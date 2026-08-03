@@ -73,6 +73,10 @@ export function ensureSchema(): Promise<void> {
       )
     `);
 
+    // Added after launch. IF NOT EXISTS keeps this safe to run against the
+    // table created by the original schema above.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS bot_check text`);
+
     // Case-insensitive uniqueness: signing up twice with "Me@x.com" and
     // "me@x.com" is one person changing their mind, not two attendees.
     await pool.query(`
@@ -98,6 +102,8 @@ export type SignupInput = {
   firstSession: string | null;
   source: string | null;
   lang: string;
+  /** Turnstile verdict for this submission: verified / skipped / unavailable. */
+  botCheck: string;
 };
 
 /**
@@ -110,8 +116,8 @@ export async function saveSignup(input: SignupInput): Promise<void> {
 
   await getPool().query(
     `
-    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     ON CONFLICT (lower(email)) DO UPDATE SET
       name          = EXCLUDED.name,
       wechat        = COALESCE(EXCLUDED.wechat, signups.wechat),
@@ -120,6 +126,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       first_session = EXCLUDED.first_session,
       source        = COALESCE(EXCLUDED.source, signups.source),
       lang          = EXCLUDED.lang,
+      bot_check     = EXCLUDED.bot_check,
       updated_at    = now()
     `,
     [
@@ -131,6 +138,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       input.firstSession,
       input.source,
       input.lang,
+      input.botCheck,
     ],
   );
 }
@@ -145,6 +153,7 @@ export type SignupRow = {
   first_session: string | null;
   source: string | null;
   lang: string | null;
+  bot_check: string | null;
   created_at: string;
 };
 
@@ -154,7 +163,8 @@ export async function listSignups(): Promise<SignupRow[]> {
   const result = await getPool().query<SignupRow>(
     `SELECT id, name, email, wechat, building, demo_intent,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            source, lang, to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
+            source, lang, bot_check,
+            to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
      FROM signups
      ORDER BY created_at DESC`,
   );

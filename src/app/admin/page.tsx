@@ -35,11 +35,13 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
+  const unverified = signups.filter((row) => row.bot_check && row.bot_check !== "verified").length;
 
   const stats = [
     { label: "Total", value: signups.length },
     { label: "Want to demo", value: wantsToDemo },
     { label: "With WeChat", value: withWechat },
+    { label: "Unverified", value: unverified },
   ];
 
   return (
@@ -62,15 +64,21 @@ export default async function AdminPage({ searchParams }: PageProps) {
         ))}
       </dl>
 
-      {/* The signup route fails closed without Turnstile keys, so a dropped
-          environment variable takes the form down. Surfacing the state here
-          means that is something you can see rather than have to guess at. */}
+      {/* Turnstile is advisory, so a dropped key no longer breaks the form —
+          it quietly stops verifying, which is exactly the kind of silent
+          degradation you would otherwise never notice. Hence stating it. */}
       {isTurnstileConfigured() ? (
-        <p className="alert">Bot protection: Turnstile active.</p>
+        <p className="alert">
+          Bot protection: Turnstile active, <strong>advisory</strong>. A submission with no token
+          is still accepted and marked <code>skipped</code> — the challenge does not complete in
+          every browser, WeChat&rsquo;s in particular. Only a token that is present and invalid is
+          rejected. Rate limit: 6 submissions per IP per hour.
+        </p>
       ) : (
         <p className="alert alert--error" role="alert">
-          Bot protection: <strong>NOT configured</strong>. The signup form is currently rejecting
-          every submission with a 503. Set NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
+          Bot protection: <strong>Turnstile not configured</strong>. Signups still work, but
+          nothing is verified — only the honeypot and the rate limit are active. Set
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
         </p>
       )}
 
@@ -95,6 +103,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <th scope="col">Building</th>
                 <th scope="col">Source</th>
                 <th scope="col">Lang</th>
+                <th scope="col">Bot check</th>
                 <th scope="col">Signed up</th>
               </tr>
             </thead>
@@ -111,6 +120,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <td style={{ whiteSpace: "normal", minWidth: "280px" }}>{row.building ?? "—"}</td>
                   <td>{row.source ?? "—"}</td>
                   <td>{row.lang ?? "—"}</td>
+                  <td style={{ color: row.bot_check === "verified" ? "var(--fg2)" : "var(--warning)" }}>
+                    {row.bot_check ?? "—"}
+                  </td>
                   <td className="mono">{row.created_at}</td>
                 </tr>
               ))}

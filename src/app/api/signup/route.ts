@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { saveSignup } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
@@ -42,22 +43,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // Bot check runs before any validation, so a failed challenge never reveals
-  // which fields the endpoint cares about or whether an email is already known.
   const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
   const remoteIp = forwardedFor?.split(",")[0]?.trim() ?? null;
 
-  const botCheck = await verifyTurnstile(clean(body.turnstileToken, 2048), remoteIp);
+  // Rate limit first — it is the defence that still works when the challenge
+  // does not, and it costs nothing to evaluate.
+  const rate = checkRateLimit(remoteIp ?? "unknown");
 
-  if (!botCheck.ok) {
-    // 403 for a genuine failed challenge, 503 when our own verification path
-    // is broken — the visitor should be told to retry, not that they look
-    // like a robot.
-    const isOurFault = botCheck.reason === "not_configured" || botCheck.reason === "unreachable";
+  if (!rate.allowed) {
     return NextResponse.json(
-      { error: isOurFault ? "server_error" : "failed_bot_check" },
-      { status: isOurFault ? 503 : 403 },
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
     );
+  }
+
+  // Advisory: only a token that is present AND invalid blocks the submission.
+  // A missing token means the challenge never completed in that browser, which
+  // must not cost someone their signup.
+  const { verdict } = await verifyTurnstile(clean(body.turnstileToken, 2048), remoteIp);
+
+  if (verdict === "rejected") {
+    return NextResponse.json({ error: "failed_bot_check" }, { status: 403 });
   }
 
   const name = clean(body.name, 100);
@@ -89,6 +95,7 @@ export async function POST(request: Request) {
       firstSession,
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
+      botCheck: verdict,
     });
   } catch (error) {
     console.error("[signup] failed to save", error);

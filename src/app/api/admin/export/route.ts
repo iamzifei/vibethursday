@@ -12,6 +12,7 @@ const COLUMNS = [
   "building",
   "source",
   "lang",
+  "bot_check",
   "created_at",
 ] as const;
 

@@ -23,8 +23,8 @@ WeChat ID.
 | `DATABASE_URL` | yes | On Zeabur set it to `${postgresql.POSTGRES_CONNECTION_STRING}` so the password is never copied around |
 | `ADMIN_TOKEN` | yes | Long random string. Guards `/admin` and the CSV export; without it those routes stay closed |
 | `NEXT_PUBLIC_SITE_URL` | recommended | Absolute site URL, e.g. `https://vibethursday.com`. Without it Open Graph image URLs resolve against localhost |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | yes | Cloudflare Turnstile site key. Read at **build** time, so changing it needs a redeploy, not a restart |
-| `TURNSTILE_SECRET_KEY` | yes | Turnstile secret. The signup route **fails closed** without it — every submission gets a 503. `/admin` shows whether protection is live |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Turnstile site key. Read at **build** time, so changing it needs a redeploy, not a restart |
+| `TURNSTILE_SECRET_KEY` | recommended | Turnstile secret. Without it signups still work but nothing is verified; `/admin` says so plainly |
 | `FIRST_SESSION_DATE` | no | `YYYY-MM-DD` of the first session that actually runs. Earlier Thursdays are not offered |
 | `DATABASE_SSL` | no | Set to `require` only if the database stops being reachable over the private network |
 
@@ -50,13 +50,23 @@ Two layers on the signup form:
 1. A honeypot field, hidden from sighted users and skipped by screen readers
    and keyboard tabbing, so only automated submissions fill it. A hit returns
    200 so the bot records success and does not retry with a different shape.
-2. Cloudflare Turnstile in managed mode, verified server-side before any
-   validation runs — a failed challenge therefore reveals nothing about which
-   fields exist or whether an email is already known.
+2. Cloudflare Turnstile in managed mode, verified server-side.
+3. A fixed-window rate limit of 6 submissions per IP per hour.
 
-Verification fails closed. A genuine failed challenge is a 403; a broken
-verification path on our side is a 503, so the visitor is told to retry rather
-than told they look like a robot.
+**Turnstile is advisory, not mandatory.** A submission carrying no token is
+accepted and recorded as `bot_check = skipped`; only a token that is present
+*and* invalid gets a 403. The submit button is never disabled by the challenge.
+
+This is deliberate, and it replaced a stricter design that broke a real signup.
+The widget does not complete in every browser — WeChat's in-app browser is the
+case that hit us, and WeChat is this community's main sharing channel. Blocking
+the button on the challenge meant a stuck spinner became an unusable form, and
+the request never even reached the server. On a form with no account and no
+payment behind it, trading real signups for spam protection is the wrong way
+round; spam rows are trivially deletable, lost signups are not.
+
+`/admin` shows how many rows are unverified so the true rate is visible rather
+than assumed.
 
 ## Viewing signups
 

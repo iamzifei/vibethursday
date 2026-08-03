@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
 
@@ -20,10 +20,23 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
 
   // Stable identity so the widget is not torn down and re-rendered on every
   // keystroke in the form above it.
   const handleToken = useCallback((token: string | null) => setTurnstileToken(token), []);
+
+  // Turnstile does not always complete — WeChat's in-app browser is the case
+  // that bit us, and it happens to be this community's main sharing channel.
+  // After the grace period the widget is removed and the form is submitted
+  // without a token rather than leaving someone stuck on a spinner forever.
+  // Signing up must never depend on the bot check succeeding.
+  useEffect(() => {
+    if (!turnstileSiteKey || turnstileToken) return;
+
+    const timer = setTimeout(() => setBotCheckGaveUp(true), 8_000);
+    return () => clearTimeout(timer);
+  }, [turnstileSiteKey, turnstileToken]);
 
   // useId keeps label/input wiring unique and stable across server and client
   // renders, which is what makes tapping a label focus the right field.
@@ -100,9 +113,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
   const sending = status === "sending";
 
-  // Turnstile's managed mode usually solves itself in under a second, so the
-  // button is held rather than the visitor being allowed to submit and fail.
-  const waitingOnBotCheck = Boolean(turnstileSiteKey) && !turnstileToken;
+  // The widget is dropped once it has produced a token, and also once it has
+  // had its chance and not produced one — a spinner that never resolves reads
+  // as a broken page.
+  const showBotCheck = Boolean(turnstileSiteKey) && !turnstileToken && !botCheckGaveUp;
 
   return (
     <form className="stack-6" onSubmit={handleSubmit} noValidate>
@@ -222,8 +236,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         </div>
       </div>
 
-      {turnstileSiteKey && (
-        <Turnstile siteKey={turnstileSiteKey} lang={lang} onToken={handleToken} />
+      {showBotCheck && (
+        <Turnstile siteKey={turnstileSiteKey!} lang={lang} onToken={handleToken} />
       )}
 
       {message && (
@@ -232,12 +246,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         </p>
       )}
 
-      <button
-        className="btn btn--primary btn--block"
-        type="submit"
-        disabled={sending || waitingOnBotCheck}
-      >
-        {sending ? copy.submitting : waitingOnBotCheck ? copy.verifying : copy.submit}
+      {/* Never disabled by the bot check — only while a submission is in
+          flight. A failed challenge must not be able to block a signup. */}
+      <button className="btn btn--primary btn--block" type="submit" disabled={sending}>
+        {sending ? copy.submitting : copy.submit}
       </button>
     </form>
   );
