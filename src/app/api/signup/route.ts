@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { saveSignup } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
 export const dynamic = "force-dynamic";
@@ -39,6 +40,24 @@ export async function POST(request: Request) {
   // so the bot records a success and does not retry with a different shape.
   if (clean(body.company, 100)) {
     return NextResponse.json({ ok: true });
+  }
+
+  // Bot check runs before any validation, so a failed challenge never reveals
+  // which fields the endpoint cares about or whether an email is already known.
+  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
+  const remoteIp = forwardedFor?.split(",")[0]?.trim() ?? null;
+
+  const botCheck = await verifyTurnstile(clean(body.turnstileToken, 2048), remoteIp);
+
+  if (!botCheck.ok) {
+    // 403 for a genuine failed challenge, 503 when our own verification path
+    // is broken — the visitor should be told to retry, not that they look
+    // like a robot.
+    const isOurFault = botCheck.reason === "not_configured" || botCheck.reason === "unreachable";
+    return NextResponse.json(
+      { error: isOurFault ? "server_error" : "failed_bot_check" },
+      { status: isOurFault ? 503 : 403 },
+    );
   }
 
   const name = clean(body.name, 100);

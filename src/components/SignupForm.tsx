@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
+import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
 
 type SessionOption = { value: string; label: string };
@@ -9,13 +10,20 @@ type Props = {
   lang: Lang;
   copy: Copy["signup"];
   sessions: SessionOption[];
+  /** Absent when Turnstile is not configured; the widget is then not rendered. */
+  turnstileSiteKey: string | null;
 };
 
 type Status = "idle" | "sending" | "done" | "error";
 
-export function SignupForm({ lang, copy, sessions }: Props) {
+export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Stable identity so the widget is not torn down and re-rendered on every
+  // keystroke in the form above it.
+  const handleToken = useCallback((token: string | null) => setTurnstileToken(token), []);
 
   // useId keeps label/input wiring unique and stable across server and client
   // renders, which is what makes tapping a label focus the right field.
@@ -53,6 +61,7 @@ export function SignupForm({ lang, copy, sessions }: Props) {
           firstSession: data.get("firstSession"),
           source: data.get("source"),
           company: data.get("company"),
+          turnstileToken,
           lang,
         }),
       });
@@ -60,7 +69,15 @@ export function SignupForm({ lang, copy, sessions }: Props) {
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
         setStatus("error");
-        setMessage(result?.error === "invalid_email" ? copy.errorEmail : copy.errorGeneric);
+        setMessage(
+          result?.error === "invalid_email"
+            ? copy.errorEmail
+            : result?.error === "failed_bot_check"
+              ? copy.errorRobot
+              : copy.errorGeneric,
+        );
+        // The token is single-use, so a rejected attempt needs a fresh one.
+        setTurnstileToken(null);
         return;
       }
 
@@ -82,6 +99,10 @@ export function SignupForm({ lang, copy, sessions }: Props) {
   }
 
   const sending = status === "sending";
+
+  // Turnstile's managed mode usually solves itself in under a second, so the
+  // button is held rather than the visitor being allowed to submit and fail.
+  const waitingOnBotCheck = Boolean(turnstileSiteKey) && !turnstileToken;
 
   return (
     <form className="stack-6" onSubmit={handleSubmit} noValidate>
@@ -201,14 +222,22 @@ export function SignupForm({ lang, copy, sessions }: Props) {
         </div>
       </div>
 
+      {turnstileSiteKey && (
+        <Turnstile siteKey={turnstileSiteKey} lang={lang} onToken={handleToken} />
+      )}
+
       {message && (
         <p className="alert alert--error" role="alert">
           {message}
         </p>
       )}
 
-      <button className="btn btn--primary btn--block" type="submit" disabled={sending}>
-        {sending ? copy.submitting : copy.submit}
+      <button
+        className="btn btn--primary btn--block"
+        type="submit"
+        disabled={sending || waitingOnBotCheck}
+      >
+        {sending ? copy.submitting : waitingOnBotCheck ? copy.verifying : copy.submit}
       </button>
     </form>
   );

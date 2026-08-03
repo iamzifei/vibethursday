@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { isAdmin } from "@/lib/admin-auth";
 import { listSignups } from "@/lib/db";
+import { isTurnstileConfigured } from "@/lib/turnstile";
 
 // Always read live data, and keep this page out of any search index.
 export const dynamic = "force-dynamic";
@@ -60,6 +61,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         ))}
       </dl>
+
+      {/* The signup route fails closed without Turnstile keys, so a dropped
+          environment variable takes the form down. Surfacing the state here
+          means that is something you can see rather than have to guess at. */}
+      {isTurnstileConfigured() ? (
+        <p className="alert">Bot protection: Turnstile active.</p>
+      ) : (
+        <p className="alert alert--error" role="alert">
+          Bot protection: <strong>NOT configured</strong>. The signup form is currently rejecting
+          every submission with a 503. Set NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
+        </p>
+      )}
 
       <div>
         <a className="btn btn--secondary" href={`/api/admin/export?key=${encodeURIComponent(key!)}`}>

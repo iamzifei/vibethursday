@@ -224,7 +224,12 @@ export default async function Page({ searchParams }: PageProps) {
               </p>
             </div>
 
-            <SignupForm lang={lang} copy={c.signup} sessions={sessions} />
+            <SignupForm
+              lang={lang}
+              copy={c.signup}
+              sessions={sessions}
+              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
+            />
           </div>
         </section>
 
@@ -275,10 +280,6 @@ export default async function Page({ searchParams }: PageProps) {
               />
               <figcaption>{c.contact.caption}</figcaption>
             </figure>
-
-            <p className="body-sm mono" style={{ color: "var(--fg3)" }}>
-              {c.contact.name}
-            </p>
           </div>
         </section>
       </main>
