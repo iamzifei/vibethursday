@@ -61,8 +61,8 @@ export const copy = {
           body: "跑不通的东西往往比跑通的更值得聊。这里不评判完成度，只看你到底试了什么。",
         },
         {
-          title: "不许推销",
-          body: "不接赞助宣讲、不接猎头招人、不接咨询拉客。这是这类活动第一大死因，所以写在明面上。",
+          title: "展示可以，插播不行",
+          body: "你做的东西就是你最好的宣发，大方讲。但别人讲的时候别转成你的推销——猎头抓人、中介拉客、收完名单就走的，不欢迎。",
         },
       ],
     },
@@ -97,8 +97,8 @@ export const copy = {
         },
         {
           time: "11:30–12:00",
-          title: "开放时间 · 求助墙",
-          note: "各自写下一条卡住的问题，谁能解谁接。",
+          title: "开放时间 · 求助 & 需求",
+          note: "一人一句：现在卡在哪、在找什么（用户 / 合伙人 / 反馈 / 工作）。想推的东西在这一段说。",
         },
         {
           time: "12:00 之后",
@@ -116,7 +116,7 @@ export const copy = {
         "同一时间、同一地点，每周不变。不轮换场地。",
         "免费，不售票。报名只是为了估人数。",
         "Demo 永远是可选的。有就讲，没有就听。",
-        "不推销、不拉客、不招人。违反的会被请出去。",
+        "展示可以，插播不行。你做的东西就是你的宣发，在自己的时段里大方讲；别人讲的时候别转成推销。只来收名单、抓人、拉客的，会被请出去。",
       ],
     },
 
@@ -180,7 +180,15 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "不要。咖啡和酒水各自买单。也不接赞助——一接就得给人家宣讲时间，那就变味了。",
+          a: "不要，各自买单。也不接「花钱换讲话时间」那种赞助——台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
+        },
+        {
+          q: "你自己从这个活动里图什么？",
+          a: "不装。我自己也在做产品、也在做内容（抖音、公众号）。这个局对我不是纯公益——我在这里认识人、拿真实反馈，偶尔也会提我在做的东西。规则对我和对你完全一样：在自己的时段里讲，不在别人的时间里插播。真到了我要卖什么东西那天，我会直接说这是在卖，不会包装成分享。",
+        },
+        {
+          q: "我能在这里推我自己的产品吗？",
+          a: "能，而且这本来就是形式的一部分——demo 就是宣发。找用户、找合伙人、找反馈，在你的 5 分钟和「求助 & 需求」那一段说。唯一的界线是：别人在讲的时候，那是别人的时间。",
         },
         {
           q: "为什么是上午？下午不是更松吗？",
@@ -252,8 +260,8 @@ export const copy = {
           body: "The thing that does not work is usually the more interesting conversation. Nobody is grading polish here.",
         },
         {
-          title: "No pitching",
-          body: "No sponsor slots, no recruiting, no consultants working the room. It is the number one killer of groups like this, so it is stated up front.",
+          title: "Show, don't sell",
+          body: "What you built is your best marketing — show it properly. Just don't turn someone else's turn into your pitch. Recruiters working the room, agencies hunting clients, people collecting contacts and leaving: not welcome.",
         },
       ],
     },
@@ -288,8 +296,8 @@ export const copy = {
         },
         {
           time: "11:30am–12:00pm",
-          title: "Open time · the stuck wall",
-          note: "Everyone writes down one blocker. Whoever can unblock it, does.",
+          title: "Open time · blockers & asks",
+          note: "One line each: what you are stuck on, and what you are looking for — users, a cofounder, feedback, a job. Anything you want to promote goes here.",
         },
         {
           time: "From 12:00pm",
@@ -307,7 +315,7 @@ export const copy = {
         "Same time, same place, every week. The venue does not rotate.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
         "Demos are always optional. Show something or just listen.",
-        "No pitching, no recruiting, no selling. You will be asked to leave.",
+        "Show, don't sell. What you built is your marketing — present it properly in your own slot, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
       ],
     },
 
@@ -371,7 +379,15 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "No. Everyone buys their own coffee. No sponsors either — taking sponsor money means giving them stage time, and that ruins it.",
+          a: "No, everyone pays their own way. No pay-for-stage-time sponsorship either — floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
+        },
+        {
+          q: "What do you get out of running this?",
+          a: "I am not going to pretend otherwise: I build products and I make content, and this is not pure charity for me. I meet people here, I get real feedback, and occasionally I will mention what I am working on. The rule applies to me exactly as it does to you — in my own slot, never over someone else's. And if I ever start selling something, I will say plainly that I am selling, not dress it up as sharing.",
+        },
+        {
+          q: "Can I promote my own product here?",
+          a: "Yes — that is the format, not a loophole. A demo is marketing. Looking for users, a cofounder, or feedback belongs in your five minutes and in the blockers & asks slot. The only line is that while someone else is talking, that time is theirs.",
         },
         {
           q: "Why mornings, not afternoons?",
