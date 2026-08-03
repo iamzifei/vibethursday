@@ -50,7 +50,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — 这是什么",
       title: "一句话：每周四上午，一群人围一张桌子，看彼此用 AI 做了什么。",
-      lede: "灵感来自北京中关村的每周四聚会。悉尼已经有很多每月一次的晚间活动，但没有一个每周固定的白天局——月度活动是日程表上的条目，每周才会变成习惯。",
+      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人——每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。",
       points: [
         {
           title: "不是讲座",
@@ -78,7 +78,7 @@ export const copy = {
         "公司里的工程师、产品、设计、运营",
         "带团队、想把 AI 落到流程里的中层",
       ],
-      note: "「做东西」不限于软件。一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。工作日上午本身就是筛选器——周四十点能出现的人，多半已经靠 AI 做出了点什么。",
+      note: "「做东西」不限于软件——一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。不用等做完，也不用做得好。",
     },
 
     schedule: {
@@ -112,7 +112,7 @@ export const copy = {
       eyebrow: "§ 04 — 几条规矩",
       title: "就这五条。",
       items: [
-        "只来两个人也照办。周更一旦取消过一次就死了。",
+        "只来两个人也照办。",
         "同一时间、同一地点，每周不变。不轮换场地。",
         "免费，不售票。报名只是为了估人数。",
         "Demo 永远是可选的。有就讲，没有就听。",
@@ -183,12 +183,8 @@ export const copy = {
           a: "不要，各自买单。也不接「花钱换讲话时间」那种赞助——台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
-          q: "你自己从这个活动里图什么？",
-          a: "不装。我自己也在做产品、也在做内容（抖音、公众号）。这个局对我不是纯公益——我在这里认识人、拿真实反馈，偶尔也会提我在做的东西。规则对我和对你完全一样：在自己的时段里讲，不在别人的时间里插播。真到了我要卖什么东西那天，我会直接说这是在卖，不会包装成分享。",
-        },
-        {
           q: "我能在这里推我自己的产品吗？",
-          a: "能，而且这本来就是形式的一部分——demo 就是宣发。找用户、找合伙人、找反馈，在你的 5 分钟和「求助 & 需求」那一段说。唯一的界线是：别人在讲的时候，那是别人的时间。",
+          a: "能，这本来就是形式的一部分——demo 就是宣发。找用户、找合伙人、找反馈，在你的 5 分钟和「求助 & 需求」那一段说。唯一的界线是：别人在讲的时候，那是别人的时间。这条对所有人一样，包括我。",
         },
         {
           q: "为什么是上午？下午不是更松吗？",
@@ -249,7 +245,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — What this is",
       title: "A group of people around one table every Thursday morning, showing each other what they built with AI.",
-      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. Sydney already has plenty of monthly evening events, but nothing weekly in daylight — a monthly event is a calendar entry, a weekly one becomes a habit.",
+      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best — it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle.",
       points: [
         {
           title: "Not a lecture",
@@ -277,7 +273,7 @@ export const copy = {
         "Engineers, PMs, designers, marketers",
         "Team leads getting AI into real workflows",
       ],
-      note: "\"Building\" is not limited to software. A content pipeline, an automation, a prompt system, an ad playbook — all of it counts. A weekday morning is the filter: people who can show up at 10am on a Thursday have usually already made AI work for them.",
+      note: "\"Building\" is not limited to software — a content pipeline, an automation, a prompt system, an ad playbook all count. It does not have to be finished, and it does not have to be good.",
     },
 
     schedule: {
@@ -311,7 +307,7 @@ export const copy = {
       eyebrow: "§ 04 — House rules",
       title: "All five of them.",
       items: [
-        "It runs even if two people show up. Cancel a weekly once and it dies.",
+        "It runs even if two people show up.",
         "Same time, same place, every week. The venue does not rotate.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
         "Demos are always optional. Show something or just listen.",
@@ -382,12 +378,8 @@ export const copy = {
           a: "No, everyone pays their own way. No pay-for-stage-time sponsorship either — floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
-          q: "What do you get out of running this?",
-          a: "I am not going to pretend otherwise: I build products and I make content, and this is not pure charity for me. I meet people here, I get real feedback, and occasionally I will mention what I am working on. The rule applies to me exactly as it does to you — in my own slot, never over someone else's. And if I ever start selling something, I will say plainly that I am selling, not dress it up as sharing.",
-        },
-        {
           q: "Can I promote my own product here?",
-          a: "Yes — that is the format, not a loophole. A demo is marketing. Looking for users, a cofounder, or feedback belongs in your five minutes and in the blockers & asks slot. The only line is that while someone else is talking, that time is theirs.",
+          a: "Yes — that is the format, not a loophole. A demo is marketing. Looking for users, a cofounder, or feedback belongs in your five minutes and in the blockers & asks slot. The only line is that while someone else is talking, that time is theirs. That applies to everyone, me included.",
         },
         {
           q: "Why mornings, not afternoons?",
