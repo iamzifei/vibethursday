@@ -36,7 +36,7 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "悉尼 · 每周四上午的 AI 局",
-      lede: "带上你用 AI 做出来的任何东西——一个网站、一段脚本、一条自动化流程、一个剪片工具，甚至一个还没跑通的想法。5 分钟，讲给一屋子听得懂的人。",
+      lede: "带上你用 AI 做出来的任何东西——一个产品、一条自动化流程、一套选题或剪辑的流水线、一个投放打法、一套提示词，甚至一个还没跑通的想法。5 分钟，讲给一屋子听得懂的人。",
       facts: [
         { label: "时间", value: "每周四 10:00–13:00" },
         { label: "地点", value: "悉尼 CBD" },
@@ -72,13 +72,13 @@ export const copy = {
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
         "独立开发者",
-        "全职创业 / 在做自己的产品",
+        "AI 初创公司的创始人和团队",
+        "做 AI 内容的：自媒体、公众号、播客、短视频",
         "自由职业 / 数字游民",
-        "公司里对 AI 感兴趣的工程师",
+        "公司里的工程师、产品、设计、运营",
         "带团队、想把 AI 落到流程里的中层",
-        "AI 方向的自媒体和内容创作者",
       ],
-      note: "工作日上午本身就是筛选器。周四十点能出现的人，多半已经靠 AI 做出了点什么——这正是我们想先攒起来的那批人。",
+      note: "「做东西」不限于软件。一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。工作日上午本身就是筛选器——周四十点能出现的人，多半已经靠 AI 做出了点什么。",
     },
 
     schedule: {
@@ -235,7 +235,7 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "Sydney · every Thursday morning",
-      lede: "Bring whatever you made with AI — a site, a script, an automation, a video tool, or an idea that does not work yet. Five minutes, to a room that gets it.",
+      lede: "Bring whatever you made with AI — a product, an automation, a content or editing pipeline, an ad playbook, a prompt system, or an idea that does not work yet. Five minutes, to a room that gets it.",
       facts: [
         { label: "When", value: "Thursdays, 10am–1pm" },
         { label: "Where", value: "Sydney CBD" },
@@ -271,13 +271,13 @@ export const copy = {
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
         "Indie developers",
-        "Founders working on their own product",
+        "AI startup founders and their teams",
+        "Creators: newsletters, podcasts, video, social",
         "Freelancers and digital nomads",
-        "Engineers curious about AI",
-        "Team leads trying to get AI into real workflows",
-        "Creators and writers covering AI",
+        "Engineers, PMs, designers, marketers",
+        "Team leads getting AI into real workflows",
       ],
-      note: "A weekday morning is the filter. People who can show up at 10am on a Thursday have usually already made AI work for them — that is the group we want in the room first.",
+      note: "\"Building\" is not limited to software. A content pipeline, an automation, a prompt system, an ad playbook — all of it counts. A weekday morning is the filter: people who can show up at 10am on a Thursday have usually already made AI work for them.",
     },
 
     schedule: {
