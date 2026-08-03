@@ -61,8 +61,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
     setStatus("sending");
     setMessage(null);
 
-    try {
-      const response = await fetch("/api/signup", {
+    const post = (token: string | null) =>
+      fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,10 +74,24 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           firstSession: data.get("firstSession"),
           source: data.get("source"),
           company: data.get("company"),
-          turnstileToken,
+          turnstileToken: token,
           lang,
         }),
       });
+
+    try {
+      let response = await post(turnstileToken);
+
+      // A token is single-use and expires after a few minutes, so the common
+      // cause of this rejection is a stale token from someone who took their
+      // time filling the form — not a bot. Retry once without it, which lands
+      // in exactly the same place as a browser that never solved the challenge
+      // at all. This gives nothing away: omitting the token was already an
+      // accepted path, so a bot gains nothing it did not already have.
+      if (response.status === 403 && turnstileToken) {
+        setTurnstileToken(null);
+        response = await post(null);
+      }
 
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -89,7 +103,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
               ? copy.errorRobot
               : copy.errorGeneric,
         );
-        // The token is single-use, so a rejected attempt needs a fresh one.
         setTurnstileToken(null);
         return;
       }
@@ -113,10 +126,12 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
   const sending = status === "sending";
 
-  // The widget is dropped once it has produced a token, and also once it has
-  // had its chance and not produced one — a spinner that never resolves reads
-  // as a broken page.
-  const showBotCheck = Boolean(turnstileSiteKey) && !turnstileToken && !botCheckGaveUp;
+  // The widget stays mounted after it succeeds. Unmounting it on success would
+  // also throw away Turnstile's expiry callback, and tokens expire in a few
+  // minutes — long enough for someone to still be writing the "what are you
+  // working on" box. It is only removed once the grace period has passed with
+  // no token, because a spinner that never resolves reads as a broken page.
+  const showBotCheck = Boolean(turnstileSiteKey) && !botCheckGaveUp;
 
   return (
     <form className="stack-6" onSubmit={handleSubmit} noValidate>
