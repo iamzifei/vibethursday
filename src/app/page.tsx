@@ -250,6 +250,37 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
           </div>
         </section>
+
+        {/* ── Contact ──────────────────────────────────────────────── */}
+        <section className="section" id="contact">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.contact.eyebrow}</span>
+              <h2>{c.contact.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.contact.lede}
+              </p>
+            </div>
+
+            <figure className="qr-card" style={{ margin: 0 }}>
+              {/* Intrinsic size is given so the plate does not reflow once the
+                  image loads. Not lazy-loaded: someone scrolling here is about
+                  to scan it, and a late-arriving QR is a broken QR. */}
+              <img
+                src="/wechat-qr.png"
+                alt={c.contact.alt}
+                width={712}
+                height={712}
+                decoding="async"
+              />
+              <figcaption>{c.contact.caption}</figcaption>
+            </figure>
+
+            <p className="body-sm mono" style={{ color: "var(--fg3)" }}>
+              {c.contact.name}
+            </p>
+          </div>
+        </section>
       </main>
 
       <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>

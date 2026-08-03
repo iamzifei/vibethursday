@@ -185,6 +185,15 @@ export const copy = {
       ],
     },
 
+    contact: {
+      eyebrow: "§ 07 — 联系",
+      title: "找不到人？加我微信。",
+      lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
+      caption: "微信扫码加我",
+      name: "James · 主理人",
+      alt: "James 的微信二维码",
+    },
+
     footer: {
       tagline: "每周四见。",
       location: "悉尼 CBD · 每周四 15:00–18:00",
@@ -358,6 +367,15 @@ export const copy = {
           a: "Of course. It runs every week and you do not need a streak.",
         },
       ],
+    },
+
+    contact: {
+      eyebrow: "§ 07 — Contact",
+      title: "Can't find us? Add me on WeChat.",
+      lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
+      caption: "Scan with WeChat",
+      name: "James · organiser",
+      alt: "James's WeChat QR code",
     },
 
     footer: {

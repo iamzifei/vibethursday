@@ -573,6 +573,41 @@ select.field {
 }
 .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* QR plate. Deliberately a white card on the dark page: scanners rely on dark
+   modules over a light field, and inverting a QR breaks a good number of them.
+   The image is never scaled up past its native 712px for the same reason. */
+.qr-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  /* Hugs its contents. Without this the card is a flex child of a column and
+     stretches to the full 880px shell, leaving a large white slab either side
+     of a 220px code. */
+  align-self: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  /* A faint lime rim ties the white plate back into the palette. */
+  box-shadow: 0 0 0 1px var(--accent-muted), 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.qr-card img {
+  display: block;
+  width: min(220px, 60vw);
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.qr-card figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  /* Fixed dark ink: this caption sits on the white plate, not the page. */
+  color: #56536a;
+}
+
 .alert {
   padding: var(--space-4);
   border: 1px solid var(--border-default);
