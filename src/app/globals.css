@@ -539,6 +539,17 @@ select.field {
 }
 
 .hint { font-size: var(--text-xs); color: var(--fg3); margin-top: var(--space-2); }
+
+/* Reassurance under the contact fields. Given a quiet border rather than an
+   alert box: it should read as a calm fact, not a warning. */
+.privacy-note {
+  margin: calc(var(--space-4) * -1) 0 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--accent-muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--fg3);
+}
 .required { color: var(--accent); }
 
 /* Radio group rendered as tappable cards — much easier on a phone than native

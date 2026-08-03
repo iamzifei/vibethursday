@@ -68,12 +68,16 @@ export async function POST(request: Request) {
 
   const name = clean(body.name, 100);
   const email = clean(body.email, 200);
+  const wechat = clean(body.wechat, 100);
 
-  if (!name || !email) {
+  // Which of the two is mandatory differs per language, and `lang` comes from
+  // the client so it cannot be trusted here. The invariant the server actually
+  // needs is weaker and unspoofable: a name, and at least one way to reach them.
+  if (!name || (!email && !wechat)) {
     return NextResponse.json({ error: "missing_required" }, { status: 400 });
   }
 
-  if (!looksLikeEmail(email)) {
+  if (email && !looksLikeEmail(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
 
@@ -89,7 +93,7 @@ export async function POST(request: Request) {
     await saveSignup({
       name,
       email,
-      wechat: clean(body.wechat, 100),
+      wechat,
       building: clean(body.building, 1000),
       demoIntent,
       firstSession,

@@ -51,10 +51,23 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
+    const wechat = String(data.get("wechat") ?? "").trim();
 
-    if (!name || !email) {
+    // The Chinese form asks for a WeChat ID, the English one for an email —
+    // that audience split is real, so the required field follows the language.
+    const missingRequired =
+      !name || (copy.fields.emailRequired && !email) || (copy.fields.wechatRequired && !wechat);
+
+    if (missingRequired) {
       setStatus("error");
       setMessage(copy.errorRequired);
+      return;
+    }
+
+    // Whichever language, one contact method has to be there.
+    if (!email && !wechat) {
+      setStatus("error");
+      setMessage(copy.errorNeedContact);
       return;
     }
 
@@ -68,7 +81,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         body: JSON.stringify({
           name,
           email,
-          wechat: data.get("wechat"),
+          wechat,
           building: data.get("building"),
           demoIntent: data.get("demoIntent"),
           firstSession: data.get("firstSession"),
@@ -160,38 +173,43 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
         <div>
           <label className="label" htmlFor={fieldId("email")}>
-            {copy.fields.email} <span className="required">*</span>
+            {copy.fields.email}
+            {copy.fields.emailRequired && <span className="required"> *</span>}
           </label>
           <input
             className="field"
             id={fieldId("email")}
             name="email"
             type="email"
-            required
+            required={copy.fields.emailRequired}
             autoComplete="email"
             inputMode="email"
             placeholder={copy.fields.emailPlaceholder}
           />
-          <p className="hint">{copy.fields.emailHint}</p>
+        </div>
+
+        <div>
+          <label className="label" htmlFor={fieldId("wechat")}>
+            {copy.fields.wechat}
+            {copy.fields.wechatRequired && <span className="required"> *</span>}
+          </label>
+          <input
+            className="field"
+            id={fieldId("wechat")}
+            name="wechat"
+            type="text"
+            required={copy.fields.wechatRequired}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder={copy.fields.wechatPlaceholder}
+          />
         </div>
       </div>
 
-      <div>
-        <label className="label" htmlFor={fieldId("wechat")}>
-          {copy.fields.wechat}
-        </label>
-        <input
-          className="field"
-          id={fieldId("wechat")}
-          name="wechat"
-          type="text"
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          placeholder={copy.fields.wechatPlaceholder}
-        />
-        <p className="hint">{copy.fields.wechatHint}</p>
-      </div>
+      {/* One note under both contact fields rather than a hint on each — the
+          reassurance is about the pair, and repeating it dilutes it. */}
+      <p className="privacy-note">{copy.fields.contactPrivacy}</p>
 
       <div>
         <label className="label" htmlFor={fieldId("building")}>

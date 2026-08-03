@@ -77,11 +77,23 @@ export function ensureSchema(): Promise<void> {
     // table created by the original schema above.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS bot_check text`);
 
+    // Email stopped being mandatory once the Chinese form started asking for a
+    // WeChat ID instead — most of that audience does not check email.
+    await pool.query(`ALTER TABLE signups ALTER COLUMN email DROP NOT NULL`);
+
     // Case-insensitive uniqueness: signing up twice with "Me@x.com" and
     // "me@x.com" is one person changing their mind, not two attendees.
+    // Postgres allows unlimited NULLs in a unique index, so rows with no email
+    // are simply not constrained by this one.
     await pool.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS signups_email_lower_idx
       ON signups (lower(email))
+    `);
+
+    // The same guarantee for people who only left a WeChat ID.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS signups_wechat_lower_idx
+      ON signups (lower(wechat))
     `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
@@ -95,7 +107,7 @@ export function ensureSchema(): Promise<void> {
 
 export type SignupInput = {
   name: string;
-  email: string;
+  email: string | null;
   wechat: string | null;
   building: string | null;
   demoIntent: string | null;
@@ -107,19 +119,27 @@ export type SignupInput = {
 };
 
 /**
- * Inserts a signup, or updates the existing row when the email is already
- * known. Re-submitting is treated as "I changed my details", never an error —
+ * Inserts a signup, or updates the existing row when we already know this
+ * person. Re-submitting is treated as "I changed my details", never an error —
  * an error here would just make someone think they failed to sign up.
+ *
+ * Which column identifies them depends on what they gave us: the Chinese form
+ * asks for a WeChat ID and the English one for an email, and either may be the
+ * only thing present. Postgres cannot express "conflict on whichever of these
+ * two is non-null" in one statement, so the conflict target is chosen here.
  */
 export async function saveSignup(input: SignupInput): Promise<void> {
   await ensureSchema();
+
+  const conflictColumn = input.email ? "lower(email)" : "lower(wechat)";
 
   await getPool().query(
     `
     INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    ON CONFLICT (lower(email)) DO UPDATE SET
+    ON CONFLICT (${conflictColumn}) DO UPDATE SET
       name          = EXCLUDED.name,
+      email         = COALESCE(EXCLUDED.email, signups.email),
       wechat        = COALESCE(EXCLUDED.wechat, signups.wechat),
       building      = COALESCE(EXCLUDED.building, signups.building),
       demo_intent   = EXCLUDED.demo_intent,
@@ -146,7 +166,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
 export type SignupRow = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   wechat: string | null;
   building: string | null;
   demo_intent: string | null;
