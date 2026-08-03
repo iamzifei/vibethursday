@@ -24,7 +24,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · 悉尼每周四的 AI 局",
       description:
-        "每周四下午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。会坏的 demo 也欢迎。免费。",
+        "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。会坏的 demo 也欢迎。免费。",
     },
 
     nav: {
@@ -35,21 +35,21 @@ export const copy = {
     hero: {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
-      subtitle: "悉尼 · 每周四下午的 AI 局",
+      subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "带上你用 AI 做出来的任何东西——一个网站、一段脚本、一条自动化流程、一个剪片工具，甚至一个还没跑通的想法。5 分钟，讲给一屋子听得懂的人。",
       facts: [
-        { label: "时间", value: "每周四 15:00–18:00" },
+        { label: "时间", value: "每周四 10:00–13:00" },
         { label: "地点", value: "悉尼 CBD" },
         { label: "费用", value: "免费，咖啡自理" },
       ],
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
-      note: "17:00 之后自愿转场酒吧，下班的人在这一段汇入。",
+      note: "12:00 之后自愿留下吃个午饭。赶着接娃或者要回去干活的，12 点直接走就行。",
     },
 
     what: {
       eyebrow: "§ 01 — 这是什么",
-      title: "一句话：每周四下午，一群人围一张桌子，看彼此用 AI 做了什么。",
+      title: "一句话：每周四上午，一群人围一张桌子，看彼此用 AI 做了什么。",
       lede: "灵感来自北京中关村的每周四聚会。悉尼已经有很多每月一次的晚间活动，但没有一个每周固定的白天局——月度活动是日程表上的条目，每周才会变成习惯。",
       points: [
         {
@@ -78,7 +78,7 @@ export const copy = {
         "带团队、想把 AI 落到流程里的中层",
         "AI 方向的自媒体和内容创作者",
       ],
-      note: "白天的时段本身就是筛选器。周四下午三点能出现的人，多半已经靠 AI 做出了点什么——这正是我们想先攒起来的那批人。",
+      note: "工作日上午本身就是筛选器。周四十点能出现的人，多半已经靠 AI 做出了点什么——这正是我们想先攒起来的那批人。",
     },
 
     schedule: {
@@ -86,24 +86,24 @@ export const copy = {
       title: "每周同一个节奏，不变。",
       slots: [
         {
-          time: "15:00–15:30",
+          time: "10:00–10:30",
           title: "陆续到场 · 一句话自我介绍",
           note: "三件事：怎么称呼、在做什么、现在卡在哪。",
         },
         {
-          time: "15:30–16:30",
+          time: "10:30–11:30",
           title: "Demo 轮",
           note: "最多 3 个名额，每人 5 分钟，硬计时。想讲在报名时勾一下就行。",
         },
         {
-          time: "16:30–17:00",
+          time: "11:30–12:00",
           title: "开放时间 · 求助墙",
           note: "各自写下一条卡住的问题，谁能解谁接。",
         },
         {
-          time: "17:00 之后",
-          title: "自愿转场酒吧",
-          note: "不强制。下班过来的人通常在这一段加入。",
+          time: "12:00 之后",
+          title: "自愿留下吃午饭",
+          note: "不强制。想接着聊的一起吃，赶时间的 12 点就走。",
         },
       ],
     },
@@ -181,6 +181,10 @@ export const copy = {
           a: "不要。咖啡和酒水各自买单。也不接赞助——一接就得给人家宣讲时间，那就变味了。",
         },
         {
+          q: "为什么是上午？下午不是更松吗？",
+          a: "下午三点正好撞小学放学，家里有孩子的一律来不了。上午还顺带解决一个实际问题：悉尼 CBD 不少咖啡厅下午三四点就打烊，上午反而好占位子。",
+        },
+        {
           q: "我这周来不了，下周还能来吗？",
           a: "当然。它每周都在，不用连着来。来了就是自己人。",
         },
@@ -197,7 +201,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "悉尼 CBD · 每周四 15:00–18:00",
+      location: "悉尼 CBD · 每周四 10:00–13:00",
     },
   },
 
@@ -209,7 +213,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · Sydney's weekly AI meetup",
       description:
-        "Every Thursday afternoon in Sydney CBD. Bring whatever you built with AI and show it in five minutes. Broken demos welcome. Free.",
+        "Every Thursday morning in Sydney CBD. Bring whatever you built with AI and show it in five minutes. Broken demos welcome. Free.",
     },
 
     nav: {
@@ -220,21 +224,21 @@ export const copy = {
     hero: {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
-      subtitle: "Sydney · every Thursday afternoon",
+      subtitle: "Sydney · every Thursday morning",
       lede: "Bring whatever you made with AI — a site, a script, an automation, a video tool, or an idea that does not work yet. Five minutes, to a room that gets it.",
       facts: [
-        { label: "When", value: "Thursdays, 3–6pm" },
+        { label: "When", value: "Thursdays, 10am–1pm" },
         { label: "Where", value: "Sydney CBD" },
         { label: "Cost", value: "Free, buy your own coffee" },
       ],
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
-      note: "We move to a pub from 5pm for anyone coming straight from work.",
+      note: "We carry on over lunch from noon. On school pickup, or need to get back to work? Leave at twelve.",
     },
 
     what: {
       eyebrow: "§ 01 — What this is",
-      title: "A group of people around one table every Thursday afternoon, showing each other what they built with AI.",
+      title: "A group of people around one table every Thursday morning, showing each other what they built with AI.",
       lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. Sydney already has plenty of monthly evening events, but nothing weekly in daylight — a monthly event is a calendar entry, a weekly one becomes a habit.",
       points: [
         {
@@ -263,7 +267,7 @@ export const copy = {
         "Team leads trying to get AI into real workflows",
         "Creators and writers covering AI",
       ],
-      note: "The daytime slot is the filter. People who can show up at 3pm on a Thursday have usually already made AI work for them — that is the group we want in the room first.",
+      note: "A weekday morning is the filter. People who can show up at 10am on a Thursday have usually already made AI work for them — that is the group we want in the room first.",
     },
 
     schedule: {
@@ -271,24 +275,24 @@ export const copy = {
       title: "Same rhythm every week.",
       slots: [
         {
-          time: "3:00–3:30pm",
+          time: "10:00–10:30am",
           title: "Arrive · one-line intros",
           note: "Three things: your name, what you are building, what you are stuck on.",
         },
         {
-          time: "3:30–4:30pm",
+          time: "10:30–11:30am",
           title: "Demo round",
           note: "Three slots max, five minutes each, hard timer. Tick the box when you sign up.",
         },
         {
-          time: "4:30–5:00pm",
+          time: "11:30am–12:00pm",
           title: "Open time · the stuck wall",
           note: "Everyone writes down one blocker. Whoever can unblock it, does.",
         },
         {
-          time: "From 5:00pm",
-          title: "Optional move to a pub",
-          note: "Entirely optional. This is where the after-work crowd joins.",
+          time: "From 12:00pm",
+          title: "Optional lunch",
+          note: "Entirely optional. Stay if you want to keep talking, leave at twelve if you do not.",
         },
       ],
     },
@@ -366,6 +370,10 @@ export const copy = {
           a: "No. Everyone buys their own coffee. No sponsors either — taking sponsor money means giving them stage time, and that ruins it.",
         },
         {
+          q: "Why mornings, not afternoons?",
+          a: "3pm collides with school pickup, which rules out anyone with kids. Mornings also fix a practical problem: plenty of Sydney CBD cafes shut by mid-afternoon.",
+        },
+        {
           q: "I cannot make this week. Can I come next week?",
           a: "Of course. It runs every week and you do not need a streak.",
         },
@@ -382,7 +390,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Sydney CBD · Thursdays 3–6pm",
+      location: "Sydney CBD · Thursdays 10am–1pm",
     },
   },
 } as const;
