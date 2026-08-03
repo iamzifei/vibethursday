@@ -156,10 +156,12 @@
   .brand { font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
   .brand span { color: #c6ff3d; }
 
-  .url {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Was the domain, in mono. Now an in-platform prompt, so it drops the
+     monospace treatment that made it read as a machine-readable address. */
+  .cta {
     font-size: 30px;
-    color: #6b7480;
+    font-weight: 600;
+    color: #c6ff3d;
   }
 
   .who {
@@ -214,7 +216,7 @@
 
     <div class="footer">
       <div class="brand">Vibe <span>Thursday</span></div>
-      <div class="url">vibethursday.com</div>
+      <div class="cta">想来的，评论区说一声</div>
     </div>
 
     <div class="who">
