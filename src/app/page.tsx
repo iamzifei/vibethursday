@@ -15,7 +15,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   return {
     title: c.meta.title,
     description: c.meta.description,
-    openGraph: { title: c.meta.title, description: c.meta.description },
+    // `images` has to be repeated here. Next.js does not merge openGraph with
+    // the parent layout — declaring the key at all replaces the whole object,
+    // so omitting images silently drops the social card.
+    openGraph: {
+      title: c.meta.title,
+      description: c.meta.description,
+      images: [{ url: "/og.jpg", width: 1200, height: 630, alt: c.meta.title }],
+    },
   };
 }
 
@@ -56,19 +63,19 @@ export default async function Page({ searchParams }: PageProps) {
         {/* ── Hero ─────────────────────────────────────────────────── */}
         <section className="hero">
           <div className="shell stack-8">
-            <div className="stack-4">
+            <div className="stack-4 rise rise-1">
               <span className="eyebrow">{c.hero.eyebrow}</span>
-              <h1 className="display-1">{c.hero.title}</h1>
+              <h1 className="display-1 wordmark">{c.hero.title}</h1>
               <p className="body-lg" style={{ color: "var(--fg1)", fontWeight: 500 }}>
                 {c.hero.subtitle}
               </p>
             </div>
 
-            <p className="body-lg" style={{ maxWidth: "58ch" }}>
+            <p className="body-lg rise rise-2" style={{ maxWidth: "58ch" }}>
               {c.hero.lede}
             </p>
 
-            <dl className="grid-auto" style={{ margin: 0 }}>
+            <dl className="grid-auto rise rise-3" style={{ margin: 0 }}>
               {c.hero.facts.map((fact) => (
                 <div className="card stack-2" key={fact.label}>
                   <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
@@ -79,7 +86,7 @@ export default async function Page({ searchParams }: PageProps) {
               ))}
             </dl>
 
-            <div className="stack-3">
+            <div className="stack-3 rise rise-4">
               <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
                 <a className="btn btn--primary" href="#signup">
                   {c.hero.cta}
@@ -91,7 +98,7 @@ export default async function Page({ searchParams }: PageProps) {
 
               {nextSession && (
                 <span className="pill pill--live" style={{ alignSelf: "flex-start" }}>
-                  <span className="dot" aria-hidden="true" />
+                  <span className="dot dot--pulse" aria-hidden="true" />
                   {lang === "zh" ? `下一场 ${nextSession.label}` : `Next · ${nextSession.label}`}
                 </span>
               )}
