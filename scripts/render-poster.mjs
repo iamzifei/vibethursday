@@ -1,12 +1,13 @@
 /**
- * Renders art/xhs-poster.html to a 3:4 PNG for Xiaohongshu.
+ * Renders the social posters to PNG.
  *
  * Rendered in a browser rather than composited with ImageMagick because the
- * poster is mostly Chinese type: the browser can reach PingFang's real bold
- * weights, and CSS handles the line breaking and vertical rhythm that would
- * otherwise be hand-placed pixel offsets.
+ * posters are mostly type: the browser reaches PingFang's real bold weights,
+ * and CSS handles line breaking and vertical rhythm that would otherwise be
+ * hand-placed pixel offsets.
  *
- *   node scripts/render-poster.mjs
+ *   node scripts/render-poster.mjs        # all
+ *   node scripts/render-poster.mjs xhs    # just one
  */
 
 import { chromium } from "playwright";
@@ -14,21 +15,40 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const source = join(root, "art", "xhs-poster.html");
-const output = join(root, "art", "xhs-cover.png");
 
-// 1200x1600 CSS pixels at 2x — 2400x3200, comfortably above what Xiaohongshu
-// downsamples to, so the type stays crisp on a high-density phone.
+const POSTERS = {
+  // 3:4 portrait. Xiaohongshu shows the full frame, and forbids URLs in images
+  // as off-platform diversion — hence no link on this one.
+  xhs: { source: "xhs-poster.html", output: "xhs-cover.png", width: 1200, height: 1600 },
+
+  // 16:9 landscape. X crops portrait images in the timeline, which would cut
+  // the headline. Links are unrestricted there, so this one carries the URL.
+  x: { source: "x-poster.html", output: "x-card.png", width: 1600, height: 900 },
+};
+
+const requested = process.argv[2];
+const jobs = requested ? { [requested]: POSTERS[requested] } : POSTERS;
+
+if (requested && !POSTERS[requested]) {
+  console.error(`Unknown poster "${requested}". Known: ${Object.keys(POSTERS).join(", ")}`);
+  process.exit(1);
+}
+
+// 2x device scale, comfortably above what either platform downsamples to, so
+// the type stays crisp on a high-density phone.
 const browser = await chromium.launch();
-const page = await browser.newPage({
-  viewport: { width: 1200, height: 1600 },
-  deviceScaleFactor: 2,
-});
 
-await page.goto(`file://${source}`);
-await page.waitForTimeout(400);
+for (const [name, { source, output, width, height }] of Object.entries(jobs)) {
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
 
-await page.locator(".poster").screenshot({ path: output });
+  await page.goto(`file://${join(root, "art", source)}`);
+  await page.waitForTimeout(400);
+
+  const target = join(root, "art", output);
+  await page.locator(".poster, .card").first().screenshot({ path: target });
+  await page.close();
+
+  console.log(`${name}: ${target} (${width * 2}x${height * 2})`);
+}
+
 await browser.close();
-
-console.log(`Wrote ${output}`);
