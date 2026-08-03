@@ -40,7 +40,7 @@ export function sydneyToday(): Date {
  * launched. Set FIRST_SESSION_DATE (YYYY-MM-DD) to move it; the fallback is
  * the planned launch date.
  */
-const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-13";
+const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-06";
 
 /**
  * The next `count` Thursdays that are being run, as ISO date strings.
