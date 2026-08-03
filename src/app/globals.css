@@ -302,6 +302,11 @@ textarea:focus-visible,
 
 .pill--live { border-color: var(--accent-muted); color: var(--accent); background: var(--accent-subtle); }
 
+/* A pill that is actually tappable (the language switch) has to clear the
+   44px minimum touch target; decorative pills stay compact. */
+a.pill { min-height: 44px; color: var(--fg1); }
+a.pill:hover { border-color: var(--border-strong); background: var(--bg-tertiary); color: var(--fg1); }
+
 .dot {
   width: 6px;
   height: 6px;

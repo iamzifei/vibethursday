@@ -33,20 +33,40 @@ export function sydneyToday(): Date {
 }
 
 /**
- * The next `count` Thursdays as ISO date strings (YYYY-MM-DD).
+ * The date of the first session that actually runs.
+ *
+ * Without this the form would happily take a signup for the Thursday that
+ * happens to be next on the calendar, including ones before the meetup has
+ * launched. Set FIRST_SESSION_DATE (YYYY-MM-DD) to move it; the fallback is
+ * the planned launch date.
+ */
+const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-13";
+
+/**
+ * The next `count` Thursdays that are being run, as ISO date strings.
  *
  * If today is Thursday, today is included — someone finding the site on a
- * Thursday morning should be able to sign up for that afternoon.
+ * Thursday morning should be able to sign up for that afternoon. Thursdays
+ * earlier than FIRST_SESSION are skipped rather than offered.
  */
 export function nextThursdays(count = 6): string[] {
   const today = sydneyToday();
   const daysUntilThursday = (THURSDAY - today.getUTCDay() + 7) % 7;
 
-  return Array.from({ length: count }, (_, index) => {
+  const upcoming: string[] = [];
+
+  // Walk forward a week at a time until `count` runnable sessions are found.
+  // The cap is a backstop against an accidentally far-future FIRST_SESSION
+  // turning this into an unbounded loop.
+  for (let week = 0; week < count + 104 && upcoming.length < count; week += 1) {
     const session = new Date(today);
-    session.setUTCDate(today.getUTCDate() + daysUntilThursday + index * 7);
-    return session.toISOString().slice(0, 10);
-  });
+    session.setUTCDate(today.getUTCDate() + daysUntilThursday + week * 7);
+
+    const iso = session.toISOString().slice(0, 10);
+    if (iso >= FIRST_SESSION) upcoming.push(iso);
+  }
+
+  return upcoming;
 }
 
 /** Formats an ISO date for display, e.g. "8月13日（周四）" or "Thu 13 Aug". */
