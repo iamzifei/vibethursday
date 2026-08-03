@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vibe Thursday
 
-## Getting Started
+Signup site for a weekly AI builders meetup in Sydney — every Thursday, 3–6pm,
+Sydney CBD.
 
-First, run the development server:
+Chinese-first with an English view at `/?lang=en`. Collects an email and,
+because most announcements currently go through a WeChat group, an optional
+WeChat ID.
+
+## Stack
+
+| Piece | Choice | Why |
+| --- | --- | --- |
+| App | Next.js 16, App Router, `output: "standalone"` | Small container on a shared host |
+| Database | Postgres, `pg` driver, no ORM | One table; an ORM would be more machinery than schema |
+| Styling | Plain CSS custom properties | The design tokens are the design system |
+| Hosting | Zeabur, Tencent Singapore server | Closest available region to Sydney with no ICP filing |
+
+## Environment variables
+
+| Name | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | On Zeabur set it to `${postgresql.POSTGRES_CONNECTION_STRING}` so the password is never copied around |
+| `ADMIN_TOKEN` | yes | Long random string. Guards `/admin` and the CSV export; without it those routes stay closed |
+| `NEXT_PUBLIC_SITE_URL` | recommended | Absolute site URL, e.g. `https://vibethursday.com`. Without it Open Graph image URLs resolve against localhost |
+| `DATABASE_SSL` | no | Set to `require` only if the database stops being reachable over the private network |
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+echo 'DATABASE_URL=postgresql://...' > .env.local
+echo 'ADMIN_TOKEN=anything-long' >> .env.local
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The `signups` table is created on the first write, so there is no migration
+step. See `ensureSchema` in `src/lib/db.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Viewing signups
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`/admin?key=$ADMIN_TOKEN` lists everyone and links to a CSV export. The page is
+`noindex` and the key is compared in constant time.
 
-## Learn More
+## Regenerating the artwork
 
-To learn more about Next.js, take a look at the following resources:
+Both steps are manual and their output is committed — neither runs during a
+build.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+OPENAI_API_KEY=... node scripts/generate-images.mjs   # gpt-image-2 → art/
+./scripts/build-og.sh                                 # art/ + real text → public/og.jpg
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The generated images are deliberately textless. Every character on the site,
+including the social card, is drawn as real text so nothing depends on an image
+model spelling correctly. `build-og.sh` needs Inter, Geist Mono and a
+standalone PingFang SC `.ttf` installed locally.
 
-## Deploy on Vercel
+## Content
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All copy lives in `src/lib/content.ts`, both languages side by side. Changing
+the wording never means touching a component.

@@ -1,65 +1,249 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { SignupForm } from "@/components/SignupForm";
+import { copy as allCopy, resolveLang } from "@/lib/content";
+import { formatSession, nextThursdays } from "@/lib/sessions";
 
-export default function Home() {
+type PageProps = {
+  searchParams: Promise<{ lang?: string }>;
+};
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const lang = resolveLang((await searchParams).lang);
+  const c = allCopy[lang];
+
+  return {
+    title: c.meta.title,
+    description: c.meta.description,
+    openGraph: { title: c.meta.title, description: c.meta.description },
+  };
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const lang = resolveLang((await searchParams).lang);
+  const c = allCopy[lang];
+
+  const sessions = nextThursdays(6).map((value) => ({
+    value,
+    label: formatSession(value, lang),
+  }));
+
+  const nextSession = sessions[0];
+
+  // The document is declared zh-CN in the layout, so the English view
+  // re-declares its own language here for screen-reader pronunciation.
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div lang={c.htmlLang}>
+      <header className="shell" style={{ paddingTop: "var(--space-6)" }}>
+        <nav
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "var(--space-4)",
+          }}
+        >
+          <span className="mono" style={{ fontWeight: 600, letterSpacing: "-0.02em" }}>
+            {c.nav.brand}
+          </span>
+          <Link className="pill" href={c.langSwitchHref} hrefLang={lang === "zh" ? "en" : "zh"}>
+            {c.langSwitchLabel}
+          </Link>
+        </nav>
+      </header>
+
+      <main>
+        {/* ── Hero ─────────────────────────────────────────────────── */}
+        <section className="hero">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.hero.eyebrow}</span>
+              <h1 className="display-1">{c.hero.title}</h1>
+              <p className="body-lg" style={{ color: "var(--fg1)", fontWeight: 500 }}>
+                {c.hero.subtitle}
+              </p>
+            </div>
+
+            <p className="body-lg" style={{ maxWidth: "58ch" }}>
+              {c.hero.lede}
+            </p>
+
+            <dl className="grid-auto" style={{ margin: 0 }}>
+              {c.hero.facts.map((fact) => (
+                <div className="card stack-2" key={fact.label}>
+                  <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
+                    {fact.label}
+                  </dt>
+                  <dd style={{ margin: 0, color: "var(--fg1)", fontWeight: 500 }}>{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="stack-3">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+                <a className="btn btn--primary" href="#signup">
+                  {c.hero.cta}
+                </a>
+                <a className="btn btn--secondary" href="#what">
+                  {c.hero.ctaSecondary}
+                </a>
+              </div>
+
+              {nextSession && (
+                <span className="pill pill--live" style={{ alignSelf: "flex-start" }}>
+                  <span className="dot" aria-hidden="true" />
+                  {lang === "zh" ? `下一场 ${nextSession.label}` : `Next · ${nextSession.label}`}
+                </span>
+              )}
+
+              <p className="body-sm" style={{ color: "var(--fg3)" }}>
+                {c.hero.note}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── What ─────────────────────────────────────────────────── */}
+        <section className="section" id="what">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.what.eyebrow}</span>
+              <h2>{c.what.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.what.lede}
+              </p>
+            </div>
+
+            <div className="grid-auto">
+              {c.what.points.map((point) => (
+                <div className="card stack-3" key={point.title}>
+                  <h3 className="h3">{point.title}</h3>
+                  <p className="body-sm">{point.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Who ──────────────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.who.eyebrow}</span>
+              <h2>{c.who.title}</h2>
+            </div>
+
+            <ul
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "var(--space-2)",
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              {c.who.groups.map((group) => (
+                <li className="pill" key={group} style={{ textTransform: "none", letterSpacing: 0 }}>
+                  {group}
+                </li>
+              ))}
+            </ul>
+
+            <p className="body-sm" style={{ maxWidth: "62ch", color: "var(--fg3)" }}>
+              {c.who.note}
+            </p>
+          </div>
+        </section>
+
+        {/* ── Run of show ──────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.schedule.eyebrow}</span>
+              <h2>{c.schedule.title}</h2>
+            </div>
+
+            <div>
+              {c.schedule.slots.map((slot) => (
+                <div className="slot" key={slot.time}>
+                  <span className="slot__time">{slot.time}</span>
+                  <div className="stack-2">
+                    <span className="slot__title">{slot.title}</span>
+                    <span className="slot__note">{slot.note}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── House rules ──────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.rules.eyebrow}</span>
+              <h2>{c.rules.title}</h2>
+            </div>
+
+            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {c.rules.items.map((item, index) => (
+                <li className="rule" key={item}>
+                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ── Signup ───────────────────────────────────────────────── */}
+        <section className="section" id="signup">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.signup.eyebrow}</span>
+              <h2>{c.signup.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.signup.lede}
+              </p>
+            </div>
+
+            <SignupForm lang={lang} copy={c.signup} sessions={sessions} />
+          </div>
+        </section>
+
+        {/* ── FAQ ──────────────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.faq.eyebrow}</span>
+              <h2>{c.faq.title}</h2>
+            </div>
+
+            <div className="stack-6">
+              {c.faq.items.map((item) => (
+                <div className="stack-2" key={item.q}>
+                  <h3 className="h3" style={{ fontSize: "var(--text-lg)" }}>
+                    {item.q}
+                  </h3>
+                  <p className="body-sm" style={{ maxWidth: "62ch" }}>
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
+
+      <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+        <div className="shell stack-3">
+          <span className="h3 hl">{c.footer.tagline}</span>
+          <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
+            {c.footer.location}
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
