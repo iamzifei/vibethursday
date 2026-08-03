@@ -24,7 +24,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · 悉尼每周四的 AI 局",
       description:
-        "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。会坏的 demo 也欢迎。免费。",
+        "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。没做完的、还在想的，都能讲。免费。",
     },
 
     nav: {
@@ -57,8 +57,8 @@ export const copy = {
           body: "没有主讲嘉宾，没有汇报型 PPT，没有台上台下。笔记本传着看，随时打断提问。",
         },
         {
-          title: "会坏的 demo 也欢迎",
-          body: "跑不通的东西往往比跑通的更值得聊。这里不评判完成度，只看你到底试了什么。",
+          title: "不用做完，也不用是产品",
+          body: "做了一半的东西、一条内容、一个还在琢磨的想法，都能拿出来讲。这里不评判完成度——半成品反而更容易聊出东西来。",
         },
         {
           title: "展示可以，插播不行",
@@ -93,7 +93,7 @@ export const copy = {
         {
           time: "10:30–11:30",
           title: "Demo 轮",
-          note: "最多 3 个名额，每人 5 分钟，硬计时。想讲在报名时勾一下就行。",
+          note: "最多 3 个名额，每人 5 分钟，硬计时。讲什么都行：产品、内容、一段流程，或者只是最近在想的事。想讲在报名时勾一下。",
         },
         {
           time: "11:30–12:00",
@@ -113,7 +113,7 @@ export const copy = {
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
-        "同一时间、同一地点，每周不变。不轮换场地。",
+        "时间雷打不动，每周四同一时段。场地固定在悉尼 CBD，只有人数坐不下时才换——换了会提前说，不会每周换来换去。",
         "免费，不售票。报名只是为了估人数。",
         "Demo 永远是可选的。有就讲，没有就听。",
         "展示可以，插播不行。你做的东西就是你的宣发，在自己的时段里大方讲；别人讲的时候别转成推销。只来收名单、抓人、拉客的，会被请出去。",
@@ -219,7 +219,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · Sydney's weekly AI meetup",
       description:
-        "Every Thursday morning in Sydney CBD. Bring whatever you built with AI and show it in five minutes. Broken demos welcome. Free.",
+        "Every Thursday morning in Sydney CBD. Bring whatever you built with AI and show it in five minutes. Unfinished and still-just-an-idea both count. Free.",
     },
 
     nav: {
@@ -252,8 +252,8 @@ export const copy = {
           body: "No keynote, no status-report slides, no stage. Laptops get passed around and you interrupt with questions.",
         },
         {
-          title: "Broken demos welcome",
-          body: "The thing that does not work is usually the more interesting conversation. Nobody is grading polish here.",
+          title: "Unfinished is fine",
+          body: "It does not have to be a working product. Something half-built, a piece of content, an idea you are still turning over — all of it is worth five minutes. Nobody is grading how finished it is."
         },
         {
           title: "Show, don't sell",
@@ -288,7 +288,7 @@ export const copy = {
         {
           time: "10:30–11:30am",
           title: "Demo round",
-          note: "Three slots max, five minutes each, hard timer. Tick the box when you sign up.",
+          note: "Three slots max, five minutes each, hard timer. Anything goes: a product, a piece of content, a workflow, or just what you have been thinking about. Tick the box when you sign up.",
         },
         {
           time: "11:30am–12:00pm",
@@ -308,7 +308,7 @@ export const copy = {
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
-        "Same time, same place, every week. The venue does not rotate.",
+        "The time never moves. The venue stays in Sydney CBD and only changes when we outgrow it — announced in advance, never week to week.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
         "Demos are always optional. Show something or just listen.",
         "Show, don't sell. What you built is your marketing — present it properly in your own slot, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",

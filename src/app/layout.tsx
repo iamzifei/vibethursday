@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     : undefined,
   title: "Vibe Thursday · 悉尼每周四的 AI 局",
   description:
-    "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。会坏的 demo 也欢迎。免费。",
+    "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。没做完的、还在想的，都能讲。免费。",
   openGraph: {
     type: "website",
     siteName: "Vibe Thursday",
