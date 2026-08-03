@@ -62,10 +62,19 @@ export default async function Page({ searchParams }: PageProps) {
       <main>
         {/* ── Hero ─────────────────────────────────────────────────── */}
         <section className="hero">
+          {/* Decorative motion layers. Purely visual, so they are hidden from
+              assistive technology and carry no content. */}
+          <div className="hero__grid" aria-hidden="true" />
+          <div className="hero__scan" aria-hidden="true" />
+
           <div className="shell stack-8">
             <div className="stack-4 rise rise-1">
-              <span className="eyebrow">{c.hero.eyebrow}</span>
-              <h1 className="display-1 wordmark">{c.hero.title}</h1>
+              <span className="eyebrow cursor">{c.hero.eyebrow}</span>
+              {/* data-text feeds the two glitch copies drawn by ::before and
+                  ::after; it must stay identical to the visible text. */}
+              <h1 className="display-1 glitch" data-text={c.hero.title}>
+                {c.hero.title}
+              </h1>
               <p className="body-lg" style={{ color: "var(--fg1)", fontWeight: 500 }}>
                 {c.hero.subtitle}
               </p>

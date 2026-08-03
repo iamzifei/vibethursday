@@ -255,79 +255,139 @@ textarea:focus-visible,
   overflow: hidden;
 }
 
-/* One soft lime bloom behind the headline, slowly breathing. The only
-   non-flat surface on the site — it carries the "活力" without turning into
-   gradient soup. */
+/* Everything below draws the hero's motion. It is all CSS — no canvas, no
+   JavaScript — so the page still ships zero animation code to the client and
+   every layer is GPU-composited (transform and opacity only). */
+
+/* A lime bloom behind the headline, breathing. */
 .hero::before {
   content: "";
   position: absolute;
-  top: -30%;
+  top: -28%;
   left: 50%;
-  width: min(760px, 130vw);
+  width: min(820px, 140vw);
   aspect-ratio: 1;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(198, 255, 61, 0.13) 0%, rgba(198, 255, 61, 0) 62%);
+  background: radial-gradient(circle, rgba(198, 255, 61, 0.18) 0%, rgba(198, 255, 61, 0) 62%);
   pointer-events: none;
   z-index: 0;
-  animation: bloom 9s ease-in-out infinite;
+  animation: bloom 7s ease-in-out infinite;
 }
 
-/* A drifting diagonal lattice, echoing the network motif in the social card.
-   Two repeating gradients rather than an image, so it costs no request and
-   stays crisp at any density. The element is oversized and moved by exactly
-   one tile so the loop is seamless. */
-.hero::after {
-  content: "";
+.hero > * { position: relative; z-index: 2; }
+
+/* Layer 1 — a perspective grid running toward the horizon under the hero.
+   The rotateX plus a short perspective is what turns two flat repeating
+   gradients into a floor receding into the distance. */
+.hero__grid {
   position: absolute;
-  inset: -60% -20% auto -20%;
-  height: 180%;
+  left: 50%;
+  bottom: -12%;
+  width: 320%;
+  height: 78%;
+  transform: translateX(-50%) perspective(300px) rotateX(70deg);
+  transform-origin: bottom center;
   background-image:
-    repeating-linear-gradient(60deg, rgba(198, 255, 61, 0.07) 0 1px, transparent 1px 62px),
-    repeating-linear-gradient(-60deg, rgba(61, 220, 255, 0.05) 0 1px, transparent 1px 62px);
-  /* Fades out toward the bottom so it never competes with the body copy. */
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 72%);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 72%);
+    repeating-linear-gradient(to right, rgba(198, 255, 61, 0.42) 0 1px, transparent 1px 84px),
+    repeating-linear-gradient(to bottom, rgba(61, 220, 255, 0.3) 0 1px, transparent 1px 84px);
+  /* Dissolve toward the horizon so the grid does not end on a hard line. */
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 72%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, transparent 72%);
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
-  animation: lattice-drift 24s linear infinite;
+  /* Scrolling by exactly one 84px tile makes the loop seamless. */
+  animation: grid-run 2.6s linear infinite;
 }
 
-.hero > * { position: relative; z-index: 1; }
+/* Layer 2 — a beam that sweeps down the hero, like a scanner passing over it. */
+.hero__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent) 45%, var(--spark) 55%, transparent);
+  box-shadow: 0 0 18px 2px rgba(198, 255, 61, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  animation: scan 5s var(--ease-standard) infinite;
+}
 
 @keyframes bloom {
-  0%, 100% { opacity: 0.75; transform: translateX(-50%) scale(1); }
-  50%      { opacity: 1;    transform: translateX(-50%) scale(1.12); }
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1;   transform: translateX(-50%) scale(1.14); }
 }
 
-@keyframes lattice-drift {
-  from { transform: translate3d(0, 0, 0); }
-  /* 71.6px ≈ one 62px tile measured along the 60° axis, so the pattern lands
-     back on itself and the restart is invisible. */
-  to   { transform: translate3d(71.6px, -124px, 0); }
+@keyframes grid-run {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 84px, 0 84px; }
 }
 
-/* Wordmark: a lime highlight sweeps across the type, pauses, repeats. */
-.wordmark {
-  background-image: linear-gradient(
-    100deg,
-    var(--fg1) 0%,
-    var(--fg1) 42%,
-    var(--accent) 50%,
-    var(--fg1) 58%,
-    var(--fg1) 100%
-  );
-  background-size: 280% 100%;
-  background-position: 140% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: wordmark-sweep 7s var(--ease-standard) infinite;
+@keyframes scan {
+  0%        { top: -4%; opacity: 0; }
+  6%        { opacity: 0.85; }
+  88%       { opacity: 0.85; }
+  100%      { top: 104%; opacity: 0; }
 }
 
-@keyframes wordmark-sweep {
-  0%, 55% { background-position: 140% 0; }
-  100%    { background-position: -40% 0; }
+/* Layer 3 — the wordmark glitches: two coloured copies of the same text flash
+   in offset horizontal slices, then vanish. `attr(data-text)` is what lets one
+   element carry three renderings of the string without duplicating markup.
+   The base text stays solid white, so the headline is legible even at the
+   instant the glitch fires. */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* steps(1) makes each keyframe snap rather than tween — a tweened glitch
+     reads as a wobble, a snapped one reads as digital. */
+  animation-duration: 6s;
+  animation-timing-function: steps(1);
+  animation-iteration-count: infinite;
+}
+
+.glitch::before { color: var(--accent); animation-name: glitch-lime; }
+.glitch::after  { color: var(--spark);  animation-name: glitch-cyan; }
+
+@keyframes glitch-lime {
+  0%, 6%, 48%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
+  1%  { opacity: 0.9; transform: translate(-5px, -2px); clip-path: inset(12% 0 60% 0); }
+  2%  { opacity: 0.9; transform: translate(5px, 2px);   clip-path: inset(56% 0 20% 0); }
+  3%  { opacity: 0.9; transform: translate(-3px, 1px);  clip-path: inset(32% 0 44% 0); }
+  4%  { opacity: 0.9; transform: translate(6px, -1px);  clip-path: inset(72% 0 8% 0); }
+  50% { opacity: 0.9; transform: translate(-6px, 2px);  clip-path: inset(24% 0 52% 0); }
+  51% { opacity: 0.9; transform: translate(4px, -2px);  clip-path: inset(64% 0 14% 0); }
+}
+
+@keyframes glitch-cyan {
+  0%, 6%, 48%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
+  1%  { opacity: 0.85; transform: translate(5px, 2px);   clip-path: inset(40% 0 34% 0); }
+  2%  { opacity: 0.85; transform: translate(-6px, -2px); clip-path: inset(8% 0 70% 0); }
+  3%  { opacity: 0.85; transform: translate(4px, 2px);   clip-path: inset(66% 0 12% 0); }
+  4%  { opacity: 0.85; transform: translate(-4px, -1px); clip-path: inset(20% 0 58% 0); }
+  50% { opacity: 0.85; transform: translate(6px, 1px);   clip-path: inset(50% 0 28% 0); }
+  51% { opacity: 0.85; transform: translate(-5px, -2px); clip-path: inset(10% 0 66% 0); }
+}
+
+/* A terminal cursor after the eyebrow. Cheap, and it sets the register. */
+.cursor::after {
+  content: "▊";
+  margin-left: 0.35em;
+  color: var(--accent);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
 /* Hero content rises in on load, each block a beat after the one above it. */
@@ -342,40 +402,31 @@ textarea:focus-visible,
 .rise-4 { animation-delay: 360ms; }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* The live badge's dot breathes, so the "next session" line reads as current. */
-.dot--pulse { animation: dot-pulse 2.2s var(--ease-standard) infinite; }
+/* The live badge's dot pulses, so the "next session" line reads as current. */
+.dot--pulse { animation: dot-pulse 2s var(--ease-standard) infinite; }
 
 @keyframes dot-pulse {
   0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 var(--accent-muted); }
-  50%      { opacity: 0.6; box-shadow: 0 0 0 5px transparent; }
+  50%      { opacity: 0.5; box-shadow: 0 0 0 6px transparent; }
 }
 
-/* Reduced motion: stop everything, and — critically — give the wordmark its
-   colour back. The global rule only collapses durations, which would leave
-   `color: transparent` painted over a frozen gradient. */
+/* Reduced motion: hold everything still. The global rule only collapses
+   durations, which for a steps(1) glitch would freeze a coloured copy on
+   screen mid-offset — so the copies are removed outright here. */
 @media (prefers-reduced-motion: reduce) {
   .hero::before,
-  .hero::after,
-  .dot--pulse { animation: none; }
+  .hero__grid,
+  .dot--pulse,
+  .cursor::after { animation: none; }
 
+  .hero__scan { display: none; }
+  .glitch::before,
+  .glitch::after { display: none; }
   .rise { opacity: 1; animation: none; }
-
-  .wordmark {
-    animation: none;
-    background-image: none;
-    color: var(--fg1);
-    -webkit-text-fill-color: var(--fg1);
-  }
-}
-
-/* Fallback for engines without background-clip:text — without this the
-   headline would render as invisible transparent text. */
-@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .wordmark { background-image: none; color: var(--fg1); animation: none; }
 }
 
 /* =============================================================================
