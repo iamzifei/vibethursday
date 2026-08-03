@@ -22,12 +22,18 @@ const POSTERS = {
   xhs: { source: "xhs-poster.html", output: "xhs-cover.png", width: 1200, height: 1600 },
 
   // 16:9 landscape. X crops portrait images in the timeline, which would cut
-  // the headline. Links are unrestricted there, so this one carries the URL.
-  x: { source: "x-poster.html", output: "x-card.png", width: 1600, height: 900 },
+  // the headline. Links are unrestricted there, so these carry the URL.
+  //
+  // Chinese is the one in use; the English card is held for when the meetup
+  // starts running English sessions, so it is not rendered by default.
+  "x-zh": { source: "x-poster-zh.html", output: "x-card-zh.png", width: 1600, height: 900 },
+  "x-en": { source: "x-poster-en.html", output: "x-card-en.png", width: 1600, height: 900, onDemand: true },
 };
 
 const requested = process.argv[2];
-const jobs = requested ? { [requested]: POSTERS[requested] } : POSTERS;
+const jobs = requested
+  ? { [requested]: POSTERS[requested] }
+  : Object.fromEntries(Object.entries(POSTERS).filter(([, p]) => !p.onDemand));
 
 if (requested && !POSTERS[requested]) {
   console.error(`Unknown poster "${requested}". Known: ${Object.keys(POSTERS).join(", ")}`);
