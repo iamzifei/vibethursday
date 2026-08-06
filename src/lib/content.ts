@@ -50,7 +50,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — 这是什么",
       title: "一句话：每周四上午，一群人围一张桌子，看彼此用 AI 做了什么。",
-      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人。每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。首场在 2026 年 8 月 6 日跑完，到了二十人左右，从独立开发者到律师、会计、企业主都有。",
+      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人。每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。首场在 2026 年 8 月 6 日跑完，来了二十多人，从独立开发者到律师、会计、企业主都有。",
       points: [
         {
           title: "不是讲座",
@@ -111,7 +111,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 03.5 — 现场",
       title: "第一场，2026 年 8 月 6 日。",
-      lede: "到了二十个人左右。为保护参与者，照片里的人脸都做了处理。",
+      lede: "来了二十多个人。为保护参与者，照片里的人脸都做了处理。",
       photos: [
         { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
         { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
@@ -257,7 +257,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — What this is",
       title: "A group of people around one table every Thursday morning, showing each other what they built with AI.",
-      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best, it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle. The first session ran on 6 August 2026 with about twenty people, from indie developers to lawyers, accountants and business owners.",
+      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best, it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle. The first session ran on 6 August 2026 with more than twenty people, from indie developers to lawyers, accountants and business owners.",
       points: [
         {
           title: "Not a lecture",
@@ -318,7 +318,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 03.5 — The room",
       title: "First session, 6 August 2026.",
-      lede: "About twenty people turned up. Faces are covered to protect the people who came.",
+      lede: "More than twenty people turned up. Faces are covered to protect the people who came.",
       photos: [
         { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
         { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
