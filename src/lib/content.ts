@@ -110,14 +110,23 @@ export const copy = {
 
     gallery: {
       eyebrow: "§ 03.5 — 现场",
-      title: "第一场，2026 年 8 月 6 日。",
-      lede: "来了二十多个人。为保护参与者，照片里的人脸都做了处理。",
-      photos: [
-        { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
-        { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
-        { src: "/photos/session-01-3.jpg", alt: "另一个角度的现场" },
-        { src: "/photos/session-01-4.jpg", alt: "开场之前的场地" },
+      title: "每一场都留了几张。",
+      lede: "为保护参与者，照片里的人脸都做了处理。往下每加一场，就多一个折叠的相册。",
+      // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
+      sessions: [
+        {
+          date: "2026-08-06",
+          title: "第一场",
+          note: "来了二十多人，从独立开发者到律师、会计、企业主都有。",
+          photos: [
+            { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
+            { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
+            { src: "/photos/session-01-3.jpg", alt: "另一个角度的现场" },
+            { src: "/photos/session-01-4.jpg", alt: "开场之前的场地" },
+          ],
+        },
       ],
+      photoCount: (n: number) => `${n} 张`,
     },
 
     rules: {
@@ -317,14 +326,22 @@ export const copy = {
 
     gallery: {
       eyebrow: "§ 03.5 — The room",
-      title: "First session, 6 August 2026.",
-      lede: "More than twenty people turned up. Faces are covered to protect the people who came.",
-      photos: [
-        { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
-        { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
-        { src: "/photos/session-01-3.jpg", alt: "Another angle on the room" },
-        { src: "/photos/session-01-4.jpg", alt: "The venue before anyone arrived" },
+      title: "A few shots from every session.",
+      lede: "Faces are covered to protect the people who came. Each session adds another folded album below.",
+      sessions: [
+        {
+          date: "2026-08-06",
+          title: "Session one",
+          note: "More than twenty people, from indie developers to lawyers, accountants and business owners.",
+          photos: [
+            { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
+            { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
+            { src: "/photos/session-01-3.jpg", alt: "Another angle on the room" },
+            { src: "/photos/session-01-4.jpg", alt: "The venue before anyone arrived" },
+          ],
+        },
       ],
+      photoCount: (n: number) => `${n} photo${n === 1 ? "" : "s"}`,
     },
 
     rules: {

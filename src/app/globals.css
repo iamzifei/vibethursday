@@ -716,3 +716,64 @@ select.field {
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
+
+/* ── Albums ──────────────────────────────────────────────────────────
+   One <details> per session so a year of sessions stays a short page.
+   Newest is rendered open; the rest are a single line until clicked. */
+.albums {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.album {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+}
+
+.album__summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.125rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Hide the default triangle so the row can carry its own affordance. */
+.album__summary::-webkit-details-marker {
+  display: none;
+}
+
+.album__title {
+  font-weight: 600;
+}
+
+.album__note,
+.album__count {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.album__note {
+  grid-column: 1;
+}
+
+.album__count {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.album__count::after {
+  content: " ▾";
+}
+
+.album[open] .album__count::after {
+  content: " ▴";
+}
+
+.album[open] .gallery {
+  margin-top: 1rem;
+}

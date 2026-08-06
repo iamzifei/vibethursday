@@ -205,15 +205,37 @@ export default async function Page({ searchParams }: PageProps) {
               </p>
             </div>
 
-            <div className="gallery">
-              {c.gallery.photos.map((photo) => (
-                <figure className="gallery__item" key={photo.src}>
-                  {/* Plain img: these are static local assets and the page is
-                      mostly text, so the optimiser buys little here. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.src} alt={photo.alt} loading="lazy" />
-                </figure>
-              ))}
+            {/* One folded album per session, newest first. Sorting here rather
+                than relying on the order in content.ts means adding a session
+                is a one-entry edit that cannot be put in the wrong place.
+                <details> keeps this working with no client JS. */}
+            <div className="albums">
+              {[...c.gallery.sessions]
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .map((session, index) => (
+                  <details className="album" key={session.date} open={index === 0}>
+                    <summary className="album__summary">
+                      <span className="album__title">
+                        {session.title} · {session.date}
+                      </span>
+                      <span className="album__note">{session.note}</span>
+                      <span className="album__count">
+                        {c.gallery.photoCount(session.photos.length)}
+                      </span>
+                    </summary>
+
+                    <div className="gallery">
+                      {session.photos.map((photo) => (
+                        <figure className="gallery__item" key={photo.src}>
+                          {/* Plain img: these are static local assets and the page
+                              is mostly text, so the optimiser buys little here. */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={photo.src} alt={photo.alt} loading="lazy" />
+                        </figure>
+                      ))}
+                    </div>
+                  </details>
+                ))}
             </div>
           </div>
         </section>
