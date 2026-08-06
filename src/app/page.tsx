@@ -194,6 +194,30 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* ── Gallery ──────────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.gallery.eyebrow}</span>
+              <h2>{c.gallery.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.gallery.lede}
+              </p>
+            </div>
+
+            <div className="gallery">
+              {c.gallery.photos.map((photo) => (
+                <figure className="gallery__item" key={photo.src}>
+                  {/* Plain img: these are static local assets and the page is
+                      mostly text, so the optimiser buys little here. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.src} alt={photo.alt} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── House rules ──────────────────────────────────────────── */}
         <section className="section">
           <div className="shell stack-8">

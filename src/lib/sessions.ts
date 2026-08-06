@@ -42,6 +42,18 @@ export function sydneyToday(): Date {
  */
 const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-06";
 
+/** Sydney hour of day, 0-23. */
+function sydneyHour(): number {
+  return Number(new Intl.DateTimeFormat("en-GB", {
+    timeZone: SYDNEY,
+    hour: "2-digit",
+    hour12: false,
+  }).format(new Date()));
+}
+
+/** The session runs 10:00-13:00; after that, today's is over. */
+const SESSION_END_HOUR = 13;
+
 /**
  * The next `count` Thursdays that are being run, as ISO date strings.
  *
@@ -51,7 +63,13 @@ const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-06";
  */
 export function nextThursdays(count = 6): string[] {
   const today = sydneyToday();
-  const daysUntilThursday = (THURSDAY - today.getUTCDay() + 7) % 7;
+  let daysUntilThursday = (THURSDAY - today.getUTCDay() + 7) % 7;
+
+  // On a Thursday afternoon the session has already happened, so offering it
+  // would take signups for something that is over. Roll to next week instead.
+  if (daysUntilThursday === 0 && sydneyHour() >= SESSION_END_HOUR) {
+    daysUntilThursday = 7;
+  }
 
   const upcoming: string[] = [];
 

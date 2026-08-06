@@ -24,7 +24,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · 悉尼每周四的 AI 局",
       description:
-        "每周四上午，悉尼 CBD。带上你用 AI 做的任何东西，5 分钟讲给一屋子懂的人听。没做完的、还在想的，都能讲。免费。",
+        "每周四上午，悉尼 CBD。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费。",
     },
 
     nav: {
@@ -36,10 +36,10 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "悉尼 · 每周四上午的 AI 局",
-      lede: "带上你用 AI 做出来的任何东西——一个产品、一条自动化流程、一套选题或剪辑的流水线、一个投放打法、一套提示词，甚至一个还没跑通的想法。5 分钟，讲给一屋子听得懂的人。",
+      lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
         { label: "时间", value: "每周四 10:00–13:00" },
-        { label: "地点", value: "悉尼 CBD" },
+        { label: "地点", value: "悉尼 CBD 一带" },
         { label: "费用", value: "免费，咖啡自理" },
       ],
       cta: "报名下一场",
@@ -50,7 +50,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — 这是什么",
       title: "一句话：每周四上午，一群人围一张桌子，看彼此用 AI 做了什么。",
-      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人——每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。",
+      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人。每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。首场在 2026 年 8 月 6 日跑完，到了二十人左右，从独立开发者到律师、会计、企业主都有。",
       points: [
         {
           title: "不是讲座",
@@ -86,19 +86,19 @@ export const copy = {
       title: "每周同一个节奏，不变。",
       slots: [
         {
-          time: "10:00–10:30",
-          title: "陆续到场 · 一句话自我介绍",
-          note: "三件事：怎么称呼、在做什么、现在卡在哪。",
+          time: "10:00–10:45",
+          title: "陆续到场 · 自由聊",
+          note: "不急着开场。这一段是留给还在路上的人的，晚到不会错过什么。",
         },
         {
-          time: "10:30–11:30",
-          title: "Demo 轮",
-          note: "最多 3 个名额，每人 5 分钟，硬计时。讲什么都行：产品、内容、一段流程，或者只是最近在想的事。想讲在报名时勾一下。",
+          time: "10:45–11:15",
+          title: "一轮自我介绍",
+          note: "每人 60 秒，硬计时。三件事：怎么称呼、在做什么、今天想从这儿拿走什么。第三件最重要，说具体点，桌上说不定就有人能接。",
         },
         {
-          time: "11:30–12:00",
-          title: "开放时间 · 求助 & 需求",
-          note: "一人一句：现在卡在哪、在找什么（用户 / 合伙人 / 反馈 / 工作）。想推的东西在这一段说。",
+          time: "11:15–12:00",
+          title: "谁想给大家看东西",
+          note: "讲 5 分钟加问答 5 分钟，硬计时，最多 4 位。宁可少而透，不凑数。想讲在报名时勾一下，现场临时想讲也行。",
         },
         {
           time: "12:00 之后",
@@ -108,14 +108,26 @@ export const copy = {
       ],
     },
 
+    gallery: {
+      eyebrow: "§ 03.5 — 现场",
+      title: "第一场，2026 年 8 月 6 日。",
+      lede: "到了二十个人左右。为保护参与者，照片里的人脸都做了处理。",
+      photos: [
+        { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
+        { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
+        { src: "/photos/session-01-3.jpg", alt: "另一个角度的现场" },
+        { src: "/photos/session-01-4.jpg", alt: "开场之前的场地" },
+      ],
+    },
+
     rules: {
       eyebrow: "§ 04 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
-        "时间雷打不动，每周四同一时段。场地固定在悉尼 CBD，只有人数坐不下时才换——换了会提前说，不会每周换来换去。",
+        "时间雷打不动，每周四同一时段。场地按当周人数定，都在悉尼 CBD 一带、公共交通到得了，前一天发在群里。",
         "免费，不售票。报名只是为了估人数。",
-        "Demo 永远是可选的。有就讲，没有就听。",
+        "给大家看东西永远是可选的。有就讲，没有就听，只来听的人一样欢迎。",
         "展示可以，插播不行。你做的东西就是你的宣发，在自己的时段里大方讲；别人讲的时候别转成推销。只来收名单、抓人、拉客的，会被请出去。",
       ],
     },
@@ -123,7 +135,7 @@ export const copy = {
     signup: {
       eyebrow: "§ 05 — 报名",
       title: "报个名，我把地址发给你。",
-      lede: "场地按人数定——人少就是咖啡厅一张大桌，人多了才换有屏幕的房间。所以报名对我确定场地真的有用。",
+      lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       fields: {
         name: "怎么称呼你",
         namePlaceholder: "名字或网名都行",
@@ -184,7 +196,7 @@ export const copy = {
         },
         {
           q: "我能在这里推我自己的产品吗？",
-          a: "能，这本来就是形式的一部分——demo 就是宣发。找用户、找合伙人、找反馈，在你的 5 分钟和「求助 & 需求」那一段说。唯一的界线是：别人在讲的时候，那是别人的时间。这条对所有人一样，包括我。",
+          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，在自我介绍那一句「今天想拿走什么」里说，或者在你自己的分享时段里说。唯一的界线是：别人在讲的时候，那是别人的时间。这条对所有人一样，包括我。",
         },
         {
           q: "为什么是上午？下午不是更松吗？",
@@ -219,7 +231,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · Sydney's weekly AI meetup",
       description:
-        "Every Thursday morning in Sydney CBD. Bring whatever you built with AI and show it in five minutes. Unfinished and still-just-an-idea both count. Free.",
+        "Every Thursday morning in Sydney CBD. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free.",
     },
 
     nav: {
@@ -231,10 +243,10 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "Sydney · every Thursday morning",
-      lede: "Bring whatever you made with AI — a product, an automation, a content or editing pipeline, an ad playbook, a prompt system, or an idea that does not work yet. Five minutes, to a room that gets it.",
+      lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
         { label: "When", value: "Thursdays, 10am–1pm" },
-        { label: "Where", value: "Sydney CBD" },
+        { label: "Where", value: "Sydney CBD area" },
         { label: "Cost", value: "Free, buy your own coffee" },
       ],
       cta: "Sign up for the next one",
@@ -245,7 +257,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — What this is",
       title: "A group of people around one table every Thursday morning, showing each other what they built with AI.",
-      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best — it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle.",
+      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best, it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle. The first session ran on 6 August 2026 with about twenty people, from indie developers to lawyers, accountants and business owners.",
       points: [
         {
           title: "Not a lecture",
@@ -281,19 +293,19 @@ export const copy = {
       title: "Same rhythm every week.",
       slots: [
         {
-          time: "10:00–10:30am",
-          title: "Arrive · one-line intros",
-          note: "Three things: your name, what you are building, what you are stuck on.",
+          time: "10:00–10:45am",
+          title: "Arrive · open chat",
+          note: "No rush to start. This stretch is for the people still on their way, so arriving late costs you nothing.",
         },
         {
-          time: "10:30–11:30am",
-          title: "Demo round",
-          note: "Three slots max, five minutes each, hard timer. Anything goes: a product, a piece of content, a workflow, or just what you have been thinking about. Tick the box when you sign up.",
+          time: "10:45–11:15am",
+          title: "Intros round",
+          note: "Sixty seconds each, hard timer. Three things: your name, what you are building, and what you want to walk away with today. The third one matters most. Be specific and someone at the table may be able to help.",
         },
         {
-          time: "11:30am–12:00pm",
-          title: "Open time · blockers & asks",
-          note: "One line each: what you are stuck on, and what you are looking for — users, a cofounder, feedback, a job. Anything you want to promote goes here.",
+          time: "11:15am–12:00pm",
+          title: "Anyone who wants to show something",
+          note: "Five minutes plus five for questions, hard timer, four people max. Better to go deep on a few than to fill slots. Tick the box when you sign up, or just volunteer on the day.",
         },
         {
           time: "From 12:00pm",
@@ -303,14 +315,26 @@ export const copy = {
       ],
     },
 
+    gallery: {
+      eyebrow: "§ 03.5 — The room",
+      title: "First session, 6 August 2026.",
+      lede: "About twenty people turned up. Faces are covered to protect the people who came.",
+      photos: [
+        { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
+        { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
+        { src: "/photos/session-01-3.jpg", alt: "Another angle on the room" },
+        { src: "/photos/session-01-4.jpg", alt: "The venue before anyone arrived" },
+      ],
+    },
+
     rules: {
       eyebrow: "§ 04 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
-        "The time never moves. The venue stays in Sydney CBD and only changes when we outgrow it — announced in advance, never week to week.",
+        "The time never moves. The venue is set each week by the headcount, always around Sydney CBD and reachable by public transport, and posted the day before.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
-        "Demos are always optional. Show something or just listen.",
+        "Showing something is always optional. Bring it if you have it, otherwise just listen. People who only come to listen are equally welcome.",
         "Show, don't sell. What you built is your marketing — present it properly in your own slot, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
       ],
     },
@@ -379,7 +403,7 @@ export const copy = {
         },
         {
           q: "Can I promote my own product here?",
-          a: "Yes — that is the format, not a loophole. A demo is marketing. Looking for users, a cofounder, or feedback belongs in your five minutes and in the blockers & asks slot. The only line is that while someone else is talking, that time is theirs. That applies to everyone, me included.",
+          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs in the \"what you want to walk away with\" line of your intro, or in your own slot if you are showing something. The only line is that while someone else is talking, that time is theirs. That applies to everyone, me included.",
         },
         {
           q: "Why mornings, not afternoons?",
