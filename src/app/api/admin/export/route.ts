@@ -11,6 +11,7 @@ const COLUMNS = [
   "first_session",
   "sessions",
   "building",
+  "topic",
   "source",
   "lang",
   "bot_check",

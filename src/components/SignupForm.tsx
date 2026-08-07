@@ -130,6 +130,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           wechat,
           building,
           demoIntent: data.get("demoIntent"),
+          topic: data.get("topic"),
           firstSession: data.get("firstSession"),
           source: data.get("source"),
           company: data.get("company"),
@@ -311,6 +312,22 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           ))}
         </div>
       </fieldset>
+
+      {/* Rendered in both modes: unlike name or WeChat this genuinely changes
+          week to week, so a returning visitor should be asked again. */}
+      <div>
+        <label className="label" htmlFor={fieldId("topic")}>
+          {copy.fields.topic}
+        </label>
+        <textarea
+          className="field"
+          id={fieldId("topic")}
+          name="topic"
+          rows={2}
+          placeholder={copy.fields.topicPlaceholder}
+        />
+        <p className="privacy-note">{copy.fields.topicHint}</p>
+      </div>
 
       <div className="grid-auto">
         <div>

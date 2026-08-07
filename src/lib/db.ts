@@ -96,6 +96,10 @@ export function ensureSchema(): Promise<void> {
       ON signups (lower(wechat))
     `);
 
+    // What they would like to talk about this week. Separate from `building`:
+    // that is a standing description of their work, this changes week to week.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS topic text`);
+
     // Every session this person has signed up for, not just the latest.
     // `first_session` alone was overwritten on each re-signup, so a regular
     // who came back for week two silently vanished from week one's count and
@@ -124,6 +128,7 @@ export type SignupInput = {
   wechat: string | null;
   building: string | null;
   demoIntent: string | null;
+  topic: string | null;
   firstSession: string | null;
   source: string | null;
   lang: string;
@@ -148,8 +153,8 @@ export async function saveSignup(input: SignupInput): Promise<void> {
 
   await getPool().query(
     `
-    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, sessions)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, sessions)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
             CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
     ON CONFLICT (${conflictColumn}) DO UPDATE SET
       name          = EXCLUDED.name,
@@ -157,6 +162,9 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       wechat        = COALESCE(EXCLUDED.wechat, signups.wechat),
       building      = COALESCE(EXCLUDED.building, signups.building),
       demo_intent   = EXCLUDED.demo_intent,
+      -- COALESCE, so submitting the compact returning-visitor form without
+      -- retyping anything does not wipe what they wrote last time.
+      topic         = COALESCE(EXCLUDED.topic, signups.topic),
       first_session = EXCLUDED.first_session,
       -- Union, not replace: signing up for week three must not erase weeks one
       -- and two. DISTINCT keeps a re-submission for the same week idempotent.
@@ -179,6 +187,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       input.source,
       input.lang,
       input.botCheck,
+      input.topic,
     ],
   );
 }
@@ -194,6 +203,8 @@ export type SignupRow = {
   source: string | null;
   lang: string | null;
   bot_check: string | null;
+  /** What they said they would like to talk about this week. */
+  topic: string | null;
   /** Every session this person has signed up for, oldest first. */
   sessions: string[];
   created_at: string;
@@ -203,7 +214,7 @@ export async function listSignups(): Promise<SignupRow[]> {
   await ensureSchema();
 
   const result = await getPool().query<SignupRow>(
-    `SELECT id, name, email, wechat, building, demo_intent,
+    `SELECT id, name, email, wechat, building, demo_intent, topic,
             -- Formatted in SQL like first_session is. Returned raw, the driver
             -- hands back Date objects, which stringify to "Thu Aug 13 2026 …"
             -- in the CSV export.

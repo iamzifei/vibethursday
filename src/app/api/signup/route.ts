@@ -69,6 +69,7 @@ export async function POST(request: Request) {
   const name = clean(body.name, 100);
   const email = clean(body.email, 200);
   const wechat = clean(body.wechat, 100);
+  const topic = clean(body.topic, 2000);
 
   // Which of the two is mandatory differs per language, and `lang` comes from
   // the client so it cannot be trusted here. The invariant the server actually
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
       name,
       email,
       wechat,
+      topic,
       building: clean(body.building, 1000),
       demoIntent,
       firstSession,

@@ -164,6 +164,10 @@ export const copy = {
         wechatPlaceholder: "微信号，不是昵称",
         wechatRequired: true,
         wechatHint: "现阶段活动通知走微信群，留了我拉你进群。",
+        topic: "这周想聊点什么",
+        topicPlaceholder: "写什么都行，一句话也可以",
+        topicHint:
+          "完全选填。有产品或者社媒账号，欢迎直接贴链接；没有也不用有压力，想聊的经验、卡住的问题、单纯好奇的话题，都算。",
         contactPrivacy: "这两栏只有我（活动组织者）看得到。不公开、不给第三方、不拿去发广告，也不会有人拿它加你推销。",
         building: "你在做什么？",
         buildingPlaceholder: "在做的产品、在折腾的东西、或者只是最近在学什么。一两句就够。",
@@ -383,6 +387,10 @@ export const copy = {
         wechatPlaceholder: "Optional",
         wechatRequired: false,
         wechatHint: "Announcements currently go through a WeChat group. Leave it and I will add you.",
+        topic: "Anything you would like to talk about",
+        topicPlaceholder: "One line is plenty",
+        topicHint:
+          "Entirely optional. Got a product or a social account? Drop the link. No pressure if not, an experience worth passing on, a problem you are stuck on, or something you are just curious about all count.",
         contactPrivacy: "Both fields are visible only to me, the organiser. Never published, never passed to anyone else, never used for marketing.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
