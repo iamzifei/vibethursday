@@ -148,7 +148,10 @@ export const copy = {
       // Shown instead of the identity fields when this browser has signed up
       // before, so a regular only picks a session.
       returning: {
-        hello: (name: string) => `${name}，欢迎回来。选个场次就行，其余的我这儿都有。`,
+        // {name} is substituted in the client component. Must not be a
+        // function: this object is passed from a Server Component into a
+        // Client Component, and functions cannot cross that boundary.
+        hello: "{name}，欢迎回来。选个场次就行，其余的我这儿都有。",
         notYou: "不是我，或者要改资料",
       },
       fields: {
@@ -367,7 +370,7 @@ export const copy = {
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
-        hello: (name: string) => `Welcome back, ${name}. Just pick a session, I have the rest.`,
+        hello: "Welcome back, {name}. Just pick a session, I have the rest.",
         notYou: "Not you, or need to change your details?",
       },
       fields: {

@@ -217,7 +217,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
       {returning ? (
         /* Known visitor: greeting plus the one thing that changes each week. */
         <div className="returning">
-          <p className="returning__hello">{copy.returning.hello(profile!.name)}</p>
+          <p className="returning__hello">{copy.returning.hello.replace("{name}", profile!.name)}</p>
           <button type="button" className="link-button" onClick={() => setEditing(true)}>
             {copy.returning.notYou}
           </button>
