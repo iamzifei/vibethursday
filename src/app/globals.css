@@ -427,7 +427,8 @@ textarea:focus-visible,
   .hero::before,
   .hero__grid,
   .dot--pulse,
-  .cursor::after { animation: none; }
+  .cursor::after,
+  .skyline { animation: none; }
 
   .hero__scan { display: none; }
   .glitch::before,
@@ -830,32 +831,40 @@ select.field {
    reader has to look past. Behind the content, no pointer target, and
    faded far enough that hero text keeps its contrast where they overlap
    on a narrow screen. */
-.hero { position: relative; overflow: hidden; }
-
-.hero > * { position: relative; z-index: 1; }
-
-.skyline {
+.hero > .skyline {
   position: absolute;
-  right: 0;
+  left: 50%;
   bottom: 0;
+  /* z-index 0 puts it in the same plane as the perspective grid and below
+     .hero__scan (1) and the content (2), so nothing it draws can sit on top
+     of the headline or the buttons. */
   z-index: 0;
-  width: 100%;
-  max-width: 78rem;
-  height: auto;
+  width: min(1400px, 132%);
+  height: clamp(150px, 26vh, 300px);
   color: var(--accent);
-  opacity: 0.14;
+  opacity: 0.26;
   pointer-events: none;
+  /* Full strength only in the bottom sliver, gone before it reaches the CTA
+     row. The secondary button has a transparent background, so anything with
+     real contrast behind it would eat into the label. */
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 30%, transparent 78%);
+  mask-image: linear-gradient(to top, #000 0%, #000 30%, transparent 78%);
+  animation: skyline-drift 26s ease-in-out infinite;
 }
 
-/* On a phone the hero text runs the full width, so the skyline is pushed
-   down and dimmed further rather than sitting behind the headline. */
+/* A slow lateral drift rather than a fade. The hero already breathes (bloom)
+   and sweeps (scan); a third pulsing layer would read as flicker, while a
+   horizon that shifts a few pixels reads as depth. Transform only, so it
+   composites on the GPU alongside the other layers. */
+@keyframes skyline-drift {
+  0%, 100% { transform: translate(-50%, 0) scale(1); }
+  50%      { transform: translate(calc(-50% - 14px), -4px) scale(1.02); }
+}
+
 @media (max-width: 48rem) {
-  .skyline {
-    opacity: 0.09;
-    bottom: -1rem;
+  .hero > .skyline {
+    width: 190%;
+    height: clamp(120px, 20vh, 200px);
+    opacity: 0.2;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .skyline { transition: opacity 200ms ease; }
 }
