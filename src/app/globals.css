@@ -542,6 +542,8 @@ select.field {
 
 /* Reassurance under the contact fields. Given a quiet border rather than an
    alert box: it should read as a calm fact, not a warning. */
+/* Sits directly under a pair of fields, hence the negative pull-up. Do not
+   reuse it under a single input: the pull-up lands it inside the box. */
 .privacy-note {
   margin: calc(var(--space-4) * -1) 0 0;
   padding-left: var(--space-3);
@@ -550,6 +552,16 @@ select.field {
   line-height: 1.6;
   color: var(--fg3);
 }
+/* Hint under one field. Same look as .privacy-note without the pull-up. */
+.field-hint {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--accent-muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--fg3);
+}
+
 .required { color: var(--accent); }
 
 /* Radio group rendered as tappable cards — much easier on a phone than native
@@ -811,4 +823,39 @@ select.field {
 
 .link-button:hover {
   opacity: 1;
+}
+
+/* ── Sydney skyline ──────────────────────────────────────────────────
+   Sits along the bottom of the hero as texture, never as an image the
+   reader has to look past. Behind the content, no pointer target, and
+   faded far enough that hero text keeps its contrast where they overlap
+   on a narrow screen. */
+.hero { position: relative; overflow: hidden; }
+
+.hero > * { position: relative; z-index: 1; }
+
+.skyline {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  width: 100%;
+  max-width: 78rem;
+  height: auto;
+  color: var(--accent);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+/* On a phone the hero text runs the full width, so the skyline is pushed
+   down and dimmed further rather than sitting behind the headline. */
+@media (max-width: 48rem) {
+  .skyline {
+    opacity: 0.09;
+    bottom: -1rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skyline { transition: opacity 200ms ease; }
 }

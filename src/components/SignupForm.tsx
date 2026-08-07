@@ -326,7 +326,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           rows={2}
           placeholder={copy.fields.topicPlaceholder}
         />
-        <p className="privacy-note">{copy.fields.topicHint}</p>
+        <p className="field-hint">{copy.fields.topicHint}</p>
       </div>
 
       <div className="grid-auto">

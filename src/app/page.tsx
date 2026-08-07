@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { formatSession, nextThursdays } from "@/lib/sessions";
@@ -62,6 +63,7 @@ export default async function Page({ searchParams }: PageProps) {
       <main>
         {/* ── Hero ─────────────────────────────────────────────────── */}
         <section className="hero">
+          <SydneySkyline />
           {/* Decorative motion layers. Purely visual, so they are hidden from
               assistive technology and carry no content. */}
           <div className="hero__grid" aria-hidden="true" />
@@ -230,7 +232,14 @@ export default async function Page({ searchParams }: PageProps) {
                           {/* Plain img: these are static local assets and the page
                               is mostly text, so the optimiser buys little here. */}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={photo.src} alt={photo.alt} loading="lazy" />
+                          <img
+                            src={photo.src}
+                            alt={photo.alt}
+                            loading="lazy"
+                            decoding="async"
+                            width={1200}
+                            height={900}
+                          />
                         </figure>
                       ))}
                     </div>
