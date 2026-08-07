@@ -777,3 +777,38 @@ select.field {
 .album[open] .gallery {
   margin-top: 1rem;
 }
+
+/* ── Returning attendee ──────────────────────────────────────────────
+   Replaces the identity fields for someone this browser already signed
+   up once, so the whole form collapses to a session picker. */
+.returning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.returning__hello {
+  margin: 0;
+  font-weight: 600;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  opacity: 1;
+}

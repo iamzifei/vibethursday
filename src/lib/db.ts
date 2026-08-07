@@ -95,6 +95,19 @@ export function ensureSchema(): Promise<void> {
       CREATE UNIQUE INDEX IF NOT EXISTS signups_wechat_lower_idx
       ON signups (lower(wechat))
     `);
+
+    // Every session this person has signed up for, not just the latest.
+    // `first_session` alone was overwritten on each re-signup, so a regular
+    // who came back for week two silently vanished from week one's count and
+    // the historical headcount kept shrinking.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS sessions date[] NOT NULL DEFAULT '{}'`);
+
+    // Backfill rows created before the column existed.
+    await pool.query(`
+      UPDATE signups
+         SET sessions = ARRAY[first_session]
+       WHERE sessions = '{}' AND first_session IS NOT NULL
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -135,8 +148,9 @@ export async function saveSignup(input: SignupInput): Promise<void> {
 
   await getPool().query(
     `
-    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, sessions)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+            CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
     ON CONFLICT (${conflictColumn}) DO UPDATE SET
       name          = EXCLUDED.name,
       email         = COALESCE(EXCLUDED.email, signups.email),
@@ -144,6 +158,12 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       building      = COALESCE(EXCLUDED.building, signups.building),
       demo_intent   = EXCLUDED.demo_intent,
       first_session = EXCLUDED.first_session,
+      -- Union, not replace: signing up for week three must not erase weeks one
+      -- and two. DISTINCT keeps a re-submission for the same week idempotent.
+      sessions      = ARRAY(
+                        SELECT DISTINCT unnest(signups.sessions || EXCLUDED.sessions)
+                        ORDER BY 1
+                      ),
       source        = COALESCE(EXCLUDED.source, signups.source),
       lang          = EXCLUDED.lang,
       bot_check     = EXCLUDED.bot_check,
@@ -174,6 +194,8 @@ export type SignupRow = {
   source: string | null;
   lang: string | null;
   bot_check: string | null;
+  /** Every session this person has signed up for, oldest first. */
+  sessions: string[];
   created_at: string;
 };
 
@@ -182,6 +204,14 @@ export async function listSignups(): Promise<SignupRow[]> {
 
   const result = await getPool().query<SignupRow>(
     `SELECT id, name, email, wechat, building, demo_intent,
+            -- Formatted in SQL like first_session is. Returned raw, the driver
+            -- hands back Date objects, which stringify to "Thu Aug 13 2026 …"
+            -- in the CSV export.
+            COALESCE(
+              (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s)
+                 FROM unnest(sessions) AS s),
+              '{}'
+            ) AS sessions,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
             source, lang, bot_check,
             to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at

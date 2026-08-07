@@ -9,6 +9,7 @@ const COLUMNS = [
   "wechat",
   "demo_intent",
   "first_session",
+  "sessions",
   "building",
   "source",
   "lang",
@@ -24,7 +25,10 @@ const COLUMNS = [
  * turns an attacker-supplied signup field into code running on your machine.
  */
 function csvCell(value: unknown): string {
-  const text = value == null ? "" : String(value);
+  // `sessions` arrives as a JS array; join it so the cell reads 2026-08-06;
+  // 2026-08-13 rather than the raw Postgres literal.
+  const text =
+    value == null ? "" : Array.isArray(value) ? value.map(String).join(";") : String(value);
   const guarded = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
   return `"${guarded.replace(/"/g, '""')}"`;
 }

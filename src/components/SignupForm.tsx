@@ -16,11 +16,54 @@ type Props = {
 
 type Status = "idle" | "sending" | "done" | "error";
 
+/** What we remember locally so a returning attendee only picks a session. */
+type SavedProfile = { name: string; email: string; wechat: string; building: string };
+
+const PROFILE_KEY = "vt.profile";
+
+/**
+ * Reads the profile left by this browser's last successful signup.
+ *
+ * Deliberately localStorage and not an account: this form has no login, no
+ * password and no payment behind it, and only a third of signups even leave an
+ * email, so email is not a usable identity here. Keeping it on the device
+ * means a returning regular taps twice, and nobody can look up anyone else's
+ * details by guessing a WeChat ID.
+ */
+function readProfile(): SavedProfile | null {
+  try {
+    const raw = window.localStorage.getItem(PROFILE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedProfile>;
+    if (!parsed.name || (!parsed.wechat && !parsed.email)) return null;
+    return {
+      name: parsed.name,
+      email: parsed.email ?? "",
+      wechat: parsed.wechat ?? "",
+      building: parsed.building ?? "",
+    };
+  } catch {
+    // Private mode and locked-down browsers throw on access rather than
+    // returning null; a returning visitor just sees the full form.
+    return null;
+  }
+}
+
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
+  const [profile, setProfile] = useState<SavedProfile | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  // Read after mount, never during render: localStorage does not exist on the
+  // server, and reading it in the first client render would mismatch the
+  // server HTML and get thrown away by hydration.
+  useEffect(() => setProfile(readProfile()), []);
+
+  // Compact mode: known visitor, and they have not asked to edit their details.
+  const returning = profile !== null && !editing;
 
   // Stable identity so the widget is not torn down and re-rendered on every
   // keystroke in the form above it.
@@ -49,9 +92,12 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
     const form = event.currentTarget;
     const data = new FormData(form);
 
-    const name = String(data.get("name") ?? "").trim();
-    const email = String(data.get("email") ?? "").trim();
-    const wechat = String(data.get("wechat") ?? "").trim();
+    // In compact mode the identity fields are not rendered, so they come from
+    // the saved profile instead of the form.
+    const name = returning ? profile!.name : String(data.get("name") ?? "").trim();
+    const email = returning ? profile!.email : String(data.get("email") ?? "").trim();
+    const wechat = returning ? profile!.wechat : String(data.get("wechat") ?? "").trim();
+    const building = returning ? profile!.building : String(data.get("building") ?? "").trim();
 
     // The Chinese form asks for a WeChat ID, the English one for an email —
     // that audience split is real, so the required field follows the language.
@@ -82,7 +128,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           name,
           email,
           wechat,
-          building: data.get("building"),
+          building,
           demoIntent: data.get("demoIntent"),
           firstSession: data.get("firstSession"),
           source: data.get("source"),
@@ -120,6 +166,19 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         return;
       }
 
+      // Remember them so the next session is a two-tap job. Written only after
+      // the server accepted the signup, so a failed submission never leaves a
+      // profile behind that was never actually registered.
+      try {
+        window.localStorage.setItem(
+          PROFILE_KEY,
+          JSON.stringify({ name, email, wechat, building } satisfies SavedProfile),
+        );
+      } catch {
+        // Storage disabled or full. Signing up still worked, which is the part
+        // that matters; they will just fill the form again next time.
+      }
+
       setStatus("done");
       form.reset();
     } catch {
@@ -155,74 +214,86 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         <input id={fieldId("company")} name="company" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div className="grid-auto">
-        <div>
-          <label className="label" htmlFor={fieldId("name")}>
-            {copy.fields.name} <span className="required">*</span>
-          </label>
-          <input
-            className="field"
-            id={fieldId("name")}
-            name="name"
-            type="text"
-            required
-            autoComplete="name"
-            placeholder={copy.fields.namePlaceholder}
-          />
+      {returning ? (
+        /* Known visitor: greeting plus the one thing that changes each week. */
+        <div className="returning">
+          <p className="returning__hello">{copy.returning.hello(profile!.name)}</p>
+          <button type="button" className="link-button" onClick={() => setEditing(true)}>
+            {copy.returning.notYou}
+          </button>
+        </div>
+      ) : (
+        <>
+        <div className="grid-auto">
+          <div>
+            <label className="label" htmlFor={fieldId("name")}>
+              {copy.fields.name} <span className="required">*</span>
+            </label>
+            <input
+              className="field"
+              id={fieldId("name")}
+              name="name"
+              type="text"
+              required
+              autoComplete="name"
+              placeholder={copy.fields.namePlaceholder}
+            />
+          </div>
+
+          <div>
+            <label className="label" htmlFor={fieldId("email")}>
+              {copy.fields.email}
+              {copy.fields.emailRequired && <span className="required"> *</span>}
+            </label>
+            <input
+              className="field"
+              id={fieldId("email")}
+              name="email"
+              type="email"
+              required={copy.fields.emailRequired}
+              autoComplete="email"
+              inputMode="email"
+              placeholder={copy.fields.emailPlaceholder}
+            />
+          </div>
+
+          <div>
+            <label className="label" htmlFor={fieldId("wechat")}>
+              {copy.fields.wechat}
+              {copy.fields.wechatRequired && <span className="required"> *</span>}
+            </label>
+            <input
+              className="field"
+              id={fieldId("wechat")}
+              name="wechat"
+              type="text"
+              required={copy.fields.wechatRequired}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder={copy.fields.wechatPlaceholder}
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="label" htmlFor={fieldId("email")}>
-            {copy.fields.email}
-            {copy.fields.emailRequired && <span className="required"> *</span>}
-          </label>
-          <input
-            className="field"
-            id={fieldId("email")}
-            name="email"
-            type="email"
-            required={copy.fields.emailRequired}
-            autoComplete="email"
-            inputMode="email"
-            placeholder={copy.fields.emailPlaceholder}
-          />
-        </div>
+        {/* One note under both contact fields rather than a hint on each — the
+            reassurance is about the pair, and repeating it dilutes it. */}
+        <p className="privacy-note">{copy.fields.contactPrivacy}</p>
 
         <div>
-          <label className="label" htmlFor={fieldId("wechat")}>
-            {copy.fields.wechat}
-            {copy.fields.wechatRequired && <span className="required"> *</span>}
+          <label className="label" htmlFor={fieldId("building")}>
+            {copy.fields.building}
           </label>
-          <input
+          <textarea
             className="field"
-            id={fieldId("wechat")}
-            name="wechat"
-            type="text"
-            required={copy.fields.wechatRequired}
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder={copy.fields.wechatPlaceholder}
+            id={fieldId("building")}
+            name="building"
+            rows={3}
+            placeholder={copy.fields.buildingPlaceholder}
           />
         </div>
-      </div>
-
-      {/* One note under both contact fields rather than a hint on each — the
-          reassurance is about the pair, and repeating it dilutes it. */}
-      <p className="privacy-note">{copy.fields.contactPrivacy}</p>
-
-      <div>
-        <label className="label" htmlFor={fieldId("building")}>
-          {copy.fields.building}
-        </label>
-        <textarea
-          className="field"
-          id={fieldId("building")}
-          name="building"
-          rows={3}
-          placeholder={copy.fields.buildingPlaceholder}
-        />
-      </div>
+        </>
+      )}
 
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="label">{copy.fields.demoIntent}</legend>

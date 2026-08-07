@@ -145,6 +145,12 @@ export const copy = {
       eyebrow: "§ 05 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
+      // Shown instead of the identity fields when this browser has signed up
+      // before, so a regular only picks a session.
+      returning: {
+        hello: (name: string) => `${name}，欢迎回来。选个场次就行，其余的我这儿都有。`,
+        notYou: "不是我，或者要改资料",
+      },
       fields: {
         name: "怎么称呼你",
         namePlaceholder: "名字或网名都行",
@@ -360,6 +366,10 @@ export const copy = {
       eyebrow: "§ 05 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
+      returning: {
+        hello: (name: string) => `Welcome back, ${name}. Just pick a session, I have the rest.`,
+        notYou: "Not you, or need to change your details?",
+      },
       fields: {
         name: "What should I call you",
         namePlaceholder: "Real name or handle, either is fine",
