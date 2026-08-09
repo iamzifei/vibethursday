@@ -979,6 +979,23 @@ select.field {
   font-size: var(--text-xl);
 }
 
+/* A real photo drops the lime plate and just fills the tile. */
+.monogram--photo {
+  background: var(--bg-tertiary);
+  border-color: var(--border-default);
+  object-fit: cover;
+  padding: 0;
+}
+
+.avatar-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.avatar-picker__actions { display: flex; align-items: center; gap: var(--space-3); }
+
 /* ── Chips ───────────────────────────────────────────────────────── */
 
 .chip {

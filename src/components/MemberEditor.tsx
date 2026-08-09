@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
+import { AvatarPicker } from "@/components/AvatarPicker";
 import type { Copy } from "@/lib/content";
 import type { Member } from "@/lib/db";
 import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
@@ -278,6 +279,14 @@ export function MemberEditor({ member, copy, labels, lang, suggestedTags }: Prop
           </button>
         </p>
       )}
+
+      <AvatarPicker
+        memberId={member.id}
+        name={displayName || member.display_name}
+        initialHasAvatar={member.has_avatar}
+        initialVersion={member.avatar_version}
+        copy={copy}
+      />
 
       {/* Reachable before publishing too: the badge is worth something on the
           day even if the card is still a draft, and it is the reason most

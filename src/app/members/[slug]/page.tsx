@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "@/components/Avatar";
 import { assetLabel, langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { getMemberBySlug } from "@/lib/db";
-import { monogram } from "@/lib/members";
 import { formatSession } from "@/lib/sessions";
 
 type PageProps = {
@@ -62,9 +62,13 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
             </Link>
 
             <div className="mprofile">
-              <span className="monogram monogram--lg" aria-hidden="true">
-                {monogram(member.display_name)}
-              </span>
+              <Avatar
+                id={member.id}
+                name={member.display_name}
+                hasAvatar={member.has_avatar}
+                version={member.avatar_version}
+                size="lg"
+              />
 
               <div className="stack-3">
                 <h1>{member.display_name}</h1>
@@ -95,8 +99,14 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
               </p>
             )}
 
-            {(member.looking_for || member.can_help) && (
+            {(member.topic || member.looking_for || member.can_help) && (
               <dl className="wants wants--lg">
+                {member.topic && (
+                  <div className="wants__row">
+                    <dt>📌 {m.thisWeekTopic}</dt>
+                    <dd>{member.topic}</dd>
+                  </div>
+                )}
                 {member.looking_for && (
                   <div className="wants__row">
                     <dt>🔎 {m.lookingFor}</dt>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
+import { Avatar } from "@/components/Avatar";
 import { BadgeExport } from "@/components/BadgeExport";
 import { KeepAwake } from "@/components/KeepAwake";
 import { langSuffix } from "@/components/MemberCard";
@@ -89,6 +90,16 @@ export default async function BadgePage({ searchParams }: PageProps) {
 
       <div className="badge__main">
         <div className="badge__who">
+          {member.has_avatar && (
+            <Avatar
+              id={member.id}
+              name={member.display_name}
+              hasAvatar={member.has_avatar}
+              version={member.avatar_version}
+              size="lg"
+            />
+          )}
+
           <span className="badge__name">{member.display_name}</span>
 
           {member.headline && <p className="badge__headline">{member.headline}</p>}

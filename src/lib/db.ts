@@ -166,6 +166,17 @@ export function ensureSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS member_assets_member_idx
       ON member_assets (member_id, sort_order)
     `);
+
+    // Avatars live in the row rather than in object storage. At this size —
+    // tens of members, capped at roughly 60 KB each after the browser resizes
+    // them — a bucket would be a second system to configure, secure and pay for
+    // in exchange for nothing. Postgres moves values this large out of line
+    // automatically, and no list query ever selects the bytes.
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS avatar bytea`);
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS avatar_mime text`);
+    // Bumped on every upload so the URL changes and caches do not serve the
+    // previous face for a month.
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS avatar_version int NOT NULL DEFAULT 0`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -372,6 +383,19 @@ export type Member = {
   published: boolean;
   /** Every session this person signed up for, oldest first. */
   sessions: string[];
+  /**
+   * What they said they wanted to talk about when they last signed up.
+   *
+   * Read live from `signups` rather than copied onto the card, so it changes
+   * by itself every week without anyone editing anything. Null once they stop
+   * filling it in, which is most weeks for most people.
+   */
+  topic: string | null;
+  /** Whether there is a photo at all. Separate from the version on purpose. */
+  has_avatar: boolean;
+  /** Cache-busting suffix only. It keeps climbing when a photo is removed, so
+   *  it can never be used to answer "is there one". */
+  avatar_version: number;
   assets: MemberAsset[];
 };
 
@@ -388,6 +412,9 @@ const MEMBER_COLUMNS = `
   m.tags,
   m.hidden,
   (m.published_at IS NOT NULL) AS published,
+  g.topic,
+  (m.avatar IS NOT NULL) AS has_avatar,
+  m.avatar_version,
   COALESCE(
     (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s) FROM unnest(g.sessions) AS s),
     '{}'
@@ -557,6 +584,49 @@ export async function listPublishedTags(limit = 24): Promise<string[]> {
   }
 
   return out;
+}
+
+/** The stored avatar bytes, for the route that serves them. */
+export async function getMemberAvatar(
+  id: string,
+): Promise<{ bytes: Buffer; mime: string } | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ avatar: Buffer | null; avatar_mime: string | null }>(
+    `SELECT avatar, avatar_mime FROM members WHERE id = $1`,
+    [id],
+  );
+
+  const row = result.rows[0];
+  if (!row?.avatar) return null;
+
+  return { bytes: row.avatar, mime: row.avatar_mime ?? "image/jpeg" };
+}
+
+export async function saveMemberAvatar(id: string, bytes: Buffer, mime: string): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ avatar_version: number }>(
+    `UPDATE members
+        SET avatar = $2, avatar_mime = $3, avatar_version = avatar_version + 1, updated_at = now()
+      WHERE id = $1
+      RETURNING avatar_version`,
+    [id, bytes, mime],
+  );
+
+  return result.rows[0]?.avatar_version ?? 0;
+}
+
+/** Back to the monogram. The version still moves, so caches let go of the old one. */
+export async function clearMemberAvatar(id: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE members
+        SET avatar = NULL, avatar_mime = NULL, avatar_version = avatar_version + 1, updated_at = now()
+      WHERE id = $1`,
+    [id],
+  );
 }
 
 /** Raised when the handle someone typed is already taken. */

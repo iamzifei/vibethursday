@@ -181,7 +181,7 @@ export const copy = {
         topic: "这周想聊点什么",
         topicPlaceholder: "写什么都行，一句话也可以",
         topicHint:
-          "完全选填。有产品或者社媒账号，欢迎直接贴链接；没有也不用有压力，想聊的经验、卡住的问题、单纯好奇的话题，都算。",
+          "完全选填。有产品或者社媒账号，欢迎直接贴链接；没有也不用有压力，想聊的经验、卡住的问题、单纯好奇的话题，都算。认领过成员卡片的话，这句会显示在你卡片上的「本周想聊」。",
         contactPrivacy: "这两栏只有我（活动组织者）看得到。不公开、不给第三方、不拿去发广告，也不会有人拿它加你推销。",
         building: "你在做什么？",
         buildingPlaceholder: "在做的产品、在折腾的东西、或者只是最近在学什么。一两句就够。",
@@ -287,6 +287,8 @@ export const copy = {
       attended: "出席 {n} 次",
       lookingFor: "想找",
       canHelp: "能帮",
+      // 直接读报名表最近一次填的「这周想聊点什么」，成员自己不用动。
+      thisWeekTopic: "本周想聊",
       visit: "打开",
       back: "← 所有成员",
       filterAll: "全部",
@@ -408,6 +410,13 @@ export const copy = {
       badgeCta: "把手机当桌牌",
       draftRestored: "恢复了你上次没保存完的修改。",
       draftDiscard: "丢弃，用已保存的版本",
+      avatar: "头像",
+      avatarUpload: "上传头像",
+      avatarReplace: "换一张",
+      avatarRemove: "去掉",
+      avatarWorking: "处理中…",
+      avatarHint: "会自动裁成正方形并压缩，只在你自己的卡片上显示。不传就用名字首字。",
+      avatarFailed: "上传失败了，换张图或者换个浏览器再试。",
     },
 
     // 桌牌。首场复盘里记了一条：后到的人没写名牌，导致「不知道说话的人是谁」。
@@ -584,7 +593,7 @@ export const copy = {
         topic: "Anything you would like to talk about",
         topicPlaceholder: "One line is plenty",
         topicHint:
-          "Entirely optional. Got a product or a social account? Drop the link. No pressure if not, an experience worth passing on, a problem you are stuck on, or something you are just curious about all count.",
+          "Entirely optional. Got a product or a social account? Drop the link. No pressure if not, an experience worth passing on, a problem you are stuck on, or something you are just curious about all count. If you have claimed a member card, this shows there as \"This week\".",
         contactPrivacy: "Both fields are visible only to me, the organiser. Never published, never passed to anyone else, never used for marketing.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
@@ -685,6 +694,7 @@ export const copy = {
       attended: "Sessions: {n}",
       lookingFor: "Looking for",
       canHelp: "Can help with",
+      thisWeekTopic: "This week",
       visit: "Open",
       back: "← All members",
       filterAll: "All",
@@ -804,6 +814,13 @@ export const copy = {
       badgeCta: "Use my phone as a name badge",
       draftRestored: "Restored the edits you had not saved.",
       draftDiscard: "Discard them and use the saved version",
+      avatar: "Photo",
+      avatarUpload: "Upload a photo",
+      avatarReplace: "Replace",
+      avatarRemove: "Remove",
+      avatarWorking: "Working…",
+      avatarHint: "Cropped square and compressed automatically, shown only on your own card. Without one you get your initial.",
+      avatarFailed: "That did not upload. Try another image or another browser.",
     },
 
     badge: {

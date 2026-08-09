@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Member, MemberAsset } from "@/lib/db";
 import type { Copy, Lang } from "@/lib/content";
-import { monogram } from "@/lib/members";
+import { Avatar } from "@/components/Avatar";
 
 type MembersCopy = Copy["members"];
 
@@ -78,11 +78,13 @@ export function MemberCard({ member, copy, lang }: Props) {
   return (
     <article className="mcard">
       <div className="mcard__head">
-        {/* A monogram, not an avatar. Uploads would mean a bucket, a size
-            limit and a moderation question for a wall of thirty people. */}
-        <span className="monogram" aria-hidden="true">
-          {monogram(member.display_name)}
-        </span>
+        <Avatar
+          id={member.id}
+          name={member.display_name}
+          hasAvatar={member.has_avatar}
+          version={member.avatar_version}
+          size="sm"
+        />
 
         <div className="mcard__id">
           <h3 className="mcard__name">
@@ -123,9 +125,18 @@ export function MemberCard({ member, copy, lang }: Props) {
       )}
 
       {/* The two lines that make this a matchmaker rather than a directory.
-          A card with neither is still a card — plenty of people only listen. */}
-      {(member.looking_for || member.can_help) && (
+          A card with neither is still a card — plenty of people only listen.
+          The week's topic joins them when there is one: it comes straight from
+          the latest signup, so it is the only part of a card that stays current
+          without its owner touching it. */}
+      {(member.topic || member.looking_for || member.can_help) && (
         <dl className="wants">
+          {member.topic && (
+            <div className="wants__row">
+              <dt>📌 {copy.thisWeekTopic}</dt>
+              <dd>{member.topic}</dd>
+            </div>
+          )}
           {member.looking_for && (
             <div className="wants__row">
               <dt>🔎 {copy.lookingFor}</dt>
