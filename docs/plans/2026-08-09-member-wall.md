@@ -86,9 +86,10 @@ Postgres 走 INSERT → 撞上微信号的唯一索引 → 23505 → 500。
 **生产上没有验证这条写入路径**——线上库里是真实报名数据，不在上面造行。
 生产只做了只读检查（见上一节），写入行为的证据来自本地同一份构建。
 
-## 部署方式（这个仓库没有 git remote，别去找）
+## 部署方式（git push 不会触发部署，别搞混）
 
-Zeabur CLI 本地上传，不是 git push：
+代码托管在 `git@github.com:iamzifei/vibethursday.git`（private，2026-08-10 建）。
+**但 Zeabur 不是从 GitHub 拉的**——它是 CLI 本地上传，所以 push 完还得单独部署：
 
 ```bash
 zeabur deploy --service-id 6a704d6bfefeb46a8834b625 -i=false

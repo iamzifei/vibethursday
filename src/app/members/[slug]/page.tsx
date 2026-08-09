@@ -6,6 +6,7 @@ import { assetLabel, langSuffix, weeklyTopic } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { getMemberBySlug } from "@/lib/db";
+import { currentMemberId } from "@/lib/member-auth";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
 type PageProps = {
@@ -47,6 +48,10 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
   if (!member) notFound();
 
   const topic = weeklyTopic(member, nextThursdays(1)[0]);
+
+  // Looking at your own card was a dead end: the only ways to edit it were the
+  // wall and /me, neither of which you are on when you followed your own QR.
+  const isMine = (await currentMemberId()) === member.id;
 
   return (
     <div lang={c.htmlLang}>
@@ -94,6 +99,17 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
                 </div>
               </div>
             </div>
+
+            {isMine && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+                <a className="btn btn--secondary" href={`/me${langSuffix(lang)}`}>
+                  {m.editCta}
+                </a>
+                <a className="btn btn--secondary" href={`/badge${langSuffix(lang)}`}>
+                  {c.editor.badgeCta}
+                </a>
+              </div>
+            )}
 
             {member.bio && (
               <p className="body-lg" style={{ maxWidth: "62ch", whiteSpace: "pre-wrap" }}>
