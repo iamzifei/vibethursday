@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "@/lib/members";
 
 /**
  * Postgres access.
@@ -112,6 +113,59 @@ export function ensureSchema(): Promise<void> {
          SET sessions = ARRAY[first_session]
        WHERE sessions = '{}' AND first_session IS NOT NULL
     `);
+
+    // ── Member wall ──────────────────────────────────────────────────
+    // One row per person who claimed their card. `signup_id` is the only way
+    // in, which is what keeps the wall to people who actually turned up: there
+    // is no open registration anywhere on this site.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS members (
+        id            bigserial PRIMARY KEY,
+        signup_id     bigint NOT NULL UNIQUE REFERENCES signups(id) ON DELETE CASCADE,
+        slug          text NOT NULL UNIQUE,
+        display_name  text NOT NULL,
+        headline      text,
+        bio           text,
+        roles         text[] NOT NULL DEFAULT '{}',
+        looking_for   text,
+        can_help      text,
+        tags          text[] NOT NULL DEFAULT '{}',
+        -- Two states, not three. A "members only" tier would mean the wall
+        -- itself needs a login, and the wall is also the recruitment page.
+        hidden        boolean NOT NULL DEFAULT false,
+        -- NULL while the card is a draft prefilled from the signup. The wall
+        -- only ever shows rows where this is set.
+        published_at  timestamptz,
+        created_at    timestamptz NOT NULL DEFAULT now(),
+        updated_at    timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Zero or more per member. A card with no assets is a complete card — that
+    // is the whole point, it is what someone who only comes to listen has.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS member_assets (
+        id          bigserial PRIMARY KEY,
+        member_id   bigint NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        kind        text NOT NULL,
+        title       text NOT NULL,
+        tagline     text,
+        url         text,
+        -- Products only: idea / local / beta / live / revenue. Deliberately a
+        -- label rather than a gate, so "runs on my laptop" is a state a card
+        -- can be in rather than a reason it cannot exist.
+        stage       text,
+        -- Media and profile links only: xhs / wechat / x / linkedin / …
+        platform    text,
+        sort_order  int NOT NULL DEFAULT 0,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS member_assets_member_idx
+      ON member_assets (member_id, sort_order)
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -141,46 +195,104 @@ export type SignupInput = {
  * person. Re-submitting is treated as "I changed my details", never an error —
  * an error here would just make someone think they failed to sign up.
  *
- * Which column identifies them depends on what they gave us: the Chinese form
- * asks for a WeChat ID and the English one for an email, and either may be the
- * only thing present. Postgres cannot express "conflict on whichever of these
- * two is non-null" in one statement, so the conflict target is chosen here.
+ * Identity is "email or WeChat ID, whichever we have": the Chinese form asks
+ * for a WeChat ID and the English one for an email, and either may be the only
+ * thing present.
+ *
+ * This is a lookup followed by an update rather than an upsert, because
+ * Postgres cannot express "conflict on whichever of these two columns is
+ * non-null". The previous version picked the ON CONFLICT target from the
+ * *submission* — and got it wrong whenever the submission carried an email the
+ * stored row did not have. The insert then fell through to the WeChat unique
+ * index and raised 23505, which surfaced as a 500 and lost the signup. That is
+ * the exact path of "signed up for week one with only a WeChat ID, came back
+ * for week two and filled the optional email in this time", and it failed
+ * permanently: every retry took the same branch.
  */
 export async function saveSignup(input: SignupInput): Promise<void> {
   await ensureSchema();
 
-  const conflictColumn = input.email ? "lower(email)" : "lower(wechat)";
+  const pool = getPool();
 
-  await getPool().query(
-    `
-    INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, sessions)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-            CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
-    ON CONFLICT (${conflictColumn}) DO UPDATE SET
-      name          = EXCLUDED.name,
-      email         = COALESCE(EXCLUDED.email, signups.email),
-      wechat        = COALESCE(EXCLUDED.wechat, signups.wechat),
-      building      = COALESCE(EXCLUDED.building, signups.building),
-      demo_intent   = EXCLUDED.demo_intent,
-      -- COALESCE, so submitting the compact returning-visitor form without
-      -- retyping anything does not wipe what they wrote last time.
-      topic         = COALESCE(EXCLUDED.topic, signups.topic),
-      first_session = EXCLUDED.first_session,
-      -- Union, not replace: signing up for week three must not erase weeks one
-      -- and two. DISTINCT keeps a re-submission for the same week idempotent.
-      sessions      = ARRAY(
-                        SELECT DISTINCT unnest(signups.sessions || EXCLUDED.sessions)
-                        ORDER BY 1
-                      ),
-      source        = COALESCE(EXCLUDED.source, signups.source),
-      lang          = EXCLUDED.lang,
-      bot_check     = EXCLUDED.bot_check,
-      updated_at    = now()
-    `,
+  // Two rows can match when the same person once signed up through each form
+  // and left a different identifier each time. LIMIT 2 is enough to notice.
+  const existing = await pool.query<{ id: string; email: string | null; wechat: string | null }>(
+    `SELECT id::text AS id, email, wechat
+       FROM signups
+      WHERE ($1::text IS NOT NULL AND lower(email) = lower($1))
+         OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))
+      ORDER BY id
+      LIMIT 2`,
+    [input.email, input.wechat],
+  );
+
+  const target = existing.rows[0];
+
+  if (!target) {
+    await pool.query(
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, sessions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)`,
+      [
+        input.name,
+        input.email,
+        input.wechat,
+        input.building,
+        input.demoIntent,
+        input.firstSession,
+        input.source,
+        input.lang,
+        input.botCheck,
+        input.topic,
+      ],
+    );
+
+    return;
+  }
+
+  /**
+   * True when some *other* matched row already holds this identifier.
+   *
+   * Writing it onto the target row would violate that column's unique index,
+   * which is the failure this function exists to avoid. Skipping the write
+   * leaves the two rows as they were — a duplicate that predates this
+   * submission — but records the signup instead of throwing it away.
+   */
+  const takenByAnother = (value: string | null, column: "email" | "wechat") =>
+    value !== null &&
+    existing.rows.some(
+      (row) => row.id !== target.id && row[column]?.toLowerCase() === value.toLowerCase(),
+    );
+
+  await pool.query(
+    `UPDATE signups SET
+       name          = $2,
+       email         = COALESCE($3, email),
+       wechat        = COALESCE($4, wechat),
+       building      = COALESCE($5, building),
+       demo_intent   = $6,
+       -- COALESCE, so submitting the compact returning-visitor form without
+       -- retyping anything does not wipe what they wrote last time.
+       topic         = COALESCE($11, topic),
+       first_session = $7,
+       -- Union, not replace: signing up for week three must not erase weeks one
+       -- and two. DISTINCT keeps a re-submission for the same week idempotent.
+       sessions      = ARRAY(
+                         SELECT DISTINCT unnest(
+                           sessions || CASE WHEN $7::date IS NULL THEN '{}'::date[] ELSE ARRAY[$7::date] END
+                         )
+                         ORDER BY 1
+                       ),
+       source        = COALESCE($8, source),
+       lang          = $9,
+       bot_check     = $10,
+       updated_at    = now()
+     WHERE id = $1`,
     [
+      target.id,
       input.name,
-      input.email,
-      input.wechat,
+      takenByAnother(input.email, "email") ? null : input.email,
+      takenByAnother(input.wechat, "wechat") ? null : input.wechat,
       input.building,
       input.demoIntent,
       input.firstSession,
@@ -231,4 +343,257 @@ export async function listSignups(): Promise<SignupRow[]> {
   );
 
   return result.rows;
+}
+
+/* =============================================================================
+   Member wall
+============================================================================= */
+
+export type MemberAsset = {
+  kind: AssetKind;
+  title: string;
+  tagline: string | null;
+  url: string | null;
+  stage: ProductStage | null;
+  platform: Platform | null;
+};
+
+export type Member = {
+  id: string;
+  slug: string;
+  display_name: string;
+  headline: string | null;
+  bio: string | null;
+  roles: Role[];
+  looking_for: string | null;
+  can_help: string | null;
+  tags: string[];
+  hidden: boolean;
+  published: boolean;
+  /** Every session this person signed up for, oldest first. */
+  sessions: string[];
+  assets: MemberAsset[];
+};
+
+/** Column list shared by every member read, so the shapes cannot drift apart. */
+const MEMBER_COLUMNS = `
+  m.id::text            AS id,
+  m.slug,
+  m.display_name,
+  m.headline,
+  m.bio,
+  m.roles,
+  m.looking_for,
+  m.can_help,
+  m.tags,
+  m.hidden,
+  (m.published_at IS NOT NULL) AS published,
+  COALESCE(
+    (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s) FROM unnest(g.sessions) AS s),
+    '{}'
+  ) AS sessions
+`;
+
+type MemberBase = Omit<Member, "assets">;
+
+/**
+ * Attaches assets to already-loaded members.
+ *
+ * One extra query for the whole page rather than one per member. Written this
+ * way instead of a json_agg join because the aggregate turns every scalar
+ * column into something the driver hands back differently, and this codebase
+ * reads raw rows.
+ */
+async function withAssets(members: MemberBase[]): Promise<Member[]> {
+  if (members.length === 0) return [];
+
+  const result = await getPool().query<MemberAsset & { member_id: string }>(
+    `SELECT member_id::text AS member_id, kind, title, tagline, url, stage, platform
+       FROM member_assets
+      WHERE member_id = ANY($1::bigint[])
+      ORDER BY member_id, sort_order, id`,
+    [members.map((member) => member.id)],
+  );
+
+  const byMember = new Map<string, MemberAsset[]>();
+
+  for (const { member_id, ...asset } of result.rows) {
+    const list = byMember.get(member_id);
+    if (list) list.push(asset);
+    else byMember.set(member_id, [asset]);
+  }
+
+  return members.map((member) => ({ ...member, assets: byMember.get(member.id) ?? [] }));
+}
+
+/**
+ * Everyone whose card is live, most recently seen first.
+ *
+ * Sorted by last session rather than by any kind of score. This wall answers
+ * "who is around" for a weekly meetup; ranking it by votes would quietly turn
+ * it into a popularity contest, which is not what it is for.
+ */
+export async function listWallMembers(): Promise<Member[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<MemberBase>(
+    `SELECT ${MEMBER_COLUMNS}
+       FROM members m
+       JOIN signups g ON g.id = m.signup_id
+      WHERE m.published_at IS NOT NULL AND NOT m.hidden
+      ORDER BY (SELECT max(s) FROM unnest(g.sessions) AS s) DESC NULLS LAST,
+               m.updated_at DESC`,
+  );
+
+  return withAssets(result.rows);
+}
+
+/** One live card, for its own page. Drafts and hidden cards 404. */
+export async function getMemberBySlug(slug: string): Promise<Member | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<MemberBase>(
+    `SELECT ${MEMBER_COLUMNS}
+       FROM members m
+       JOIN signups g ON g.id = m.signup_id
+      WHERE m.slug = $1 AND m.published_at IS NOT NULL AND NOT m.hidden`,
+    [slug],
+  );
+
+  return (await withAssets(result.rows))[0] ?? null;
+}
+
+/** The signed-in member's own card, draft or not. */
+export async function getMemberById(id: string): Promise<Member | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<MemberBase>(
+    `SELECT ${MEMBER_COLUMNS}
+       FROM members m
+       JOIN signups g ON g.id = m.signup_id
+      WHERE m.id = $1`,
+    [id],
+  );
+
+  return (await withAssets(result.rows))[0] ?? null;
+}
+
+/**
+ * Finds the signup behind a claim attempt, and creates the draft card.
+ *
+ * The match is name plus one contact method, both case-insensitive. This is a
+ * soft check on purpose: there is no email sender in this project, so a
+ * one-time link would mean standing up mail infrastructure first, and the
+ * worst case here is that someone who already knows both your name and your
+ * WeChat ID edits a page you were going to publish anyway. The organiser can
+ * fix that from /admin.
+ *
+ * The draft is prefilled from what the person already wrote when they signed
+ * up, which is the whole cold-start strategy: editing two sentences is a very
+ * different ask from writing a profile from scratch.
+ */
+export async function claimMember(name: string, contact: string): Promise<string | null> {
+  await ensureSchema();
+
+  const pool = getPool();
+
+  const found = await pool.query<{ id: string; name: string; building: string | null; topic: string | null }>(
+    `SELECT id::text AS id, name, building, topic
+       FROM signups
+      WHERE lower(name) = lower($1)
+        AND (lower(email) = lower($2) OR lower(wechat) = lower($2))
+      LIMIT 1`,
+    [name, contact],
+  );
+
+  const signup = found.rows[0];
+  if (!signup) return null;
+
+  // Slug defaults off the signup id because it is already unique and known
+  // before the insert. Members pick a real handle in the editor.
+  const result = await pool.query<{ id: string }>(
+    `INSERT INTO members (signup_id, slug, display_name, bio, looking_for)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (signup_id) DO UPDATE SET updated_at = now()
+     RETURNING id::text AS id`,
+    [signup.id, fallbackSlug(signup.id), signup.name, signup.building, signup.topic],
+  );
+
+  return result.rows[0].id;
+}
+
+/** Raised when the handle someone typed is already taken. */
+export class SlugTakenError extends Error {}
+
+/**
+ * Writes a card and replaces its assets.
+ *
+ * Assets are deleted and re-inserted rather than diffed: the editor submits the
+ * whole list, there are at most eight of them, and a diff would need stable ids
+ * round-tripped through the client for no benefit.
+ */
+export async function saveMember(id: string, profile: ProfileInput): Promise<void> {
+  await ensureSchema();
+
+  const client = await getPool().connect();
+
+  try {
+    await client.query("BEGIN");
+
+    try {
+      await client.query(
+        `UPDATE members SET
+           slug         = $2,
+           display_name = $3,
+           headline     = $4,
+           bio          = $5,
+           roles        = $6,
+           looking_for  = $7,
+           can_help     = $8,
+           tags         = $9,
+           hidden       = $10,
+           -- Publishing is one-way from the editor's point of view: taking a
+           -- card down is what the hidden flag is for. Keeping the original
+           -- timestamp means "member since" stays true after every later edit.
+           published_at = CASE WHEN $11 THEN COALESCE(published_at, now()) ELSE published_at END,
+           updated_at   = now()
+         WHERE id = $1`,
+        [
+          id,
+          profile.slug,
+          profile.displayName,
+          profile.headline,
+          profile.bio,
+          profile.roles,
+          profile.lookingFor,
+          profile.canHelp,
+          profile.tags,
+          profile.hidden,
+          profile.publish,
+        ],
+      );
+    } catch (error) {
+      // 23505 is unique_violation, and `slug` is the only unique column this
+      // statement touches.
+      if ((error as { code?: string }).code === "23505") throw new SlugTakenError();
+      throw error;
+    }
+
+    await client.query(`DELETE FROM member_assets WHERE member_id = $1`, [id]);
+
+    for (const [index, asset] of profile.assets.entries()) {
+      await client.query(
+        `INSERT INTO member_assets (member_id, kind, title, tagline, url, stage, platform, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [id, asset.kind, asset.title, asset.tagline, asset.url, asset.stage, asset.platform, index],
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Playwright browser cache is machine-local
 /test-results/
+
+# Throwaway smoke-test database (scripts/smoke-db.sh)
+/.smoke/

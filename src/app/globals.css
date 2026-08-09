@@ -868,3 +868,205 @@ select.field {
     opacity: 0.2;
   }
 }
+
+/* =============================================================================
+   Member wall
+   =============================================================================
+   The subject of every card is a person, not a product. That is why there is
+   no screenshot slot, no vote count and no ranking treatment anywhere below:
+   a card belonging to someone who only comes to listen has to look as complete
+   as one belonging to someone with a live product, or most of the room would
+   never fill theirs in.
+============================================================================= */
+
+.mwall {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: start;
+}
+
+.mcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur-normal), background var(--dur-normal);
+}
+
+.mcard:hover { border-color: var(--border-default); background: var(--bg-tertiary); }
+
+.mcard__head { display: flex; gap: var(--space-4); align-items: flex-start; }
+.mcard__id { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+
+.mcard__name { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin: 0; }
+.mcard__name a { color: var(--fg1); }
+.mcard__name a:hover { color: var(--accent); }
+
+.mcard__headline { font-size: var(--text-sm); color: var(--fg2); margin: 0; }
+
+.mcard__meta,
+.mcard__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Initials instead of an avatar. Photo uploads would need a bucket, a size
+   limit and a moderation policy; a monogram needs none of that and keeps the
+   wall looking like one set rather than a mix of logos and selfies. */
+.monogram {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-muted);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.monogram--lg {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xl);
+}
+
+/* ── Chips ───────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  color: var(--fg2);
+  background: var(--bg-tertiary);
+}
+
+.chip--quiet { border-color: transparent; background: transparent; color: var(--fg3); font-family: var(--font-mono); }
+.chip--stage { border-color: var(--accent-muted); background: var(--accent-subtle); color: var(--accent); }
+
+/* Filter chips are links, so they need a real touch target. */
+a.chip--link { min-height: 36px; padding-inline: var(--space-3); color: var(--fg2); }
+a.chip--link:hover { border-color: var(--border-strong); color: var(--fg1); }
+a.chip--on { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
+
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg3);
+}
+
+.tag:hover { color: var(--accent); }
+
+/* ── Assets ──────────────────────────────────────────────────────── */
+
+.asset-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.asset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.asset__kind {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--spark);
+}
+
+.asset__title { color: var(--fg1); font-weight: var(--weight-medium); }
+.asset__stage { color: var(--fg3); font-size: var(--text-xs); }
+.asset--more { color: var(--fg3); font-family: var(--font-mono); font-size: var(--text-xs); }
+
+/* ── Looking for / can help ──────────────────────────────────────────
+   Given the accent rail because these two lines are what turns a
+   directory into something people actually get matched through. */
+
+.wants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--accent-muted);
+}
+
+.wants__row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.wants dt {
+  flex: none;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--fg3);
+  letter-spacing: var(--tracking-wide);
+}
+
+.wants dd { margin: 0; font-size: var(--text-sm); color: var(--fg1); }
+.wants--lg dd { font-size: var(--text-base); }
+
+/* ── Member page and section headers ─────────────────────────────── */
+
+.mprofile { display: flex; gap: var(--space-6); align-items: flex-start; flex-wrap: wrap; }
+
+.group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.group-head h2 { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* ── Editor ──────────────────────────────────────────────────────── */
+
+/* A URL prefix glued to the front of the handle input, so it is obvious the
+   value is a path segment rather than a display name. */
+.prefixed { display: flex; align-items: stretch; }
+
+.prefixed__prefix {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-right: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--fg3);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.prefixed .field { border-radius: 0 var(--radius-md) var(--radius-md) 0; }

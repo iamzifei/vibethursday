@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
+import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
@@ -42,23 +43,7 @@ export default async function Page({ searchParams }: PageProps) {
   // re-declares its own language here for screen-reader pronunciation.
   return (
     <div lang={c.htmlLang}>
-      <header className="shell" style={{ paddingTop: "var(--space-6)" }}>
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "var(--space-4)",
-          }}
-        >
-          <span className="mono" style={{ fontWeight: 600, letterSpacing: "-0.02em" }}>
-            {c.nav.brand}
-          </span>
-          <Link className="pill" href={c.langSwitchHref} hrefLang={lang === "zh" ? "en" : "zh"}>
-            {c.langSwitchLabel}
-          </Link>
-        </nav>
-      </header>
+      <SiteHeader lang={lang} copy={c} switchHref={c.langSwitchHref} />
 
       <main>
         {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -245,6 +230,28 @@ export default async function Page({ searchParams }: PageProps) {
                     </div>
                   </details>
                 ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Members ──────────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.membersTeaser.eyebrow}</span>
+              <h2>{c.membersTeaser.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.membersTeaser.lede}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+              <Link className="btn btn--primary" href={lang === "en" ? "/members?lang=en" : "/members"}>
+                {c.membersTeaser.cta}
+              </Link>
+              <Link className="btn btn--secondary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
+                {c.membersTeaser.ctaSecondary}
+              </Link>
             </div>
           </div>
         </section>
