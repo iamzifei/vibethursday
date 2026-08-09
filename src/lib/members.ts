@@ -7,8 +7,15 @@
  * convenience, never a guarantee.
  */
 
-/** How someone describes themselves. Multi-select: most people are two of these. */
-export const ROLES = ["builder", "business", "creator", "organiser", "listener"] as const;
+/**
+ * How someone describes themselves. Multi-select: most people are two of these.
+ *
+ * `advisor` covers the lawyers, accountants, grant and compliance people. It is
+ * here because the first session surfaced compliance as the strongest unmet
+ * need in the room, and "can help with" is useless if the people who can help
+ * are not findable.
+ */
+export const ROLES = ["builder", "business", "advisor", "creator", "organiser", "listener"] as const;
 export type Role = (typeof ROLES)[number];
 
 /**

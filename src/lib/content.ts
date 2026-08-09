@@ -285,6 +285,7 @@ export const copy = {
       roles: {
         builder: "在做产品",
         business: "有公司 / 业务",
+        advisor: "专业服务",
         creator: "做内容",
         organiser: "有社群",
         listener: "先来听",
@@ -358,7 +359,8 @@ export const copy = {
       bio: "多说两句",
       bioPlaceholder: "选填。背景、在折腾的方向、最近在想什么都行。",
       roles: "你是哪一种",
-      rolesHint: "可以多选。「先来听」也是一种，选了不丢人——这个局里听的人本来就比讲的人多。",
+      rolesHint:
+        "可以多选。做律师、会计、补贴、合规、市场这些的选「专业服务」，屋里正好有人在找你。「先来听」也是一种，选了不丢人——这个局里听的人本来就比讲的人多。",
       lookingFor: "🔎 想找什么",
       lookingForPlaceholder: "找会 iOS 的合伙人 / 想找第一批种子用户 / 想聊聊出海支付",
       canHelp: "🤝 能帮什么",
@@ -655,6 +657,7 @@ export const copy = {
       roles: {
         builder: "Building a product",
         business: "Has a business",
+        advisor: "Professional services",
         creator: "Makes content",
         organiser: "Runs a community",
         listener: "Here to listen",
@@ -726,7 +729,8 @@ export const copy = {
       bio: "A bit more",
       bioPlaceholder: "Optional. Background, what you are poking at, what you have been thinking about.",
       roles: "Which of these are you",
-      rolesHint: "Pick as many as fit. \"Here to listen\" is a real answer — there are always more listeners than presenters.",
+      rolesHint:
+        "Pick as many as fit. Lawyers, accountants, grant and compliance people: pick \"Professional services\" — there are people here looking for you. \"Here to listen\" is a real answer too; there are always more listeners than presenters.",
       lookingFor: "🔎 Looking for",
       lookingForPlaceholder: "An iOS cofounder / my first ten users / someone who has done cross-border payments",
       canHelp: "🤝 Can help with",
