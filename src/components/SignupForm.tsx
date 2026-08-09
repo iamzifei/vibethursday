@@ -436,6 +436,24 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         </>
       )}
 
+      {/* Moved above the demo question on purpose. It is the only field that
+          collects what someone actually wants out of the morning, and 3 of the
+          first 49 signups filled it in — being last on the form, right after a
+          hint that opened with "entirely optional", was doing that. */}
+      <div>
+        <label className="label" htmlFor={fieldId("topic")}>
+          {copy.fields.topic}
+        </label>
+        <textarea
+          className="field"
+          id={fieldId("topic")}
+          name="topic"
+          rows={2}
+          placeholder={copy.fields.topicPlaceholder}
+        />
+        <p className="field-hint">{copy.fields.topicHint}</p>
+      </div>
+
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="label">{copy.fields.demoIntent}</legend>
         <div className="choice-group">
@@ -452,22 +470,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           ))}
         </div>
       </fieldset>
-
-      {/* Rendered in both modes: unlike name or WeChat this genuinely changes
-          week to week, so a returning visitor should be asked again. */}
-      <div>
-        <label className="label" htmlFor={fieldId("topic")}>
-          {copy.fields.topic}
-        </label>
-        <textarea
-          className="field"
-          id={fieldId("topic")}
-          name="topic"
-          rows={2}
-          placeholder={copy.fields.topicPlaceholder}
-        />
-        <p className="field-hint">{copy.fields.topicHint}</p>
-      </div>
 
       <div className="grid-auto">
         <div>

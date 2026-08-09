@@ -1280,9 +1280,25 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
 
 .badge__export {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.badge__export-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Deliberately on the page rather than downloaded: in WeChat's browser a
+   long-press on this is the only way to save or forward it. */
+.badge__preview {
+  display: block;
+  width: min(280px, 70vw);
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
 }
 
 /* Landscape, which is how a propped phone actually sits: name on the left,

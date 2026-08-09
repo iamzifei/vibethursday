@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Copy } from "@/lib/content";
 
 type Props = {
@@ -199,6 +199,20 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
 export function BadgeExport(props: Props) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  /**
+   * The generated image, shown on the page after export.
+   *
+   * This is the only route that works inside WeChat's in-app browser, which is
+   * where most of this community opens links: it supports neither
+   * `navigator.share` with files nor `<a download>`, so a button that only did
+   * those two silently did nothing. Putting the picture on the page lets the
+   * normal WeChat gesture take over — long-press, save or forward.
+   */
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
 
   async function exportImage() {
     setBusy(true);
@@ -229,22 +243,29 @@ export function BadgeExport(props: Props) {
 
       const file = new File([blob], `vibe-thursday-${props.name}.png`, { type: "image/png" });
 
-      // The share sheet is the actual route into WeChat on a phone. Desktop and
-      // anything without file sharing falls back to a download.
+      // Shown first and always: whatever happens next, the image is on the page
+      // and can be long-pressed. Everything below is a shortcut, not the path.
+      const url = URL.createObjectURL(blob);
+      setPreview((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return url;
+      });
+
+      // The share sheet is the nicest route where it exists — iOS Safari and
+      // Android Chrome — because it can hand the file straight to WeChat.
       if (navigator.canShare?.({ files: [file] })) {
+        setNote(props.copy.exportLongPress);
         await navigator.share({ files: [file] });
         return;
       }
 
-      // Built here rather than kept in the markup: an anchor with no href is a
-      // broken link for every reader that is not this click handler.
-      const url = URL.createObjectURL(blob);
+      // Desktop: a download is still the most useful thing. In WeChat this
+      // quietly does nothing, which is exactly why the preview above exists.
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = file.name;
       anchor.click();
-      URL.revokeObjectURL(url);
-      setNote(props.copy.exportSaved);
+      setNote(props.copy.exportLongPress);
     } catch (error) {
       // AbortError is the person dismissing the share sheet, not a failure.
       if ((error as Error)?.name !== "AbortError") {
@@ -258,10 +279,21 @@ export function BadgeExport(props: Props) {
 
   return (
     <div className="badge__export">
-      <button type="button" className="btn btn--secondary" onClick={exportImage} disabled={busy}>
-        {busy ? props.copy.exporting : props.copy.exportCta}
-      </button>
-      {note && <span className="body-sm" style={{ color: "var(--fg3)" }}>{note}</span>}
+      <div className="badge__export-row">
+        <button type="button" className="btn btn--secondary" onClick={exportImage} disabled={busy}>
+          {busy ? props.copy.exporting : preview ? props.copy.exportAgain : props.copy.exportCta}
+        </button>
+        {note && (
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {note}
+          </span>
+        )}
+      </div>
+
+      {preview && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="badge__preview" src={preview} alt={props.copy.exportAlt} />
+      )}
     </div>
   );
 }
