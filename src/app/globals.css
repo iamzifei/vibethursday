@@ -1070,3 +1070,120 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 }
 
 .prefixed .field { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+
+/* =============================================================================
+   Name badge
+   =============================================================================
+   A phone stood on the table. Read from a metre away by someone who is not
+   holding it, so everything here is bigger and higher-contrast than the rest of
+   the site, and the layout turns to two columns the moment the phone is
+   landscape — which is how it ends up when it is propped against a cup.
+============================================================================= */
+
+.badge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* svh, not vh: on mobile Safari vh includes the retracted browser chrome, so
+     the bottom of the badge sits under the toolbar exactly when the phone is
+     lying on a table and nobody is scrolling it back into view. */
+  min-height: 100svh;
+  padding: var(--space-8) var(--space-6);
+  gap: var(--space-6);
+}
+
+.badge__exit {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-6);
+  color: var(--fg3);
+}
+
+.badge__exit:hover { color: var(--fg1); }
+
+.badge__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: flex-start;
+}
+
+.badge__who { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+
+.badge__name {
+  font-size: clamp(2.75rem, 13vw, 5.5rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-editorial);
+  color: var(--fg1);
+}
+
+.badge__headline {
+  font-size: clamp(1.0625rem, 3.4vw, var(--text-2xl));
+  line-height: 1.35;
+  color: var(--accent);
+  margin: 0;
+}
+
+/* The single most useful line on a table badge: it tells a passer-by whether
+   they are the person this one is looking for. */
+.badge__looking {
+  font-size: clamp(1rem, 3vw, var(--text-xl));
+  line-height: 1.4;
+  color: var(--fg2);
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--accent-muted);
+}
+
+.badge__roles { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.badge__code {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+/* White plate, never inverted: a good number of scanners fail on a light-on-dark
+   code. Same reason the WeChat plate on the home page is white. */
+.badge__qr {
+  padding: var(--space-3);
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px var(--accent-muted);
+  line-height: 0;
+}
+
+.badge__qr svg { display: block; width: clamp(112px, 26vw, 168px); height: auto; }
+
+.badge__scan { font-size: var(--text-2xs); letter-spacing: var(--tracking-label); color: var(--fg3); }
+
+
+.badge__warning {
+  font-size: var(--text-sm);
+  color: var(--warning);
+  margin: 0;
+}
+
+/* Landscape, which is how a propped phone actually sits: name on the left,
+   code on the right, both as large as the height allows. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .badge { justify-content: center; padding: var(--space-4) var(--space-8); }
+
+  .badge__main {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+    width: 100%;
+  }
+
+  .badge__name { font-size: clamp(2.5rem, 14vh, 5rem); }
+  .badge__headline { font-size: clamp(1rem, 3.4vh, var(--text-xl)); }
+  .badge__looking { font-size: clamp(0.9375rem, 3vh, var(--text-lg)); }
+  .badge__qr svg { width: clamp(96px, 24vh, 150px); }
+}

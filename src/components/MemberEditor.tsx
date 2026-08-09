@@ -162,6 +162,13 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
         )}
       </div>
 
+      {/* Reachable before publishing too: the badge is worth something on the
+          day even if the card is still a draft, and it is the reason most
+          people will bother finishing the card at all. */}
+      <a className="btn btn--secondary" href={lang === "en" ? "/badge?lang=en" : "/badge"}>
+        {copy.badgeCta}
+      </a>
+
       {/* ── Identity ─────────────────────────────────────────────── */}
       <div className="grid-auto">
         <div>

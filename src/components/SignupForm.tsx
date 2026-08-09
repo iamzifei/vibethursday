@@ -190,9 +190,16 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
   if (status === "done") {
     return (
-      <div className="card card--accent stack-3" role="status">
+      <div className="card card--accent stack-4" role="status">
         <h3 className="h3">{copy.successTitle}</h3>
         <p>{copy.successBody}</p>
+
+        {/* The one moment where claiming a card is not a chore: the signup it
+            needs was created seconds ago, and the details are still in mind. */}
+        <p className="body-sm">{copy.successClaimBody}</p>
+        <a className="btn btn--primary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
+          {copy.successClaimCta}
+        </a>
       </div>
     );
   }

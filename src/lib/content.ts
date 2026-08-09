@@ -41,7 +41,7 @@ export const copy = {
       facts: [
         { label: "时间", value: "每周四 10:00–13:00" },
         { label: "地点", value: "悉尼 CBD 一带" },
-        { label: "费用", value: "免费，咖啡自理" },
+        { label: "费用", value: "免费，店里点杯喝的就行" },
       ],
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
@@ -51,7 +51,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — 这是什么",
       title: "一句话：每周四上午，一群人围一张桌子，看彼此用 AI 做了什么。",
-      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人。每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。首场在 2026 年 8 月 6 日跑完，来了二十多人，从独立开发者到律师、会计、企业主都有。",
+      lede: "灵感来自北京中关村的每周四聚会。核心不是谁讲得好，是在悉尼找到一群同频的人。每周同一时间、同一地点，来的次数多了，它就成了你自己的圈子。首场在 2026 年 8 月 6 日跑完，报名二十六个、到场十八九个，从独立开发者到律师、会计、企业主都有。",
       points: [
         {
           title: "不是讲座",
@@ -78,6 +78,8 @@ export const copy = {
         "自由职业 / 数字游民",
         "公司里的工程师、产品、设计、运营",
         "带团队、想把 AI 落到流程里的中层",
+        // 首场实际来得最多、聊得最深的一类人，之前这张单子上没有。
+        "律师、会计、政府补贴与合规、市场——服务这些行业的，或者在用 AI 改造它们的",
       ],
       note: "「做东西」不限于软件——一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。不用等做完，也不用做得好。",
     },
@@ -118,7 +120,7 @@ export const copy = {
         {
           date: "2026-08-06",
           title: "第一场",
-          note: "来了二十多人，从独立开发者到律师、会计、企业主都有。",
+          note: "报名二十六个，到场十八九个，从独立开发者到律师、会计、企业主都有。",
           photos: [
             { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
             { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
@@ -197,6 +199,10 @@ export const copy = {
       submitting: "提交中…",
       successTitle: "收到了。",
       successBody: "地址和当周提醒会发到你的邮箱。留了微信号的话，我会另外拉你进群。",
+      // The highest-intent screen on the site, and claiming a card needs exactly
+      // the signup that was just created. Anywhere else this ask is a chore.
+      successClaimBody: "顺手认领一下你的成员卡片吧——已经按你刚才填的内容预填好了，改两个字就能发布。当天还能直接当桌牌用。",
+      successClaimCta: "认领我的名片",
       errorGeneric: "提交失败了。稍等一下再试一次，或者直接扫码加我微信。",
       errorRobot: "人机验证没通过。刷新页面重试一次。",
       errorRequired: "名字和微信号是必填的。",
@@ -218,7 +224,7 @@ export const copy = {
         },
         {
           q: "讲中文还是英文？",
-          a: "现阶段以中文为主。人多起来之后会开英文场，那时候两边都跑。",
+          a: "现阶段以中文为主，暂时也没有开英文场的计划。中文不是限制，是这个局能聊得深的原因——悉尼英文的 AI 聚会不缺，缺的是这个。以后真要开，那会是另外一场，不会把这场改成英文。",
         },
         {
           q: "具体在哪？",
@@ -238,7 +244,7 @@ export const copy = {
         },
         {
           q: "我这周来不了，下周还能来吗？",
-          a: "当然。它每周都在，不用连着来。来了就是自己人。",
+          a: "当然。它每周都在，不用连着来。来了就是自己人。每次来之前回来点一下、选个场次就行，我按人数订位子——第二次之后就是两下的事，资料都记着。",
         },
       ],
     },
@@ -395,6 +401,21 @@ export const copy = {
       errorSlug: "这个地址已经有人用了，换一个。",
       errorGeneric: "保存失败，稍等一下再试。",
       signOut: "退出",
+      badgeCta: "把手机当桌牌",
+    },
+
+    // 桌牌。首场复盘里记了一条：后到的人没写名牌，导致「不知道说话的人是谁」。
+    // 手机立在桌上就解决了，不用印、不用笔、不用指定一个人管。
+    badge: {
+      meta: { title: "桌牌 · Vibe Thursday" },
+      title: "把手机立在自己前面",
+      lede: "横过来立在桌上就行。别人扫一下二维码，就能看到你的完整名片：在做什么、想找什么、能帮什么。",
+      open: "打开桌牌",
+      exit: "退出桌牌",
+      scanHint: "扫一下看我的完整名片",
+      draftWarning: "你的卡片还没发布，二维码现在扫不开。回去点一下「发布到成员墙」就行。",
+      keepAwakeNote: "打开期间屏幕不会自动熄灭。",
+      back: "← 我的名片",
     },
   },
 
@@ -423,7 +444,7 @@ export const copy = {
       facts: [
         { label: "When", value: "Thursdays, 10am–1pm" },
         { label: "Where", value: "Sydney CBD area" },
-        { label: "Cost", value: "Free, buy your own coffee" },
+        { label: "Cost", value: "Free, just order a drink" },
       ],
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
@@ -433,7 +454,7 @@ export const copy = {
     what: {
       eyebrow: "§ 01 — What this is",
       title: "A group of people around one table every Thursday morning, showing each other what they built with AI.",
-      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best, it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle. The first session ran on 6 August 2026 with more than twenty people, from indie developers to lawyers, accountants and business owners.",
+      lede: "Borrowed from the weekly Thursday meetups in Beijing's Zhongguancun. The point is not who presents best, it is finding people on your wavelength in Sydney. Same time, same place, every week; come often enough and it becomes your circle. The first session ran on 6 August 2026: 26 signed up and 18 to 20 turned up, from indie developers to lawyers, accountants and business owners.",
       points: [
         {
           title: "Not a lecture",
@@ -460,6 +481,7 @@ export const copy = {
         "Freelancers and digital nomads",
         "Engineers, PMs, designers, marketers",
         "Team leads getting AI into real workflows",
+        "Lawyers, accountants, grant and compliance people — serving those fields, or rebuilding them with AI",
       ],
       note: "\"Building\" is not limited to software — a content pipeline, an automation, a prompt system, an ad playbook all count. It does not have to be finished, and it does not have to be good.",
     },
@@ -499,7 +521,7 @@ export const copy = {
         {
           date: "2026-08-06",
           title: "Session one",
-          note: "More than twenty people, from indie developers to lawyers, accountants and business owners.",
+          note: "26 signed up, 18 to 20 turned up, from indie developers to lawyers, accountants and business owners.",
           photos: [
             { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
             { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
@@ -570,6 +592,8 @@ export const copy = {
       submitting: "Sending…",
       successTitle: "Got it.",
       successBody: "The address and a reminder will land in your inbox. If you left a WeChat ID I will add you to the group too.",
+      successClaimBody: "While you are here, claim your member card — it is already prefilled from what you just wrote, so it is a two-word edit away. On the day it doubles as your name badge.",
+      successClaimCta: "Claim my card",
       errorGeneric: "That did not go through. Give it a moment and try again, or scan the WeChat code below.",
       errorRobot: "The bot check did not pass. Reload the page and try again.",
       errorRequired: "Name and email are required.",
@@ -591,7 +615,7 @@ export const copy = {
         },
         {
           q: "What language is it in?",
-          a: "Mostly Mandarin right now. English sessions start once the group is big enough to run both.",
+          a: "Mostly Mandarin right now, and there is no plan for an English session yet. The language is not a limitation, it is why the conversation goes deep — Sydney is not short of English-language AI meetups, it was short of this one. If an English session ever happens it will be a separate one, not this one translated.",
         },
         {
           q: "Where exactly?",
@@ -611,7 +635,7 @@ export const copy = {
         },
         {
           q: "I cannot make this week. Can I come next week?",
-          a: "Of course. It runs every week and you do not need a streak.",
+          a: "Of course. It runs every week and you do not need a streak. Just come back and pick the session before each one you are coming to — I book the table off that number. After the first time it is two taps; your details are remembered.",
         },
       ],
     },
@@ -765,6 +789,19 @@ export const copy = {
       errorSlug: "That address is taken. Pick another.",
       errorGeneric: "That did not save. Give it a moment and try again.",
       signOut: "Sign out",
+      badgeCta: "Use my phone as a name badge",
+    },
+
+    badge: {
+      meta: { title: "Name badge · Vibe Thursday" },
+      title: "Stand your phone up in front of you",
+      lede: "Turn it sideways and prop it on the table. Anyone can scan the code to get your full card: what you are building, what you are looking for, what you can help with.",
+      open: "Open the badge",
+      exit: "Exit",
+      scanHint: "Scan for my full card",
+      draftWarning: "Your card is not published yet, so the code will not open for anyone. Hit \"Publish to the wall\" first.",
+      keepAwakeNote: "The screen stays awake while this is open.",
+      back: "← My card",
     },
   },
 } as const;
