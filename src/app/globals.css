@@ -1261,6 +1261,13 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   margin: 0;
 }
 
+.badge__export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 /* Landscape, which is how a propped phone actually sits: name on the left,
    code on the right, both as large as the height allows. */
 @media (orientation: landscape) and (max-height: 560px) {
@@ -1278,4 +1285,7 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   .badge__headline { font-size: clamp(1rem, 3.4vh, var(--text-xl)); }
   .badge__looking { font-size: clamp(0.9375rem, 3vh, var(--text-lg)); }
   .badge__qr svg { width: clamp(96px, 24vh, 150px); }
+  /* On a propped phone the badge is being read, not operated — the export
+     button would only eat height it cannot spare. */
+  .badge__export { display: none; }
 }

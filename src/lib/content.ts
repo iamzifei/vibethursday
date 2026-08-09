@@ -422,6 +422,10 @@ export const copy = {
       draftWarning: "你的卡片还没发布，二维码现在扫不开。回去点一下「发布到成员墙」就行。",
       keepAwakeNote: "打开期间屏幕不会自动熄灭。",
       back: "← 我的名片",
+      exportCta: "导出图片 / 分享",
+      exporting: "生成中…",
+      exportSaved: "已下载到本地。",
+      exportFailed: "生成失败了，换个浏览器再试一次。",
     },
   },
 
@@ -812,6 +816,10 @@ export const copy = {
       draftWarning: "Your card is not published yet, so the code will not open for anyone. Hit \"Publish to the wall\" first.",
       keepAwakeNote: "The screen stays awake while this is open.",
       back: "← My card",
+      exportCta: "Export / share image",
+      exporting: "Making it…",
+      exportSaved: "Downloaded.",
+      exportFailed: "That did not work. Try another browser.",
     },
   },
 } as const;

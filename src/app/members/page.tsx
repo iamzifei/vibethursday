@@ -4,6 +4,7 @@ import { MemberCard, langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { listWallMembers, type Member } from "@/lib/db";
+import { currentMemberId } from "@/lib/member-auth";
 import { ROLES, type Role } from "@/lib/members";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
@@ -42,6 +43,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
   const tag = params.tag?.trim() || null;
 
   const everyone = await listWallMembers();
+  const signedIn = (await currentMemberId()) !== null;
 
   // Filtered in JS rather than SQL: this is a weekly meetup, the whole wall is
   // one small query, and pushing the filters down would buy nothing.
@@ -86,13 +88,29 @@ export default async function MembersPage({ searchParams }: PageProps) {
               </p>
             </div>
 
+            {/* Someone who has already claimed was being told to claim. They
+                get their own two doors instead — and the badge needs a way in
+                that is not "open the editor and scroll". */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-              <Link className="btn btn--primary" href={`/me${langSuffix(lang)}`}>
-                {m.claimCta}
-              </Link>
-              <Link className="btn btn--secondary" href={`/${langSuffix(lang)}#signup`}>
-                {c.nav.cta}
-              </Link>
+              {signedIn ? (
+                <>
+                  <Link className="btn btn--primary" href={`/badge${langSuffix(lang)}`}>
+                    {c.editor.badgeCta}
+                  </Link>
+                  <Link className="btn btn--secondary" href={`/me${langSuffix(lang)}`}>
+                    {m.editCta}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link className="btn btn--primary" href={`/me${langSuffix(lang)}`}>
+                    {m.claimCta}
+                  </Link>
+                  <Link className="btn btn--secondary" href={`/${langSuffix(lang)}#signup`}>
+                    {c.nav.cta}
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Role filter. Plain links, so it works with JavaScript off and

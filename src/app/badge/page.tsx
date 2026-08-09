@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
+import { BadgeExport } from "@/components/BadgeExport";
 import { KeepAwake } from "@/components/KeepAwake";
 import { langSuffix } from "@/components/MemberCard";
 import { copy as allCopy, resolveLang } from "@/lib/content";
@@ -118,6 +119,18 @@ export default async function BadgePage({ searchParams }: PageProps) {
       </div>
 
       {!member.published && <p className="badge__warning">{b.draftWarning}</p>}
+
+      {/* The same card as a 3:4 image, for the times the exchange happens in a
+          chat rather than across a table. */}
+      <BadgeExport
+        copy={b}
+        name={member.display_name}
+        headline={member.headline}
+        lookingFor={member.looking_for}
+        roles={member.roles.map((role) => c.members.roles[role])}
+        cardUrl={cardUrl}
+        qrSvg={qr}
+      />
     </div>
   );
 }
