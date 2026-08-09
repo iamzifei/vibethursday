@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Copy } from "@/lib/content";
 import type { Member } from "@/lib/db";
+import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
 import {
   ASSET_KINDS,
   LIMITS,
@@ -45,6 +46,20 @@ function toDraft(member: Member): DraftAsset[] {
   }));
 }
 
+/** Everything the form owns, which is exactly what a draft has to carry. */
+type EditorDraft = {
+  displayName: string;
+  slug: string;
+  headline: string;
+  bio: string;
+  roles: Role[];
+  lookingFor: string;
+  canHelp: string;
+  tags: string;
+  hidden: boolean;
+  assets: DraftAsset[];
+};
+
 export function MemberEditor({ member, copy, labels, lang }: Props) {
   const router = useRouter();
   const uid = useId();
@@ -66,6 +81,88 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
   const [message, setMessage] = useState<string | null>(null);
 
   const field = (name: string) => `${uid}-${name}`;
+
+  /* ── Draft ────────────────────────────────────────────────────────
+     Keyed per member so a shared laptop cannot hand one person's unsaved
+     text to the next. */
+  const draftKey = `vt.editor.draft.${member.id}`;
+
+  const [hydrated, setHydrated] = useState(false);
+  const [restored, setRestored] = useState(false);
+
+  function apply(draft: EditorDraft) {
+    setDisplayName(draft.displayName);
+    setSlug(draft.slug);
+    setHeadline(draft.headline);
+    setBio(draft.bio);
+    setRoles(draft.roles);
+    setLookingFor(draft.lookingFor);
+    setCanHelp(draft.canHelp);
+    setTags(draft.tags);
+    setHidden(draft.hidden);
+    setAssets(draft.assets);
+  }
+
+  // Read after mount, never during render: localStorage does not exist on the
+  // server, and reading it in the first client render would mismatch the
+  // server HTML and be thrown away by hydration. Deferring to an effect is the
+  // only hydration-safe way to seed form state from the browser, which is why
+  // the set-state-in-effect rule is turned off for exactly this line — the
+  // cost is one extra render on mount, once per visit to the editor.
+  useEffect(() => {
+    const draft = readDraft<EditorDraft>(draftKey);
+
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (draft && Array.isArray(draft.assets) && Array.isArray(draft.roles)) {
+      apply(draft);
+      setRestored(true);
+    }
+
+    setHydrated(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // `apply` only calls setState functions, which React keeps stable.
+  }, [draftKey]);
+
+  // Serialised rather than listed as ten dependencies: the string is the thing
+  // being stored anyway, and comparing it is what decides whether to write.
+  const snapshot = JSON.stringify({
+    displayName,
+    slug,
+    headline,
+    bio,
+    roles,
+    lookingFor,
+    canHelp,
+    tags,
+    hidden,
+    assets,
+  } satisfies EditorDraft);
+
+  useEffect(() => {
+    // Writing before the restore has run would overwrite the draft with the
+    // server's copy — the exact data loss this is here to prevent.
+    if (!hydrated) return;
+
+    const timer = setTimeout(() => writeDraft(draftKey, JSON.parse(snapshot)), DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [hydrated, snapshot, draftKey]);
+
+  function discardDraft() {
+    clearDraft(draftKey);
+    apply({
+      displayName: member.display_name,
+      slug: member.slug,
+      headline: member.headline ?? "",
+      bio: member.bio ?? "",
+      roles: member.roles,
+      lookingFor: member.looking_for ?? "",
+      canHelp: member.can_help ?? "",
+      tags: member.tags.join(", "),
+      hidden: member.hidden,
+      assets: toDraft(member),
+    });
+    setRestored(false);
+  }
 
   function toggleRole(role: Role) {
     setRoles((current) =>
@@ -100,8 +197,11 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
           lookingFor,
           canHelp,
           // Split here rather than server-side so what you typed and what you
-          // get back are obviously the same list.
-          tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+          // get back are obviously the same list. Full-width comma and the CJK
+          // enumeration comma count too — this form is filled on a Chinese IME
+          // far more often than not, and splitting on "," alone silently turned
+          // a whole line into one 24-character tag.
+          tags: tags.split(/[,，、]+/).map((tag) => tag.trim()).filter(Boolean),
           hidden,
           publish,
           assets: assets.map((asset) => ({
@@ -134,6 +234,12 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
       setPublished(result.published);
       setStatus("saved");
       setMessage(copy.saved);
+
+      // The server now holds everything the draft did. Keeping it would mean
+      // the next visit offers to "restore" edits that are already saved.
+      clearDraft(draftKey);
+      setRestored(false);
+
       router.refresh();
     } catch {
       setStatus("error");
@@ -162,9 +268,21 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
         )}
       </div>
 
+      {/* Restoring silently would be worse than losing the text: it would look
+          like the card had been saved when it had not. */}
+      {restored && (
+        <p className="alert" role="status">
+          {copy.draftRestored}{" "}
+          <button type="button" className="link-button" onClick={discardDraft}>
+            {copy.draftDiscard}
+          </button>
+        </p>
+      )}
+
       {/* Reachable before publishing too: the badge is worth something on the
           day even if the card is still a draft, and it is the reason most
-          people will bother finishing the card at all. */}
+          people will bother finishing the card at all. Navigating away here is
+          safe now — everything above is kept as a local draft. */}
       <a className="btn btn--secondary" href={lang === "en" ? "/badge?lang=en" : "/badge"}>
         {copy.badgeCta}
       </a>

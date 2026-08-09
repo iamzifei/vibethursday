@@ -402,6 +402,8 @@ export const copy = {
       errorGeneric: "保存失败，稍等一下再试。",
       signOut: "退出",
       badgeCta: "把手机当桌牌",
+      draftRestored: "恢复了你上次没保存完的修改。",
+      draftDiscard: "丢弃，用已保存的版本",
     },
 
     // 桌牌。首场复盘里记了一条：后到的人没写名牌，导致「不知道说话的人是谁」。
@@ -790,6 +792,8 @@ export const copy = {
       errorGeneric: "That did not save. Give it a moment and try again.",
       signOut: "Sign out",
       badgeCta: "Use my phone as a name badge",
+      draftRestored: "Restored the edits you had not saved.",
+      draftDiscard: "Discard them and use the saved version",
     },
 
     badge: {

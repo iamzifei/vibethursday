@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
+import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
 
 type SessionOption = { value: string; label: string };
 
@@ -20,6 +21,18 @@ type Status = "idle" | "sending" | "done" | "error";
 type SavedProfile = { name: string; email: string; wechat: string; building: string };
 
 const PROFILE_KEY = "vt.profile";
+
+/**
+ * Unsent form contents, kept separately from the saved profile above.
+ *
+ * The profile is written only after the server accepts a signup; this is the
+ * half-filled state before that, so scrolling away to read the FAQ or opening
+ * the member wall in the same tab does not cost someone their typing.
+ */
+const DRAFT_KEY = "vt.signup.draft";
+
+/** Fields never worth keeping: the honeypot, and a token that expires anyway. */
+const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
 
 /**
  * Reads the profile left by this browser's last successful signup.
@@ -85,6 +98,60 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   // renders, which is what makes tapping a label focus the right field.
   const uid = useId();
   const fieldId = (field: string) => `${uid}-${field}`;
+
+  /* ── Draft ────────────────────────────────────────────────────────
+     The inputs here are uncontrolled — the form reads itself with FormData on
+     submit — so the draft is read and written through the form element rather
+     than through state. That keeps a dozen fields from becoming a dozen
+     useStates purely to enable autosave. */
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const draft = readDraft<Record<string, string>>(DRAFT_KEY);
+    const form = formRef.current;
+
+    if (!draft || !form) return;
+
+    for (const [name, value] of Object.entries(draft)) {
+      const element = form.elements.namedItem(name);
+
+      // A RadioNodeList also has a settable `value` that picks the matching
+      // radio, so both cases are covered by the same assignment.
+      if (element && "value" in element) {
+        (element as { value: string }).value = value;
+      }
+    }
+    // Restoring is silent: it is the visitor's own typing reappearing where
+    // they left it, which needs no explanation. The editor is different —
+    // there a draft can shadow something already saved.
+  }, [returning]);
+
+  const saveDraft = useCallback(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    const entries: Record<string, string> = {};
+
+    for (const [name, value] of new FormData(form).entries()) {
+      if (DRAFT_SKIP.has(name) || typeof value !== "string") continue;
+      entries[name] = value;
+    }
+
+    writeDraft(DRAFT_KEY, entries);
+  }, []);
+
+  // Typing into an uncontrolled input causes no re-render, so the save has to
+  // hang off the form's own events rather than off the render cycle.
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleDraftSave = useCallback(() => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(saveDraft, DRAFT_DEBOUNCE_MS);
+  }, [saveDraft]);
+
+  useEffect(() => () => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,6 +247,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         // that matters; they will just fill the form again next time.
       }
 
+      // The signup landed, so the half-filled copy of it is no longer anyone's
+      // work in progress — leaving it would refill the form for the next person
+      // on a shared device.
+      clearDraft(DRAFT_KEY);
+
       setStatus("done");
       form.reset();
     } catch {
@@ -214,7 +286,16 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const showBotCheck = Boolean(turnstileSiteKey) && !botCheckGaveUp;
 
   return (
-    <form className="stack-6" onSubmit={handleSubmit} noValidate>
+    <form
+      className="stack-6"
+      ref={formRef}
+      onSubmit={handleSubmit}
+      // Both events: `input` covers typing, `change` covers the radio group and
+      // the session picker on the browsers that do not fire `input` for those.
+      onInput={scheduleDraftSave}
+      onChange={scheduleDraftSave}
+      noValidate
+    >
       {/* Honeypot. Hidden from sighted users and skipped by screen readers and
           keyboard tabbing, so only automated submissions ever fill it. */}
       <div className="visually-hidden" aria-hidden="true">
