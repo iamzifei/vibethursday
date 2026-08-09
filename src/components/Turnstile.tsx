@@ -98,9 +98,15 @@ export function Turnstile({ siteKey, lang, onToken }: Props) {
   const widgetIdRef = useRef<string | null>(null);
 
   // Held in a ref so a new function identity from the parent never tears the
-  // widget down and re-renders it.
+  // widget down and re-renders it. The assignment lives in an effect rather
+  // than in the render body: writing to a ref while rendering is what breaks
+  // React's ability to discard and retry a render. The widget's callbacks only
+  // fire on user interaction, long after this has run.
   const onTokenRef = useRef(onToken);
-  onTokenRef.current = onToken;
+
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
 
   useEffect(() => {
     let cancelled = false;

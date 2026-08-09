@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
 import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
@@ -43,10 +43,10 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  * means a returning regular taps twice, and nobody can look up anyone else's
  * details by guessing a WeChat ID.
  */
-function readProfile(): SavedProfile | null {
+function parseProfile(raw: string | null): SavedProfile | null {
+  if (!raw) return null;
+
   try {
-    const raw = window.localStorage.getItem(PROFILE_KEY);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedProfile>;
     if (!parsed.name || (!parsed.wechat && !parsed.email)) return null;
     return {
@@ -56,10 +56,61 @@ function readProfile(): SavedProfile | null {
       building: parsed.building ?? "",
     };
   } catch {
-    // Private mode and locked-down browsers throw on access rather than
-    // returning null; a returning visitor just sees the full form.
     return null;
   }
+}
+
+/*
+ * The saved profile, exposed as an external store.
+ *
+ * localStorage genuinely is external state, so `useSyncExternalStore` is the
+ * tool for it rather than "read it in an effect and call setState" — that
+ * version worked but cost an extra render on every mount and tripped the
+ * set-state-in-effect rule. React also handles the hydration half correctly
+ * here: `getServerSnapshot` is used for the server render and the first client
+ * pass, so the markup matches and nothing is thrown away.
+ *
+ * The parsed value has to be cached, because `getSnapshot` returning a fresh
+ * object every call makes React re-render forever.
+ */
+let cachedRaw: string | null | undefined;
+let cachedProfile: SavedProfile | null = null;
+
+function profileSnapshot(): SavedProfile | null {
+  let raw: string | null = null;
+
+  try {
+    raw = window.localStorage.getItem(PROFILE_KEY);
+  } catch {
+    // Private mode and locked-down browsers throw on access rather than
+    // returning null; a returning visitor just sees the full form.
+    raw = null;
+  }
+
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    cachedProfile = parseProfile(raw);
+  }
+
+  return cachedProfile;
+}
+
+const profileListeners = new Set<() => void>();
+
+function subscribeProfile(onChange: () => void): () => void {
+  profileListeners.add(onChange);
+  // `storage` only fires in *other* tabs, which is exactly the case an in-page
+  // write cannot cover; same-tab writes call notifyProfile() directly.
+  window.addEventListener("storage", onChange);
+
+  return () => {
+    profileListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function notifyProfile(): void {
+  for (const listener of profileListeners) listener();
 }
 
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
@@ -67,13 +118,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
-  const [profile, setProfile] = useState<SavedProfile | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // Read after mount, never during render: localStorage does not exist on the
-  // server, and reading it in the first client render would mismatch the
-  // server HTML and get thrown away by hydration.
-  useEffect(() => setProfile(readProfile()), []);
+  // Null on the server and during hydration, then the stored profile if there
+  // is one. See the store above for why this is not a useState + useEffect.
+  const profile = useSyncExternalStore(subscribeProfile, profileSnapshot, () => null);
 
   // Compact mode: known visitor, and they have not asked to edit their details.
   const returning = profile !== null && !editing;
@@ -242,6 +291,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           PROFILE_KEY,
           JSON.stringify({ name, email, wechat, building } satisfies SavedProfile),
         );
+        // `storage` events do not fire in the tab that wrote, so the store has
+        // to be told by hand.
+        notifyProfile();
       } catch {
         // Storage disabled or full. Signing up still worked, which is the part
         // that matters; they will just fill the form again next time.

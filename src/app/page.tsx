@@ -333,6 +333,11 @@ export default async function Page({ searchParams }: PageProps) {
               {/* Intrinsic size is given so the plate does not reflow once the
                   image loads. Not lazy-loaded: someone scrolling here is about
                   to scan it, and a late-arriving QR is a broken QR. */}
+              {/* Plain img, not next/image: this is an 8 KB code that has to
+                  stay pixel-exact. Anything that resamples or re-encodes it
+                  risks a QR that some scanners cannot read, and there is no
+                  bandwidth to win here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/wechat-qr.png"
                 alt={c.contact.alt}
