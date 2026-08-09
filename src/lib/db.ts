@@ -522,6 +522,43 @@ export async function claimMember(name: string, contact: string): Promise<string
   return result.rows[0].id;
 }
 
+/**
+ * Tags already in use on live cards, most used first.
+ *
+ * Feeds the editor's suggestions. Suggesting only what other people have
+ * actually published is what makes tags converge into something worth
+ * filtering by — a free-text field with no prompt produces thirty spellings of
+ * the same idea and a filter nobody can use.
+ */
+export async function listPublishedTags(limit = 24): Promise<string[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ tag: string }>(
+    `SELECT t AS tag
+       FROM members m, unnest(m.tags) AS t
+      WHERE m.published_at IS NOT NULL AND NOT m.hidden
+      GROUP BY t
+      ORDER BY count(*) DESC, t
+      LIMIT $1`,
+    [limit * 2],
+  );
+
+  // Case-insensitive dedupe after the fact: "AI Agent" and "ai agent" are one
+  // tag, and the more popular spelling arrives first so it wins.
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const { tag } of result.rows) {
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+    if (out.length >= limit) break;
+  }
+
+  return out;
+}
+
 /** Raised when the handle someone typed is already taken. */
 export class SlugTakenError extends Error {}
 

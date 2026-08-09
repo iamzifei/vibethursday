@@ -11,6 +11,7 @@ import {
   PLATFORMS,
   PRODUCT_STAGES,
   ROLES,
+  splitTags,
   type AssetKind,
   type Platform,
   type ProductStage,
@@ -23,6 +24,8 @@ type Props = {
   /** Shared label dictionaries, so the editor and the wall never disagree. */
   labels: Copy["members"];
   lang: "zh" | "en";
+  /** Tags already live on other cards, most used first. May be empty. */
+  suggestedTags: string[];
 };
 
 /** An asset while it is being edited — every field is a string the form owns. */
@@ -60,7 +63,7 @@ type EditorDraft = {
   assets: DraftAsset[];
 };
 
-export function MemberEditor({ member, copy, labels, lang }: Props) {
+export function MemberEditor({ member, copy, labels, lang, suggestedTags }: Props) {
   const router = useRouter();
   const uid = useId();
 
@@ -197,11 +200,8 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
           lookingFor,
           canHelp,
           // Split here rather than server-side so what you typed and what you
-          // get back are obviously the same list. Full-width comma and the CJK
-          // enumeration comma count too — this form is filled on a Chinese IME
-          // far more often than not, and splitting on "," alone silently turned
-          // a whole line into one 24-character tag.
-          tags: tags.split(/[,，、]+/).map((tag) => tag.trim()).filter(Boolean),
+          // get back are obviously the same list.
+          tags: splitTags(tags),
           hidden,
           publish,
           assets: assets.map((asset) => ({
@@ -416,6 +416,38 @@ export function MemberEditor({ member, copy, labels, lang }: Props) {
           onChange={(event) => setTags(event.target.value)}
         />
         <p className="hint">{copy.tagsHint}</p>
+
+        {/* Suggestions come from tags already live on other cards, which is the
+            only thing that makes this field converge. Left to free text, the
+            same idea gets spelled four ways and the filter becomes useless. */}
+        {suggestedTags.length > 0 && (
+          <div className="suggest">
+            <span className="suggest__label">{copy.tagsSuggest}</span>
+            {suggestedTags.map((suggestion) => {
+              const current = splitTags(tags);
+              const on = current.some((tag) => tag.toLowerCase() === suggestion.toLowerCase());
+
+              return (
+                <button
+                  type="button"
+                  className={`chip chip--link${on ? " chip--on" : ""}`}
+                  key={suggestion}
+                  aria-pressed={on}
+                  onClick={() =>
+                    setTags(
+                      (on
+                        ? current.filter((tag) => tag.toLowerCase() !== suggestion.toLowerCase())
+                        : [...current, suggestion]
+                      ).join(", "),
+                    )
+                  }
+                >
+                  {suggestion}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Assets ───────────────────────────────────────────────── */}

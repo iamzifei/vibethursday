@@ -154,6 +154,20 @@ export function fallbackSlug(id: string | number): string {
   return `m${id}`;
 }
 
+/**
+ * Splits a typed tag line into tags.
+ *
+ * Half-width, full-width and the CJK enumeration comma all count: this field is
+ * filled on a Chinese IME more often than not, and splitting on "," alone
+ * silently turned a whole line into one very long tag.
+ */
+export function splitTags(input: string): string[] {
+  return input
+    .split(/[,，、]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
 function tags(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
 

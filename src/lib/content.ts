@@ -278,6 +278,9 @@ export const copy = {
       editCta: "编辑我的名片",
       thisWeek: "本周四会来",
       everyone: "所有成员",
+      // 用在「本周四会来」那组存在的时候。第二组装的是「其余的人」，
+      // 管它叫「所有成员」是错的——本周那几位并不在里面。
+      others: "其他成员",
       empty: "还没有人认领名片。你可以是第一个。",
       emptyFiltered: "这个筛选下还没有人。",
       countLabel: "{n} 位",
@@ -374,7 +377,8 @@ export const copy = {
       matchHint: "这两栏是整面墙最有用的部分。别人是靠它找到你的，不是靠你的头衔。",
       tags: "标签",
       tagsPlaceholder: "AI Agent, 出海, 小红书",
-      tagsHint: "逗号分隔，最多 6 个。",
+      tagsHint: "逗号分隔，最多 6 个。中英文逗号都行。",
+      tagsSuggest: "别人在用的：",
       assets: "你的东西",
       assetsHint:
         "产品、公司业务、自媒体账号、社群、个人主页，有几个加几个，最多 8 个。一个都没有也完全可以——名片照样成立。",
@@ -668,6 +672,7 @@ export const copy = {
       editCta: "Edit my card",
       thisWeek: "Coming this Thursday",
       everyone: "Everyone",
+      others: "Everyone else",
       empty: "Nobody has claimed a card yet. Be first.",
       emptyFiltered: "Nobody here yet under that filter.",
       // Both are phrased to read correctly at one as well as at twelve, which
@@ -765,6 +770,7 @@ export const copy = {
       tags: "Tags",
       tagsPlaceholder: "AI agents, growth, design",
       tagsHint: "Comma separated, six at most.",
+      tagsSuggest: "Already in use:",
       assets: "Your things",
       assetsHint:
         "Products, a business, a channel, a community, a profile link — add as many as apply, up to eight. None at all is completely fine; the card still works.",

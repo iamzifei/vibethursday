@@ -5,7 +5,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { MemberEditor } from "@/components/MemberEditor";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
-import { getMemberById } from "@/lib/db";
+import { getMemberById, listPublishedTags } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 
 type PageProps = {
@@ -36,6 +36,8 @@ export default async function MePage({ searchParams }: PageProps) {
   // the card from the signup if one still exists.
   if (!member) redirect(`/claim${langSuffix(lang)}`);
 
+  const suggestedTags = await listPublishedTags();
+
   return (
     <div lang={c.htmlLang}>
       <SiteHeader lang={lang} copy={c} switchHref={lang === "zh" ? "/me?lang=en" : "/me"} />
@@ -52,7 +54,13 @@ export default async function MePage({ searchParams }: PageProps) {
               <p className="body-lg">{c.editor.lede}</p>
             </div>
 
-            <MemberEditor member={member} copy={c.editor} labels={c.members} lang={lang} />
+            <MemberEditor
+              member={member}
+              copy={c.editor}
+              labels={c.members}
+              lang={lang}
+              suggestedTags={suggestedTags}
+            />
           </div>
         </section>
       </main>

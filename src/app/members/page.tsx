@@ -53,6 +53,11 @@ export default async function MembersPage({ searchParams }: PageProps) {
 
   // "This Thursday" is the reason someone opens this page on a Wednesday
   // night, so it goes first rather than being something to scroll for.
+  //
+  // A partition, deliberately: every member lands in exactly one group, so a
+  // regular who has been to six sessions is listed once, not six times, and
+  // someone who has never picked a session still appears — in the second group,
+  // just without an attendance count.
   const upcoming = nextThursdays(1)[0];
   const comingThisWeek = filtered.filter((member) => member.sessions.includes(upcoming));
   const rest = filtered.filter((member) => !member.sessions.includes(upcoming));
@@ -129,7 +134,9 @@ export default async function MembersPage({ searchParams }: PageProps) {
 
                 {rest.length > 0 && (
                   <Group
-                    title={m.everyone}
+                    // Only "everyone" when there is no group above it holding
+                    // some of them back.
+                    title={comingThisWeek.length > 0 ? m.others : m.everyone}
                     count={m.countLabel.replace("{n}", String(rest.length))}
                     members={rest}
                     copy={m}

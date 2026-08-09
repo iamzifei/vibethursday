@@ -879,14 +879,23 @@ select.field {
    never fill theirs in.
 ============================================================================= */
 
+/* No `align-items: start`: stretching is what makes every card in a row the
+   same height, which is the difference between a grid and a ragged pile. The
+   cards are flex columns, so the tag row can then be pinned to the bottom and
+   the whole wall gains a horizontal rhythm. */
 .mwall {
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  align-items: start;
+  /* Every row the same height, not just every card within a row. Combined with
+     the clamps below this is what turns the wall into a grid instead of a
+     collage — and the clamps are what stop one verbose card from setting a
+     punishing height for everyone else. */
+  grid-auto-rows: 1fr;
 }
 
 .mcard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -899,6 +908,10 @@ select.field {
 
 .mcard:hover { border-color: var(--border-default); background: var(--bg-tertiary); }
 
+/* Keyboard focus lands on the name link, whose hit area is the whole card, so
+   the ring belongs on the card rather than around two words of text. */
+.mcard:focus-within { border-color: var(--accent); }
+
 .mcard__head { display: flex; gap: var(--space-4); align-items: flex-start; }
 .mcard__id { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 
@@ -906,7 +919,30 @@ select.field {
 .mcard__name a { color: var(--fg1); }
 .mcard__name a:hover { color: var(--accent); }
 
-.mcard__headline { font-size: var(--text-sm); color: var(--fg2); margin: 0; }
+/* Stretched link. The card looked clickable long before it was; this makes the
+   whole surface open the member's page while leaving the asset links and tags
+   inside it independently clickable (they are lifted above this layer below). */
+.mcard__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.mcard__link:focus-visible { outline: none; }
+
+/* Two lines, then ellipsis. The headline is the biggest source of height
+   variance between cards and the part least worth reading in full on the wall. */
+.mcard__headline {
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .mcard__meta,
 .mcard__tags {
@@ -972,6 +1008,8 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--fg3);
+  /* "AI 图像" contains a space and was reading as two separate tags. */
+  white-space: nowrap;
 }
 
 .tag:hover { color: var(--accent); }
@@ -1008,6 +1046,19 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 .asset__stage { color: var(--fg3); font-size: var(--text-xs); }
 .asset--more { color: var(--fg3); font-family: var(--font-mono); font-size: var(--text-xs); }
 
+/* Above the stretched link, so a product link opens the product rather than
+   the card it sits on. */
+.asset__title--link {
+  position: relative;
+  z-index: 1;
+  color: var(--fg1);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-muted);
+  text-underline-offset: 3px;
+}
+
+.asset__title--link:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
 /* ── Looking for / can help ──────────────────────────────────────────
    Given the accent rail because these two lines are what turns a
    directory into something people actually get matched through. */
@@ -1033,6 +1084,22 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 
 .wants dd { margin: 0; font-size: var(--text-sm); color: var(--fg1); }
 .wants--lg dd { font-size: var(--text-base); }
+
+/* Clamped on the wall only — the member's own page shows them in full. */
+.mcard .wants dd {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Pinned to the bottom of the card, which gives every card in a row a shared
+   baseline even when the middle sections are different lengths. */
+.mcard__tags { margin-top: auto; }
+
+/* Tags are links, so they need to sit above the stretched link too. */
+.mcard__tags .tag { position: relative; z-index: 1; }
 
 /* ── Member page and section headers ─────────────────────────────── */
 
@@ -1070,6 +1137,31 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 }
 
 .prefixed .field { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+
+/* Tag suggestions. Buttons, not links — they edit the field above rather than
+   navigate, so they reuse the chip look but keep button semantics. */
+.suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.suggest__label {
+  font-size: var(--text-xs);
+  color: var(--fg3);
+}
+
+button.chip--link {
+  min-height: 36px;
+  padding-inline: var(--space-3);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button.chip--link:hover { border-color: var(--border-strong); color: var(--fg1); }
+button.chip--on { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
 
 /* =============================================================================
    Name badge

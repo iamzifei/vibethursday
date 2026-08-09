@@ -28,7 +28,23 @@ export function AssetLine({ asset, copy }: { asset: MemberAsset; copy: MembersCo
   return (
     <li className="asset">
       <span className="asset__kind">{assetLabel(asset, copy)}</span>
-      <span className="asset__title">{asset.title}</span>
+
+      {asset.url ? (
+        <a
+          className="asset__title asset__title--link"
+          href={asset.url}
+          target="_blank"
+          // noopener stops the opened page reaching back through window.opener;
+          // nofollow keeps the wall from being worth spamming for backlinks.
+          rel="noopener noreferrer nofollow"
+        >
+          {asset.title}
+          <span aria-hidden="true"> ↗</span>
+        </a>
+      ) : (
+        <span className="asset__title">{asset.title}</span>
+      )}
+
       {/* Stage sits next to the name rather than in a corner: on this wall
           "runs locally" is part of what the thing is, not a caveat. */}
       {asset.stage && <span className="asset__stage">{copy.stages[asset.stage]}</span>}
@@ -42,12 +58,22 @@ type Props = {
   lang: Lang;
 };
 
-/** Up to this many assets on the wall; the rest are on the member's own page. */
+/**
+ * How much of a card the wall shows before deferring to the member's own page.
+ *
+ * These caps exist for the grid, not for brevity: every row is the same height,
+ * so one person with eight assets and six tags would otherwise set that height
+ * for the whole wall.
+ */
 const ASSETS_ON_CARD = 3;
+const TAGS_ON_CARD = 4;
 
 export function MemberCard({ member, copy, lang }: Props) {
   const shown = member.assets.slice(0, ASSETS_ON_CARD);
   const overflow = member.assets.length - shown.length;
+
+  const shownTags = member.tags.slice(0, TAGS_ON_CARD);
+  const tagOverflow = member.tags.length - shownTags.length;
 
   return (
     <article className="mcard">
@@ -60,7 +86,13 @@ export function MemberCard({ member, copy, lang }: Props) {
 
         <div className="mcard__id">
           <h3 className="mcard__name">
-            <Link href={`/members/${member.slug}${langSuffix(lang)}`}>{member.display_name}</Link>
+            {/* Stretched link: the ::after on this anchor covers the whole card,
+                so anywhere on the card opens the member's page. Everything else
+                that is interactive — asset links, tags — is lifted above it in
+                CSS, which keeps them clickable without nesting anchors. */}
+            <Link className="mcard__link" href={`/members/${member.slug}${langSuffix(lang)}`}>
+              {member.display_name}
+            </Link>
           </h3>
           {member.headline && <p className="mcard__headline">{member.headline}</p>}
         </div>
@@ -109,9 +141,9 @@ export function MemberCard({ member, copy, lang }: Props) {
         </dl>
       )}
 
-      {member.tags.length > 0 && (
+      {shownTags.length > 0 && (
         <div className="mcard__tags">
-          {member.tags.map((tag) => (
+          {shownTags.map((tag) => (
             <Link
               className="tag"
               href={`/members?tag=${encodeURIComponent(tag)}${langSuffix(lang, true)}`}
@@ -120,6 +152,7 @@ export function MemberCard({ member, copy, lang }: Props) {
               #{tag}
             </Link>
           ))}
+          {tagOverflow > 0 && <span className="tag">+{tagOverflow}</span>}
         </div>
       )}
     </article>
