@@ -586,19 +586,36 @@ export async function listPublishedTags(limit = 24): Promise<string[]> {
   return out;
 }
 
-/** The stored avatar bytes, for the route that serves them. */
+/**
+ * The stored avatar bytes, for the route that serves them.
+ *
+ * Gated the same way the card is. Without this, a hidden or still-draft card
+ * leaked its owner's photo to anyone counting upwards through /api/avatar/1,
+ * /2, /3 — the ids are sequential and the route needs no credential. `viewerId`
+ * is the signed-in member, who must always be able to see their own picture in
+ * the editor before they publish.
+ */
 export async function getMemberAvatar(
   id: string,
+  viewerId: string | null,
 ): Promise<{ bytes: Buffer; mime: string } | null> {
   await ensureSchema();
 
-  const result = await getPool().query<{ avatar: Buffer | null; avatar_mime: string | null }>(
-    `SELECT avatar, avatar_mime FROM members WHERE id = $1`,
+  const result = await getPool().query<{
+    avatar: Buffer | null;
+    avatar_mime: string | null;
+    visible: boolean;
+  }>(
+    `SELECT avatar, avatar_mime,
+            (published_at IS NOT NULL AND NOT hidden) AS visible
+       FROM members
+      WHERE id = $1`,
     [id],
   );
 
   const row = result.rows[0];
   if (!row?.avatar) return null;
+  if (!row.visible && viewerId !== id) return null;
 
   return { bytes: row.avatar, mime: row.avatar_mime ?? "image/jpeg" };
 }
@@ -626,6 +643,48 @@ export async function clearMemberAvatar(id: string): Promise<void> {
         SET avatar = NULL, avatar_mime = NULL, avatar_version = avatar_version + 1, updated_at = now()
       WHERE id = $1`,
     [id],
+  );
+}
+
+/** Every card, published or not, for the organiser's moderation table. */
+export type AdminMember = {
+  id: string;
+  slug: string;
+  display_name: string;
+  headline: string | null;
+  published: boolean;
+  hidden: boolean;
+  updated_at: string;
+};
+
+export async function listAllMembers(): Promise<AdminMember[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<AdminMember>(
+    `SELECT id::text AS id, slug, display_name, headline,
+            (published_at IS NOT NULL) AS published, hidden,
+            to_char(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
+       FROM members
+      ORDER BY updated_at DESC`,
+  );
+
+  return result.rows;
+}
+
+/**
+ * Takes a card off the wall, or puts it back.
+ *
+ * The claim check is deliberately soft, so there had to be a way to undo
+ * someone else's edit that did not involve opening a psql session. Hiding
+ * rather than deleting: the row is still the member's, and the organiser
+ * reversing a decision should not cost them their card.
+ */
+export async function setMemberHidden(id: string, hidden: boolean): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE members SET hidden = $2, updated_at = now() WHERE id = $1`,
+    [id, hidden],
   );
 }
 

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { assetLabel, langSuffix } from "@/components/MemberCard";
+import { assetLabel, langSuffix, weeklyTopic } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { getMemberBySlug } from "@/lib/db";
-import { formatSession } from "@/lib/sessions";
+import { formatSession, nextThursdays } from "@/lib/sessions";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -45,6 +45,8 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
   const member = await getMemberBySlug(slug);
 
   if (!member) notFound();
+
+  const topic = weeklyTopic(member, nextThursdays(1)[0]);
 
   return (
     <div lang={c.htmlLang}>
@@ -99,12 +101,12 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
               </p>
             )}
 
-            {(member.topic || member.looking_for || member.can_help) && (
+            {(topic || member.looking_for || member.can_help) && (
               <dl className="wants wants--lg">
-                {member.topic && (
+                {topic && (
                   <div className="wants__row">
                     <dt>📌 {m.thisWeekTopic}</dt>
-                    <dd>{member.topic}</dd>
+                    <dd>{topic}</dd>
                   </div>
                 )}
                 {member.looking_for && (

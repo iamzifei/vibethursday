@@ -6,10 +6,11 @@ import QRCode from "qrcode";
 import { Avatar } from "@/components/Avatar";
 import { BadgeExport } from "@/components/BadgeExport";
 import { KeepAwake } from "@/components/KeepAwake";
-import { langSuffix } from "@/components/MemberCard";
+import { langSuffix, weeklyTopic } from "@/components/MemberCard";
 import { copy as allCopy, resolveLang } from "@/lib/content";
 import { getMemberById } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
+import { nextThursdays } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -70,6 +71,7 @@ export default async function BadgePage({ searchParams }: PageProps) {
   if (!member) redirect(`/claim${langSuffix(lang)}`);
 
   const cardUrl = `${await origin()}/members/${member.slug}`;
+  const topic = weeklyTopic(member, nextThursdays(1)[0]);
 
   // Dark modules on a white field, never inverted: plenty of scanners fail on a
   // light-on-dark code. Same reasoning as the WeChat QR plate on the home page.
@@ -103,6 +105,14 @@ export default async function BadgePage({ searchParams }: PageProps) {
           <span className="badge__name">{member.display_name}</span>
 
           {member.headline && <p className="badge__headline">{member.headline}</p>}
+
+          {/* Same two lines the card shows, in the same order, so the badge
+              and the wall never disagree about what someone is after. */}
+          {topic && (
+            <p className="badge__looking">
+              <span aria-hidden="true">📌</span> {topic}
+            </p>
+          )}
 
           {member.looking_for && (
             <p className="badge__looking">
@@ -138,6 +148,8 @@ export default async function BadgePage({ searchParams }: PageProps) {
         name={member.display_name}
         headline={member.headline}
         lookingFor={member.looking_for}
+        topic={topic}
+        avatarUrl={member.has_avatar ? `/api/avatar/${member.id}?v=${member.avatar_version}` : null}
         roles={member.roles.map((role) => c.members.roles[role])}
         cardUrl={cardUrl}
         qrSvg={qr}

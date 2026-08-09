@@ -8,6 +8,10 @@ type Props = {
   name: string;
   headline: string | null;
   lookingFor: string | null;
+  /** This week's topic, already gated and deduped by weeklyTopic(). */
+  topic: string | null;
+  /** Same-origin, so drawing it into the canvas does not taint it. */
+  avatarUrl: string | null;
   roles: string[];
   /** Shown as the footer line so a screenshot still says where to find them. */
   cardUrl: string;
@@ -94,10 +98,25 @@ function textBlock(
   props: Props,
   top: number,
   paint: boolean,
+  avatar: HTMLImageElement | null,
 ): number {
-  const { name, headline, lookingFor, roles } = props;
+  const { name, headline, lookingFor, topic, roles } = props;
   const maxWidth = W - PAD * 2;
   let y = top;
+
+  // The face goes above the name rather than beside it: at this width a photo
+  // large enough to recognise would leave the name nowhere to wrap.
+  if (avatar) {
+    if (paint) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(PAD, y, 160, 160, 28);
+      ctx.clip();
+      ctx.drawImage(avatar, PAD, y, 160, 160);
+      ctx.restore();
+    }
+    y += 196;
+  }
 
   const put = (text: string, x: number) => {
     if (paint) ctx.fillText(text, x, y);
@@ -122,12 +141,14 @@ function textBlock(
     }
   }
 
-  if (lookingFor) {
+  for (const [icon, text] of [["📌", topic], ["🔎", lookingFor]] as const) {
+    if (!text) continue;
+
     y += 36;
     const start = y;
     ctx.fillStyle = FG1;
     ctx.font = `400 40px ${SANS}`;
-    for (const line of wrap(ctx, `🔎 ${lookingFor}`, maxWidth - 32, 3)) {
+    for (const line of wrap(ctx, `${icon} ${text}`, maxWidth - 32, 3)) {
       put(line, PAD + 32);
       y += 56;
     }
@@ -148,7 +169,12 @@ function textBlock(
   return y - top;
 }
 
-function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement) {
+function draw(
+  ctx: CanvasRenderingContext2D,
+  props: Props,
+  qr: HTMLImageElement,
+  avatar: HTMLImageElement | null,
+) {
   const { cardUrl } = props;
 
   ctx.fillStyle = INK;
@@ -158,11 +184,11 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
   const gap = 96;
 
   // Measure first, then centre the text + QR as one block.
-  const blockHeight = textBlock(ctx, props, 0, false);
+  const blockHeight = textBlock(ctx, props, 0, false, avatar);
   const total = blockHeight + gap + plate;
   const top = Math.max(PAD, Math.round((H - total) / 2));
 
-  textBlock(ctx, props, top, true);
+  textBlock(ctx, props, top, true, avatar);
 
   // ── QR on a white plate, with the footer beside it ────────────────
   const plateY = top + blockHeight + gap;
@@ -234,7 +260,20 @@ export function BadgeExport(props: Props) {
       qr.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sized)}`;
       await qr.decode();
 
-      draw(ctx, props, qr);
+      // Same origin, so this does not taint the canvas and toBlob still works.
+      let avatar: HTMLImageElement | null = null;
+      if (props.avatarUrl) {
+        const image = new Image();
+        image.src = props.avatarUrl;
+        try {
+          await image.decode();
+          avatar = image;
+        } catch {
+          // A missing photo is not a reason to fail the whole export.
+        }
+      }
+
+      draw(ctx, props, qr, avatar);
 
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png"),

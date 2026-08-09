@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { isAdmin } from "@/lib/admin-auth";
-import { listSignups } from "@/lib/db";
+import { listAllMembers, listSignups } from "@/lib/db";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
 // Always read live data, and keep this page out of any search index.
@@ -31,7 +31,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const signups = await listSignups();
+  const [signups, members] = await Promise.all([listSignups(), listAllMembers()]);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
@@ -87,6 +87,62 @@ export default async function AdminPage({ searchParams }: PageProps) {
           Download CSV
         </a>
       </div>
+
+      {/* Member cards. Here because the claim check is soft on purpose — the
+          undo it was traded against has to actually exist somewhere. */}
+      <section className="stack-4" id="members">
+        <div className="group-head">
+          <h2 className="h3">Member cards</h2>
+          <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
+            {members.filter((m) => m.published && !m.hidden).length} live / {members.length} total
+          </span>
+        </div>
+
+        {members.length === 0 ? (
+          <p className="alert">Nobody has claimed a card yet.</p>
+        ) : (
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Handle</th>
+                  <th scope="col">Headline</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col">On the wall</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ color: "var(--fg1)" }}>{row.display_name}</td>
+                    <td className="mono">
+                      <a href={`/members/${row.slug}`}>/{row.slug}</a>
+                    </td>
+                    <td style={{ whiteSpace: "normal", minWidth: "280px" }}>{row.headline ?? "—"}</td>
+                    <td style={{ color: row.published ? "var(--fg2)" : "var(--warning)" }}>
+                      {row.published ? "published" : "draft"}
+                    </td>
+                    <td className="mono">{row.updated_at}</td>
+                    <td>
+                      {/* A form, not fetch: /admin ships no client JS. */}
+                      <form action="/api/admin/member" method="post">
+                        <input type="hidden" name="key" value={key!} />
+                        <input type="hidden" name="id" value={row.id} />
+                        <input type="hidden" name="hidden" value={row.hidden ? "false" : "true"} />
+                        <button type="submit" className="link-button">
+                          {row.hidden ? "hidden — put back" : "visible — hide"}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {signups.length === 0 ? (
         <p className="alert">No signups yet.</p>

@@ -56,7 +56,27 @@ type Props = {
   member: Member;
   copy: MembersCopy;
   lang: Lang;
+  /** ISO date of the next session, so "this week" can only mean this week. */
+  upcoming: string;
 };
+
+/**
+ * The line to show as this week's topic, if there is one.
+ *
+ * Two things had to be true and neither was:
+ *
+ * - It is only "this week" if they signed up for the upcoming session. A topic
+ *   written three weeks ago and never touched again was being labelled 本周.
+ * - Claiming a card copies the signup's topic into `looking_for`, so for anyone
+ *   who has not edited since, the same sentence appeared twice under two
+ *   different headings.
+ */
+export function weeklyTopic(member: Member, upcoming: string): string | null {
+  if (!member.topic || !member.sessions.includes(upcoming)) return null;
+
+  const same = member.looking_for?.trim().toLowerCase() === member.topic.trim().toLowerCase();
+  return same ? null : member.topic;
+}
 
 /**
  * How much of a card the wall shows before deferring to the member's own page.
@@ -68,7 +88,8 @@ type Props = {
 const ASSETS_ON_CARD = 3;
 const TAGS_ON_CARD = 4;
 
-export function MemberCard({ member, copy, lang }: Props) {
+export function MemberCard({ member, copy, lang, upcoming }: Props) {
+  const topic = weeklyTopic(member, upcoming);
   const shown = member.assets.slice(0, ASSETS_ON_CARD);
   const overflow = member.assets.length - shown.length;
 
@@ -129,12 +150,12 @@ export function MemberCard({ member, copy, lang }: Props) {
           The week's topic joins them when there is one: it comes straight from
           the latest signup, so it is the only part of a card that stays current
           without its owner touching it. */}
-      {(member.topic || member.looking_for || member.can_help) && (
+      {(topic || member.looking_for || member.can_help) && (
         <dl className="wants">
-          {member.topic && (
+          {topic && (
             <div className="wants__row">
               <dt>📌 {copy.thisWeekTopic}</dt>
-              <dd>{member.topic}</dd>
+              <dd>{topic}</dd>
             </div>
           )}
           {member.looking_for && (

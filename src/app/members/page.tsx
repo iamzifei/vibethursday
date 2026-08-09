@@ -146,6 +146,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
                     members={comingThisWeek}
                     copy={m}
                     lang={lang}
+                    upcoming={upcoming}
                     highlight
                   />
                 )}
@@ -159,6 +160,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
                     members={rest}
                     copy={m}
                     lang={lang}
+                    upcoming={upcoming}
                   />
                 )}
               </>
@@ -185,6 +187,7 @@ function Group({
   members,
   copy,
   lang,
+  upcoming,
   highlight = false,
 }: {
   title: string;
@@ -192,6 +195,7 @@ function Group({
   members: Member[];
   copy: Copy["members"];
   lang: Lang;
+  upcoming: string;
   highlight?: boolean;
 }) {
   return (
@@ -208,7 +212,7 @@ function Group({
 
       <div className="mwall">
         {members.map((member) => (
-          <MemberCard member={member} copy={copy} lang={lang} key={member.slug} />
+          <MemberCard member={member} copy={copy} lang={lang} upcoming={upcoming} key={member.slug} />
         ))}
       </div>
     </section>

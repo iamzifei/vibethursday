@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clearMemberAvatar, saveMemberAvatar } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,13 @@ function sniff(bytes: Buffer): string | null {
 export async function POST(request: Request) {
   const memberId = await currentMemberId();
   if (!memberId) return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
+
+  // Keyed on the member rather than the IP: this endpoint already requires a
+  // valid cookie, so the thing worth bounding is one person hammering it, not
+  // one network. Every accepted request writes hundreds of kilobytes.
+  if (!checkRateLimit(`avatar:${memberId}`).allowed) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
 
   const form = await request.formData().catch(() => null);
   const file = form?.get("avatar");
