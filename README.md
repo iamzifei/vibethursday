@@ -119,8 +119,14 @@ would quietly turn it into a popularity contest.
 
 The meetup is free and stays free — no ticket, no membership. It is not
 costless: a venue charges either a minimum spend or a room fee, usually a
-hundred or two, whoever shows up. `/support` explains that and offers a Ko-fi
+hundred or two, whoever shows up. `/support` states that and offers a Ko-fi
 link for anyone — a person or a company — who wants to help carry it.
+
+It states it and stops. **No copy anywhere promises to explain, account for, or
+open the books.** The page gives a range so nobody has to guess whether this
+costs twenty dollars or two thousand, and otherwise says nothing about where
+the money goes. That is deliberate: a promise of transparency is a promise, and
+the only thing worse than not publishing the numbers is implying you do.
 
 **The order of that page is the argument.** "It is free" comes first, the bill
 second, and the way to contribute only after both. Reversed, the same three

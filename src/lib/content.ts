@@ -252,9 +252,9 @@ export const copy = {
       // wall — the only thing here that accumulates, and the page shown to
       // anyone considering coming — so two competing CTAs would cost more
       // there than they could win back in coffee money.
-      successSupportBody: "另外，这个活动的场地费是我先垫的——想搭把手的话，",
-      successSupportCta: "入口在这儿",
-      successSupportTail: "。想一起分摊的随意，不分摊照样来。",
+      successSupportBody: "另外，这个活动的场地费是我先垫的——",
+      successSupportCta: "想搭把手的话看这儿",
+      successSupportTail: "。不搭把手照样来。",
       errorGeneric: "提交失败了。稍等一下再试一次，或者直接扫码加我微信。",
       errorRobot: "人机验证没通过。刷新页面重试一次。",
       errorRequired: "名字和微信号是必填的。",
@@ -284,7 +284,7 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——「这个活动的开销」那一页说清楚了，想搭把手的随意，不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
+          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——「这个活动的开销」那一页有个入口，想搭把手的随意，不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
           q: "我能在这里推我自己的产品吗？",
@@ -316,13 +316,13 @@ export const copy = {
       meta: {
         title: "这个活动的开销 · Vibe Thursday",
         description:
-          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。这一页说清楚这笔钱是什么，以及想搭把手的话去哪儿。",
+          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。想搭把手的话，入口在这儿。",
       },
       eyebrow: "§ 开销",
       title: "活动免费。但它不是零成本。",
-      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么，只是把这笔开销说清楚。",
+      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么。",
 
-      costTitle: "每周的账",
+      costTitle: "每周的开销",
       costItems: [
         {
           label: "场地",
@@ -753,9 +753,9 @@ export const copy = {
       successBody: "The address and a reminder will land in your inbox. If you left a WeChat ID I will add you to the group too.",
       successClaimBody: "While you are here, claim your member card — it is already prefilled from what you just wrote, so it is a two-word edit away. On the day it doubles as your name badge.",
       successClaimCta: "Claim my card",
-      successSupportBody: "Separately: I cover the venue myself. If you ever feel like chipping in, ",
+      successSupportBody: "Separately: I cover the venue myself — ",
       successSupportCta: "there is a page for it",
-      successSupportTail: ". Chipping in is optional and changes nothing either way.",
+      successSupportTail: ", entirely optional, and it changes nothing either way.",
       errorGeneric: "That did not go through. Give it a moment and try again, or scan the WeChat code below.",
       errorRobot: "The bot check did not pass. Reload the page and try again.",
       errorRequired: "Name and email are required.",
@@ -785,7 +785,7 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — \"what this costs\" explains it, and chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
+          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — \"what this costs\" has a link for anyone who wants to help carry it, and chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
           q: "Can I promote my own product here?",
@@ -817,11 +817,11 @@ export const copy = {
       meta: {
         title: "What this costs · Vibe Thursday",
         description:
-          "The meetup is free and stays free. It is not costless though — a venue charges a minimum spend or a room fee each week, usually a hundred or two. This page puts every session's numbers on the table.",
+          "The meetup is free and stays free. It is not costless though — a venue charges a minimum spend or a room fee each week, usually a hundred or two. If you ever want to help carry that, this is where.",
       },
       eyebrow: "§ Costs",
       title: "It is free. It is not costless.",
-      lede: "The important part first: this meetup is free, always will be, and there will never be a ticket or a membership fee. This page is not selling anything — it just puts the numbers on the table.",
+      lede: "The important part first: this meetup is free, always will be, and there will never be a ticket or a membership fee. This page is not selling anything.",
 
       costTitle: "What a week costs",
       costItems: [
