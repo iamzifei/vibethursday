@@ -84,7 +84,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 02 — 谁适合来",
+      eyebrow: "§ 03 — 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
         "独立开发者",
@@ -100,7 +100,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 03 — 流程",
+      eyebrow: "§ 05 — 流程",
       title: "每周同一个节奏，不变。",
       slots: [
         {
@@ -127,7 +127,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 03.5 — 现场",
+      eyebrow: "§ 04 — 现场",
       title: "每一场都留了几张。",
       lede: "为保护参与者，照片里的人脸都做了处理。往下每加一场，就多一个折叠的相册。",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
@@ -151,15 +151,15 @@ export const copy = {
     // point the reader knows what the room is, and "who is in it" is the next
     // thing they want.
     membersTeaser: {
-      eyebrow: "§ 03.6 — 成员",
-      title: "来过的人都在这儿。",
-      lede: "报过名就能认领一张自己的名片：在做的产品、公司业务、自媒体账号、社群，或者只写一句「想找什么」。没有产品也一样有名片——这个局里听的人本来就比讲的人多。以前这些都发在群里，翻两天就找不到了。",
+      eyebrow: "§ 02 — 会遇到谁",
+      title: "你去了会遇到谁。",
+      lede: "每个来过的人都有一张自己的名片：在做的产品、公司业务、自媒体账号、社群，或者只写一句「想找什么」。卡上最管用的是「想找什么」和「能帮什么」这两栏——找合伙人、找第一批用户、找踩过同一个坑的人，多半是从这两栏接上的。没有产品也一样有名片，这个局里听的人本来就比讲的人多。",
       cta: "看成员墙",
       ctaSecondary: "认领我的名片",
     },
 
     rules: {
-      eyebrow: "§ 04 — 几条规矩",
+      eyebrow: "§ 06 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
@@ -171,7 +171,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 05 — 报名",
+      eyebrow: "§ 07 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -263,7 +263,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 06 — 常见问题",
+      eyebrow: "§ 08 — 常见问题",
       title: "先回答几个大概率会问的。",
       items: [
         {
@@ -271,54 +271,62 @@ export const copy = {
           a: "能。Demo 是可选的，来听的人永远比讲的人多。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "需要会写代码吗？",
           a: "不需要。用 AI 做出来的东西不一定是代码——一条内容流水线、一个自动化工作流、一套提示词，都算。",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "讲中文还是英文？",
           a: "现阶段以中文为主，暂时也没有开英文场的计划。中文不是限制，是这个局能聊得深的原因——悉尼英文的 AI 聚会不缺，缺的是这个。以后真要开，那会是另外一场，不会把这场改成英文。",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "具体在哪？",
           a: "Vogue Cafe，Retail 5, 35 Wheat Road, Darling Harbour NSW 2000——达令港水边、W Sydney 楼下。接下来几场都在这儿。报名后我也会把地址再发你一次。",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "要钱吗？",
-          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——想搭把手的随意，不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
+          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
           href: "/support",
-          linkLabel: "这个活动的开销 →",
+          linkLabel: "这儿有个入口",
+          aTail: "；不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
           q: "我能在这里推我自己的产品吗？",
           a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，在自我介绍那一句「今天想拿走什么」里说，或者在你自己的分享时段里说。唯一的界线是：别人在讲的时候，那是别人的时间。这条对所有人一样，包括我。",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "为什么是上午？下午不是更松吗？",
-          a: "下午三点正好撞小学放学，家里有孩子的一律来不了。上午还顺带解决一个实际问题：悉尼 CBD 不少咖啡厅下午三四点就打烊，上午反而好占位子。上午上班来不了的话也别走——报名时把场次选成「上午都来不了」，以后要是开晚上或者周末的场，我就按那份名单来找人。",
+          a: "下午三点正好撞小学放学，家里有孩子的一律来不了。上午还顺带解决一个实际问题：悉尼 CBD 不少咖啡厅下午三四点就打烊，上午反而好占位子。上午上班来不了的话也别走——报名时把场次选成",
           href: "#signup",
-          linkLabel: "去报名表选「上午都来不了」→",
+          linkLabel: "「上午都来不了」",
+          aTail: "，以后要是开晚上或者周末的场，我就按那份名单来找人。",
         },
         {
           q: "我这周来不了，下周还能来吗？",
-          a: "当然。它每周都在，不用连着来。来了就是自己人。每次来之前回来点一下、选个场次就行，我按人数订位子——第二次之后就是两下的事，资料都记着。",
+          a: "当然。它每周都在，不用连着来。来了就是自己人。每次来之前",
           href: "#signup",
-          linkLabel: "去选场次 →",
+          linkLabel: "回来选个场次",
+          aTail: "就行，我按人数订位子——第二次之后就是两下的事，资料都记着。",
         },
       ],
     },
 
     contact: {
-      eyebrow: "§ 07 — 联系",
+      eyebrow: "§ 09 — 联系",
       title: "找不到人？加我微信。",
       lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
       caption: "微信扫码加我",
@@ -632,7 +640,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 02 — Who it is for",
+      eyebrow: "§ 03 — Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
         "Indie developers",
@@ -647,7 +655,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 03 — Run of show",
+      eyebrow: "§ 05 — Run of show",
       title: "Same rhythm every week.",
       slots: [
         {
@@ -674,7 +682,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 03.5 — The room",
+      eyebrow: "§ 04 — The room",
       title: "A few shots from every session.",
       lede: "Faces are covered to protect the people who came. Each session adds another folded album below.",
       sessions: [
@@ -694,15 +702,15 @@ export const copy = {
     },
 
     membersTeaser: {
-      eyebrow: "§ 03.6 — Members",
-      title: "Everyone who comes is on the wall.",
-      lede: "Sign up once and your card is yours to claim: what you are building, your business, a channel, a community — or just one line about what you are looking for. No product needed. There are always more listeners than presenters here, and this all used to vanish into a chat log within days.",
+      eyebrow: "§ 02 — Who you will meet",
+      title: "Who you will actually meet.",
+      lede: "Everyone who comes has a card: what they are building, their business, a channel, a community — or just one line about what they are looking for. The two fields that do the work are «looking for» and «can help with» — a cofounder, a first batch of users, someone who has already hit the wall you are hitting, mostly get found through those two. No product needed; there are always more listeners than presenters here.",
       cta: "See the member wall",
       ctaSecondary: "Claim my card",
     },
 
     rules: {
-      eyebrow: "§ 04 — House rules",
+      eyebrow: "§ 06 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
@@ -714,7 +722,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 05 — Sign up",
+      eyebrow: "§ 07 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
@@ -780,7 +788,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 06 — Questions",
+      eyebrow: "§ 08 — Questions",
       title: "The ones people ask first.",
       items: [
         {
@@ -788,54 +796,62 @@ export const copy = {
           a: "Yes. Demos are optional and there are always more listeners than presenters. The only real bar is genuine interest — this is not a networking room.",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "Do I need to code?",
           a: "No. What you made with AI does not have to be code — a content pipeline, an automation, a prompt system all count.",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "What language is it in?",
           a: "Mostly Mandarin right now, and there is no plan for an English session yet. The language is not a limitation, it is why the conversation goes deep — Sydney is not short of English-language AI meetups, it was short of this one. If an English session ever happens it will be a separate one, not this one translated.",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "Where exactly?",
           a: "Vogue Cafe, Retail 5, 35 Wheat Road, Darling Harbour NSW 2000 — on the Darling Harbour waterfront, below W Sydney. That is the venue for the next few sessions. You get the address again after signing up.",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "Does it cost anything?",
-          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
+          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
           href: "/support",
-          linkLabel: "What running it costs →",
+          linkLabel: "there is a page for it",
+          aTail: ". Chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
           q: "Can I promote my own product here?",
           a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs in the \"what you want to walk away with\" line of your intro, or in your own slot if you are showing something. The only line is that while someone else is talking, that time is theirs. That applies to everyone, me included.",
           href: null,
           linkLabel: null,
+          aTail: null,
         },
         {
           q: "Why mornings, not afternoons?",
-          a: "3pm collides with school pickup, which rules out anyone with kids. Mornings also fix a practical problem: plenty of Sydney CBD cafes shut by mid-afternoon. If mornings are working hours for you, do not just close the tab — sign up and pick \"mornings do not work for me\" instead. If an evening or weekend session ever happens, that list is who I go to.",
+          a: "3pm collides with school pickup, which rules out anyone with kids. Mornings also fix a practical problem: plenty of Sydney CBD cafes shut by mid-afternoon. If mornings are working hours for you, do not just close the tab — sign up and pick ",
           href: "#signup",
-          linkLabel: "Sign up and pick \"mornings do not work\" →",
+          linkLabel: "\"mornings do not work for me\"",
+          aTail: " instead. If an evening or weekend session ever happens, that list is who I go to.",
         },
         {
           q: "I cannot make this week. Can I come next week?",
-          a: "Of course. It runs every week and you do not need a streak. Just come back and pick the session before each one you are coming to — I book the table off that number. After the first time it is two taps; your details are remembered.",
+          a: "Of course. It runs every week and you do not need a streak. Just ",
           href: "#signup",
-          linkLabel: "Pick a session →",
+          linkLabel: "come back and pick the session",
+          aTail: " before each one you are coming to — I book the table off that number. After the first time it is two taps; your details are remembered.",
         },
       ],
     },
 
     contact: {
-      eyebrow: "§ 07 — Contact",
+      eyebrow: "§ 09 — Contact",
       title: "Can't find us? Add me on WeChat.",
       lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
       caption: "Scan with WeChat",

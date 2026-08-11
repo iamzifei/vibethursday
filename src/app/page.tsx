@@ -94,19 +94,25 @@ export default async function Page({ searchParams }: PageProps) {
                     {fact.href &&
                       (fact.href.startsWith("http") ? (
                         <a
-                          className="body-sm"
                           href={fact.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ display: "block", fontWeight: 400 }}
+                          style={{
+                            display: "block",
+                            fontWeight: 400,
+                            fontSize: "var(--text-sm)",
+                          }}
                         >
                           {fact.linkLabel}
                         </a>
                       ) : (
                         <Link
-                          className="body-sm"
                           href={lang === "en" ? `${fact.href}?lang=en` : fact.href}
-                          style={{ display: "block", fontWeight: 400 }}
+                          style={{
+                            display: "block",
+                            fontWeight: 400,
+                            fontSize: "var(--text-sm)",
+                          }}
                         >
                           {fact.linkLabel}
                         </Link>
@@ -162,6 +168,36 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* ── Members ──────────────────────────────────────────────────
+            Third on the page, straight after "what this is", because it is the
+            only section that answers "who would I actually meet" — and that
+            question is the whole decision for two different readers: someone
+            deciding whether to come, and someone looking for a cofounder, a
+            first customer or a partner. It used to sit sixth, behind the
+            photos, which is a long way to scroll for the most persuasive thing
+            here. Concrete people also answer "do I belong" better than the
+            list of categories in "who it is for", which now follows it. */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.membersTeaser.eyebrow}</span>
+              <h2>{c.membersTeaser.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.membersTeaser.lede}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+              <Link className="btn btn--primary" href={lang === "en" ? "/members?lang=en" : "/members"}>
+                {c.membersTeaser.cta}
+              </Link>
+              <Link className="btn btn--secondary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
+                {c.membersTeaser.ctaSecondary}
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ── Who ──────────────────────────────────────────────────── */}
         <section className="section">
           <div className="shell stack-8">
@@ -190,28 +226,6 @@ export default async function Page({ searchParams }: PageProps) {
             <p className="body-sm" style={{ maxWidth: "62ch", color: "var(--fg3)" }}>
               {c.who.note}
             </p>
-          </div>
-        </section>
-
-        {/* ── Run of show ──────────────────────────────────────────── */}
-        <section className="section">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.schedule.eyebrow}</span>
-              <h2>{c.schedule.title}</h2>
-            </div>
-
-            <div>
-              {c.schedule.slots.map((slot) => (
-                <div className="slot" key={slot.time}>
-                  <span className="slot__time">{slot.time}</span>
-                  <div className="stack-2">
-                    <span className="slot__title">{slot.title}</span>
-                    <span className="slot__note">{slot.note}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -268,24 +282,24 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── Members ──────────────────────────────────────────────── */}
+        {/* ── Run of show ──────────────────────────────────────────── */}
         <section className="section">
           <div className="shell stack-8">
             <div className="stack-4">
-              <span className="eyebrow">{c.membersTeaser.eyebrow}</span>
-              <h2>{c.membersTeaser.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.membersTeaser.lede}
-              </p>
+              <span className="eyebrow">{c.schedule.eyebrow}</span>
+              <h2>{c.schedule.title}</h2>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-              <Link className="btn btn--primary" href={lang === "en" ? "/members?lang=en" : "/members"}>
-                {c.membersTeaser.cta}
-              </Link>
-              <Link className="btn btn--secondary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
-                {c.membersTeaser.ctaSecondary}
-              </Link>
+            <div>
+              {c.schedule.slots.map((slot) => (
+                <div className="slot" key={slot.time}>
+                  <span className="slot__time">{slot.time}</span>
+                  <div className="stack-2">
+                    <span className="slot__title">{slot.title}</span>
+                    <span className="slot__note">{slot.note}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -355,27 +369,29 @@ export default async function Page({ searchParams }: PageProps) {
                   <h3 className="h3" style={{ fontSize: "var(--text-lg)" }}>
                     {item.q}
                   </h3>
+                  {/* The link sits inside the sentence rather than trailing it.
+                      An answer that says "pick «mornings do not work»" should
+                      make those words the thing you click.
+
+                      Note what is NOT here: `className="body-sm"` on the anchor.
+                      `.body-sm` sets a colour and a class outranks the bare `a`
+                      rule in globals.css, so styling the anchor that way paints
+                      links in body grey and they stop looking like links. The
+                      size comes from the paragraph; the anchor only inherits. */}
                   <p className="body-sm" style={{ maxWidth: "62ch" }}>
                     {item.a}
+                    {item.href &&
+                      (item.href.startsWith("#") ? (
+                        // Same-page anchor: routing here would reload the whole
+                        // page to scroll a few hundred pixels.
+                        <a href={item.href}>{item.linkLabel}</a>
+                      ) : (
+                        <Link href={lang === "en" ? `${item.href}?lang=en` : item.href}>
+                          {item.linkLabel}
+                        </Link>
+                      ))}
+                    {item.aTail}
                   </p>
-
-                  {/* An answer that tells someone what to do should take them
-                      there. `#signup` is a same-page anchor, so it stays a
-                      plain <a> — routing to "/#signup" would reload the page
-                      to scroll a few hundred pixels. */}
-                  {item.href &&
-                    (item.href.startsWith("#") ? (
-                      <a className="body-sm" href={item.href}>
-                        {item.linkLabel}
-                      </a>
-                    ) : (
-                      <Link
-                        className="body-sm"
-                        href={lang === "en" ? `${item.href}?lang=en` : item.href}
-                      >
-                        {item.linkLabel}
-                      </Link>
-                    ))}
                 </div>
               ))}
             </div>
