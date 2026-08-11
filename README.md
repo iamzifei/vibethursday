@@ -1,7 +1,7 @@
 # Vibe Thursday
 
 Signup site for a weekly AI builders meetup in Sydney — every Thursday,
-10am–1pm, Sydney CBD.
+10am–12pm, at Vogue Cafe on the Darling Harbour waterfront.
 
 Chinese-first with an English view at `/?lang=en`. Collects an email and,
 because most announcements currently go through a WeChat group, an optional

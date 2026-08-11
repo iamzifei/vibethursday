@@ -39,7 +39,7 @@ export const copy = {
       subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
-        { label: "时间", value: "每周四 10:00–13:00", href: null, linkLabel: null },
+        { label: "时间", value: "每周四 10:00–12:00", href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
         // first screen rather than in a message the day before.
         {
@@ -395,7 +395,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "达令港 Vogue Cafe · 每周四 10:00–13:00",
+      location: "达令港 Vogue Cafe · 每周四 10:00–12:00",
       supportLink: "这个活动的开销",
     },
 
@@ -600,7 +600,7 @@ export const copy = {
       subtitle: "Sydney · every Thursday morning",
       lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
-        { label: "When", value: "Thursdays, 10am–1pm", href: null, linkLabel: null },
+        { label: "When", value: "Thursdays, 10am–12pm", href: null, linkLabel: null },
         {
           label: "Where",
           value: "Vogue Cafe · Darling Harbour",
@@ -920,7 +920,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Vogue Cafe, Darling Harbour · Thursdays 10am–1pm",
+      location: "Vogue Cafe, Darling Harbour · Thursdays 10am–12pm",
       supportLink: "What this costs",
     },
 
