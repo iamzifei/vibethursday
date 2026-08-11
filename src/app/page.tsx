@@ -358,6 +358,24 @@ export default async function Page({ searchParams }: PageProps) {
                   <p className="body-sm" style={{ maxWidth: "62ch" }}>
                     {item.a}
                   </p>
+
+                  {/* An answer that tells someone what to do should take them
+                      there. `#signup` is a same-page anchor, so it stays a
+                      plain <a> — routing to "/#signup" would reload the page
+                      to scroll a few hundred pixels. */}
+                  {item.href &&
+                    (item.href.startsWith("#") ? (
+                      <a className="body-sm" href={item.href}>
+                        {item.linkLabel}
+                      </a>
+                    ) : (
+                      <Link
+                        className="body-sm"
+                        href={lang === "en" ? `${item.href}?lang=en` : item.href}
+                      >
+                        {item.linkLabel}
+                      </Link>
+                    ))}
                 </div>
               ))}
             </div>
