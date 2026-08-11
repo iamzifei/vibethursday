@@ -1,111 +1,22 @@
 /**
- * Tests for the /support ledger arithmetic.
+ * Tests for the invariants /support depends on.
  *
  * Run with `pnpm test`. Node's built-in test runner and type stripping are
  * used deliberately: this repo has no ORM, no migration step and no test
- * framework, and a running balance over a handful of rows does not justify
- * being the thing that introduces one.
+ * framework, and these checks do not justify being the thing that introduces
+ * one.
  *
- * The money here is real and the page publishes it, so the cases that matter
- * are the ones where a wrong number would be believed: cent rounding, a
- * shortfall, and the order rows come back in.
+ * What is worth testing here is not arithmetic — there is none left since the
+ * public ledger was dropped — but the promises the copy makes: no name carries
+ * an amount, no string names a fixed price, and the only way to give actually
+ * resolves.
  */
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import {
-  CONTRIBUTORS,
-  formatAud,
-  ledgerBalance,
-  ledgerRows,
-  LEDGER,
-  SUPPORT_URL,
-  type LedgerEntry,
-} from "../src/lib/support.ts";
+import { CONTRIBUTORS, SUPPORT_URL } from "../src/lib/support.ts";
 import { copy } from "../src/lib/content.ts";
-
-const entry = (date: string, received: number, spent: number, contributors = 0): LedgerEntry => ({
-  date,
-  received,
-  spent,
-  contributors,
-});
-
-test("formatAud drops the decimals on whole dollars", () => {
-  assert.equal(formatAud(11_800), "$118");
-  assert.equal(formatAud(0), "$0");
-});
-
-test("formatAud keeps two decimals on part-dollar amounts", () => {
-  assert.equal(formatAud(12_350), "$123.50");
-  // A single trailing cent must not render as "$123.5".
-  assert.equal(formatAud(12_305), "$123.05");
-});
-
-test("formatAud groups thousands", () => {
-  assert.equal(formatAud(610_000), "$6,100");
-});
-
-test("formatAud keeps the sign outside the dollar mark", () => {
-  // A shortfall reads as "-$56", never "$-56".
-  assert.equal(formatAud(-5_600), "-$56");
-  assert.equal(formatAud(-12_350), "-$123.50");
-});
-
-test("ledgerRows carries the balance forward across sessions", () => {
-  const rows = ledgerRows([
-    entry("2026-08-13", 18_000, 11_800, 9),
-    entry("2026-08-20", 22_000, 11_800, 11),
-  ]);
-
-  // Newest first, because the page answers "where does it stand now".
-  assert.deepEqual(
-    rows.map((row) => row.date),
-    ["2026-08-20", "2026-08-13"],
-  );
-
-  // 180 - 118 = 62, then + 220 - 118 = 164.
-  assert.equal(rows[1].balance, 6_200);
-  assert.equal(rows[0].balance, 16_400);
-});
-
-test("ledgerRows reports a shortfall as a negative balance", () => {
-  const rows = ledgerRows([entry("2026-08-13", 6_000, 11_800, 3)]);
-
-  assert.equal(rows[0].balance, -5_800);
-  assert.equal(formatAud(rows[0].balance), "-$58");
-});
-
-test("ledgerRows does not mutate the entries it is given", () => {
-  const entries = [entry("2026-08-13", 18_000, 11_800, 9), entry("2026-08-20", 0, 11_800, 0)];
-  const before = JSON.parse(JSON.stringify(entries));
-
-  ledgerRows(entries);
-
-  // `.reverse()` is in-place on the mapped copy, never on the caller's array.
-  assert.deepEqual(entries, before);
-});
-
-test("ledgerRows and ledgerBalance agree on the total", () => {
-  const entries = [
-    entry("2026-08-13", 18_000, 11_800, 9),
-    entry("2026-08-20", 5_000, 11_800, 3),
-    entry("2026-08-27", 30_000, 31_800, 15),
-  ];
-
-  assert.equal(ledgerRows(entries)[0].balance, ledgerBalance(entries));
-});
-
-test("an empty ledger balances to zero", () => {
-  assert.deepEqual(ledgerRows([]), []);
-  assert.equal(ledgerBalance([]), 0);
-});
-
-test("the shipped ledger starts empty", () => {
-  // 2026-08-06 had a donated venue, so there is no first row to carry.
-  assert.deepEqual(LEDGER, []);
-});
 
 test("the contributor list carries no amounts", () => {
   // The opt-in list says who showed up for this, never how much anyone paid.

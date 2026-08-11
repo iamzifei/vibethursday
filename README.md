@@ -35,7 +35,7 @@ WeChat ID.
 pnpm install
 cp .env.example .env.local   # then fill in DATABASE_URL
 pnpm dev
-pnpm test                    # ledger arithmetic, Node's own runner, no framework
+pnpm test                    # /support invariants, Node's own runner, no framework
 ```
 
 `.env.example` ships Cloudflare's published Turnstile test pair, which always
@@ -119,8 +119,8 @@ would quietly turn it into a popularity contest.
 
 The meetup is free and stays free — no ticket, no membership. It is not
 costless: a venue charges either a minimum spend or a room fee, usually a
-hundred or two, whoever shows up. `/support` puts those numbers in public and
-lets people chip in if they want to.
+hundred or two, whoever shows up. `/support` explains that and offers a Ko-fi
+link for anyone — a person or a company — who wants to help carry it.
 
 **The order of that page is the argument.** "It is free" comes first, the bill
 second, and the way to contribute only after both. Reversed, the same three
@@ -135,25 +135,26 @@ building something, not bought.
 
 Four consequences follow in the code:
 
+- **There is no public ledger**, by decision. An earlier version published what
+  came in and went out per session. That was worth something — it was the only
+  way "I am not making money on this" could be checked rather than asserted —
+  so nothing on the page now claims or implies a transparency it does not have.
 - **No copy states a fixed price.** The charge moves with the venue, and copy
-  naming a figure starts lying the first week it changes — nobody edits eight
-  strings across two languages to keep up. The copy gives a range and points at
-  the ledger, which carries the real number for each session. A test enforces
-  this: a range is allowed, a lone price is not.
-- The entry points are the `/support` page, a line **below** the signup form,
-  the "does it cost anything" FAQ answer, and the footer. It is deliberately
-  **not** in the nav, and deliberately **not** a field inside the form —
-  anything optional that looks like a step stops being optional.
+  naming a figure starts lying the first week it changes; nobody edits eight
+  strings across two languages to keep up. The copy gives a range, and a test
+  enforces it — a range is allowed, a lone price is not.
+- The entry points are the `/support` page, the cost card in the hero, a line
+  **below** the signup form, the success screen after signing up, the "does it
+  cost anything" FAQ answer, and the footer. It is deliberately **not** in the
+  nav, deliberately **not** a field inside the form, and on the success screen
+  deliberately **text rather than a second button** — the claim-your-card CTA
+  there feeds the member wall, which is the only thing here that accumulates.
 - The contributor list is **opt-in, and money is one of four kinds** alongside
   showing something, bringing people, and helping out. A list of who paid,
   shown to twenty people around one table, is legible in a way a GitHub sponsor
   wall is not: everyone can see who is missing. Opt-in means absence carries no
   information, and mixing the kinds means being listed says nothing about
-  anyone's bank balance. Amounts are never recorded per person.
-- Surplus is never refunded. It carries forward, which is what absorbs a week
-  that needs a screen or a venue price rise. Updating the ledger after a session
-  is a one-line edit plus a deploy; a table would need an admin screen to be
-  useful, and this is three numbers a week.
+  anyone's bank balance. No amount is ever recorded against a name.
 
 `SUPPORT_URL` in `src/lib/support.ts` is a committed constant rather than an
 environment variable. A Ko-fi page is a public address; making it configuration

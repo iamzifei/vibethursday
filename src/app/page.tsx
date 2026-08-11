@@ -32,9 +32,14 @@ export default async function Page({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
   const c = allCopy[lang];
 
+  // The time is appended here rather than inside formatSession, which is also
+  // used on the member wall to list which sessions someone attended — "8月6日
+  // （周四）上午 10:00 · 8月13日（周四）上午 10:00" would be noise there. In the
+  // picker it is the point: a bare date lets someone who works weekday
+  // mornings choose one without ever registering that it is a morning.
   const sessions = nextThursdays(6).map((value) => ({
     value,
-    label: formatSession(value, lang),
+    label: `${formatSession(value, lang)} · ${allCopy[lang].signup.fields.sessionTimeSuffix}`,
   }));
 
   const nextSession = sessions[0];
@@ -77,7 +82,36 @@ export default async function Page({ searchParams }: PageProps) {
                   <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
                     {fact.label}
                   </dt>
-                  <dd style={{ margin: 0, color: "var(--fg1)", fontWeight: 500 }}>{fact.value}</dd>
+                  <dd className="stack-1" style={{ margin: 0, color: "var(--fg1)", fontWeight: 500 }}>
+                    <span>{fact.value}</span>
+                    {/* Only the cost card carries one. It is already the card
+                        answering this question, so the link rides along instead
+                        of claiming a section of its own. */}
+                    {/* Two of these cards carry a link: the venue points at a
+                        map, the cost points at what running it costs. External
+                        ones must not get ?lang= appended, which would send a
+                        stray query string to Google. */}
+                    {fact.href &&
+                      (fact.href.startsWith("http") ? (
+                        <a
+                          className="body-sm"
+                          href={fact.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: "block", fontWeight: 400 }}
+                        >
+                          {fact.linkLabel}
+                        </a>
+                      ) : (
+                        <Link
+                          className="body-sm"
+                          href={lang === "en" ? `${fact.href}?lang=en` : fact.href}
+                          style={{ display: "block", fontWeight: 400 }}
+                        >
+                          {fact.linkLabel}
+                        </Link>
+                      ))}
+                  </dd>
                 </div>
               ))}
             </dl>

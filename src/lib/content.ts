@@ -39,9 +39,24 @@ export const copy = {
       subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
-        { label: "时间", value: "每周四 10:00–13:00" },
-        { label: "地点", value: "悉尼 CBD 一带" },
-        { label: "费用", value: "免费，店里点杯喝的就行" },
+        { label: "时间", value: "每周四 10:00–13:00", href: null, linkLabel: null },
+        // Fixed for the next few sessions, so the address belongs on the
+        // first screen rather than in a message the day before.
+        {
+          label: "地点",
+          value: "Vogue Cafe · 达令港",
+          href: "https://maps.google.com/?q=Vogue+Cafe+Retail+5,+35+Wheat+Road,+Darling+Harbour+NSW+2000",
+          linkLabel: "Retail 5, 35 Wheat Road, Darling Harbour →",
+        },
+        // This card is already asking "what does it cost", so it is the one
+        // place the cost page can be linked without adding any weight to the
+        // ask itself — maximum exposure, unchanged centre of gravity.
+        {
+          label: "费用",
+          value: "免费，店里点杯喝的就行",
+          href: "/support",
+          linkLabel: "这活动本身的开销 →",
+        },
       ],
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
@@ -148,7 +163,7 @@ export const copy = {
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
-        "时间雷打不动，每周四同一时段。场地按当周人数定，都在悉尼 CBD 一带、公共交通到得了，前一天发在群里。",
+        "时间雷打不动，每周四上午同一时段。接下来几场固定在达令港的 Vogue Cafe（地址在首屏），走路到 Town Hall 或 Darling Harbour 都很近。万一临时换场地，前一天发在群里。",
         "免费，不售票。报名只是为了估人数。",
         "给大家看东西永远是可选的。有就讲，没有就听，只来听的人一样欢迎。",
         "展示可以，插播不行。你做的东西就是你的宣发，在自己的时段里大方讲；别人讲的时候别转成推销。只来收名单、抓人、拉客的，会被请出去。",
@@ -195,11 +210,15 @@ export const copy = {
           { value: "listen", label: "先来听听" },
         ],
         session: "打算参加哪一场？",
+        // Appended to every option. The dropdown is what people actually
+        // read when choosing, and a date alone lets someone who works
+        // weekday mornings pick one without ever noticing the time.
+        sessionTimeSuffix: "上午 10:00",
         // Without this option someone who works Thursdays has two choices:
         // pick a date they will not attend, or close the page. The first
         // corrupts the headcount the table is booked against; the second is
         // the person lost. Listed last so the default stays a real session.
-        sessionNone: "这几周都来不了",
+        sessionNone: "上午都来不了（想要下班后或周末的场）",
         sessionNoneHint:
           "周四上午上班来不了的话，选这个就行——一样算登记，以后要是开周末或者晚上的场，我按这份名单来找人。",
         // Asked of everyone, not just the people who picked "none". Whether a
@@ -219,7 +238,7 @@ export const copy = {
       // come should see what the thing costs before they commit — but it must
       // never look like a step, or it stops being optional.
       supportNote: "活动免费，这条不变。场地每周会有最低消费或场地费，通常一两百澳元，目前我垫着——",
-      supportNoteCta: "账在这里",
+      supportNoteCta: "这活动的开销",
       supportNoteTail: "。想一起分摊的随意，不分摊照样来。",
       submit: "提交报名",
       submitting: "提交中…",
@@ -229,6 +248,13 @@ export const copy = {
       // the signup that was just created. Anywhere else this ask is a chore.
       successClaimBody: "顺手认领一下你的成员卡片吧——已经按你刚才填的内容预填好了，改两个字就能发布。当天还能直接当桌牌用。",
       successClaimCta: "认领我的名片",
+      // A quiet second line, never a second button. The card feeds the member
+      // wall — the only thing here that accumulates, and the page shown to
+      // anyone considering coming — so two competing CTAs would cost more
+      // there than they could win back in coffee money.
+      successSupportBody: "另外，这个活动的场地费是我先垫的——想搭把手的话，",
+      successSupportCta: "入口在这儿",
+      successSupportTail: "。想一起分摊的随意，不分摊照样来。",
       errorGeneric: "提交失败了。稍等一下再试一次，或者直接扫码加我微信。",
       errorRobot: "人机验证没通过。刷新页面重试一次。",
       errorRequired: "名字和微信号是必填的。",
@@ -254,11 +280,11 @@ export const copy = {
         },
         {
           q: "具体在哪？",
-          a: "报名后发给你。场地按当周人数定，在悉尼 CBD 范围内，公共交通直达。",
+          a: "Vogue Cafe，Retail 5, 35 Wheat Road, Darling Harbour NSW 2000——达令港水边、W Sydney 楼下。接下来几场都在这儿。报名后我也会把地址再发你一次。",
         },
         {
           q: "要钱吗？",
-          a: "不要，不售票，也不会有会员费，这条不变。你的咖啡各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——「这个活动的开销」那一页把每一场的账都摊开写了，想一起分摊的随意，不分摊照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
+          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——「这个活动的开销」那一页说清楚了，想搭把手的随意，不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
           q: "我能在这里推我自己的产品吗？",
@@ -290,23 +316,23 @@ export const copy = {
       meta: {
         title: "这个活动的开销 · Vibe Thursday",
         description:
-          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。这一页把每一场的账都摊开，想一起分摊的随意，不分摊照样来。",
+          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。这一页说清楚这笔钱是什么，以及想搭把手的话去哪儿。",
       },
       eyebrow: "§ 开销",
       title: "活动免费。但它不是零成本。",
-      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么，是把账摊开给你看。",
+      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么，只是把这笔开销说清楚。",
 
       costTitle: "每周的账",
       costItems: [
         {
           label: "场地",
           value: "一两百澳元",
-          note: "有的场地收最低消费，有的收场地费，每周不一样，也跟来多少人没关系。通常在一两百澳元之间，个别场次会更高。每一场的实际数字都记在下面的账本里。",
+          note: "有的场地收最低消费，有的收场地费，每周不一样，也跟来多少人没关系。通常在一两百澳元之间，个别场次会更高。",
         },
         {
-          label: "你的咖啡",
+          label: "你的那一杯",
           value: "各付各的",
-          note: "跟上面那笔无关。你点什么、点多少，都是你自己的账。",
+          note: "场地那边的规矩是每人点一杯——咖啡、茶、气泡水、果汁都行，不一定得是咖啡。这跟上面那笔完全无关，各付各的。",
         },
       ],
       costNote:
@@ -335,31 +361,17 @@ export const copy = {
 
       rulesTitle: "三条不会变的",
       rules: [
-        "不会有人因为没给而被看出来。金额永远只公开总数，名单是自愿上的——给了但不想上名单，跟从来没给过，在这一页上长得一模一样。",
+        "不会有人因为没给而被看出来。谁给了、给了多少，我不会说；「谁在一起撑着这件事」那份名单是自愿上的——给了但不想上名单，跟从来没给过，在这一页上长得一模一样。",
         "给过钱不换来任何东西——不换讲话时间，不换排序，不换任何优待。台上的时间靠做出东西来换，这条对所有人一样，包括我。",
         "多出来的钱不退，滚到下一场，也留着应付场地涨价这类事。不够的我补。",
       ],
 
-      ledgerTitle: "账本",
-      ledgerLede: "每场一行，办完就更新。",
-      ledgerEmpty:
-        "还没有一场用到这个安排——首场的场地是别人白提供的，没有这笔账。下一场之后，这里会出现第一行，每场的实际金额以这张表为准。",
-      ledgerHead: {
-        date: "场次",
-        received: "收到",
-        contributors: "人数",
-        spent: "支出",
-        balance: "结余",
-      },
-      contributorUnit: "人",
-      balanceLabel: "当前结余",
-      balanceNote: "结余只用在后面的场次上，不做别的用途。",
       back: "← 回首页",
     },
 
     footer: {
       tagline: "每周四见。",
-      location: "悉尼 CBD · 每周四 10:00–13:00",
+      location: "达令港 Vogue Cafe · 每周四 10:00–13:00",
       supportLink: "这个活动的开销",
     },
 
@@ -564,9 +576,19 @@ export const copy = {
       subtitle: "Sydney · every Thursday morning",
       lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
-        { label: "When", value: "Thursdays, 10am–1pm" },
-        { label: "Where", value: "Sydney CBD area" },
-        { label: "Cost", value: "Free, just order a drink" },
+        { label: "When", value: "Thursdays, 10am–1pm", href: null, linkLabel: null },
+        {
+          label: "Where",
+          value: "Vogue Cafe · Darling Harbour",
+          href: "https://maps.google.com/?q=Vogue+Cafe+Retail+5,+35+Wheat+Road,+Darling+Harbour+NSW+2000",
+          linkLabel: "Retail 5, 35 Wheat Road, Darling Harbour →",
+        },
+        {
+          label: "Cost",
+          value: "Free, just order a drink",
+          href: "/support",
+          linkLabel: "What running it costs →",
+        },
       ],
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
@@ -668,7 +690,7 @@ export const copy = {
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
-        "The time never moves. The venue is set each week by the headcount, always around Sydney CBD and reachable by public transport, and posted the day before.",
+        "The time never moves — Thursday mornings, always. The next few sessions are at Vogue Cafe on the Darling Harbour waterfront; the address is on the first screen. If a venue ever has to change, it is posted the day before.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
         "Showing something is always optional. Bring it if you have it, otherwise just listen. People who only come to listen are equally welcome.",
         "Show, don't sell. What you built is your marketing — present it properly in your own slot, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
@@ -707,7 +729,8 @@ export const copy = {
           { value: "listen", label: "Just listening" },
         ],
         session: "Which session are you coming to?",
-        sessionNone: "None of these work",
+        sessionTimeSuffix: "10am",
+        sessionNone: "Mornings do not work for me (evening or weekend, please)",
         sessionNoneHint:
           "Thursday mornings are working hours for a lot of people. Pick this and you are still on the list — if an evening or weekend one ever happens, this is who I go to.",
         availability: "What other times could you make?",
@@ -722,7 +745,7 @@ export const copy = {
       },
       supportNote:
         "It is free and stays free. A venue does charge a minimum spend or a room fee each week, usually a hundred or two, which I cover — ",
-      supportNoteCta: "here are the numbers",
+      supportNoteCta: "what running it costs",
       supportNoteTail: ". Chipping in is optional and changes nothing either way.",
       submit: "Sign up",
       submitting: "Sending…",
@@ -730,6 +753,9 @@ export const copy = {
       successBody: "The address and a reminder will land in your inbox. If you left a WeChat ID I will add you to the group too.",
       successClaimBody: "While you are here, claim your member card — it is already prefilled from what you just wrote, so it is a two-word edit away. On the day it doubles as your name badge.",
       successClaimCta: "Claim my card",
+      successSupportBody: "Separately: I cover the venue myself. If you ever feel like chipping in, ",
+      successSupportCta: "there is a page for it",
+      successSupportTail: ". Chipping in is optional and changes nothing either way.",
       errorGeneric: "That did not go through. Give it a moment and try again, or scan the WeChat code below.",
       errorRobot: "The bot check did not pass. Reload the page and try again.",
       errorRequired: "Name and email are required.",
@@ -755,11 +781,11 @@ export const copy = {
         },
         {
           q: "Where exactly?",
-          a: "Sent after you sign up. Always in Sydney CBD, always reachable by public transport.",
+          a: "Vogue Cafe, Retail 5, 35 Wheat Road, Darling Harbour NSW 2000 — on the Darling Harbour waterfront, below W Sydney. That is the venue for the next few sessions. You get the address again after signing up.",
         },
         {
           q: "Does it cost anything?",
-          a: "No. No tickets, no membership fee, and that will not change. Your coffee is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — \"what this costs\" lays out every session's actual numbers, and chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
+          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — \"what this costs\" explains it, and chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
           q: "Can I promote my own product here?",
@@ -802,12 +828,12 @@ export const copy = {
         {
           label: "The venue",
           value: "A$100–200",
-          note: "Some places charge a minimum spend, some charge for the room. It changes week to week, it does not change with how many people come, and the odd session runs higher. Every actual figure is in the books below.",
+          note: "Some places charge a minimum spend, some charge for the room. It changes week to week, it does not change with how many people come, and the odd session runs higher.",
         },
         {
-          label: "Your coffee",
+          label: "Your drink",
           value: "Your own tab",
-          note: "Unrelated to the above. What you order is yours.",
+          note: "The venue asks that everyone at the table orders something — coffee, tea, a soft drink, a juice. It does not have to be coffee. Unrelated to the above, and it is your own tab.",
         },
       ],
       costNote:
@@ -836,31 +862,17 @@ export const copy = {
 
       rulesTitle: "Three things that will not change",
       rules: [
-        "Nobody can be spotted for not giving. Amounts are only ever published as a total, and the list of names is opt-in — someone who chipped in and stayed off it looks exactly like someone who never did.",
+        "Nobody can be spotted for not giving. Who gave and how much is never said, and the thank-you list is opt-in — someone who chipped in and stayed off it looks exactly like someone who never did.",
         "Chipping in buys nothing — not floor time, not billing, not any kind of preference. Time on the floor is earned by building something. That applies to everyone, me included.",
         "Anything left over is not refunded. It rolls into the next session and cushions things like a venue price rise. Shortfalls are on me.",
       ],
 
-      ledgerTitle: "The books",
-      ledgerLede: "One line per session, updated after each one.",
-      ledgerEmpty:
-        "No session has run under this arrangement yet — the first one had a donated venue, so there was no bill. The first line appears after the next one, and this table is the authority on what each session actually cost.",
-      ledgerHead: {
-        date: "Session",
-        received: "In",
-        contributors: "People",
-        spent: "Out",
-        balance: "Balance",
-      },
-      contributorUnit: "people",
-      balanceLabel: "Balance carried",
-      balanceNote: "Whatever is carried goes to future sessions and nothing else.",
       back: "← Back to the home page",
     },
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Sydney CBD · Thursdays 10am–1pm",
+      location: "Vogue Cafe, Darling Harbour · Thursdays 10am–1pm",
       supportLink: "What this costs",
     },
 

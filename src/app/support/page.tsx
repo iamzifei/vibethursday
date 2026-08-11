@@ -3,13 +3,7 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { copy as allCopy, resolveLang } from "@/lib/content";
-import {
-  CONTRIBUTORS,
-  formatAud,
-  ledgerBalance,
-  ledgerRows,
-  SUPPORT_URL,
-} from "@/lib/support";
+import { CONTRIBUTORS, SUPPORT_URL } from "@/lib/support";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -22,20 +16,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 /**
- * What the meetup costs, and where the money that comes in has gone.
+ * What the meetup costs, and where to chip in if you want to.
  *
  * The order of this page is the argument. "It is free" comes first, the bill
  * second, and the way to chip in only after both — reversed, the same facts
  * read as the opening move of charging for entry, which is the one impression
  * this page has to avoid.
+ *
+ * There is no ledger here by decision. An earlier version published what came
+ * in and went out each session; see `@/lib/support` for what that gave up and
+ * why nothing on the page implies otherwise.
  */
 export default async function SupportPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
   const c = allCopy[lang];
   const s = c.support;
-
-  const rows = ledgerRows();
-  const balance = ledgerBalance();
 
   return (
     <div lang={c.htmlLang}>
@@ -168,56 +163,6 @@ export default async function SupportPage({ searchParams }: PageProps) {
                   </li>
                 ))}
               </ol>
-            </div>
-
-            {/* ── The books ────────────────────────────────────────── */}
-            <div className="stack-4">
-              <h2 className="h3">{s.ledgerTitle}</h2>
-              <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                {s.ledgerLede}
-              </p>
-
-              {rows.length === 0 ? (
-                <p className="body-sm">{s.ledgerEmpty}</p>
-              ) : (
-                <>
-                  {/* Wide content scrolls inside itself so the page body never
-                      scrolls sideways on a phone. */}
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="mono body-sm" style={{ width: "100%", minWidth: "460px" }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: "left" }}>{s.ledgerHead.date}</th>
-                          <th style={{ textAlign: "right" }}>{s.ledgerHead.received}</th>
-                          <th style={{ textAlign: "right" }}>{s.ledgerHead.contributors}</th>
-                          <th style={{ textAlign: "right" }}>{s.ledgerHead.spent}</th>
-                          <th style={{ textAlign: "right" }}>{s.ledgerHead.balance}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((row) => (
-                          <tr key={row.date}>
-                            <td>{row.date}</td>
-                            <td style={{ textAlign: "right" }}>{formatAud(row.received)}</td>
-                            <td style={{ textAlign: "right" }}>
-                              {row.contributors} {s.contributorUnit}
-                            </td>
-                            <td style={{ textAlign: "right" }}>{formatAud(row.spent)}</td>
-                            <td style={{ textAlign: "right" }}>{formatAud(row.balance)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <p style={{ margin: 0, color: "var(--fg1)", fontWeight: 600 }}>
-                    {s.balanceLabel} <span className="mono">{formatAud(balance)}</span>
-                  </p>
-                  <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                    {s.balanceNote}
-                  </p>
-                </>
-              )}
             </div>
 
             <p className="body-sm">

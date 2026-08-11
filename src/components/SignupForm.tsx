@@ -327,6 +327,16 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         <a className="btn btn--primary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
           {copy.successClaimCta}
         </a>
+
+        {/* Text, not a button. The claim above is the one action worth pushing
+            here — it feeds the member wall, which is the only thing on this
+            site that accumulates. A second button would split the attention of
+            the highest-intent screen there is, and win far less than it cost. */}
+        <p className="body-sm" style={{ opacity: 0.85 }}>
+          {copy.successSupportBody}
+          <a href={lang === "en" ? "/support?lang=en" : "/support"}>{copy.successSupportCta}</a>
+          {copy.successSupportTail}
+        </p>
       </div>
     );
   }
