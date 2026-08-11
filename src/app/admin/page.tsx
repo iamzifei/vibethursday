@@ -37,10 +37,23 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const withWechat = signups.filter((row) => row.wechat).length;
   const unverified = signups.filter((row) => row.bot_check && row.bot_check !== "verified").length;
 
+  // People who signed up without picking a Thursday: they work weekday
+  // mornings. Kept as its own number because it is the one that answers
+  // "how many are we losing to the timeslot", which the total hides.
+  const noThursday = signups.filter((row) => row.sessions.length === 0).length;
+
+  /** How many picked each other slot. This decides whether a 2nd session runs. */
+  const countSlot = (slot: string) =>
+    signups.filter((row) => row.availability.includes(slot)).length;
+
   const stats = [
     { label: "Total", value: signups.length },
     { label: "Want to demo", value: wantsToDemo },
     { label: "With WeChat", value: withWechat },
+    { label: "Can't do Thu", value: noThursday },
+    { label: "Weekday eve", value: countSlot("weekday_evening") },
+    { label: "Weekend day", value: countSlot("weekend_day") },
+    { label: "Weekend eve", value: countSlot("weekend_evening") },
     { label: "Unverified", value: unverified },
   ];
 

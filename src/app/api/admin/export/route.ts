@@ -10,6 +10,7 @@ const COLUMNS = [
   "demo_intent",
   "first_session",
   "sessions",
+  "availability",
   "building",
   "topic",
   "source",

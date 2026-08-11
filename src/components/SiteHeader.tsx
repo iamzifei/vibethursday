@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VibeThursdayMark } from "@/components/VibeThursdayMark";
 import type { Copy, Lang } from "@/lib/content";
 
 type Props = {
@@ -29,8 +30,21 @@ export function SiteHeader({ lang, copy, switchHref }: Props) {
         <Link
           className="mono"
           href={lang === "en" ? "/?lang=en" : "/"}
-          style={{ fontWeight: 600, letterSpacing: "-0.02em", color: "var(--fg1)" }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+            color: "var(--fg1)",
+          }}
         >
+          {/* Accent-coloured while the wordmark stays foreground: the bridge is
+              the logo, the name is the label, and colouring both flattens them
+              into one shape. Decorative — the link text already says the name. */}
+          <span style={{ color: "var(--accent)", display: "flex" }}>
+            <VibeThursdayMark size={26} />
+          </span>
           {copy.nav.brand}
         </Link>
 

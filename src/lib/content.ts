@@ -195,9 +195,32 @@ export const copy = {
           { value: "listen", label: "先来听听" },
         ],
         session: "打算参加哪一场？",
+        // Without this option someone who works Thursdays has two choices:
+        // pick a date they will not attend, or close the page. The first
+        // corrupts the headcount the table is booked against; the second is
+        // the person lost. Listed last so the default stays a real session.
+        sessionNone: "这几周都来不了",
+        sessionNoneHint:
+          "周四上午上班来不了的话，选这个就行——一样算登记，以后要是开周末或者晚上的场，我按这份名单来找人。",
+        // Asked of everyone, not just the people who picked "none". Whether a
+        // second session is worth running depends on total demand, and a
+        // Thursday regular who would also come on a Saturday is part of that.
+        availability: "除了周四上午，你还能来什么时间？",
+        availabilityHint: "选填，可多选。这是我决定要不要开第二场、开在什么时间的唯一依据——够多的人选同一个时间，那一场就开。",
+        availabilityOptions: [
+          { value: "weekday_evening", label: "工作日晚上" },
+          { value: "weekend_day", label: "周末白天" },
+          { value: "weekend_evening", label: "周末晚上" },
+        ],
         source: "怎么知道这个活动的？",
         sourcePlaceholder: "选填",
       },
+      // Sits under the form rather than inside it. Someone deciding whether to
+      // come should see what the thing costs before they commit — but it must
+      // never look like a step, or it stops being optional.
+      supportNote: "活动免费，这条不变。场地每周会有最低消费或场地费，通常一两百澳元，目前我垫着——",
+      supportNoteCta: "账在这里",
+      supportNoteTail: "。想一起分摊的随意，不分摊照样来。",
       submit: "提交报名",
       submitting: "提交中…",
       successTitle: "收到了。",
@@ -235,7 +258,7 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "不要，各自买单。也不接「花钱换讲话时间」那种赞助——台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
+          a: "不要，不售票，也不会有会员费，这条不变。你的咖啡各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着——「这个活动的开销」那一页把每一场的账都摊开写了，想一起分摊的随意，不分摊照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
           q: "我能在这里推我自己的产品吗？",
@@ -260,9 +283,84 @@ export const copy = {
       alt: "James 的微信二维码",
     },
 
+    // ── 开销 ──────────────────────────────────────────────────────────
+    // 这一页的第一句必须是「免费」，不是「支持我们」。顺序反过来，
+    // 它就从「成本透明」变成了「开始收费的第一步」——那正是要避免的读法。
+    support: {
+      meta: {
+        title: "这个活动的开销 · Vibe Thursday",
+        description:
+          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。这一页把每一场的账都摊开，想一起分摊的随意，不分摊照样来。",
+      },
+      eyebrow: "§ 开销",
+      title: "活动免费。但它不是零成本。",
+      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么，是把账摊开给你看。",
+
+      costTitle: "每周的账",
+      costItems: [
+        {
+          label: "场地",
+          value: "一两百澳元",
+          note: "有的场地收最低消费，有的收场地费，每周不一样，也跟来多少人没关系。通常在一两百澳元之间，个别场次会更高。每一场的实际数字都记在下面的账本里。",
+        },
+        {
+          label: "你的咖啡",
+          value: "各付各的",
+          note: "跟上面那笔无关。你点什么、点多少，都是你自己的账。",
+        },
+      ],
+      costNote:
+        "这笔目前是我先垫的。不是垫不起，是没必要一个人扛着。",
+
+      askTitle: "想一起分摊的话",
+      askBody:
+        "十块二十块都行，一次、偶尔、或者从来不给，都完全没关系。来的人里大多数不会给，这很正常，也不影响任何事。",
+      askScaleNote:
+        "给个参照：一场的场地大概是一两百澳元，到场二十来个人，也就是人均几块钱。不用多给，这不是筹款。",
+      askOptIn:
+        "想上「谁在一起撑着这件事」那份名单的话，付款留言里写个名字就行。不写就不上，我也不会问。",
+      linkCta: "分摊一笔",
+
+      thanksTitle: "谁在一起撑着这件事",
+      thanksLede:
+        "跟开源项目一样，contributor 从来不只是出钱的人：带朋友来的、上去讲过的、帮着张罗的，都在这儿。名单是自愿上的——想上就在转账留言里写个名字，不写就不上，没人会问。",
+      thanksKinds: {
+        money: "分摊过场地",
+        demo: "讲过东西",
+        brought: "带人来过",
+        helped: "帮过忙",
+      },
+      thanksNote:
+        "顺序就是先后，不是排名，也不记谁给了多少。没在这份名单上不代表任何事——大多数人本来就不会来登记。",
+
+      rulesTitle: "三条不会变的",
+      rules: [
+        "不会有人因为没给而被看出来。金额永远只公开总数，名单是自愿上的——给了但不想上名单，跟从来没给过，在这一页上长得一模一样。",
+        "给过钱不换来任何东西——不换讲话时间，不换排序，不换任何优待。台上的时间靠做出东西来换，这条对所有人一样，包括我。",
+        "多出来的钱不退，滚到下一场，也留着应付场地涨价这类事。不够的我补。",
+      ],
+
+      ledgerTitle: "账本",
+      ledgerLede: "每场一行，办完就更新。",
+      ledgerEmpty:
+        "还没有一场用到这个安排——首场的场地是别人白提供的，没有这笔账。下一场之后，这里会出现第一行，每场的实际金额以这张表为准。",
+      ledgerHead: {
+        date: "场次",
+        received: "收到",
+        contributors: "人数",
+        spent: "支出",
+        balance: "结余",
+      },
+      contributorUnit: "人",
+      balanceLabel: "当前结余",
+      balanceNote: "结余只用在后面的场次上，不做别的用途。",
+      back: "← 回首页",
+    },
+
     footer: {
       tagline: "每周四见。",
       location: "悉尼 CBD · 每周四 10:00–13:00",
+      supportLink: "这个活动的开销",
     },
 
     // ── 成员墙 ────────────────────────────────────────────────────────
@@ -609,9 +707,23 @@ export const copy = {
           { value: "listen", label: "Just listening" },
         ],
         session: "Which session are you coming to?",
+        sessionNone: "None of these work",
+        sessionNoneHint:
+          "Thursday mornings are working hours for a lot of people. Pick this and you are still on the list — if an evening or weekend one ever happens, this is who I go to.",
+        availability: "What other times could you make?",
+        availabilityHint: "Optional, pick as many as apply. This is the only thing deciding whether a second session happens and when — enough people on one slot and that slot runs.",
+        availabilityOptions: [
+          { value: "weekday_evening", label: "Weekday evenings" },
+          { value: "weekend_day", label: "Weekend daytime" },
+          { value: "weekend_evening", label: "Weekend evenings" },
+        ],
         source: "How did you hear about this?",
         sourcePlaceholder: "Optional",
       },
+      supportNote:
+        "It is free and stays free. A venue does charge a minimum spend or a room fee each week, usually a hundred or two, which I cover — ",
+      supportNoteCta: "here are the numbers",
+      supportNoteTail: ". Chipping in is optional and changes nothing either way.",
       submit: "Sign up",
       submitting: "Sending…",
       successTitle: "Got it.",
@@ -647,7 +759,7 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "No, everyone pays their own way. No pay-for-stage-time sponsorship either — floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
+          a: "No. No tickets, no membership fee, and that will not change. Your coffee is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it — \"what this costs\" lays out every session's actual numbers, and chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
           q: "Can I promote my own product here?",
@@ -672,9 +784,84 @@ export const copy = {
       alt: "James's WeChat QR code",
     },
 
+    // The first sentence has to be "it's free", not "support us". Reversed, the
+    // page reads as the first step towards charging — the exact reading this
+    // whole design exists to avoid.
+    support: {
+      meta: {
+        title: "What this costs · Vibe Thursday",
+        description:
+          "The meetup is free and stays free. It is not costless though — a venue charges a minimum spend or a room fee each week, usually a hundred or two. This page puts every session's numbers on the table.",
+      },
+      eyebrow: "§ Costs",
+      title: "It is free. It is not costless.",
+      lede: "The important part first: this meetup is free, always will be, and there will never be a ticket or a membership fee. This page is not selling anything — it just puts the numbers on the table.",
+
+      costTitle: "What a week costs",
+      costItems: [
+        {
+          label: "The venue",
+          value: "A$100–200",
+          note: "Some places charge a minimum spend, some charge for the room. It changes week to week, it does not change with how many people come, and the odd session runs higher. Every actual figure is in the books below.",
+        },
+        {
+          label: "Your coffee",
+          value: "Your own tab",
+          note: "Unrelated to the above. What you order is yours.",
+        },
+      ],
+      costNote:
+        "I currently cover that myself. Not unaffordable, just no reason for one person to carry it.",
+
+      askTitle: "If you want to chip in",
+      askBody:
+        "Ten or twenty dollars is plenty. Once, occasionally, or never — all completely fine. Most people who come will not chip in, which is normal and changes nothing.",
+      askScaleNote:
+        "For scale: a session costs roughly a hundred or two, with about twenty people in the room — a few dollars each. There is no need to give more. This is not a fundraiser.",
+      askOptIn:
+        "If you want to be on the \"who keeps this going\" list, put a name in the payment message. Leave it out and you are not listed, and I will not ask.",
+      linkCta: "Chip in",
+
+      thanksTitle: "Who keeps this going",
+      thanksLede:
+        "As in any open source project, a contributor was never only the person who paid: people who brought a friend, who showed something, who helped set up, are all here. The list is opt-in — put a name in the payment message if you want to be on it, leave it out if you do not, and nobody will ask.",
+      thanksKinds: {
+        money: "chipped in",
+        demo: "showed something",
+        brought: "brought people",
+        helped: "helped out",
+      },
+      thanksNote:
+        "The order is when people joined it, not a ranking, and amounts are never recorded. Not being on this list means nothing — most people never put their name down.",
+
+      rulesTitle: "Three things that will not change",
+      rules: [
+        "Nobody can be spotted for not giving. Amounts are only ever published as a total, and the list of names is opt-in — someone who chipped in and stayed off it looks exactly like someone who never did.",
+        "Chipping in buys nothing — not floor time, not billing, not any kind of preference. Time on the floor is earned by building something. That applies to everyone, me included.",
+        "Anything left over is not refunded. It rolls into the next session and cushions things like a venue price rise. Shortfalls are on me.",
+      ],
+
+      ledgerTitle: "The books",
+      ledgerLede: "One line per session, updated after each one.",
+      ledgerEmpty:
+        "No session has run under this arrangement yet — the first one had a donated venue, so there was no bill. The first line appears after the next one, and this table is the authority on what each session actually cost.",
+      ledgerHead: {
+        date: "Session",
+        received: "In",
+        contributors: "People",
+        spent: "Out",
+        balance: "Balance",
+      },
+      contributorUnit: "people",
+      balanceLabel: "Balance carried",
+      balanceNote: "Whatever is carried goes to future sessions and nothing else.",
+      back: "← Back to the home page",
+    },
+
     footer: {
       tagline: "See you Thursday.",
       location: "Sydney CBD · Thursdays 10am–1pm",
+      supportLink: "What this costs",
     },
 
     members: {

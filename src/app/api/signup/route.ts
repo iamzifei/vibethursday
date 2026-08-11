@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 
 const DEMO_INTENTS = new Set(["yes", "maybe", "listen"]);
 
+/** Other times someone could make. Kept in step with `copy.fields.availabilityOptions`. */
+const AVAILABILITY = new Set(["weekday_evening", "weekend_day", "weekend_evening"]);
+
 /** Trims, drops empties, and caps length so one paste cannot fill a column. */
 function clean(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
@@ -90,6 +93,15 @@ export async function POST(request: Request) {
   const sessionRaw = clean(body.firstSession, 10);
   const firstSession = sessionRaw && nextThursdays(12).includes(sessionRaw) ? sessionRaw : null;
 
+  // Whitelisted the same way the session date is: this column is read back as
+  // counts to decide whether a second session is worth running, and a free
+  // text array would make those counts meaningless.
+  const availability = Array.isArray(body.availability)
+    ? [...new Set(body.availability.filter((slot: unknown): slot is string =>
+        typeof slot === "string" && AVAILABILITY.has(slot),
+      ))]
+    : [];
+
   try {
     await saveSignup({
       name,
@@ -99,6 +111,7 @@ export async function POST(request: Request) {
       building: clean(body.building, 1000),
       demoIntent,
       firstSession,
+      availability,
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,

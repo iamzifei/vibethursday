@@ -292,6 +292,18 @@ export default async function Page({ searchParams }: PageProps) {
               sessions={sessions}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
             />
+
+            {/* Deliberately outside the form. Someone deciding whether to come
+                should see what a session costs before committing — but the
+                moment it sits among the fields it reads as a step, and an
+                optional thing that looks like a step is no longer optional. */}
+            <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
+              {c.signup.supportNote}
+              <Link href={lang === "en" ? "/support?lang=en" : "/support"}>
+                {c.signup.supportNoteCta}
+              </Link>
+              {c.signup.supportNoteTail}
+            </p>
           </div>
         </section>
 
@@ -356,6 +368,11 @@ export default async function Page({ searchParams }: PageProps) {
           <span className="h3 hl">{c.footer.tagline}</span>
           <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
             {c.footer.location}
+          </span>
+          <span className="body-sm">
+            <Link href={lang === "en" ? "/support?lang=en" : "/support"}>
+              {c.footer.supportLink}
+            </Link>
           </span>
         </div>
       </footer>

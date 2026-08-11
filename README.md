@@ -1,7 +1,7 @@
 # Vibe Thursday
 
-Signup site for a weekly AI builders meetup in Sydney — every Thursday, 3–6pm,
-Sydney CBD.
+Signup site for a weekly AI builders meetup in Sydney — every Thursday,
+10am–1pm, Sydney CBD.
 
 Chinese-first with an English view at `/?lang=en`. Collects an email and,
 because most announcements currently go through a WeChat group, an optional
@@ -35,6 +35,7 @@ WeChat ID.
 pnpm install
 cp .env.example .env.local   # then fill in DATABASE_URL
 pnpm dev
+pnpm test                    # ledger arithmetic, Node's own runner, no framework
 ```
 
 `.env.example` ships Cloudflare's published Turnstile test pair, which always
@@ -113,6 +114,51 @@ enumerate who has signed up.
 Sorting on the wall is by **most recent session**, never by votes. This answers
 "who is around this Thursday", which is what a weekly meetup needs; ranking it
 would quietly turn it into a popularity contest.
+
+## What it costs
+
+The meetup is free and stays free — no ticket, no membership. It is not
+costless: a venue charges either a minimum spend or a room fee, usually a
+hundred or two, whoever shows up. `/support` puts those numbers in public and
+lets people chip in if they want to.
+
+**The order of that page is the argument.** "It is free" comes first, the bill
+second, and the way to contribute only after both. Reversed, the same three
+facts read as the opening move of charging for entry — which is the single
+impression that would damage the room, so the sequence is not cosmetic.
+
+Three sentences on the page are load-bearing and should survive future edits:
+*there will never be a ticket or a membership fee*, *nobody can be spotted for
+not giving*, and *chipping in buys nothing* — not floor time, not billing, not
+preference. The last one keeps the house rule that stage time is earned by
+building something, not bought.
+
+Four consequences follow in the code:
+
+- **No copy states a fixed price.** The charge moves with the venue, and copy
+  naming a figure starts lying the first week it changes — nobody edits eight
+  strings across two languages to keep up. The copy gives a range and points at
+  the ledger, which carries the real number for each session. A test enforces
+  this: a range is allowed, a lone price is not.
+- The entry points are the `/support` page, a line **below** the signup form,
+  the "does it cost anything" FAQ answer, and the footer. It is deliberately
+  **not** in the nav, and deliberately **not** a field inside the form —
+  anything optional that looks like a step stops being optional.
+- The contributor list is **opt-in, and money is one of four kinds** alongside
+  showing something, bringing people, and helping out. A list of who paid,
+  shown to twenty people around one table, is legible in a way a GitHub sponsor
+  wall is not: everyone can see who is missing. Opt-in means absence carries no
+  information, and mixing the kinds means being listed says nothing about
+  anyone's bank balance. Amounts are never recorded per person.
+- Surplus is never refunded. It carries forward, which is what absorbs a week
+  that needs a screen or a venue price rise. Updating the ledger after a session
+  is a one-line edit plus a deploy; a table would need an admin screen to be
+  useful, and this is three numbers a week.
+
+`SUPPORT_URL` in `src/lib/support.ts` is a committed constant rather than an
+environment variable. A Ko-fi page is a public address; making it configuration
+bought nothing and cost a footgun, since deploying without the variable set
+renders a page with no way to give that looks identical to a working one.
 
 ## Viewing signups
 

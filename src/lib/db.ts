@@ -114,6 +114,12 @@ export function ensureSchema(): Promise<void> {
        WHERE sessions = '{}' AND first_session IS NOT NULL
     `);
 
+    // Which other times this person could make. Asked of everyone, not just
+    // the people who cannot do Thursdays: whether a second session is worth
+    // running depends on total demand, and a Thursday regular who would also
+    // come on a Saturday is part of that number.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS availability text[] NOT NULL DEFAULT '{}'`);
+
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
     // in, which is what keeps the wall to people who actually turned up: there
@@ -196,6 +202,8 @@ export type SignupInput = {
   topic: string | null;
   firstSession: string | null;
   source: string | null;
+  /** Other times this person could make. Whitelisted by the route. */
+  availability: string[];
   lang: string;
   /** Turnstile verdict for this submission: verified / skipped / unavailable. */
   botCheck: string;
@@ -241,8 +249,8 @@ export async function saveSignup(input: SignupInput): Promise<void> {
 
   if (!target) {
     await pool.query(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, sessions)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, sessions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
                CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)`,
       [
         input.name,
@@ -255,6 +263,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
         input.lang,
         input.botCheck,
         input.topic,
+        input.availability,
       ],
     );
 
@@ -295,6 +304,12 @@ export async function saveSignup(input: SignupInput): Promise<void> {
                          ORDER BY 1
                        ),
        source        = COALESCE($8, source),
+       -- Replace rather than union: unlike sessions, this is a current
+       -- preference and someone whose Saturdays stopped working must be able
+       -- to say so. An empty submission leaves it alone, so the compact
+       -- returning-visitor form does not silently wipe an earlier answer.
+       availability  = CASE WHEN cardinality($12::text[]) = 0
+                            THEN availability ELSE $12::text[] END,
        lang          = $9,
        bot_check     = $10,
        updated_at    = now()
@@ -311,6 +326,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       input.lang,
       input.botCheck,
       input.topic,
+      input.availability,
     ],
   );
 }
@@ -330,6 +346,8 @@ export type SignupRow = {
   topic: string | null;
   /** Every session this person has signed up for, oldest first. */
   sessions: string[];
+  /** Other times they said they could make. Empty when they did not answer. */
+  availability: string[];
   created_at: string;
 };
 
@@ -347,7 +365,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS sessions,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            source, lang, bot_check,
+            availability, source, lang, bot_check,
             to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
      FROM signups
      ORDER BY created_at DESC`,

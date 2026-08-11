@@ -248,6 +248,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           demoIntent: data.get("demoIntent"),
           topic: data.get("topic"),
           firstSession: data.get("firstSession"),
+          // getAll, not get: this is a checkbox group and `get` would silently
+          // send only whichever box happens to be first in the DOM.
+          availability: data.getAll("availability"),
           source: data.get("source"),
           company: data.get("company"),
           turnstileToken: token,
@@ -482,8 +485,34 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
                 {session.label}
               </option>
             ))}
+            {/* "none" is not a date, so the route's whitelist turns it into
+                null and the row is stored with no sessions — which is already
+                a valid state, so this needs no schema or API change. Last in
+                the list, and never the default, so nothing changes for someone
+                who is actually coming. */}
+            <option value="none">{copy.fields.sessionNone}</option>
           </select>
+          <p className="body-sm" style={{ color: "var(--fg3)", marginTop: "var(--space-2)" }}>
+            {copy.fields.sessionNoneHint}
+          </p>
         </div>
+
+        {/* Shown to everyone rather than only to whoever picked "none". A
+            Thursday regular who would also come on a Saturday counts towards
+            whether a Saturday is worth running, and asking only the people who
+            cannot make Thursdays would undercount that demand. */}
+        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="label">{copy.fields.availability}</legend>
+          <div className="choice-group">
+            {copy.fields.availabilityOptions.map((option) => (
+              <label className="choice" key={option.value}>
+                <input type="checkbox" name="availability" value={option.value} />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="field-hint">{copy.fields.availabilityHint}</p>
+        </fieldset>
 
         <div>
           <label className="label" htmlFor={fieldId("source")}>
