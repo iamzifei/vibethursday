@@ -51,8 +51,13 @@ function sydneyHour(): number {
   }).format(new Date()));
 }
 
-/** The session runs 10:00-13:00; after that, today's is over. */
-const SESSION_END_HOUR = 13;
+/**
+ * The session runs 10:00-12:00; after that, today's is over.
+ *
+ * Keep this in step with the times in `content.ts` — people may stay on for
+ * lunch afterwards, but that is not part of the session anyone signs up for.
+ */
+const SESSION_END_HOUR = 12;
 
 /**
  * The next `count` Thursdays that are being run, as ISO date strings.

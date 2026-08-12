@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { isAdmin } from "@/lib/admin-auth";
 import { listAllMembers, listSignups } from "@/lib/db";
+import { nextThursdays } from "@/lib/sessions";
+import { countPerSession } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
 // Always read live data, and keep this page out of any search index.
@@ -46,8 +48,16 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const countSlot = (slot: string) =>
     signups.filter((row) => row.availability.includes(slot)).length;
 
+  const nextSession = nextThursdays(1)[0];
+  const perSession = countPerSession(signups, [nextSession]);
+  const nextSessionRow = perSession.find((session) => session.date === nextSession);
+
   const stats = [
     { label: "Total", value: signups.length },
+    // The headcount for the Thursday that is actually coming up. Kept first
+    // among the per-session numbers because it is the one question this page
+    // gets opened to answer.
+    { label: `Next session ${nextSession}`, value: nextSessionRow?.total ?? 0 },
     { label: "Want to demo", value: wantsToDemo },
     { label: "With WeChat", value: withWechat },
     { label: "Can't do Thu", value: noThursday },
@@ -94,6 +104,46 @@ export default async function AdminPage({ searchParams }: PageProps) {
           NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
         </p>
       )}
+
+      {/* Headcount per Thursday. "New" is the number this page exists for:
+          working it out by hand means diffing WeChat handles between exports,
+          because a returning person does not create a new row. */}
+      <section className="stack-4" id="sessions">
+        <div className="group-head">
+          <h2 className="h3">Per session</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            Signed up, not turnout — the first session ran at about 70–77% of it.
+          </span>
+        </div>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Signed up</th>
+                <th scope="col">New</th>
+                <th scope="col">Returning</th>
+                <th scope="col">Want to demo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perSession.map((session) => (
+                <tr key={session.date}>
+                  <td className="mono" style={{ color: session.date === nextSession ? "var(--fg1)" : undefined }}>
+                    {session.date}
+                    {session.date === nextSession ? " ← next" : ""}
+                  </td>
+                  <td className="mono">{session.total}</td>
+                  <td className="mono">{session.firstTimers}</td>
+                  <td className="mono">{session.total - session.firstTimers}</td>
+                  <td className="mono">{session.wantsToDemo}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div>
         <a className="btn btn--secondary" href={`/api/admin/export?key=${encodeURIComponent(key!)}`}>
