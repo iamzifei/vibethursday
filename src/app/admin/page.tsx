@@ -105,9 +105,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </p>
       )}
 
-      {/* Headcount per Thursday. "New" is the number this page exists for:
-          working it out by hand means diffing WeChat handles between exports,
-          because a returning person does not create a new row. */}
+      {/* Headcount per Thursday. Deliberately only headcounts: see the note in
+          signup-stats.ts for why "how many are new" cannot be answered here. */}
       <section className="stack-4" id="sessions">
         <div className="group-head">
           <h2 className="h3">Per session</h2>
@@ -116,14 +115,21 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </span>
         </div>
 
+        <p className="alert">
+          This is everyone who picked that date, not who is new. Past Thursdays are never
+          selectable, so someone who signs up the day after a session can only pick the next
+          one — which makes them look like a first-timer. Who still needs pulling into the
+          WeChat group is a set difference against{" "}
+          <code>sydney-meetup/data/已处理微信号.txt</code>, and this database does not know
+          who is in the group.
+        </p>
+
         <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
                 <th scope="col">Session</th>
                 <th scope="col">Signed up</th>
-                <th scope="col">New</th>
-                <th scope="col">Returning</th>
                 <th scope="col">Want to demo</th>
               </tr>
             </thead>
@@ -135,8 +141,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     {session.date === nextSession ? " ← next" : ""}
                   </td>
                   <td className="mono">{session.total}</td>
-                  <td className="mono">{session.firstTimers}</td>
-                  <td className="mono">{session.total - session.firstTimers}</td>
                   <td className="mono">{session.wantsToDemo}</td>
                 </tr>
               ))}

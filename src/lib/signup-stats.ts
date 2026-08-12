@@ -17,11 +17,28 @@ export type SessionCount = {
   date: string;
   /** Everyone whose signup includes this date. */
   total: number;
-  /** Of those, the ones this is the first session for. */
-  firstTimers: number;
   /** Of those, the ones who said they want to demo. */
   wantsToDemo: number;
 };
+
+/*
+ * There is deliberately no "first timers" count here.
+ *
+ * It looks derivable — the earliest date in someone's `sessions` — but that is
+ * not when they arrived, it is the earliest session the form could still offer
+ * them, because past Thursdays are never selectable. Someone who signed up the
+ * day after a session shows up as a first-timer for the next one, however long
+ * they have been around.
+ *
+ * Measured 2026-08-12: 26 people had 2026-08-13 as their earliest session, and
+ * all 26 were already in the WeChat group. The real increment that day was 1.
+ * That gap is not a rounding error, and a column claiming otherwise on this
+ * page would be read as the number to pull people into the group by.
+ *
+ * Who is actually new is the set of WeChat handles not yet in
+ * `sydney-meetup/data/已处理微信号.txt` — a question this database cannot
+ * answer, since it does not know who is in the group.
+ */
 
 /**
  * Signups grouped by the session they picked.
@@ -30,6 +47,9 @@ export type SessionCount = {
  * their existing row rather than creating a new one — which is why a headcount
  * for a given Thursday can only be read from that array, never from
  * `created_at` or `first_session` (the latter is only the most recent pick).
+ *
+ * These are signups, not turnout: the first session ran at roughly 70-77% of
+ * its number.
  *
  * `seedDates` are always returned, at zero if nobody has signed up for them
  * yet, so an upcoming session shows as an empty row rather than disappearing.
@@ -49,7 +69,7 @@ export function countPerSession(
     const existing = byDate.get(date);
     if (existing) return existing;
 
-    const created: SessionCount = { date, total: 0, firstTimers: 0, wantsToDemo: 0 };
+    const created: SessionCount = { date, total: 0, wantsToDemo: 0 };
     byDate.set(date, created);
     return created;
   };
@@ -57,16 +77,10 @@ export function countPerSession(
   for (const date of seedDates) rowFor(date);
 
   for (const signup of signups) {
-    // Sort defensively rather than trusting the caller: "first session" is the
-    // number this whole table exists for, and getting it from an out-of-order
-    // array would be wrong in a way nobody would notice.
-    const ordered = [...new Set(signup.sessions)].sort();
-    const earliest = ordered[0];
-
-    for (const date of ordered) {
+    // Deduplicated so a date stored twice cannot inflate a headcount.
+    for (const date of new Set(signup.sessions)) {
       const session = rowFor(date);
       session.total += 1;
-      if (date === earliest) session.firstTimers += 1;
       if (signup.demo_intent === "yes") session.wantsToDemo += 1;
     }
   }
