@@ -200,6 +200,12 @@ export const copy = {
         // 退路留在最后一句。
         topicHint:
           "一句话就够。这是现场最容易帮到你的一句——说得越具体，越可能有人当场接上。它会显示在你成员卡片的「本周想聊」，每周都可以改。想不到就先空着。",
+        // 08-13 有人反馈：来之前翻过成员墙，对几个人先有了印象，但墙上只有一部分人，
+        // 剩下的还得现场花时间聊，聊完才发现不相关。当天实测 56 份报名只有 14 张卡在墙上——
+        // 缺的不是意愿，是「认领 + 发布」两道闸。这个勾选把两道闸压成一个明示的同意。
+        publishCard: "把上面这些放到成员墙上",
+        publishCardHint:
+          "勾了的话，你的名字、在做什么、这周想聊什么会出现在 vibethursday.com/members，别人来之前就能知道你是谁、要不要找你聊。邮箱和微信号永远不会出现在上面。随时可以改，也可以撤下来。",
         contactPrivacy: "这两栏只有我（活动组织者）看得到。不公开、不给第三方、不拿去发广告，也不会有人拿它加你推销。",
         building: "你在做什么？",
         buildingPlaceholder: "在做的产品、在折腾的东西、或者只是最近在学什么。一两句就够。",
@@ -748,6 +754,9 @@ export const copy = {
         topicPlaceholder: "An iOS cofounder / how the R&D tax offset actually gets claimed / how other people's AI workflows look",
         topicHint:
           "One line is enough. This is the line most likely to get you helped on the day — the more specific it is, the more likely someone picks it up. It shows on your member card as \"This week\", and you can change it every week. Leave it blank if nothing comes to mind.",
+        publishCard: "Put this on the member wall",
+        publishCardHint:
+          "Tick this and your name, what you are working on, and what you want to talk about this week show up at vibethursday.com/members, so people can work out who to find before they arrive. Your email and WeChat ID never appear there. You can edit it or take it down whenever you like.",
         contactPrivacy: "Both fields are visible only to me, the organiser. Never published, never passed to anyone else, never used for marketing.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",

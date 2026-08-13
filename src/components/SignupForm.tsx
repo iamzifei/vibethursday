@@ -251,6 +251,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           // getAll, not get: this is a checkbox group and `get` would silently
           // send only whichever box happens to be first in the DOM.
           availability: data.getAll("availability"),
+          // Boolean, not the browser's "on": the route only publishes on a
+          // strict === true, so anything looser would silently never publish.
+          publishCard: data.get("publishCard") !== null,
           source: data.get("source"),
           company: data.get("company"),
           turnstileToken: token,
@@ -465,6 +468,23 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           placeholder={copy.fields.topicPlaceholder}
         />
         <p className="field-hint">{copy.fields.topicHint}</p>
+      </div>
+
+      {/* Outside the identity block on purpose, so it shows for returning
+          visitors too — they are exactly the people who signed up before the
+          wall existed and are not on it. The card is built from what the
+          database already holds, so it works even when this compact form does
+          not re-ask for "what are you working on".
+
+          Unticked by default, and it stays unticked-by-default forever: this is
+          the only place anyone is told that "what are you working on" can
+          become public, so a pre-ticked box would be consent nobody gave. */}
+      <div>
+        <label className="consent">
+          <input type="checkbox" name="publishCard" />
+          <span>{copy.fields.publishCard}</span>
+        </label>
+        <p className="field-hint">{copy.fields.publishCardHint}</p>
       </div>
 
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>

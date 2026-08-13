@@ -597,6 +597,36 @@ select.field {
 }
 .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* A single opt-in, not one of a set of options.
+   `.choice` hides its input and signals state by lighting the whole panel,
+   which reads as "the selected one" among siblings but as an inert panel when
+   it stands alone. A consent box nobody recognises as a checkbox is a consent
+   box nobody ticks, so this variant keeps a real, visible control. */
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: color var(--dur-normal);
+}
+
+.consent input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  /* Native control on purpose: no custom box to get wrong for screen readers,
+     touch targets, or forced-colors mode. */
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.consent:has(input:checked) { color: var(--fg1); }
+.consent:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 4px; }
+
 /* QR plate. Deliberately a white card on the dark page: scanners rely on dark
    modules over a light field, and inverting a QR breaks a good number of them.
    The image is never scaled up past its native 712px for the same reason. */

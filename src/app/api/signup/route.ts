@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveSignup } from "@/lib/db";
+import { publishCardForSignup, saveSignup } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -102,8 +102,15 @@ export async function POST(request: Request) {
       ))]
     : [];
 
+  // Strict `=== true`: anything else, including the string "false" a hand-rolled
+  // client might send, means the box was not ticked. Publishing someone's card
+  // is not a thing to do on a truthy value.
+  const publishCard = body.publishCard === true;
+
+  let signupId: string;
+
   try {
-    await saveSignup({
+    signupId = await saveSignup({
       name,
       email,
       wechat,
@@ -121,5 +128,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 
+  // Deliberately after the signup is safely stored, and deliberately not
+  // allowed to fail the request: the signup is the thing that must not be lost.
+  // A card that did not get published is recoverable by the person at /claim;
+  // a signup that 500ed is a headcount the venue booking never hears about.
+  if (publishCard) {
+    try {
+      await publishCardForSignup(signupId);
+    } catch (error) {
+      console.error("[signup] saved, but publishing the member card failed", error);
+    }
+  }
+
+  // No member cookie is issued here, unlike /claim. That route rate-limits the
+  // same soft name-plus-contact match to six attempts an hour precisely because
+  // it hands out edit access to a card; handing the same access out from an
+  // open signup form would make "sign up as someone whose WeChat ID you know"
+  // a way to take over their card. Editing still goes through /claim.
   return NextResponse.json({ ok: true });
 }

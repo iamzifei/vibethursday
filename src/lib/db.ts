@@ -228,7 +228,7 @@ export type SignupInput = {
  * for week two and filled the optional email in this time", and it failed
  * permanently: every retry took the same branch.
  */
-export async function saveSignup(input: SignupInput): Promise<void> {
+export async function saveSignup(input: SignupInput): Promise<string> {
   await ensureSchema();
 
   const pool = getPool();
@@ -248,10 +248,11 @@ export async function saveSignup(input: SignupInput): Promise<void> {
   const target = existing.rows[0];
 
   if (!target) {
-    await pool.query(
+    const inserted = await pool.query<{ id: string }>(
       `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, sessions)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)`,
+               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
+       RETURNING id::text AS id`,
       [
         input.name,
         input.email,
@@ -267,7 +268,7 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       ],
     );
 
-    return;
+    return inserted.rows[0].id;
   }
 
   /**
@@ -328,6 +329,50 @@ export async function saveSignup(input: SignupInput): Promise<void> {
       input.topic,
       input.availability,
     ],
+  );
+
+  return target.id;
+}
+
+/**
+ * Puts a signup's card on the wall, for someone who ticked the box asking for
+ * exactly that.
+ *
+ * This exists because claiming was a two-gate funnel — find your card at
+ * /claim, then publish it in the editor — and on 2026-08-13 only 14 of 56
+ * signups had made it through both. The wall is what lets people work out who
+ * is worth talking to *before* they arrive, so a wall holding a quarter of the
+ * room only does a quarter of its job.
+ *
+ * Consent is the reason this is a checkbox and not automatic. `building` is
+ * the field people want published, and the form never said whether it was
+ * public — publishing it on everyone's behalf would turn something written for
+ * the organiser into something written for the internet. Email and WeChat ID
+ * are never copied here; the form promises those stay private.
+ *
+ * Three things it deliberately does not do on an existing card:
+ *
+ *   - It does not overwrite `display_name` / `bio` / `looking_for`. Someone who
+ *     edited their card has said more about themselves than the signup form
+ *     ever asked, and a later signup must not undo that.
+ *   - It does not clear `hidden`. Taking your card down is an explicit act; a
+ *     tickbox on a different form is not consent to reverse it.
+ *   - It does not unpublish when the box is left unticked. The box means "put
+ *     me up", not "here is my current wall setting" — the card's owner controls
+ *     that from /me.
+ */
+export async function publishCardForSignup(signupId: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `INSERT INTO members (signup_id, slug, display_name, bio, looking_for, published_at)
+     SELECT g.id, $2, g.name, g.building, g.topic, now()
+       FROM signups g
+      WHERE g.id = $1
+     ON CONFLICT (signup_id) DO UPDATE
+        SET published_at = COALESCE(members.published_at, now()),
+            updated_at   = now()`,
+    [signupId, fallbackSlug(signupId)],
   );
 }
 
