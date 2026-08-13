@@ -482,6 +482,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
             </label>
           ))}
         </div>
+        {/* Says out loud that a half-finished thing, or just a question, is
+            enough to host a table. Three people ticked "maybe" on 2026-08-13
+            and none of them hosted — the bar they imagined was higher than
+            the real one, and nothing on this form said otherwise. */}
+        <p className="field-hint">{copy.fields.demoIntentHint}</p>
       </fieldset>
 
       <div className="grid-auto">

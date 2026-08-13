@@ -39,7 +39,7 @@ export const copy = {
       subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
-        { label: "时间", value: "每周四 10:00–12:00", href: null, linkLabel: null },
+        { label: "时间", value: "每周四 10:00 开门 · 10:30 开始", href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
         // first screen rather than in a message the day before.
         {
@@ -104,24 +104,24 @@ export const copy = {
       title: "每周同一个节奏，不变。",
       slots: [
         {
-          time: "10:00–10:45",
-          title: "陆续到场 · 自由聊",
-          note: "不急着开场。这一段是留给还在路上的人的，晚到不会错过什么。",
+          time: "10:00–10:30",
+          title: "开门 · 点杯喝的 · 随便聊",
+          note: "不急着开场。场地在二楼，上楼前先把饮料点了——中途服务员进来问单会打断正在说话的人。晚到不会错过什么。",
         },
         {
-          time: "10:45–11:15",
-          title: "一轮自我介绍",
-          note: "每人 60 秒，硬计时。三件事：怎么称呼、在做什么、今天想从这儿拿走什么。第三件最重要，说具体点，桌上说不定就有人能接。",
+          time: "10:30–10:40",
+          title: "只有新朋友做个自我介绍",
+          note: "45 秒，三件事：怎么称呼、在做什么、今天想拿走什么。来过的人不用再讲一遍——三十个人轮一圈要半小时，而且谁也记不住三十个人。",
         },
         {
-          time: "11:15–12:00",
-          title: "谁想给大家看东西",
-          note: "讲 5 分钟加问答 5 分钟，硬计时，最多 4 位。宁可少而透，不凑数。想讲在报名时勾一下，现场临时想讲也行。",
+          time: "10:40–11:50",
+          title: "小桌",
+          note: "分 3–4 桌，每桌一个话题或一个产品。随时串桌，想听哪个去哪个——不用等到聊不下去才走，走开不用打招呼也不用说再见，这个形式本来就该这么用。",
         },
         {
           time: "12:00 之后",
-          title: "自愿留下吃午饭",
-          note: "不强制。想接着聊的一起吃，赶时间的 12 点就走。",
+          title: "接着聊 · 午饭",
+          note: "不强制。想接着聊的一起走，赶时间的 12 点就走。上一场散场后又聊了一个多小时，那一段往往是最好的。",
         },
       ],
     },
@@ -165,8 +165,8 @@ export const copy = {
         "只来两个人也照办。",
         "时间雷打不动，每周四上午同一时段。接下来几场固定在达令港的 Vogue Cafe（地址在首屏），走路到 Town Hall 或 Darling Harbour 都很近。万一临时换场地，前一天发在群里。",
         "免费，不售票。报名只是为了估人数。",
-        "给大家看东西永远是可选的。有就讲，没有就听，只来听的人一样欢迎。",
-        "展示可以，插播不行。你做的东西就是你的宣发，在自己的时段里大方讲；别人讲的时候别转成推销。只来收名单、抓人、拉客的，会被请出去。",
+        "开一桌永远是可选的。想开就开，不想开就串桌听，只来听的人一样欢迎。",
+        "展示可以，插播不行。你做的东西就是你的宣发，在自己那一桌大方讲；别人那一桌不是你的场子。只来收名单、抓人、拉客的，会被请出去。",
       ],
     },
 
@@ -203,12 +203,17 @@ export const copy = {
         contactPrivacy: "这两栏只有我（活动组织者）看得到。不公开、不给第三方、不拿去发广告，也不会有人拿它加你推销。",
         building: "你在做什么？",
         buildingPlaceholder: "在做的产品、在折腾的东西、或者只是最近在学什么。一两句就够。",
-        demoIntent: "这次想 demo 吗？",
+        // 「开一桌」不是「demo」：小桌制下开桌门槛低到「有一个问题」就够，
+        // 而 demo 这个词会让人以为要有做完的东西可展示。选项的存储值仍是
+        // yes/maybe/listen —— signup-stats.ts 与 /admin 按它统计，不能动。
+        demoIntent: "这次想开一桌吗？",
         demoOptions: [
-          { value: "yes", label: "想讲" },
+          { value: "yes", label: "想开一桌" },
           { value: "maybe", label: "也许" },
           { value: "listen", label: "先来听听" },
         ],
+        demoIntentHint:
+          "门槛很低：不用做完，不用准备幻灯片，做了一半卡住的反而最好聊。手上没产品也行，一个问题就能开一桌。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -268,7 +273,7 @@ export const copy = {
       items: [
         {
           q: "我什么都还没做出来，能来吗？",
-          a: "能。Demo 是可选的，来听的人永远比讲的人多。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
+          a: "能。开一桌是可选的，串桌听的人永远比开桌的人多。而且开桌的门槛也很低——不用做完，不用准备幻灯片，做了一半卡住的反而最好聊；手上没产品也行，一个问题就能开一桌。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -303,7 +308,7 @@ export const copy = {
         },
         {
           q: "我能在这里推我自己的产品吗？",
-          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，在自我介绍那一句「今天想拿走什么」里说，或者在你自己的分享时段里说。唯一的界线是：别人在讲的时候，那是别人的时间。这条对所有人一样，包括我。",
+          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，写在你的成员卡上，或者干脆自己开一桌。唯一的界线是：别人那一桌不是你的场子。这条对所有人一样，包括我。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -395,7 +400,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "达令港 Vogue Cafe · 每周四 10:00–12:00",
+      location: "达令港 Vogue Cafe · 每周四 10:00 开门，10:30 开始",
       supportLink: "这个活动的开销",
     },
 
@@ -600,7 +605,7 @@ export const copy = {
       subtitle: "Sydney · every Thursday morning",
       lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
-        { label: "When", value: "Thursdays, 10am–12pm", href: null, linkLabel: null },
+        { label: "When", value: "Thursdays · doors 10am, starts 10:30am", href: null, linkLabel: null },
         {
           label: "Where",
           value: "Vogue Cafe · Darling Harbour",
@@ -659,24 +664,24 @@ export const copy = {
       title: "Same rhythm every week.",
       slots: [
         {
-          time: "10:00–10:45am",
-          title: "Arrive · open chat",
-          note: "No rush to start. This stretch is for the people still on their way, so arriving late costs you nothing.",
+          time: "10:00–10:30am",
+          title: "Doors · order a drink · open chat",
+          note: "No rush to start. We are upstairs, so order downstairs on your way up — a waiter taking orders mid-session cuts across whoever is talking. Arriving late costs you nothing.",
         },
         {
-          time: "10:45–11:15am",
-          title: "Intros round",
-          note: "Sixty seconds each, hard timer. Three things: your name, what you are building, and what you want to walk away with today. The third one matters most. Be specific and someone at the table may be able to help.",
+          time: "10:30–10:40am",
+          title: "First-timers introduce themselves",
+          note: "Forty-five seconds, three things: your name, what you are building, what you want to walk away with. Regulars skip it — thirty people take half an hour to go around, and nobody remembers thirty names anyway.",
         },
         {
-          time: "11:15am–12:00pm",
-          title: "Anyone who wants to show something",
-          note: "Five minutes plus five for questions, hard timer, four people max. Better to go deep on a few than to fill slots. Tick the box when you sign up, or just volunteer on the day.",
+          time: "10:40–11:50am",
+          title: "Small tables",
+          note: "Three or four tables, one topic or one product each. Move between them whenever you like — you do not have to wait until a conversation dries up, and leaving needs no hello and no goodbye. That is how this format is meant to work.",
         },
         {
           time: "From 12:00pm",
-          title: "Optional lunch",
-          note: "Entirely optional. Stay if you want to keep talking, leave at twelve if you do not.",
+          title: "Keep talking · lunch",
+          note: "Entirely optional. Stay on if you want to keep going, leave at twelve if you do not. Last time the hour after we wrapped was the best part.",
         },
       ],
     },
@@ -716,8 +721,8 @@ export const copy = {
         "It runs even if two people show up.",
         "The time never moves — Thursday mornings, always. The next few sessions are at Vogue Cafe on the Darling Harbour waterfront; the address is on the first screen. If a venue ever has to change, it is posted the day before.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
-        "Showing something is always optional. Bring it if you have it, otherwise just listen. People who only come to listen are equally welcome.",
-        "Show, don't sell. What you built is your marketing — present it properly in your own slot, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
+        "Hosting a table is always optional. Host one if you want to, otherwise move between them and listen. People who only come to listen are equally welcome.",
+        "Show, don't sell. What you built is your marketing — present it properly at your own table, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
       ],
     },
 
@@ -746,12 +751,14 @@ export const copy = {
         contactPrivacy: "Both fields are visible only to me, the organiser. Never published, never passed to anyone else, never used for marketing.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
-        demoIntent: "Want to demo this time?",
+        demoIntent: "Want to host a table this time?",
         demoOptions: [
-          { value: "yes", label: "Yes" },
+          { value: "yes", label: "Yes, I'll host one" },
           { value: "maybe", label: "Maybe" },
           { value: "listen", label: "Just listening" },
         ],
+        demoIntentHint:
+          "The bar is low: it does not have to be finished, there are no slides, and something you are half-way through and stuck on makes for a better table than something that works. You do not even need a product — one question is enough to host a table.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10am",
         sessionNone: "Mornings do not work for me (evening or weekend, please)",
@@ -793,7 +800,7 @@ export const copy = {
       items: [
         {
           q: "I have not built anything yet. Can I come?",
-          a: "Yes. Demos are optional and there are always more listeners than presenters. The only real bar is genuine interest — this is not a networking room.",
+          a: "Yes. Hosting a table is optional, and there are always more people moving between tables than hosting one. The bar for hosting is low too: nothing has to be finished, there are no slides, and something you are stuck half-way through beats something that works. You do not even need a product — one question is enough. The only real bar is genuine interest — this is not a networking room.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -828,7 +835,7 @@ export const copy = {
         },
         {
           q: "Can I promote my own product here?",
-          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs in the \"what you want to walk away with\" line of your intro, or in your own slot if you are showing something. The only line is that while someone else is talking, that time is theirs. That applies to everyone, me included.",
+          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs on your member card, or at a table you host yourself. The only line is that someone else's table is not your stage. That applies to everyone, me included.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -920,7 +927,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Vogue Cafe, Darling Harbour · Thursdays 10am–12pm",
+      location: "Vogue Cafe, Darling Harbour · Thursdays, doors 10am",
       supportLink: "What this costs",
     },
 
