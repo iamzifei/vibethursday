@@ -129,7 +129,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 04 — 现场",
       title: "每一场都留了几张。",
-      lede: "为保护参与者，照片里的人脸都做了处理。往下每加一场，就多一个折叠的相册。",
+      lede: "为保护参与者，照片里的人脸都做了处理，处理不掉的那几张就不放上来。往下每加一场，就多一个折叠的相册。",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
       sessions: [
         {
@@ -137,10 +137,20 @@ export const copy = {
           title: "第一场",
           note: "报名二十六个，到场十八九个，从独立开发者到律师、会计、企业主都有。",
           photos: [
-            { src: "/photos/session-01-1.jpg", alt: "首场现场，一张长桌坐满了人" },
-            { src: "/photos/session-01-2.jpg", alt: "临着达令港的一侧，有人在讲自己在做的东西" },
-            { src: "/photos/session-01-3.jpg", alt: "另一个角度的现场" },
-            { src: "/photos/session-01-4.jpg", alt: "开场之前的场地" },
+            { src: "/photos/session-01-1", alt: "首场现场，一张长桌坐满了人", width: 1200, height: 900 },
+            { src: "/photos/session-01-2", alt: "临着达令港的一侧，有人在讲自己在做的东西", width: 1200, height: 900 },
+            { src: "/photos/session-01-3", alt: "另一个角度的现场", width: 1200, height: 900 },
+            { src: "/photos/session-01-4", alt: "开场之前的场地", width: 1200, height: 900 },
+          ],
+        },
+        {
+          date: "2026-08-13",
+          title: "第二场",
+          note: "报名三十五个，到场三十来个。散场之后大家在楼下又聊了一个多小时，留下吃饭的聊到下午。",
+          photos: [
+            { src: "/photos/session-02-1", alt: "开场之前的场地，长桌沿着落地窗摆开，窗外是达令港", width: 1600, height: 900 },
+            { src: "/photos/session-02-2", alt: "第二场现场，三十来个人围着长桌，靠窗一整排", width: 1600, height: 903 },
+            { src: "/photos/session-02-3", alt: "桌上的咖啡、果盘和可颂", width: 1200, height: 1600 },
           ],
         },
       ],
@@ -695,17 +705,27 @@ export const copy = {
     gallery: {
       eyebrow: "§ 04 — The room",
       title: "A few shots from every session.",
-      lede: "Faces are covered to protect the people who came. Each session adds another folded album below.",
+      lede: "Faces are covered to protect the people who came, and shots where they could not be are left out. Each session adds another folded album below.",
       sessions: [
         {
           date: "2026-08-06",
           title: "Session one",
           note: "26 signed up, 18 to 20 turned up, from indie developers to lawyers, accountants and business owners.",
           photos: [
-            { src: "/photos/session-01-1.jpg", alt: "The first session, a long table full of people" },
-            { src: "/photos/session-01-2.jpg", alt: "The Darling Harbour side, someone talking about what they are building" },
-            { src: "/photos/session-01-3.jpg", alt: "Another angle on the room" },
-            { src: "/photos/session-01-4.jpg", alt: "The venue before anyone arrived" },
+            { src: "/photos/session-01-1", alt: "The first session, a long table full of people", width: 1200, height: 900 },
+            { src: "/photos/session-01-2", alt: "The Darling Harbour side, someone talking about what they are building", width: 1200, height: 900 },
+            { src: "/photos/session-01-3", alt: "Another angle on the room", width: 1200, height: 900 },
+            { src: "/photos/session-01-4", alt: "The venue before anyone arrived", width: 1200, height: 900 },
+          ],
+        },
+        {
+          date: "2026-08-13",
+          title: "Session two",
+          note: "35 signed up, around 30 turned up. People carried on downstairs for another hour after we wrapped, and the ones who stayed for lunch kept going into the afternoon.",
+          photos: [
+            { src: "/photos/session-02-1", alt: "The venue before anyone arrived, a long table along the windows over Darling Harbour", width: 1600, height: 900 },
+            { src: "/photos/session-02-2", alt: "Session two, around thirty people along the table by the windows", width: 1600, height: 903 },
+            { src: "/photos/session-02-3", alt: "Coffee, a fruit platter and pastries on the table", width: 1200, height: 1600 },
           ],
         },
       ],

@@ -753,11 +753,26 @@ select.field {
   background: rgba(0, 0, 0, 0.04);
 }
 
+/* Each photo keeps its own shape. The grid used to force 4/3 with object-fit,
+   which was fine while every photo was landscape and wrong the week two
+   portraits arrived: it cropped 44% off their height, and the browser
+   downloaded those cropped-away pixels first. The width/height attributes
+   carry the real ratio now, so nothing jumps while they load. */
+.gallery__item,
+.gallery__item picture {
+  display: block;
+}
+
 .gallery__item img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  height: auto;
+}
+
+/* Rows are as tall as their tallest photo; without this a landscape shot next
+   to a portrait one would stretch to match it. */
+.gallery {
+  align-items: start;
 }
 
 /* ── Albums ──────────────────────────────────────────────────────────

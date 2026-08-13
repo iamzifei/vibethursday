@@ -262,17 +262,40 @@ export default async function Page({ searchParams }: PageProps) {
                     <div className="gallery">
                       {session.photos.map((photo) => (
                         <figure className="gallery__item" key={photo.src}>
-                          {/* Plain img: these are static local assets and the page
-                              is mostly text, so the optimiser buys little here. */}
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={photo.src}
-                            alt={photo.alt}
-                            loading="lazy"
-                            decoding="async"
-                            width={1200}
-                            height={900}
-                          />
+                          {/* Still no next/image: these are static local assets
+                              and `scripts/build-photos.mts` has already done the
+                              resizing and re-encoding at author time, so an
+                              optimiser at request time would repeat the work on
+                              every deploy for nothing.
+
+                              `sizes` describes the CSS width, not the file: the
+                              gallery is one column on a phone and columns of at
+                              least 20rem inside an 880px shell above that, so
+                              440px is the widest a photo is ever drawn on a
+                              desktop. A phone at 2x therefore wants the 800, and
+                              only a retina desktop showing one photo full width
+                              reaches for the 1600.
+
+                              Real width/height per photo, not a hard-coded 4:3:
+                              two of these are portrait, and declaring the wrong
+                              ratio makes the page jump when they load. */}
+                          <picture>
+                            <source
+                              type="image/avif"
+                              srcSet={`${photo.src}-800.avif 800w, ${photo.src}-1600.avif 1600w`}
+                              sizes="(max-width: 48rem) 100vw, 440px"
+                            />
+                            <img
+                              src={`${photo.src}-1600.jpg`}
+                              srcSet={`${photo.src}-800.jpg 800w, ${photo.src}-1600.jpg 1600w`}
+                              sizes="(max-width: 48rem) 100vw, 440px"
+                              alt={photo.alt}
+                              loading="lazy"
+                              decoding="async"
+                              width={photo.width}
+                              height={photo.height}
+                            />
+                          </picture>
                         </figure>
                       ))}
                     </div>
