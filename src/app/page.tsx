@@ -240,23 +240,53 @@ export default async function Page({ searchParams }: PageProps) {
               </p>
             </div>
 
-            {/* One folded album per session, newest first. Sorting here rather
-                than relying on the order in content.ts means adding a session
-                is a one-entry edit that cannot be put in the wrong place.
-                <details> keeps this working with no client JS. */}
+            {/* One album per session, newest first, each closed and shown as a
+                stack of prints. Sorting here rather than relying on the order in
+                content.ts means adding a session is a one-entry edit that cannot
+                be put in the wrong place. <details> keeps the whole thing working
+                with no client JS: the stack is the summary, the grid is what it
+                opens into. */}
             <div className="albums">
               {[...c.gallery.sessions]
                 .sort((a, b) => b.date.localeCompare(a.date))
-                .map((session, index) => (
-                  <details className="album" key={session.date} open={index === 0}>
+                .map((session) => (
+                  <details className="album" key={session.date}>
                     <summary className="album__summary">
-                      <span className="album__title">
-                        {session.title} · {session.date}
-                      </span>
-                      <span className="album__note">{session.note}</span>
-                      <span className="album__count">
-                        {c.gallery.photoCount(session.photos.length)}
-                      </span>
+                      {/* Back to front, so the cover on top is the session's
+                          first photo. Reversed here rather than in CSS because
+                          z-index would have to fight the DOM order anyway.
+
+                          400w: these are covers a couple of hundred pixels wide
+                          and every visitor downloads them, which makes them the
+                          only images on the page worth being small. Not lazy for
+                          the same reason — they are the section's content, not
+                          something below it. */}
+                      <div className="album__stack" aria-hidden="true">
+                        {session.photos
+                          .slice(0, 3)
+                          .reverse()
+                          .map((photo) => (
+                            /* <picture>, not srcSet, because this is a format
+                               choice and srcset does not make one: it picks by
+                               width and assumes every candidate is decodable,
+                               so an AVIF listed there reaches browsers that
+                               cannot read it. Only <source type> negotiates. */
+                            <picture key={photo.src}>
+                              <source type="image/avif" srcSet={`${photo.src}-400.avif`} />
+                              <img src={`${photo.src}-400.jpg`} alt="" decoding="async" />
+                            </picture>
+                          ))}
+                      </div>
+
+                      <div className="album__meta">
+                        <span className="album__title">
+                          {session.title} · {session.date}
+                        </span>
+                        <span className="album__note">{session.note}</span>
+                        <span className="album__count">
+                          {c.gallery.photoCount(session.photos.length)}
+                        </span>
+                      </div>
                     </summary>
 
                     <div className="gallery">

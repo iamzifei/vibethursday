@@ -11,13 +11,14 @@
  *
  * What it emits per photo, into public/photos/:
  *
- *   session-NN-i-800.avif    session-NN-i-1600.avif
- *   session-NN-i-800.jpg     session-NN-i-1600.jpg
+ *   session-NN-i-{400,800,1600}.avif
+ *   session-NN-i-{400,800,1600}.jpg
  *
- * Two widths because the gallery is at most 880px wide and one column on a
- * phone: 800 covers a phone at 2x and a desktop column, 1600 covers a retina
- * screen showing one photo full width. A third size would be bytes nobody
- * fetches.
+ * Three widths, each with a job. 400 is the album cover on the home page,
+ * where three of them sit stacked at a couple of hundred pixels — everyone
+ * downloads those, so they are the ones worth being small. 800 covers a phone
+ * at 2x and a desktop column once an album is opened. 1600 covers a retina
+ * screen showing one photo full width.
  *
  * Two formats, not three. AVIF is what almost everyone gets; JPEG is the floor
  * that always works. WebP would sit between them and help Safari 15 and old
@@ -33,7 +34,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-const WIDTHS = [800, 1600] as const;
+const WIDTHS = [400, 800, 1600] as const;
 
 /** Only shrink, never upscale: `>` is ImageMagick for "if larger than". */
 const resizeSpec = (width: number) => `${width}x>`;
@@ -98,7 +99,7 @@ for (const [index, name] of sources.entries()) {
   }
 
   // Reported from the largest JPEG, which is what the width/height attributes
-  // describe. Both widths share the aspect ratio, so either would do.
+  // describe. Every width shares the aspect ratio, so any of them would do.
   const emitted = sizeOf(path.join(outputDir, `${stem}-${WIDTHS.at(-1)}.jpg`));
 
   entries.push({ stem, width: emitted.width, height: emitted.height, bytes });
@@ -118,6 +119,6 @@ for (const entry of entries) {
 }
 
 console.log(
-  `\n注意 src 不带扩展名：<picture> 自己拼 -800/-1600 和 .avif/.jpg。` +
-    `\n照片里有人脸的，上线前必须处理掉——站上写着「照片里的人脸都做了处理」。\n`,
+  `\n注意 src 不带扩展名：<picture> 自己拼 -400/-800/-1600 和 .avif/.jpg。` +
+    `\n照片里认得出的人脸，上线前必须遮掉——站上写着「认得出的人脸都遮掉了」。\n`,
 );

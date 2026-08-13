@@ -129,7 +129,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 04 — 现场",
       title: "每一场都留了几张。",
-      lede: "为保护参与者，照片里的人脸都做了处理，处理不掉的那几张就不放上来。往下每加一场，就多一个折叠的相册。",
+      lede: "为保护参与者，认得出的人脸都遮掉了。点开某一场就能看到那天的全部照片。",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
       sessions: [
         {
@@ -150,7 +150,8 @@ export const copy = {
           photos: [
             { src: "/photos/session-02-1", alt: "开场之前的场地，长桌沿着落地窗摆开，窗外是达令港", width: 1600, height: 900 },
             { src: "/photos/session-02-2", alt: "第二场现场，三十来个人围着长桌，靠窗一整排", width: 1600, height: 903 },
-            { src: "/photos/session-02-3", alt: "桌上的咖啡、果盘和可颂", width: 1200, height: 1600 },
+            { src: "/photos/session-02-3", alt: "桌上的果盘，一整排人沿着长桌坐开", width: 978, height: 1304 },
+            { src: "/photos/session-02-4", alt: "桌上的咖啡、可颂和一支白玫瑰", width: 1200, height: 1600 },
           ],
         },
       ],
@@ -705,7 +706,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 04 — The room",
       title: "A few shots from every session.",
-      lede: "Faces are covered to protect the people who came, and shots where they could not be are left out. Each session adds another folded album below.",
+      lede: "Recognisable faces are covered to protect the people who came. Open a session to see everything from that morning.",
       sessions: [
         {
           date: "2026-08-06",
@@ -725,7 +726,8 @@ export const copy = {
           photos: [
             { src: "/photos/session-02-1", alt: "The venue before anyone arrived, a long table along the windows over Darling Harbour", width: 1600, height: 900 },
             { src: "/photos/session-02-2", alt: "Session two, around thirty people along the table by the windows", width: 1600, height: 903 },
-            { src: "/photos/session-02-3", alt: "Coffee, a fruit platter and pastries on the table", width: 1200, height: 1600 },
+            { src: "/photos/session-02-3", alt: "A fruit platter on the table, a row of people down the length of it", width: 978, height: 1304 },
+            { src: "/photos/session-02-4", alt: "Coffee, a croissant and a single white rose on the table", width: 1200, height: 1600 },
           ],
         },
       ],
