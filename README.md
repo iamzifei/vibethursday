@@ -7,6 +7,8 @@
 
 活动本身免费，不卖票，也没有会员费。
 
+![vibethursday.com 首屏](.github/readme-hero.jpg)
+
 ---
 
 ## 这个站在做什么
@@ -23,7 +25,9 @@
 ## 它没有什么
 
 - **没有报名数据。** 数据库不在这个仓库里，`.env` 也从没进过版本控制
-- **没有前端框架之外的客户端 JS。** 相册的折叠、展开都是 `<details>`；表单是原生表单
+- **能不用客户端 JS 的地方都没用。** 相册的堆叠和展开是 `<details>`，没有一行脚本；
+  报名表是个 client component（要做 Turnstile 和「这个浏览器来过」的记忆），其余页面
+  基本是静态渲染的 HTML
 - **没有 webfont。** 全系统字体栈，中文优先，省掉一次字体加载抖动
 - **没有第三方统计、没有 cookie 横幅**
 
@@ -92,6 +96,15 @@ node --experimental-strip-types scripts/build-photos.mts \
   <img height="40" src="https://storage.ko-fi.com/cdn/kofi3.png?v=6" alt="在 Ko-fi 上分摊一点场地开销">
 </a>
 
+## In English, briefly
+
+Vibe Thursday is a weekly Thursday-morning meetup in Sydney for people building
+things with AI. It runs in Mandarin. This repo is its website — Next.js and
+Postgres, no client-side JS where it can be avoided, no analytics, no tracking.
+The code is MIT; the photos in `public/photos/` are not, since they are of real
+attendees. The site itself is bilingual: [vibethursday.com](https://vibethursday.com)
+and [?lang=en](https://vibethursday.com/?lang=en).
+
 ## 用它办你自己的局
 
 代码随便拿去用。真要开一个的话，比代码有用的是这几条：
@@ -104,4 +117,11 @@ node --experimental-strip-types scripts/build-photos.mts \
 
 ## 协议
 
-MIT。
+**代码是 MIT**，随便拿去用。
+
+**`public/photos/` 里的照片不在授权范围内。** 那是真实参与者，虽然认得出的
+人脸都遮掉了，但把它们连同代码一起授权出去，等于替这些人做了一个他们没同意
+过的决定。要 fork 的话把那个目录换成你自己的照片。
+
+同理，`Vibe Thursday` 这个名字和 logo 也请换掉——不是因为舍不得，是因为
+两个同名的局会让想来的人走错地方。
