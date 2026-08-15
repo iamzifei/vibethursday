@@ -73,35 +73,50 @@ test("Traditional is the Simplified copy, converted, and nothing else", () => {
   const zh = getCopy("zh");
   const hant = getCopy("zh-Hant");
 
+  // Read out into plain strings before asserting. `node:assert/strict`'s
+  // `equal` is declared as an assertion function, so asserting straight on
+  // `hant.nav.members` narrows the whole union to the literal it was compared
+  // against — and every later property read on `hant` is then `never`.
+  const actual = {
+    members: hant.nav.members as string,
+    support: hant.nav.support as string,
+    subtitle: hant.hero.subtitle as string,
+    brand: hant.nav.brand as string,
+    photoSrc: hant.gallery.sessions[0].photos[0].src as string,
+    htmlLang: hant.htmlLang as string,
+    photoCount: hant.gallery.photoCount(4) as string,
+    note: hant.who.note as string,
+  };
+
   // Same shape — it is the same object walked, so a key that exists in one has
   // to exist in the other. This is what makes the third language free.
   assert.deepEqual(Object.keys(hant).sort(), Object.keys(zh).sort());
 
   // Converted where it is prose.
-  assert.equal(hant.nav.members, "成員");
-  assert.equal(hant.nav.support, "開銷");
-  assert.equal(hant.hero.subtitle, "悉尼 · 每週四上午的 AI 局");
+  assert.equal(actual.members, "成員");
+  assert.equal(actual.support, "開銷");
+  assert.equal(actual.subtitle, "悉尼 · 每週四上午的 AI 局");
 
   // Not converted where it is not prose: the brand, paths, and the language
   // tag a screen reader reads the page with.
-  assert.equal(hant.nav.brand, "Vibe Thursday");
-  assert.equal(hant.gallery.sessions[0].photos[0].src, zh.gallery.sessions[0].photos[0].src);
-  assert.equal(hant.htmlLang, "zh-Hant");
-  assert.equal(zh.htmlLang, "zh-CN");
+  assert.equal(actual.brand, "Vibe Thursday");
+  assert.equal(actual.photoSrc, zh.gallery.sessions[0].photos[0].src as string);
+  assert.equal(actual.htmlLang, "zh-Hant");
+  assert.equal(zh.htmlLang as string, "zh-CN");
 
   // Functions are wrapped, not dropped: this one builds a string at call time
   // and would otherwise be the one place Simplified leaked through.
-  assert.equal(hant.gallery.photoCount(4), "4 張");
+  assert.equal(actual.photoCount, "4 張");
 
   // Characters only. `twp` would also swap vocabulary — 软件 → 軟體 — which is
   // a dictionary rewriting copy that was written a word at a time.
-  assert.ok(hant.who.note.includes("軟件"), "vocabulary must not be substituted");
+  assert.ok(actual.note.includes("軟件"), "vocabulary must not be substituted");
 });
 
 test("each written language keeps its own copy; only Traditional is derived", () => {
   // English must never be routed through the converter.
-  assert.equal(getCopy("en").nav.members, "Members");
-  assert.equal(getCopy("zh").nav.members, "成员");
+  assert.equal(getCopy("en").nav.members as string, "Members");
+  assert.equal(getCopy("zh").nav.members as string, "成员");
 });
 
 test("a session date is converted too", () => {
