@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...and this is that opt-in. The template holds placeholders, Cloudflare's
+# published test keys and the public domain — no secret has ever been in it.
+# README tells you to `cp .env.example .env.local`, which only works if a fresh
+# clone actually has the file.
+!.env.example
 
 # vercel
 .vercel
