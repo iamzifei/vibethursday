@@ -31,6 +31,12 @@ export const copy = {
       brand: "Vibe Thursday",
       cta: "报名",
       members: "成员",
+      about: "这是什么",
+      schedule: "流程",
+      support: "开销",
+      // Label for the phone menu button and for the two <nav> landmarks, which
+      // is all a screen reader gets — the button itself is an icon.
+      menu: "菜单",
     },
 
     hero: {
@@ -614,6 +620,10 @@ export const copy = {
       brand: "Vibe Thursday",
       cta: "Sign up",
       members: "Members",
+      about: "What this is",
+      schedule: "Run of show",
+      support: "Costs",
+      menu: "Menu",
     },
 
     hero: {

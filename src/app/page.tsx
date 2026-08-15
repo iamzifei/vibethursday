@@ -336,7 +336,7 @@ export default async function Page({ searchParams }: PageProps) {
         </section>
 
         {/* ── Run of show ──────────────────────────────────────────── */}
-        <section className="section">
+        <section className="section" id="schedule">
           <div className="shell stack-8">
             <div className="stack-4">
               <span className="eyebrow">{c.schedule.eyebrow}</span>

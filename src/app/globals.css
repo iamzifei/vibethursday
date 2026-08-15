@@ -246,6 +246,178 @@ textarea:focus-visible,
 }
 
 /* =============================================================================
+   Site nav
+   =============================================================================
+   Sticky, so the way back out of a page is always one tap away. Two renderings
+   of the same links live in the markup: an inline row above 860px, a panel
+   behind a button below it. The breakpoint is set by the English labels, which
+   are the widest, plus the CTA and the language pill.
+============================================================================= */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* Translucent rather than solid: content scrolling under it stays faintly
+     visible, which is what tells you the page moved and the bar did not. */
+  background: rgba(10, 11, 13, 0.82);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Without the blur the bar is nearly transparent and the hero's grid and
+   skyline read straight through the labels. */
+@supports not ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .nav { background: var(--bg-primary); }
+}
+
+.nav__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 60px;
+}
+
+.nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Matches the 44px minimum touch target without making the bar taller. */
+  min-height: 44px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  color: var(--fg1);
+  white-space: nowrap;
+}
+
+.nav__brand:hover { color: var(--fg1); }
+.nav__mark { color: var(--accent); display: flex; }
+
+.nav__wide {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  white-space: nowrap;
+  transition: color var(--dur-fast), background var(--dur-fast);
+}
+
+.nav__link:hover { color: var(--fg1); background: var(--bg-tertiary); }
+
+/* The page you are already on. Colour alone would be the only signal, so it
+   also loses the hover affordance by keeping the accent on hover. */
+.nav__link[aria-current="page"],
+.nav__row[aria-current="page"] { color: var(--accent); }
+
+.nav__lang { margin-left: var(--space-2); }
+
+/* A denser button than the page CTAs: 48px tall would set the height of the
+   whole bar, and this one sits beside 40px links rather than alone on a page. */
+.nav__cta {
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.nav__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  /* Pulled toward the edge so the icon lines up with the shell's gutter rather
+     than sitting 12px inside it. */
+  margin-right: calc(var(--space-2) * -1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--fg1);
+  cursor: pointer;
+}
+
+.nav__toggle:hover { background: var(--bg-tertiary); }
+
+.nav__toggle svg path {
+  transform-origin: center;
+  transition: transform var(--dur-normal), opacity var(--dur-fast);
+}
+
+/* Open: the outer bars rotate into a cross about the middle one, which fades. */
+.nav__toggle[aria-expanded="true"] .nav__bar-1 { transform: translateY(5px) rotate(45deg); }
+.nav__toggle[aria-expanded="true"] .nav__bar-2 { opacity: 0; }
+.nav__toggle[aria-expanded="true"] .nav__bar-3 { transform: translateY(-5px) rotate(-45deg); }
+
+.nav__panel {
+  border-top: 1px solid var(--border-subtle);
+  /* The bar above is translucent, but the panel covers content it has to stay
+     readable over, so it is opaque. */
+  background: var(--bg-primary);
+  /* A long menu on a short phone in landscape must not become unreachable. */
+  max-height: calc(100svh - 60px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nav__panel[hidden] { display: none; }
+
+.nav__panel-inner {
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-2) var(--space-4);
+}
+
+.nav__row {
+  display: flex;
+  align-items: center;
+  /* Full-width rows with a real target — a phone menu is tapped with a thumb
+     at arm's length, not clicked with a cursor. */
+  min-height: 52px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--fg1);
+  font-size: var(--text-base);
+}
+
+.nav__row:hover { color: var(--accent); }
+
+.nav__panel-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* Takes the width it can get; the language pill keeps its own. */
+.nav__panel-cta { flex: 1; }
+
+@media (max-width: 860px) {
+  .nav__wide { display: none; }
+  .nav__toggle { display: inline-flex; }
+}
+
+/* Above the breakpoint the panel is not just unused, it must be unreachable:
+   a menu opened on a phone that is then rotated into the wide layout would
+   otherwise stay hanging under the bar with no button left to close it. */
+@media (min-width: 861px) {
+  .nav__panel { display: none; }
+}
+
+/* Anchored sections have to clear the sticky bar, or a link to #signup puts
+   the heading behind it. */
+section[id] { scroll-margin-top: 76px; }
+
+/* =============================================================================
    Hero
 ============================================================================= */
 
