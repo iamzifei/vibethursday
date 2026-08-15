@@ -61,7 +61,7 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
         switchHref={lang === "zh" ? `/members/${slug}?lang=en` : `/members/${slug}`}
       />
 
-      <main>
+      <main id="main">
         <section className="section">
           <div className="shell stack-8">
             <Link className="body-sm" href={`/members${langSuffix(lang)}`}>

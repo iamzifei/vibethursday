@@ -40,7 +40,7 @@ export default async function SupportPage({ searchParams }: PageProps) {
         switchHref={lang === "zh" ? "/support?lang=en" : "/support"}
       />
 
-      <main>
+      <main id="main">
         <section className="section">
           <div className="shell stack-8" style={{ maxWidth: "680px" }}>
             <div className="stack-4">

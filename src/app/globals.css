@@ -263,13 +263,47 @@ textarea:focus-visible,
   background: rgba(10, 11, 13, 0.82);
   -webkit-backdrop-filter: blur(12px) saturate(140%);
   backdrop-filter: blur(12px) saturate(140%);
-  border-bottom: 1px solid var(--border-subtle);
+  /* A hairline alone disappears against the dark sections: over `--bg-primary`
+     the subtle border is a 2% step. The border draws the edge and the shadow
+     says which side of it is nearer, so the bar reads as a plane over the page
+     rather than as a patch of it. */
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
 /* Without the blur the bar is nearly transparent and the hero's grid and
    skyline read straight through the labels. */
 @supports not ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
   .nav { background: var(--bg-primary); }
+}
+
+/* Off-screen until it has focus, then the first thing on the page.
+   The bar put six controls in front of the content on every page; a keyboard
+   or switch user should not have to walk them on each navigation. Positioned
+   fixed rather than absolute so it clears the sticky bar it sits inside. */
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-4);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  /* Moved out of view rather than `display: none`, which would take it out of
+     the tab order and defeat the point. */
+  transform: translateY(calc(-100% - var(--space-4)));
+  transition: transform var(--dur-fast);
+}
+
+.skip-link:focus {
+  transform: none;
+  color: var(--accent-contrast);
 }
 
 .nav__bar {
@@ -301,10 +335,14 @@ textarea:focus-visible,
   gap: var(--space-1);
 }
 
+/* One height for every control in the bar. The brand, the links, the language
+   pill and the CTA were 44/40/44/48 while each obeyed its own rule, which in a
+   60px bar is four different amounts of air above and below. 44 is the floor a
+   touch target needs, and the wide row is reachable by touch on a tablet. */
 .nav__link {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;
   padding-inline: var(--space-3);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
@@ -320,14 +358,32 @@ textarea:focus-visible,
 .nav__link[aria-current="page"],
 .nav__row[aria-current="page"] { color: var(--accent); }
 
-.nav__lang { margin-left: var(--space-2); }
+/* Sets the language pill and the CTA apart from the section links beside them.
+   Scoped to the wide row: in the panel the two sit in their own flex row with
+   its own gap, and the extra margin there would only be lopsided. */
+.nav__wide .nav__lang { margin-left: var(--space-2); }
 
-/* A denser button than the page CTAs: 48px tall would set the height of the
-   whole bar, and this one sits beside 40px links rather than alone on a page. */
-.nav__cta {
-  min-height: 40px;
+/* Outlined, not filled — and this is a hierarchy decision, not a style one.
+   Every page here already ends in its own lime button (报名下一场, 看成员墙,
+   分摊一笔), so a filled bar CTA puts two identical primaries in one viewport
+   at every scroll position and the page's own action loses. Accent text on an
+   accent tint keeps this the only coloured thing in the bar — still obviously
+   the action, no longer shouting over the page.
+   `.nav` is needed on the selector because `.btn` is defined further down the
+   file and would otherwise win on source order. */
+.nav .nav__cta {
+  min-height: 44px;
   padding-inline: var(--space-4);
   font-size: var(--text-sm);
+  background: var(--accent-subtle);
+  border-color: var(--accent-muted);
+  color: var(--accent);
+}
+
+.nav .nav__cta:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent-hover);
 }
 
 .nav__toggle {

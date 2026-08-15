@@ -50,7 +50,7 @@ export default async function Page({ searchParams }: PageProps) {
     <div lang={c.htmlLang}>
       <SiteHeader lang={lang} copy={c} switchHref={c.langSwitchHref} />
 
-      <main>
+      <main id="main">
         {/* ── Hero ─────────────────────────────────────────────────── */}
         <section className="hero">
           <SydneySkyline />

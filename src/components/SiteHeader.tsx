@@ -37,6 +37,7 @@ export function SiteHeader({ lang, copy, switchHref }: Props) {
       switchLabel={copy.langSwitchLabel}
       switchLang={lang === "zh" ? "en" : "zh"}
       menuLabel={copy.nav.menu}
+      skipLabel={copy.nav.skip}
     />
   );
 }

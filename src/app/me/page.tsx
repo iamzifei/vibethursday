@@ -42,7 +42,7 @@ export default async function MePage({ searchParams }: PageProps) {
     <div lang={c.htmlLang}>
       <SiteHeader lang={lang} copy={c} switchHref={lang === "zh" ? "/me?lang=en" : "/me"} />
 
-      <main>
+      <main id="main">
         <section className="section">
           <div className="shell stack-8" style={{ maxWidth: "720px" }}>
             <div className="stack-4">

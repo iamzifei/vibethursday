@@ -9,7 +9,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { copy } from "../src/lib/content.ts";
@@ -17,6 +17,15 @@ import { langHref, NAV_CTA, NAV_LINKS } from "../src/lib/nav.ts";
 import { siteUrl, FALLBACK_SITE_URL } from "../src/lib/site.ts";
 
 const homePage = readFileSync(path.join(process.cwd(), "src/app/page.tsx"), "utf8");
+
+/** Every `page.tsx` under src/app, however deeply nested. */
+function pageFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return pageFiles(full);
+    return entry.name === "page.tsx" ? [full] : [];
+  });
+}
 
 test("every anchor in the nav is a section on the home page", () => {
   const anchors = [...NAV_LINKS, NAV_CTA]
@@ -29,6 +38,23 @@ test("every anchor in the nav is a section on the home page", () => {
       `the nav points at #${hash}, which no section on the home page carries`,
     );
   }
+});
+
+test("every page with the nav has the skip link's target", () => {
+  // The bar puts six controls in front of the content, so the skip link is the
+  // only short way past them. It points at #main, and a page that carries the
+  // header but not the id sends the reader nowhere — silently, and only for
+  // the people who most need it to work.
+  const pages = pageFiles(path.join(process.cwd(), "src/app"));
+  const missing: string[] = [];
+
+  for (const file of pages) {
+    const source = readFileSync(file, "utf8");
+    if (!source.includes("SiteHeader")) continue;
+    if (!source.includes('<main id="main">')) missing.push(file);
+  }
+
+  assert.deepEqual(missing, [], `these pages render the nav but have no #main:\n${missing.join("\n")}`);
 });
 
 test("every nav item has a label in both languages", () => {

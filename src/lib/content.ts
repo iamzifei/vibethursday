@@ -37,6 +37,8 @@ export const copy = {
       // Label for the phone menu button and for the two <nav> landmarks, which
       // is all a screen reader gets — the button itself is an icon.
       menu: "菜单",
+      // The skip link. Hidden until it has focus; the first stop on the page.
+      skip: "跳到正文",
     },
 
     hero: {
@@ -624,6 +626,7 @@ export const copy = {
       schedule: "Run of show",
       support: "Costs",
       menu: "Menu",
+      skip: "Skip to content",
     },
 
     hero: {

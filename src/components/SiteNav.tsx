@@ -20,6 +20,8 @@ type Props = {
   switchLang: string;
   /** Names the menu button and both <nav> landmarks. */
   menuLabel: string;
+  /** The skip link, which is the first thing a keyboard user reaches. */
+  skipLabel: string;
 };
 
 /**
@@ -46,6 +48,7 @@ export function SiteNav({
   switchLabel,
   switchLang,
   menuLabel,
+  skipLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -84,6 +87,13 @@ export function SiteNav({
 
   return (
     <header className="nav">
+      {/* A plain <a>, not <Link>: this jumps within the current document, and
+          routing it would re-render the page to move focus a few hundred
+          pixels. */}
+      <a className="skip-link" href="#main">
+        {skipLabel}
+      </a>
+
       <div className="shell nav__bar">
         <Link className="nav__brand mono" href={brandHref} onClick={() => setOpen(false)}>
           {/* Accent-coloured while the wordmark stays foreground: the bridge is
@@ -111,7 +121,9 @@ export function SiteNav({
             {switchLabel}
           </Link>
 
-          <Link className="btn btn--primary nav__cta" href={cta.href}>
+          {/* Not `btn--primary`: `.nav__cta` gives it the outlined accent
+              treatment so it stops competing with each page's own lime CTA. */}
+          <Link className="btn nav__cta" href={cta.href}>
             {cta.label}
           </Link>
         </nav>
