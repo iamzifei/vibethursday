@@ -102,14 +102,15 @@ export default async function MembersPage({ searchParams }: PageProps) {
                   </Link>
                 </>
               ) : (
-                <>
-                  <Link className="btn btn--primary" href={`/me${langSuffix(lang)}`}>
-                    {m.claimCta}
-                  </Link>
-                  <Link className="btn btn--secondary" href={`/${langSuffix(lang)}#signup`}>
-                    {c.nav.cta}
-                  </Link>
-                </>
+                /* One door, not two. There used to be a "报名" button beside
+                   this one, which the site nav now carries on every page — the
+                   same word twice in one viewport, both going to the same
+                   anchor. Someone who has never signed up is not stranded by
+                   its removal: /me sends them to /claim, which ends in "还没
+                   报过名？" pointing at the form. */
+                <Link className="btn btn--primary" href={`/me${langSuffix(lang)}`}>
+                  {m.claimCta}
+                </Link>
               )}
             </div>
 
