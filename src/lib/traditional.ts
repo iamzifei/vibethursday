@@ -18,6 +18,14 @@ import * as Locale from "opencc-js/preset/cn2t";
  * Server-side only. Every caller is a Server Component or a route handler, so
  * the dictionaries never reach the browser — the client receives finished
  * strings like it does for the other two languages.
+ *
+ * SCOPE, decided deliberately and not an oversight: this converts the site's
+ * own copy. It never touches what members wrote about themselves — names,
+ * headlines, "looking for", tags. Their card is their words, and a name is not
+ * prose: converting 张 to 張 changes what someone is called, which is not a
+ * setting a reader gets to pick. So a Traditional page shows Traditional
+ * chrome around whatever script each person chose for themselves, and that is
+ * the intended result.
  */
 const convert = ConverterBuilder(Locale)({ from: "cn", to: "tw" });
 
