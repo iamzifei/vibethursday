@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { langSuffix } from "@/components/MemberCard";
 import { MemberEditor } from "@/components/MemberEditor";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberById, listPublishedTags } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 
@@ -16,14 +16,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   return {
-    title: allCopy[resolveLang((await searchParams).lang)].editor.meta.title,
+    title: getCopy(resolveLang((await searchParams).lang)).editor.meta.title,
     robots: { index: false },
   };
 }
 
 export default async function MePage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
 
   const memberId = await currentMemberId();
 
@@ -40,7 +40,7 @@ export default async function MePage({ searchParams }: PageProps) {
 
   return (
     <div lang={c.htmlLang}>
-      <SiteHeader lang={lang} copy={c} switchHref={lang === "zh" ? "/me?lang=en" : "/me"} />
+      <SiteHeader lang={lang} copy={c} path="/me" />
 
       <main id="main">
         <section className="section">

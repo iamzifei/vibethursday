@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
 import { CONTRIBUTORS, SUPPORT_URL } from "@/lib/support";
 
 type PageProps = {
@@ -10,7 +10,7 @@ type PageProps = {
 };
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = allCopy[resolveLang((await searchParams).lang)].support;
+  const c = getCopy(resolveLang((await searchParams).lang)).support;
 
   return { title: c.meta.title, description: c.meta.description };
 }
@@ -29,16 +29,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  */
 export default async function SupportPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
   const s = c.support;
 
   return (
     <div lang={c.htmlLang}>
-      <SiteHeader
-        lang={lang}
-        copy={c}
-        switchHref={lang === "zh" ? "/support?lang=en" : "/support"}
-      />
+      <SiteHeader lang={lang} copy={c} path="/support" />
 
       <main id="main">
         <section className="section">

@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { Member, MemberAsset } from "@/lib/db";
-import type { Copy, Lang } from "@/lib/content";
+import { LANG_PARAM, type Copy, type Lang } from "@/lib/content";
 import { Avatar } from "@/components/Avatar";
 
 type MembersCopy = Copy["members"];
 
 /** English is a query param, so every internal link has to carry it along. */
 export function langSuffix(lang: Lang, hasQuery = false): string {
-  if (lang !== "en") return "";
-  return hasQuery ? "&lang=en" : "?lang=en";
+  const param = LANG_PARAM[lang];
+  if (!param) return "";
+  return `${hasQuery ? "&" : "?"}lang=${param}`;
 }
 
 /**

@@ -1,4 +1,5 @@
-import type { Lang } from "@/lib/content";
+// Relative, not "@/": the tests load this through Node's type stripper.
+import { LANG_PARAM, type Lang } from "./content.ts";
 
 /**
  * What the site's nav bar points at.
@@ -20,18 +21,20 @@ export const NAV_LINKS = [
 export const NAV_CTA = { href: "/#signup", label: "cta" } as const;
 
 /**
- * Appends `?lang=en` to an internal href, ahead of any fragment.
+ * Puts the current language on an internal href, ahead of any fragment.
  *
  * "/#signup" has to become "/?lang=en#signup", never "/#signup?lang=en" — in
  * the second the query string is part of the fragment, so the page loads in
- * Chinese and the anchor never resolves. Chinese is the default and carries no
- * query string at all.
+ * the default language and the anchor never resolves either. Simplified
+ * Chinese is the default and carries no query string at all, which is why
+ * every link on the Chinese site is still a clean URL.
  */
 export function langHref(href: string, lang: Lang): string {
-  if (lang === "zh") return href;
+  const param = LANG_PARAM[lang];
+  if (!param) return href;
 
   const [path, hash] = href.split("#");
   const separator = path.includes("?") ? "&" : "?";
 
-  return `${path || "/"}${separator}lang=en${hash ? `#${hash}` : ""}`;
+  return `${path || "/"}${separator}lang=${param}${hash ? `#${hash}` : ""}`;
 }

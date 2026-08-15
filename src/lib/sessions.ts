@@ -1,3 +1,8 @@
+// Relative, not "@/": these are loaded by the tests through Node's type
+// stripper, which does not read tsconfig's path aliases.
+import type { Lang } from "./content.ts";
+import { toTraditional } from "./traditional.ts";
+
 /**
  * Session date helpers.
  *
@@ -96,13 +101,17 @@ export function nextThursdays(count = 6): string[] {
 }
 
 /** Formats an ISO date for display, e.g. "8月13日（周四）" or "Thu 13 Aug". */
-export function formatSession(isoDate: string, lang: "zh" | "en"): string {
+export function formatSession(isoDate: string, lang: Lang): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
 
-  if (lang === "zh") {
+  if (lang !== "en") {
     const month = date.getUTCMonth() + 1;
     const day = date.getUTCDate();
-    return `${month}月${day}日（周四）`;
+    const formatted = `${month}月${day}日（周四）`;
+
+    // Built here rather than read from the copy bundle, so it misses the
+    // conversion that bundle gets: 周 is 週 in Traditional.
+    return lang === "zh-Hant" ? toTraditional(formatted) : formatted;
   }
 
   return new Intl.DateTimeFormat("en-AU", {

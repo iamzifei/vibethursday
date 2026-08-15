@@ -1,3 +1,4 @@
+import { LangSwitch } from "@/components/LangSwitch";
 import { SiteNav, type NavItem } from "@/components/SiteNav";
 import type { Copy, Lang } from "@/lib/content";
 import { langHref, NAV_CTA, NAV_LINKS } from "@/lib/nav";
@@ -5,21 +6,24 @@ import { langHref, NAV_CTA, NAV_LINKS } from "@/lib/nav";
 type Props = {
   lang: Lang;
   copy: Copy;
-  /** Where the language toggle goes — the current path in the other language. */
-  switchHref: string;
+  /**
+   * The current page with no `lang` parameter on it, e.g. "/members" or
+   * "/members/jane". The language switch builds one URL per language from it,
+   * so switching language keeps you on the page you were reading — which is
+   * why this is passed in rather than derived: only the page knows its own
+   * address once there is a slug in it.
+   */
+  path: string;
 };
 
 /**
  * The bar every page opens with.
  *
  * A server component that does nothing but turn `NAV_LINKS` into labelled,
- * language-aware hrefs; the bar itself is `SiteNav`, which needs state for the
- * phone menu. The language toggle's destination is passed in rather than read
- * from the copy: on the home page it is "/", but on a member's page it has to
- * be that same member's page, or switching language would throw away where you
- * were.
+ * language-aware hrefs and render the language switch; the bar itself is
+ * `SiteNav`, which needs state for the phone menu.
  */
-export function SiteHeader({ lang, copy, switchHref }: Props) {
+export function SiteHeader({ lang, copy, path }: Props) {
   // The section anchors are written against the home page, so they work from
   // /members and /support as well as from the page they point into.
   const items: NavItem[] = NAV_LINKS.map((link) => ({
@@ -33,9 +37,7 @@ export function SiteHeader({ lang, copy, switchHref }: Props) {
       brandHref={langHref("/", lang)}
       items={items}
       cta={{ href: langHref(NAV_CTA.href, lang), label: copy.nav[NAV_CTA.label] }}
-      switchHref={switchHref}
-      switchLabel={copy.langSwitchLabel}
-      switchLang={lang === "zh" ? "en" : "zh"}
+      langSwitch={<LangSwitch current={lang} path={path} label={copy.nav.language} />}
       menuLabel={copy.nav.menu}
       skipLabel={copy.nav.skip}
     />

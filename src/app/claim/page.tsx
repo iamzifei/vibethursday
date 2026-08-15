@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ClaimForm } from "@/components/ClaimForm";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
 import { currentMemberId } from "@/lib/member-auth";
 
 type PageProps = {
@@ -14,7 +14,7 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = allCopy[resolveLang((await searchParams).lang)].claim;
+  const c = getCopy(resolveLang((await searchParams).lang)).claim;
 
   // Nothing here is worth indexing, and a claim form in search results is a
   // slightly odd first impression of the community.
@@ -23,14 +23,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function ClaimPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
 
   // Already claimed on this device: there is nothing to do here.
   if (await currentMemberId()) redirect(`/me${langSuffix(lang)}`);
 
   return (
     <div lang={c.htmlLang}>
-      <SiteHeader lang={lang} copy={c} switchHref={lang === "zh" ? "/claim?lang=en" : "/claim"} />
+      <SiteHeader lang={lang} copy={c} path="/claim" />
 
       <main id="main">
         <section className="section">

@@ -21,13 +21,17 @@ export const dynamic = "force-dynamic";
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteUrl();
 
-  // Both languages are the same URL plus `?lang=en`, so every entry declares
-  // its own pair rather than there being separate zh and en trees.
-  const bilingual = (path: string, rest: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">) => ({
+  // All three languages are the same URL with a different `lang`, so every
+  // entry declares its own set rather than there being separate trees.
+  const everyLanguage = (
+    path: string,
+    rest: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">,
+  ) => ({
     url: `${base}${path}`,
     alternates: {
       languages: {
-        "zh-CN": `${base}${path}`,
+        "zh-Hans": `${base}${path}`,
+        "zh-Hant": `${base}${path}?lang=zh-Hant`,
         "en-AU": `${base}${path}?lang=en`,
       },
     },
@@ -35,9 +39,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   });
 
   return [
-    bilingual("/", { changeFrequency: "weekly", priority: 1 }),
-    bilingual("/members", { changeFrequency: "weekly", priority: 0.8 }),
-    bilingual("/support", { changeFrequency: "monthly", priority: 0.5 }),
-    bilingual("/claim", { changeFrequency: "yearly", priority: 0.3 }),
+    everyLanguage("/", { changeFrequency: "weekly", priority: 1 }),
+    everyLanguage("/members", { changeFrequency: "weekly", priority: 0.8 }),
+    everyLanguage("/support", { changeFrequency: "monthly", priority: 0.5 }),
+    everyLanguage("/claim", { changeFrequency: "yearly", priority: 0.3 }),
   ];
 }

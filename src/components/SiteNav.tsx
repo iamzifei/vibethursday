@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { VibeThursdayMark } from "@/components/VibeThursdayMark";
 
 export type NavItem = { href: string; label: string };
@@ -13,11 +13,8 @@ type Props = {
   /** The section and page links, already carrying `?lang=` where needed. */
   items: NavItem[];
   cta: NavItem;
-  /** The current page in the other language. */
-  switchHref: string;
-  switchLabel: string;
-  /** `hreflang` for the switch — the language it goes to, not the current one. */
-  switchLang: string;
+  /** The 简/繁/EN control, rendered by a Server Component and passed in. */
+  langSwitch: ReactNode;
   /** Names the menu button and both <nav> landmarks. */
   menuLabel: string;
   /** The skip link, which is the first thing a keyboard user reaches. */
@@ -44,9 +41,7 @@ export function SiteNav({
   brandHref,
   items,
   cta,
-  switchHref,
-  switchLabel,
-  switchLang,
+  langSwitch,
   menuLabel,
   skipLabel,
 }: Props) {
@@ -117,9 +112,7 @@ export function SiteNav({
             </Link>
           ))}
 
-          <Link className="pill nav__lang" href={switchHref} hrefLang={switchLang}>
-            {switchLabel}
-          </Link>
+          <div className="nav__lang">{langSwitch}</div>
 
           {/* Not `btn--primary`: `.nav__cta` gives it the outlined accent
               treatment so it stops competing with each page's own lime CTA. */}
@@ -168,14 +161,13 @@ export function SiteNav({
             >
               {cta.label}
             </Link>
-            <Link
-              className="pill nav__lang"
-              href={switchHref}
-              hrefLang={switchLang}
-              onClick={() => setOpen(false)}
-            >
-              {switchLabel}
-            </Link>
+            {/* The language links keep the current pathname, so the
+                route-change reset below never sees them. Catching the click on
+                the way out is enough — the links themselves are the controls,
+                and a keyboard Enter on one fires this too. */}
+            <div className="nav__lang" onClick={() => setOpen(false)}>
+              {langSwitch}
+            </div>
           </div>
         </nav>
       </div>

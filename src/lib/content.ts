@@ -1,26 +1,66 @@
 /**
- * All user-facing copy, in both languages.
+ * All user-facing copy, in both written languages.
  *
  * The community starts Chinese-first and goes bilingual once it outgrows a
  * single table, so Chinese is the default and English is a peer translation
  * rather than an afterthought. Keeping both in one shaped object means the
- * page components never branch on language — they just read `copy[lang]`.
+ * page components never branch on language — they just read `getCopy(lang)`.
+ *
+ * There is a third language on the site and it is deliberately not a third
+ * block here: Traditional Chinese is derived from the Simplified copy by
+ * `getCopy` at the bottom of this file.
  */
 
-export type Lang = "zh" | "en";
+// Relative, not "@/": `pnpm test` loads this file through Node's type
+// stripper, which does not read tsconfig's path aliases.
+import { deepTranslate } from "./traditional.ts";
 
-export const LANGS: Lang[] = ["zh", "en"];
+/**
+ * The three views of this site.
+ *
+ * Only two of them are written. `zh-Hant` is `zh` put through a character
+ * converter at render time — see `@/lib/traditional` for why, and note that it
+ * means everything below stays a two-language object.
+ */
+export type Lang = "zh" | "zh-Hant" | "en";
+
+export const LANGS: Lang[] = ["zh", "zh-Hant", "en"];
+
+/** The `?lang=` value for each. Simplified is the default and carries none. */
+export const LANG_PARAM: Record<Lang, string | null> = {
+  zh: null,
+  "zh-Hant": "zh-Hant",
+  en: "en",
+};
+
+/** What each calls itself, short enough for the switch in the nav bar. */
+export const LANG_LABEL: Record<Lang, string> = {
+  zh: "简",
+  "zh-Hant": "繁",
+  en: "EN",
+};
+
+/** The full name, for the switch's accessible labels. */
+export const LANG_NAME: Record<Lang, string> = {
+  zh: "简体中文",
+  "zh-Hant": "繁體中文",
+  en: "English",
+};
 
 export function resolveLang(value: string | undefined): Lang {
-  return value === "en" ? "en" : "zh";
+  // Case-insensitive: a link pasted into WeChat comes back lowercased often
+  // enough that "zh-hant" has to mean the same thing as "zh-Hant".
+  const normalised = value?.toLowerCase();
+
+  if (normalised === "en") return "en";
+  if (normalised === "zh-hant") return "zh-Hant";
+
+  return "zh";
 }
 
 export const copy = {
   zh: {
     htmlLang: "zh-CN",
-    langSwitchLabel: "English",
-    langSwitchHref: "/?lang=en",
-
     meta: {
       title: "Vibe Thursday · 悉尼每周四的 AI 局",
       description:
@@ -39,6 +79,8 @@ export const copy = {
       menu: "菜单",
       // The skip link. Hidden until it has focus; the first stop on the page.
       skip: "跳到正文",
+      // Names the 简/繁/EN group for a screen reader.
+      language: "语言",
     },
 
     hero: {
@@ -66,6 +108,7 @@ export const copy = {
           linkLabel: "这活动本身的开销 →",
         },
       ],
+      nextPrefix: "下一场 ",
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
       note: "12:00 之后自愿留下吃个午饭。赶着接娃或者要回去干活的，12 点直接走就行。",
@@ -609,9 +652,6 @@ export const copy = {
 
   en: {
     htmlLang: "en-AU",
-    langSwitchLabel: "中文",
-    langSwitchHref: "/?lang=zh",
-
     meta: {
       title: "Vibe Thursday · Sydney's weekly AI meetup",
       description:
@@ -627,6 +667,7 @@ export const copy = {
       support: "Costs",
       menu: "Menu",
       skip: "Skip to content",
+      language: "Language",
     },
 
     hero: {
@@ -649,6 +690,7 @@ export const copy = {
           linkLabel: "What running it costs →",
         },
       ],
+      nextPrefix: "Next · ",
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
       note: "We carry on over lunch from noon. On school pickup, or need to get back to work? Leave at twelve.",
@@ -1146,4 +1188,42 @@ export const copy = {
   },
 } as const;
 
-export type Copy = (typeof copy)[Lang];
+/**
+ * One language's copy.
+ *
+ * Written as the union of the two authored bundles rather than as one of them:
+ * a handful of values genuinely differ in type between the two — `emailRequired`
+ * is false in Chinese and true in English — and collapsing to a single bundle
+ * would type those as constants and quietly make one branch of the signup form
+ * look dead.
+ */
+export type Copy = (typeof copy)["zh"] | (typeof copy)["en"];
+
+/**
+ * The copy for one language.
+ *
+ * Every page reads its strings through here rather than indexing `copy`
+ * directly, because one of the three languages is not in `copy` at all.
+ * Traditional is built once per process and then handed out: the conversion
+ * walks a few hundred strings, which is nothing once and wasteful per request.
+ */
+let traditional: Copy | undefined;
+
+export function getCopy(lang: Lang): Copy {
+  if (lang === "en") return copy.en;
+  if (lang === "zh") return copy.zh;
+
+  if (!traditional) {
+    // The cast is the price of `as const`: every string in the converted clone
+    // is a different literal from the one the type names, so TypeScript cannot
+    // see the result as the same shape however true that is at runtime.
+    traditional = {
+      ...deepTranslate(copy.zh),
+      // Never converted — a BCP 47 tag is not prose, and `zh-CN` on a
+      // Traditional page tells a screen reader the wrong pronunciation.
+      htmlLang: "zh-Hant",
+    } as unknown as Copy;
+  }
+
+  return traditional;
+}

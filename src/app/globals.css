@@ -358,10 +358,61 @@ textarea:focus-visible,
 .nav__link[aria-current="page"],
 .nav__row[aria-current="page"] { color: var(--accent); }
 
-/* Sets the language pill and the CTA apart from the section links beside them.
-   Scoped to the wide row: in the panel the two sit in their own flex row with
-   its own gap, and the extra margin there would only be lopsided. */
+/* Sets the language switch and the CTA apart from the section links beside
+   them. Scoped to the wide row: in the panel the two sit in their own flex row
+   with its own gap, and the extra margin there would only be lopsided. */
 .nav__wide .nav__lang { margin-left: var(--space-2); }
+
+/* ── 简 · 繁 · EN ─────────────────────────────────────────────────────
+   A segmented control, not a toggle: with three languages a toggle has to hide
+   two of them, and the reader who needs this control is by definition the one
+   who cannot read the script it is currently in. Three single-character
+   targets cost less width than the word "ENGLISH" did on its own. */
+.langs {
+  display: inline-flex;
+  align-items: stretch;
+  /* One border around the set, none between the segments — the whole thing
+     reads as a single control rather than three small buttons. */
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.langs__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 36 rather than the bar's 44: this is a set of three, so the tappable area
+     is the group, and three 44px segments would be a 130px slab in a 60px bar.
+     Each segment still clears 32px in both directions, which is the floor for
+     a control inside a group. */
+  min-width: 36px;
+  min-height: 36px;
+  padding-inline: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1;
+  color: var(--fg3);
+  transition: color var(--dur-fast), background var(--dur-fast);
+}
+
+.langs__opt + .langs__opt { border-left: 1px solid var(--border-subtle); }
+
+.langs__opt:hover { color: var(--fg1); background: var(--bg-tertiary); }
+
+/* The one you are reading. Filled rather than merely coloured, because at one
+   character a colour change alone is easy to miss. */
+.langs__opt--on {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.langs__opt--on:hover { background: var(--accent-muted); color: var(--accent); }
+
+/* Inside the phone panel the switch sits in a row with the CTA, where 44px is
+   the height everything else is and a thumb is the input device. */
+.nav__panel .langs__opt { min-width: 44px; min-height: 44px; font-size: var(--text-sm); }
 
 /* Outlined, not filled — and this is a hierarchy decision, not a style one.
    Every page here already ends in its own lime button (报名下一场, 看成员墙,

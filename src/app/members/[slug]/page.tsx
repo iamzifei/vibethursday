@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { assetLabel, langSuffix, weeklyTopic } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberBySlug } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { formatSession, nextThursdays } from "@/lib/sessions";
@@ -20,11 +20,11 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const lang = resolveLang((await searchParams).lang);
   const member = await getMemberBySlug((await params).slug);
 
-  if (!member) return { title: allCopy[lang].members.meta.title };
+  if (!member) return { title: getCopy(lang).members.meta.title };
 
   // The headline is what the person chose to say about themselves, so it is a
   // better description than anything assembled from their fields.
-  const description = member.headline ?? allCopy[lang].members.meta.description;
+  const description = member.headline ?? getCopy(lang).members.meta.description;
 
   return {
     title: `${member.display_name} · Vibe Thursday`,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 export default async function MemberPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
   const m = c.members;
 
   const member = await getMemberBySlug(slug);
@@ -58,7 +58,7 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
       <SiteHeader
         lang={lang}
         copy={c}
-        switchHref={lang === "zh" ? `/members/${slug}?lang=en` : `/members/${slug}`}
+        path={`/members/${slug}`}
       />
 
       <main id="main">

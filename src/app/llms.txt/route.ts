@@ -1,4 +1,4 @@
-import { copy, type Lang } from "@/lib/content";
+import { copy, type Copy } from "@/lib/content";
 import { siteUrl } from "@/lib/site";
 
 // The absolute URLs below are only known once the app is running.
@@ -17,8 +17,7 @@ export const dynamic = "force-dynamic";
  * a copy change on the site cannot leave this file describing last month's
  * venue. Nothing in it is anything a visitor cannot already read on the page.
  */
-function section(lang: Lang): string {
-  const c = copy[lang];
+function section(c: Copy, isZh: boolean): string {
   const lines: string[] = [];
 
   lines.push(c.hero.lede, "");
@@ -27,23 +26,23 @@ function section(lang: Lang): string {
     lines.push(`- **${fact.label}**: ${fact.value}`);
   }
 
-  lines.push("", lang === "zh" ? "### 流程" : "### Run of show", "");
+  lines.push("", isZh ? "### 流程" : "### Run of show", "");
 
   for (const slot of c.schedule.slots) {
     lines.push(`- **${slot.time}** ${slot.title} — ${slot.note}`);
   }
 
-  lines.push("", lang === "zh" ? "### 谁适合来" : "### Who it is for", "");
+  lines.push("", isZh ? "### 谁适合来" : "### Who it is for", "");
   lines.push(c.who.groups.map((group) => `- ${group}`).join("\n"));
   lines.push("", c.who.note);
 
-  lines.push("", lang === "zh" ? "### 规矩" : "### House rules", "");
+  lines.push("", isZh ? "### 规矩" : "### House rules", "");
 
   c.rules.items.forEach((item, index) => {
     lines.push(`${index + 1}. ${item}`);
   });
 
-  lines.push("", lang === "zh" ? "### 常见问题" : "### FAQ", "");
+  lines.push("", isZh ? "### 常见问题" : "### FAQ", "");
 
   for (const item of c.faq.items) {
     // The answer is stored split around an optional inline link, because on the
@@ -73,15 +72,18 @@ export async function GET(): Promise<Response> {
 - [这个活动的开销 / What it costs](${base}/support): ${zh.support.title} ${en.support.title}
 - [认领名片 / Claim your card](${base}/claim): ${zh.claim.lede}
 
-English versions of every page are the same URL with \`?lang=en\`.
+Every page has three views on the same URL: Simplified Chinese (no parameter,
+the default), Traditional Chinese with \`?lang=zh-Hant\`, and English with
+\`?lang=en\`. The Traditional view is the Simplified copy converted character by
+character, so it is not reproduced below.
 
 ## 中文
 
-${section("zh")}
+${section(zh, true)}
 
 ## English
 
-${section("en")}
+${section(en, false)}
 
 ## 说明 · Notes
 

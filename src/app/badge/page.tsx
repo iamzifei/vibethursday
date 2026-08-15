@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { BadgeExport } from "@/components/BadgeExport";
 import { KeepAwake } from "@/components/KeepAwake";
 import { langSuffix, weeklyTopic } from "@/components/MemberCard";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberById } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { nextThursdays } from "@/lib/sessions";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   return {
-    title: allCopy[resolveLang((await searchParams).lang)].badge.meta.title,
+    title: getCopy(resolveLang((await searchParams).lang)).badge.meta.title,
     robots: { index: false },
   };
 }
@@ -61,7 +61,7 @@ async function origin(): Promise<string> {
  */
 export default async function BadgePage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
   const b = c.badge;
 
   const memberId = await currentMemberId();

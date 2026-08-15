@@ -12,7 +12,8 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { copy } from "../src/lib/content.ts";
+import { copy, getCopy, LANGS, LANG_LABEL, LANG_NAME } from "../src/lib/content.ts";
+import { formatSession } from "../src/lib/sessions.ts";
 import { langHref, NAV_CTA, NAV_LINKS } from "../src/lib/nav.ts";
 import { siteUrl, FALLBACK_SITE_URL } from "../src/lib/site.ts";
 
@@ -65,6 +66,59 @@ test("every nav item has a label in both languages", () => {
     }
     // Names the menu button, which is otherwise an unlabelled icon.
     assert.ok(copy[lang].nav.menu, `${lang} has no label for the menu button`);
+  }
+});
+
+test("Traditional is the Simplified copy, converted, and nothing else", () => {
+  const zh = getCopy("zh");
+  const hant = getCopy("zh-Hant");
+
+  // Same shape — it is the same object walked, so a key that exists in one has
+  // to exist in the other. This is what makes the third language free.
+  assert.deepEqual(Object.keys(hant).sort(), Object.keys(zh).sort());
+
+  // Converted where it is prose.
+  assert.equal(hant.nav.members, "成員");
+  assert.equal(hant.nav.support, "開銷");
+  assert.equal(hant.hero.subtitle, "悉尼 · 每週四上午的 AI 局");
+
+  // Not converted where it is not prose: the brand, paths, and the language
+  // tag a screen reader reads the page with.
+  assert.equal(hant.nav.brand, "Vibe Thursday");
+  assert.equal(hant.gallery.sessions[0].photos[0].src, zh.gallery.sessions[0].photos[0].src);
+  assert.equal(hant.htmlLang, "zh-Hant");
+  assert.equal(zh.htmlLang, "zh-CN");
+
+  // Functions are wrapped, not dropped: this one builds a string at call time
+  // and would otherwise be the one place Simplified leaked through.
+  assert.equal(hant.gallery.photoCount(4), "4 張");
+
+  // Characters only. `twp` would also swap vocabulary — 软件 → 軟體 — which is
+  // a dictionary rewriting copy that was written a word at a time.
+  assert.ok(hant.who.note.includes("軟件"), "vocabulary must not be substituted");
+});
+
+test("each written language keeps its own copy; only Traditional is derived", () => {
+  // English must never be routed through the converter.
+  assert.equal(getCopy("en").nav.members, "Members");
+  assert.equal(getCopy("zh").nav.members, "成员");
+});
+
+test("a session date is converted too", () => {
+  // Built at runtime rather than read from the copy bundle, so it misses the
+  // conversion the bundle gets unless it asks for it: 周 → 週.
+  assert.ok(formatSession("2026-08-20", "zh").includes("周四"));
+  assert.ok(formatSession("2026-08-20", "zh-Hant").includes("週四"));
+  assert.ok(!formatSession("2026-08-20", "zh-Hant").includes("周四"));
+});
+
+test("every language has a label and a name for the switch", () => {
+  for (const lang of LANGS) {
+    assert.ok(LANG_LABEL[lang]?.length, `${lang} has no short label`);
+    assert.ok(LANG_NAME[lang]?.length, `${lang} has no full name`);
+    // The visible label is one or two characters; anything longer stops being
+    // a segment and starts being a word.
+    assert.ok(LANG_LABEL[lang].length <= 2, `${lang}'s label is too long for a segment`);
   }
 });
 

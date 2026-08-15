@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { Lang } from "@/lib/content";
 
 type TurnstileApi = {
   render: (
@@ -83,7 +84,7 @@ function loadTurnstile(): Promise<TurnstileApi> {
 
 type Props = {
   siteKey: string;
-  lang: "zh" | "en";
+  lang: Lang;
   /** Receives the token, or null when it expires or errors and must be re-solved. */
   onToken: (token: string | null) => void;
 };
@@ -117,7 +118,8 @@ export function Turnstile({ siteKey, lang, onToken }: Props) {
 
         widgetIdRef.current = turnstile.render(containerRef.current, {
           sitekey: siteKey,
-          language: lang === "zh" ? "zh-cn" : "en",
+          // Turnstile has its own tags: zh-cn, zh-tw, en.
+          language: lang === "en" ? "en" : lang === "zh-Hant" ? "zh-tw" : "zh-cn",
           theme: "dark",
           callback: (token) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(null),

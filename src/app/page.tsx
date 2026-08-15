@@ -3,7 +3,8 @@ import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang } from "@/lib/content";
+import { getCopy, resolveLang } from "@/lib/content";
+import { langHref } from "@/lib/nav";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
 type PageProps = {
@@ -12,7 +13,7 @@ type PageProps = {
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
 
   return {
     title: c.meta.title,
@@ -30,7 +31,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function Page({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
 
   // The time is appended here rather than inside formatSession, which is also
   // used on the member wall to list which sessions someone attended — "8月6日
@@ -39,7 +40,7 @@ export default async function Page({ searchParams }: PageProps) {
   // mornings choose one without ever registering that it is a morning.
   const sessions = nextThursdays(6).map((value) => ({
     value,
-    label: `${formatSession(value, lang)} · ${allCopy[lang].signup.fields.sessionTimeSuffix}`,
+    label: `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}`,
   }));
 
   const nextSession = sessions[0];
@@ -48,7 +49,7 @@ export default async function Page({ searchParams }: PageProps) {
   // re-declares its own language here for screen-reader pronunciation.
   return (
     <div lang={c.htmlLang}>
-      <SiteHeader lang={lang} copy={c} switchHref={c.langSwitchHref} />
+      <SiteHeader lang={lang} copy={c} path="/" />
 
       <main id="main">
         {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -107,7 +108,7 @@ export default async function Page({ searchParams }: PageProps) {
                         </a>
                       ) : (
                         <Link
-                          href={lang === "en" ? `${fact.href}?lang=en` : fact.href}
+                          href={langHref(fact.href, lang)}
                           style={{
                             display: "block",
                             fontWeight: 400,
@@ -135,7 +136,7 @@ export default async function Page({ searchParams }: PageProps) {
               {nextSession && (
                 <span className="pill pill--live" style={{ alignSelf: "flex-start" }}>
                   <span className="dot dot--pulse" aria-hidden="true" />
-                  {lang === "zh" ? `下一场 ${nextSession.label}` : `Next · ${nextSession.label}`}
+                  {`${c.hero.nextPrefix}${nextSession.label}`}
                 </span>
               )}
 
@@ -188,10 +189,10 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-              <Link className="btn btn--primary" href={lang === "en" ? "/members?lang=en" : "/members"}>
+              <Link className="btn btn--primary" href={langHref("/members", lang)}>
                 {c.membersTeaser.cta}
               </Link>
-              <Link className="btn btn--secondary" href={lang === "en" ? "/claim?lang=en" : "/claim"}>
+              <Link className="btn btn--secondary" href={langHref("/claim", lang)}>
                 {c.membersTeaser.ctaSecondary}
               </Link>
             </div>
@@ -400,7 +401,7 @@ export default async function Page({ searchParams }: PageProps) {
                 optional thing that looks like a step is no longer optional. */}
             <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
               {c.signup.supportNote}
-              <Link href={lang === "en" ? "/support?lang=en" : "/support"}>
+              <Link href={langHref("/support", lang)}>
                 {c.signup.supportNoteCta}
               </Link>
               {c.signup.supportNoteTail}
@@ -439,7 +440,7 @@ export default async function Page({ searchParams }: PageProps) {
                         // page to scroll a few hundred pixels.
                         <a href={item.href}>{item.linkLabel}</a>
                       ) : (
-                        <Link href={lang === "en" ? `${item.href}?lang=en` : item.href}>
+                        <Link href={langHref(item.href, lang)}>
                           {item.linkLabel}
                         </Link>
                       ))}
@@ -491,7 +492,7 @@ export default async function Page({ searchParams }: PageProps) {
             {c.footer.location}
           </span>
           <span className="body-sm">
-            <Link href={lang === "en" ? "/support?lang=en" : "/support"}>
+            <Link href={langHref("/support", lang)}>
               {c.footer.supportLink}
             </Link>
           </span>

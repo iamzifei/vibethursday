@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MemberCard, langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
-import { copy as allCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
+import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { listWallMembers, type Member } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { ROLES, type Role } from "@/lib/members";
@@ -18,7 +18,7 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = allCopy[resolveLang((await searchParams).lang)].members;
+  const c = getCopy(resolveLang((await searchParams).lang)).members;
 
   return {
     title: c.meta.title,
@@ -34,7 +34,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function MembersPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const lang = resolveLang(params.lang);
-  const c = allCopy[lang];
+  const c = getCopy(lang);
   const m = c.members;
 
   const role = (ROLES as readonly string[]).includes(params.role ?? "")
@@ -68,14 +68,14 @@ export default async function MembersPage({ searchParams }: PageProps) {
     const query = new URLSearchParams();
     if (value) query.set("role", value);
     if (tag) query.set("tag", tag);
-    if (lang === "en") query.set("lang", "en");
+    if (LANG_PARAM[lang]) query.set("lang", LANG_PARAM[lang]!);
     const search = query.toString();
     return search ? `/members?${search}` : "/members";
   };
 
   return (
     <div lang={c.htmlLang}>
-      <SiteHeader lang={lang} copy={c} switchHref={lang === "zh" ? "/members?lang=en" : "/members"} />
+      <SiteHeader lang={lang} copy={c} path="/members" />
 
       <main id="main">
         <section className="section">

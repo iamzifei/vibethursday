@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { AvatarPicker } from "@/components/AvatarPicker";
-import type { Copy } from "@/lib/content";
+import type { Copy, Lang } from "@/lib/content";
+import { langHref } from "@/lib/nav";
 import type { Member } from "@/lib/db";
 import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
 import {
@@ -24,7 +25,7 @@ type Props = {
   copy: Copy["editor"];
   /** Shared label dictionaries, so the editor and the wall never disagree. */
   labels: Copy["members"];
-  lang: "zh" | "en";
+  lang: Lang;
   /** Tags already live on other cards, most used first. May be empty. */
   suggestedTags: string[];
 };
@@ -251,11 +252,11 @@ export function MemberEditor({ member, copy, labels, lang, suggestedTags }: Prop
   async function signOut() {
     await fetch("/api/me", { method: "DELETE" });
     router.refresh();
-    router.push(lang === "en" ? "/members?lang=en" : "/members");
+    router.push(langHref("/members", lang));
   }
 
   const saving = status === "saving";
-  const cardHref = `/members/${savedSlug}${lang === "en" ? "?lang=en" : ""}`;
+  const cardHref = langHref(`/members/${savedSlug}`, lang);
 
   return (
     <div className="stack-8">
