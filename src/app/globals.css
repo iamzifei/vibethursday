@@ -358,61 +358,95 @@ textarea:focus-visible,
 .nav__link[aria-current="page"],
 .nav__row[aria-current="page"] { color: var(--accent); }
 
-/* Sets the language switch and the CTA apart from the section links beside
-   them. Scoped to the wide row: in the panel the two sit in their own flex row
-   with its own gap, and the extra margin there would only be lopsided. */
-.nav__wide .nav__lang { margin-left: var(--space-2); }
+/* Air on both sides of the language menu, so the bar reads as two groups: the
+   four section links, then the two controls that act on the whole site. They
+   were a single 4px-gapped run, which left the menu touching the CTA. */
+.nav__wide .nav__lang { margin-inline: var(--space-4) var(--space-3); }
 
-/* ── 简 · 繁 · EN ─────────────────────────────────────────────────────
-   A segmented control, not a toggle: with three languages a toggle has to hide
-   two of them, and the reader who needs this control is by definition the one
-   who cannot read the script it is currently in. Three single-character
-   targets cost less width than the word "ENGLISH" did on its own. */
+/* ── Language menu ────────────────────────────────────────────────────
+   A dropdown, not the three visible segments this started as: those spent
+   110px of a bar whose job is to stay out of the way, two thirds of it on
+   options almost nobody takes. The trigger keeps the part worth the width —
+   which language you are currently reading — and the rest appears on demand. */
 .langs {
+  position: relative;
   display: inline-flex;
-  align-items: stretch;
-  /* One border around the set, none between the segments — the whole thing
-     reads as a single control rather than three small buttons. */
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  background: var(--bg-secondary);
 }
 
-.langs__opt {
+.langs__trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  /* 36 rather than the bar's 44: this is a set of three, so the tappable area
-     is the group, and three 44px segments would be a 130px slab in a 60px bar.
-     Each segment still clears 32px in both directions, which is the floor for
-     a control inside a group. */
-  min-width: 36px;
+  gap: var(--space-1);
   min-height: 36px;
-  padding-inline: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--fg2);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
-  color: var(--fg3);
+  cursor: pointer;
+  transition: color var(--dur-fast), background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.langs__trigger:hover {
+  color: var(--fg1);
+  background: var(--bg-tertiary);
+  border-color: var(--border-strong);
+}
+
+.langs__chevron { flex: none; transition: transform var(--dur-fast); }
+.langs__trigger[aria-expanded="true"] .langs__chevron { transform: rotate(180deg); }
+
+.langs__menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  /* Right-aligned: the trigger sits near the right edge of the bar, and a
+     left-aligned menu would hang off it. */
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 148px;
+  padding: var(--space-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  /* Opaque, not the bar's translucency: this sits over page content and has to
+     be read, not seen through. */
+  background: var(--bg-elevated);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+.langs__opt {
+  display: flex;
+  align-items: center;
+  /* Full names here, so the menu is where someone who cannot read the current
+     script finds their own language spelled out. */
+  min-height: 40px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--fg1);
+  white-space: nowrap;
   transition: color var(--dur-fast), background var(--dur-fast);
 }
 
-.langs__opt + .langs__opt { border-left: 1px solid var(--border-subtle); }
+.langs__opt:hover { background: var(--bg-tertiary); color: var(--fg1); }
 
-.langs__opt:hover { color: var(--fg1); background: var(--bg-tertiary); }
+.langs__opt--on { color: var(--accent); background: var(--accent-subtle); }
+.langs__opt--on:hover { color: var(--accent); background: var(--accent-muted); }
 
-/* The one you are reading. Filled rather than merely coloured, because at one
-   character a colour change alone is easy to miss. */
-.langs__opt--on {
-  background: var(--accent-subtle);
-  color: var(--accent);
+/* Inside the phone panel a thumb is the input device, and the menu has to open
+   upward: the panel scrolls its own overflow, and the switch sits in its last
+   row, so a downward menu would open straight into the clipped edge. */
+.nav__panel .langs__trigger { min-height: 44px; font-size: var(--text-sm); }
+.nav__panel .langs__opt { min-height: 44px; }
+
+.nav__panel .langs__menu {
+  top: auto;
+  bottom: calc(100% + var(--space-2));
 }
-
-.langs__opt--on:hover { background: var(--accent-muted); color: var(--accent); }
-
-/* Inside the phone panel the switch sits in a row with the CTA, where 44px is
-   the height everything else is and a thumb is the input device. */
-.nav__panel .langs__opt { min-width: 44px; min-height: 44px; font-size: var(--text-sm); }
 
 /* Outlined, not filled — and this is a hierarchy decision, not a style one.
    Every page here already ends in its own lime button (报名下一场, 看成员墙,

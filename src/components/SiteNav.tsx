@@ -161,13 +161,12 @@ export function SiteNav({
             >
               {cta.label}
             </Link>
-            {/* The language links keep the current pathname, so the
-                route-change reset below never sees them. Catching the click on
-                the way out is enough — the links themselves are the controls,
-                and a keyboard Enter on one fires this too. */}
-            <div className="nav__lang" onClick={() => setOpen(false)}>
-              {langSwitch}
-            </div>
+            {/* No click handler here. It used to close the panel on any click
+                inside, which was fine while the switch was three links and
+                wrong the moment it became a menu: opening the menu would shut
+                the panel underneath it. Picking a language is a full page load
+                (see LangSwitch), so the panel is gone by itself. */}
+            <div className="nav__lang">{langSwitch}</div>
           </div>
         </nav>
       </div>
