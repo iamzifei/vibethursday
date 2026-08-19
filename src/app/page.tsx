@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
 import { langHref } from "@/lib/nav";
@@ -485,19 +486,7 @@ export default async function Page({ searchParams }: PageProps) {
         </section>
       </main>
 
-      <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-        <div className="shell stack-3">
-          <span className="h3 hl">{c.footer.tagline}</span>
-          <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
-            {c.footer.location}
-          </span>
-          <span className="body-sm">
-            <Link href={langHref("/support", lang)}>
-              {c.footer.supportLink}
-            </Link>
-          </span>
-        </div>
-      </footer>
+      <SiteFooter lang={lang} copy={c} support />
     </div>
   );
 }

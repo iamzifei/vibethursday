@@ -470,6 +470,12 @@ export const copy = {
       tagline: "每周四见。",
       location: "达令港 Vogue Cafe · 每周四 10:00 开门，10:30 开始",
       supportLink: "这个活动的开销",
+      // `{heart}` is where the icon goes — see `Slogan` in @/components/SiteFooter.
+      // The site is what it asks people to bring: something made with AI, by
+      // someone who is not a full-time engineer. Saying so in the footer is the
+      // shortest version of that argument.
+      slogan: "在悉尼用 {heart} 和 Claude vibe coding 出来的",
+      sourceLink: "源代码",
     },
 
     // ── 成员墙 ────────────────────────────────────────────────────────
@@ -1015,6 +1021,8 @@ export const copy = {
       tagline: "See you Thursday.",
       location: "Vogue Cafe, Darling Harbour · Thursdays, doors 10am",
       supportLink: "What this costs",
+      slogan: "Vibe-coded in Sydney with {heart} and Claude",
+      sourceLink: "Source",
     },
 
     members: {

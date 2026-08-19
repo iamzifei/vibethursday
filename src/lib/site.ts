@@ -18,3 +18,14 @@ export function siteUrl(): string {
   // without producing a double slash.
   return (configured || FALLBACK_SITE_URL).replace(/\/+$/, "");
 }
+
+/**
+ * Where this site's own code lives.
+ *
+ * The repository is public, so the footer can point at it: the clearest way to
+ * say "this is a small hand-built thing, not a platform" is to let anyone read
+ * it. Kept here beside the site's address because it is the same kind of fact
+ * — where this thing is — and because a link in three footers should have one
+ * source.
+ */
+export const SOURCE_URL = "https://github.com/iamzifei/vibethursday";

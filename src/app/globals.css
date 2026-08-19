@@ -87,6 +87,13 @@
   --success: #c6ff3d;
   --warning: #ffc93d;
   --error: #ff5c8a;
+
+  /* ── Decorative ────────────────────────────────────────────────────
+     The footer's heart. Its own token rather than --error, which is a
+     near neighbour on the colour wheel and would look fine today: an
+     error colour is retuned for legibility in a warning state, and the
+     heart would follow it somewhere it was never meant to go. */
+  --heart: #ff4d63;
 }
 
 /* =============================================================================

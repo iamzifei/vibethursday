@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MemberCard, langSuffix } from "@/components/MemberCard";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { listWallMembers, type Member } from "@/lib/db";
@@ -170,14 +171,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
         </section>
       </main>
 
-      <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-        <div className="shell stack-3">
-          <span className="h3 hl">{c.footer.tagline}</span>
-          <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
-            {c.footer.location}
-          </span>
-        </div>
-      </footer>
+      <SiteFooter lang={lang} copy={c} />
     </div>
   );
 }

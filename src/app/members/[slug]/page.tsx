@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { assetLabel, langSuffix, weeklyTopic } from "@/components/MemberCard";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberBySlug } from "@/lib/db";
@@ -195,14 +196,7 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
         </section>
       </main>
 
-      <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-        <div className="shell stack-3">
-          <span className="h3 hl">{c.footer.tagline}</span>
-          <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
-            {c.footer.location}
-          </span>
-        </div>
-      </footer>
+      <SiteFooter lang={lang} copy={c} />
     </div>
   );
 }
