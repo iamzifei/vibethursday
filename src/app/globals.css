@@ -253,6 +253,41 @@ textarea:focus-visible,
 }
 
 /* =============================================================================
+   Site footer
+   =============================================================================
+   Two blocks pushed to opposite edges: what the reader might still want on the
+   left, what the site is on the right. They stack on a phone, where "opposite
+   edges" is 20px apart and reads as a typesetting accident rather than a
+   layout. ============================================================================= */
+
+.footer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+/* Ends the line, so it aligns to the right edge on wide screens and sits back
+   under the rest once the row wraps. */
+.footer__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--fg3);
+}
+
+/* The mark takes the accent on hover like a text link does, so it is visibly
+   the same kind of thing rather than a decoration that happens to be clickable. */
+.footer__source {
+  display: inline-flex;
+  color: var(--fg3);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.footer__source:hover { color: var(--accent); }
+
+/* =============================================================================
    Site nav
    =============================================================================
    Sticky, so the way back out of a page is always one tap away. Two renderings

@@ -29,3 +29,17 @@ export function siteUrl(): string {
  * source.
  */
 export const SOURCE_URL = "https://github.com/iamzifei/vibethursday";
+
+/**
+ * The line in the footer, in English on every version of the site.
+ *
+ * Deliberately not translated and therefore not in `content.ts`. "Vibe-coded"
+ * has no Chinese equivalent that keeps both halves of it — the closest
+ * renderings either drop the joke or explain it, and a line whose whole job is
+ * to sound offhand cannot survive being explained. It reads the same way to
+ * this room in English, which is a room that types `git commit` all day.
+ *
+ * `{heart}` marks where the icon goes; the spaces around it are part of the
+ * string so the gap is exactly one space. See `SiteFooter`.
+ */
+export const FOOTER_SLOGAN = "Vibe-coded in Sydney with {heart} and Claude";
