@@ -205,6 +205,20 @@ export const copy = {
             { src: "/photos/session-02-4", alt: "桌上的咖啡、可颂和一支白玫瑰", width: 1200, height: 1600 },
           ],
         },
+        {
+          date: "2026-08-20",
+          title: "第三场",
+          // TODO(James)：这一场我不在场，所以这句只写了能核对的部分（报名数、照片里
+          // 看得见的东西）。实到多少、当天真正发生了什么，等你补一句真的。
+          note: "报名二十一个。长桌沿着落地窗一路摆开，坐满了人。",
+          photos: [
+            { src: "/photos/session-03-1", alt: "桌上的果盘、面包和一支白玫瑰，背景里有人在聊天", width: 1448, height: 1086 },
+            { src: "/photos/session-03-2", alt: "第三场现场，长桌两侧坐满了人，尽头有人站着讲话", width: 1600, height: 900 },
+            { src: "/photos/session-03-3", alt: "另一个角度的长桌，窗外是达令港", width: 1600, height: 900 },
+            { src: "/photos/session-03-4", alt: "从长桌另一头看过去，一整排人沿着窗坐开", width: 1600, height: 900 },
+            { src: "/photos/session-03-5", alt: "散场前后，有人还坐着聊，有人站在吧台边上", width: 1600, height: 900 },
+          ],
+        },
       ],
       photoCount: (n: number) => `${n} 张`,
     },
@@ -787,6 +801,18 @@ export const copy = {
             { src: "/photos/session-02-2", alt: "Session two, around thirty people along the table by the windows", width: 1600, height: 903 },
             { src: "/photos/session-02-3", alt: "A fruit platter on the table, a row of people down the length of it", width: 978, height: 1304 },
             { src: "/photos/session-02-4", alt: "Coffee, a croissant and a single white rose on the table", width: 1200, height: 1600 },
+          ],
+        },
+        {
+          date: "2026-08-20",
+          title: "Session three",
+          note: "21 signed up. The long table ran the length of the windows and filled up.",
+          photos: [
+            { src: "/photos/session-03-1", alt: "A fruit platter, bread and a white rose on the table, people talking behind it", width: 1448, height: 1086 },
+            { src: "/photos/session-03-2", alt: "Session three, the long table full on both sides, someone standing at the far end", width: 1600, height: 900 },
+            { src: "/photos/session-03-3", alt: "Another angle on the table, Darling Harbour through the windows", width: 1600, height: 900 },
+            { src: "/photos/session-03-4", alt: "Looking down the table from the other end, a row of people along the windows", width: 1600, height: 900 },
+            { src: "/photos/session-03-5", alt: "Around the end of the session, some still seated, some standing by the bar", width: 1600, height: 900 },
           ],
         },
       ],
