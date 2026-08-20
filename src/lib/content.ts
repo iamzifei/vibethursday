@@ -208,9 +208,7 @@ export const copy = {
         {
           date: "2026-08-20",
           title: "第三场",
-          // TODO(James)：这一场我不在场，所以这句只写了能核对的部分（报名数、照片里
-          // 看得见的东西）。实到多少、当天真正发生了什么，等你补一句真的。
-          note: "报名二十一个。长桌沿着落地窗一路摆开，坐满了人。",
+          note: "报名二十一个。这一场分了四张桌子——增长与商业、To B、To C、AI 实操，进门自己挑一桌坐下，想去的那桌坐满了就换一桌。",
           photos: [
             { src: "/photos/session-03-1", alt: "桌上的果盘、面包和一支白玫瑰，背景里有人在聊天", width: 1448, height: 1086 },
             { src: "/photos/session-03-2", alt: "第三场现场，长桌两侧坐满了人，尽头有人站着讲话", width: 1600, height: 900 },
@@ -806,7 +804,7 @@ export const copy = {
         {
           date: "2026-08-20",
           title: "Session three",
-          note: "21 signed up. The long table ran the length of the windows and filled up.",
+          note: "21 signed up. Four tables this time — growth and business, B2B, B2C, and hands-on AI. You picked one on the way in, and took another if the one you wanted was full.",
           photos: [
             { src: "/photos/session-03-1", alt: "A fruit platter, bread and a white rose on the table, people talking behind it", width: 1448, height: 1086 },
             { src: "/photos/session-03-2", alt: "Session three, the long table full on both sides, someone standing at the far end", width: 1600, height: 900 },
