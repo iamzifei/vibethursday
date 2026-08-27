@@ -48,6 +48,21 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const countSlot = (slot: string) =>
     signups.filter((row) => row.availability.includes(slot)).length;
 
+  // The AI questions are optional, so the denominator for anything below is the
+  // people who answered — not `signups.length`. Counting silence as "uses
+  // nothing" or "spends nothing" would make the room look lighter than it is.
+  const answeredModels = signups.filter((row) => row.ai_models.length > 0);
+
+  /** Everyone using at least one model from that side. Sides overlap: most
+   *  people who use a Chinese model also use an overseas one, so these two do
+   *  not add up to the number who answered, and are not meant to. */
+  const countSide = (prefix: "intl_" | "cn_") =>
+    answeredModels.filter((row) => row.ai_models.some((model) => model.startsWith(prefix))).length;
+
+  /** Signups per spend band, in the order the form lists them. */
+  const SPEND_BANDS = ["free", "lt_50", "50_200", "200_1000", "gt_1000"] as const;
+  const countSpend = (band: string) => signups.filter((row) => row.ai_spend === band).length;
+
   const nextSession = nextThursdays(1)[0];
   const perSession = countPerSession(signups, [nextSession]);
   const nextSessionRow = perSession.find((session) => session.date === nextSession);
@@ -65,6 +80,16 @@ export default async function AdminPage({ searchParams }: PageProps) {
     { label: "Weekend day", value: countSlot("weekend_day") },
     { label: "Weekend eve", value: countSlot("weekend_evening") },
     { label: "Unverified", value: unverified },
+  ];
+
+  // A second row rather than more cards in the first: these answer "how heavy
+  // is this room", which is a different question from "who is coming on
+  // Thursday", and mixing them makes neither readable at a glance.
+  const aiStats = [
+    { label: "Said which AI", value: answeredModels.length },
+    { label: "Uses overseas", value: countSide("intl_") },
+    { label: "Uses China", value: countSide("cn_") },
+    ...SPEND_BANDS.map((band) => ({ label: `Spend ${band}`, value: countSpend(band) })),
   ];
 
   return (
@@ -86,6 +111,29 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         ))}
       </dl>
+
+      <section className="stack-4">
+        <div className="group-head">
+          <h2 className="h3">AI usage</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            Both questions are optional — {signups.length - answeredModels.length} of{" "}
+            {signups.length} left the model question blank, and a blank is not a zero.
+          </span>
+        </div>
+
+        <dl className="grid-auto" style={{ margin: 0 }}>
+          {aiStats.map((stat) => (
+            <div className="card stack-2" key={stat.label}>
+              <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
+                {stat.label}
+              </dt>
+              <dd className="h3 hl" style={{ margin: 0 }}>
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {/* Turnstile is advisory, so a dropped key no longer breaks the form —
           it quietly stops verifying, which is exactly the kind of silent
@@ -223,6 +271,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <th scope="col">WeChat</th>
                 <th scope="col">Demo</th>
                 <th scope="col">Session</th>
+                <th scope="col">AI</th>
+                <th scope="col">Spend</th>
                 <th scope="col">Building</th>
                 <th scope="col">Source</th>
                 <th scope="col">Lang</th>
@@ -238,6 +288,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <td>{row.wechat ?? "—"}</td>
                   <td>{row.demo_intent ?? "—"}</td>
                   <td className="mono">{row.first_session ?? "—"}</td>
+                  {/* Stripped of the region prefix: the column is narrow, and
+                      the side is already counted in the cards above. */}
+                  <td style={{ whiteSpace: "normal", minWidth: "160px" }}>
+                    {row.ai_models.length > 0
+                      ? row.ai_models.map((model) => model.replace(/^(intl_|cn_)/, "")).join(", ")
+                      : "—"}
+                  </td>
+                  <td className="mono">{row.ai_spend ?? "—"}</td>
                   {/* The only free-text column, so it is the only one allowed
                       to wrap rather than widen the table indefinitely. */}
                   <td style={{ whiteSpace: "normal", minWidth: "280px" }}>{row.building ?? "—"}</td>

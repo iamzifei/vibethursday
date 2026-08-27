@@ -943,6 +943,18 @@ select.field {
   transition: border-color var(--dur-normal), background var(--dur-normal), color var(--dur-normal);
 }
 
+/* Names one half of a split choice group — the overseas / China rows in the
+   signup form. Quieter than .label, which is already taken by the legend
+   above it; this is a caption inside a field, not a second field. */
+.choice-subhead {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
 .choice input { position: absolute; opacity: 0; width: 0; height: 0; }
 .choice:has(input:checked) {
   border-color: var(--accent);

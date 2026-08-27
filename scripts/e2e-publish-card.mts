@@ -26,6 +26,8 @@ const base = {
   demoIntent: "listen",
   firstSession: null,
   availability: [] as string[],
+  aiModels: [] as string[],
+  aiSpend: null,
   source: null,
   lang: "zh",
   botCheck: "skipped",

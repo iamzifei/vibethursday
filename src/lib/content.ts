@@ -317,6 +317,52 @@ export const copy = {
           { value: "weekend_day", label: "周末白天" },
           { value: "weekend_evening", label: "周末晚上" },
         ],
+        // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
+        // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。放在表单末尾，
+        // 和 source 一组——它们对报名的人本身没有用处，不该挡在场次前面。
+        //
+        // 之前 topic 那个文本框放末尾只有 49 份里 3 个人填，但那是要动脑写字的；
+        // 这两栏是点两下的方块，和 availability 一样，不是同一件事。
+        aiModels: "平时主要用哪些 AI？",
+        aiModelsHint:
+          "选填，可多选。我想知道这屋子里海外模型和国内模型各占多少——现场演示用什么、值不值得聊拼车订阅和国内 API，都看这个。",
+        // 分成海外/国内两排，是因为这份统计最想要的就是这条线。选项的存储值
+        // 自带 intl_ / cn_ 前缀，所以两边各有多少人可以直接从值上数出来，
+        // 不需要在别处再维护一张「哪个模型算哪边」的对照表。
+        aiModelGroups: [
+          {
+            label: "海外",
+            options: [
+              { value: "intl_openai", label: "ChatGPT / GPT" },
+              { value: "intl_claude", label: "Claude" },
+              { value: "intl_gemini", label: "Gemini" },
+              { value: "intl_other", label: "其他海外（Grok、Llama…）" },
+            ],
+          },
+          {
+            label: "国内",
+            options: [
+              { value: "cn_deepseek", label: "DeepSeek" },
+              { value: "cn_qwen", label: "通义千问 Qwen" },
+              { value: "cn_kimi", label: "Kimi" },
+              { value: "cn_doubao", label: "豆包" },
+              { value: "cn_other", label: "其他国内（智谱、MiniMax…）" },
+            ],
+          },
+        ],
+        // 刻意不问「一个月烧多少 token」。真要答那个数得去翻三个后台的账单页，
+        // 大多数人答不上来，于是这一栏就会空着。问花多少钱是同一件事的一个
+        // 便宜代理：订阅和 API 的价钱是大家本来就记得的数。
+        aiSpend: "每个月在 AI 上大概花多少？",
+        aiSpendHint:
+          "选填。不用去翻账单，下面哪条最像你就选哪条。问的是用得有多重，不是钱本身。按美元算。",
+        aiSpendOptions: [
+          { value: "free", label: "只用免费的" },
+          { value: "lt_50", label: "一两个订阅（50 以内）" },
+          { value: "50_200", label: "订阅之外还调 API（50–200）" },
+          { value: "200_1000", label: "API / agent 天天在跑（200–1000）" },
+          { value: "gt_1000", label: "跑批量任务或带着团队用（1000 以上）" },
+        ],
         source: "怎么知道这个活动的？",
         sourcePlaceholder: "选填",
       },
@@ -886,6 +932,43 @@ export const copy = {
           { value: "weekday_evening", label: "Weekday evenings" },
           { value: "weekend_day", label: "Weekend daytime" },
           { value: "weekend_evening", label: "Weekend evenings" },
+        ],
+        // Two optional questions about AI usage. See the Chinese block above for
+        // why they sit here at the end and why the second one asks about money
+        // rather than about tokens.
+        aiModels: "Which AI models do you mostly use?",
+        aiModelsHint:
+          "Optional, pick as many as apply. It tells me how the room splits between overseas and Chinese models — which decides what gets demoed on the day, and whether shared subscriptions or China-hosted APIs are worth a table.",
+        aiModelGroups: [
+          {
+            label: "Overseas",
+            options: [
+              { value: "intl_openai", label: "ChatGPT / GPT" },
+              { value: "intl_claude", label: "Claude" },
+              { value: "intl_gemini", label: "Gemini" },
+              { value: "intl_other", label: "Other overseas (Grok, Llama…)" },
+            ],
+          },
+          {
+            label: "China",
+            options: [
+              { value: "cn_deepseek", label: "DeepSeek" },
+              { value: "cn_qwen", label: "Qwen" },
+              { value: "cn_kimi", label: "Kimi" },
+              { value: "cn_doubao", label: "Doubao" },
+              { value: "cn_other", label: "Other China (GLM, MiniMax…)" },
+            ],
+          },
+        ],
+        aiSpend: "Roughly what do you spend on AI a month?",
+        aiSpendHint:
+          "Optional. No need to open a billing page — pick whichever line sounds most like you. This is about how heavily you use the stuff, not about the money. In USD.",
+        aiSpendOptions: [
+          { value: "free", label: "Free tiers only" },
+          { value: "lt_50", label: "A subscription or two (under 50)" },
+          { value: "50_200", label: "Subscriptions plus some API (50–200)" },
+          { value: "200_1000", label: "API / agents running daily (200–1000)" },
+          { value: "gt_1000", label: "Batch jobs, or a team on it (1000+)" },
         ],
         source: "How did you hear about this?",
         sourcePlaceholder: "Optional",

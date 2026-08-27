@@ -120,6 +120,19 @@ export function ensureSchema(): Promise<void> {
     // come on a Saturday is part of that number.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS availability text[] NOT NULL DEFAULT '{}'`);
 
+    // Which models this person uses, and roughly how heavily. Both optional on
+    // the form, so an empty array and a NULL are ordinary answers here — they
+    // mean "did not say", which is not the same as "uses nothing" and must not
+    // be counted as either.
+    //
+    // Values carry an `intl_` / `cn_` prefix so the overseas-vs-China split the
+    // question exists to measure is a prefix match on this column alone.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS ai_models text[] NOT NULL DEFAULT '{}'`);
+
+    // A band, not a number: asking for a token count would send people to three
+    // different billing pages, and the column would come back mostly empty.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS ai_spend text`);
+
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
     // in, which is what keeps the wall to people who actually turned up: there
@@ -204,6 +217,10 @@ export type SignupInput = {
   source: string | null;
   /** Other times this person could make. Whitelisted by the route. */
   availability: string[];
+  /** Models they use, `intl_*` / `cn_*`. Whitelisted by the route. Empty = unanswered. */
+  aiModels: string[];
+  /** Monthly AI spend band. Whitelisted by the route. Null = unanswered. */
+  aiSpend: string | null;
   lang: string;
   /** Turnstile verdict for this submission: verified / skipped / unavailable. */
   botCheck: string;
@@ -249,8 +266,8 @@ export async function saveSignup(input: SignupInput): Promise<string> {
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, sessions)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
                CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
        RETURNING id::text AS id`,
       [
@@ -265,6 +282,8 @@ export async function saveSignup(input: SignupInput): Promise<string> {
         input.botCheck,
         input.topic,
         input.availability,
+        input.aiModels,
+        input.aiSpend,
       ],
     );
 
@@ -311,6 +330,13 @@ export async function saveSignup(input: SignupInput): Promise<string> {
        -- returning-visitor form does not silently wipe an earlier answer.
        availability  = CASE WHEN cardinality($12::text[]) = 0
                             THEN availability ELSE $12::text[] END,
+       -- Same shape as availability, and for the same reason: replace, because
+       -- someone who stopped using a model must be able to untick it, but leave
+       -- an earlier answer alone when nothing was ticked this time, so the
+       -- compact returning-visitor form does not silently wipe it.
+       ai_models     = CASE WHEN cardinality($13::text[]) = 0
+                            THEN ai_models ELSE $13::text[] END,
+       ai_spend      = COALESCE($14, ai_spend),
        lang          = $9,
        bot_check     = $10,
        updated_at    = now()
@@ -328,6 +354,8 @@ export async function saveSignup(input: SignupInput): Promise<string> {
       input.botCheck,
       input.topic,
       input.availability,
+      input.aiModels,
+      input.aiSpend,
     ],
   );
 
@@ -393,6 +421,10 @@ export type SignupRow = {
   sessions: string[];
   /** Other times they said they could make. Empty when they did not answer. */
   availability: string[];
+  /** Models they use, `intl_*` / `cn_*`. Empty when they did not answer. */
+  ai_models: string[];
+  /** Monthly AI spend band. Null when they did not answer. */
+  ai_spend: string | null;
   created_at: string;
 };
 
@@ -410,7 +442,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS sessions,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, source, lang, bot_check,
+            availability, ai_models, ai_spend, source, lang, bot_check,
             to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
      FROM signups
      ORDER BY created_at DESC`,

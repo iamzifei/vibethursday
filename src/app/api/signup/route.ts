@@ -12,6 +12,29 @@ const DEMO_INTENTS = new Set(["yes", "maybe", "listen"]);
 /** Other times someone could make. Kept in step with `copy.fields.availabilityOptions`. */
 const AVAILABILITY = new Set(["weekday_evening", "weekend_day", "weekend_evening"]);
 
+/**
+ * Which models someone uses. Kept in step with `copy.fields.aiModelGroups`.
+ *
+ * The `intl_` / `cn_` prefix is load-bearing: the whole reason this question is
+ * asked is the split between the two, and encoding it in the value means that
+ * count is a prefix match rather than a second list of "which model is which
+ * side" that could drift out of step with this one.
+ */
+const AI_MODELS = new Set([
+  "intl_openai",
+  "intl_claude",
+  "intl_gemini",
+  "intl_other",
+  "cn_deepseek",
+  "cn_qwen",
+  "cn_kimi",
+  "cn_doubao",
+  "cn_other",
+]);
+
+/** Monthly AI spend band. Kept in step with `copy.fields.aiSpendOptions`. */
+const AI_SPEND = new Set(["free", "lt_50", "50_200", "200_1000", "gt_1000"]);
+
 /** Trims, drops empties, and caps length so one paste cannot fill a column. */
 function clean(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
@@ -102,6 +125,18 @@ export async function POST(request: Request) {
       ))]
     : [];
 
+  // Whitelisted for the same reason availability is: these columns are only
+  // ever read back as counts, and one free-text value would make the count of
+  // whatever it lands next to a number nobody can trust.
+  const aiModels = Array.isArray(body.aiModels)
+    ? [...new Set(body.aiModels.filter((model: unknown): model is string =>
+        typeof model === "string" && AI_MODELS.has(model),
+      ))]
+    : [];
+
+  const aiSpendRaw = clean(body.aiSpend, 20);
+  const aiSpend = aiSpendRaw && AI_SPEND.has(aiSpendRaw) ? aiSpendRaw : null;
+
   // Strict `=== true`: anything else, including the string "false" a hand-rolled
   // client might send, means the box was not ticked. Publishing someone's card
   // is not a thing to do on a truthy value.
@@ -119,6 +154,8 @@ export async function POST(request: Request) {
       demoIntent,
       firstSession,
       availability,
+      aiModels,
+      aiSpend,
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,

@@ -11,6 +11,8 @@ const COLUMNS = [
   "first_session",
   "sessions",
   "availability",
+  "ai_models",
+  "ai_spend",
   "building",
   "topic",
   "source",

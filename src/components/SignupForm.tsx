@@ -251,6 +251,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           // getAll, not get: this is a checkbox group and `get` would silently
           // send only whichever box happens to be first in the DOM.
           availability: data.getAll("availability"),
+          // Same reason as availability — a checkbox group, so getAll.
+          aiModels: data.getAll("aiModels"),
+          aiSpend: data.get("aiSpend"),
           // Boolean, not the browser's "on": the route only publishes on a
           // strict === true, so anything looser would silently never publish.
           publishCard: data.get("publishCard") !== null,
@@ -562,6 +565,56 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           />
         </div>
       </div>
+
+      {/* Both AI questions sit here, at the end, next to "how did you hear
+          about this" — they are the two fields on this form that serve the
+          organiser rather than the person filling it in, so they must not come
+          before the session picker.
+
+          Being last is what killed `topic` (3 of the first 49 filled it), but
+          that was a textarea asking someone to think. These are tappable
+          chips, like the availability group two fields up. */}
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label">{copy.fields.aiModels}</legend>
+
+        {/* One checkbox group split into two labelled rows rather than two
+            separate fields: overseas-vs-China is the split being measured, so
+            showing it is also what makes the question quick to answer. The
+            name is shared, so the server sees one flat list. */}
+        <div className="stack-3">
+          {copy.fields.aiModelGroups.map((group) => (
+            <div key={group.label}>
+              <p className="choice-subhead">{group.label}</p>
+              <div className="choice-group">
+                {group.options.map((option) => (
+                  <label className="choice" key={option.value}>
+                    <input type="checkbox" name="aiModels" value={option.value} />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="field-hint">{copy.fields.aiModelsHint}</p>
+      </fieldset>
+
+      {/* No defaultChecked anywhere in this group, unlike demoIntent: a radio
+          cannot be un-picked, so a pre-selected band would be indistinguishable
+          from an answer and would quietly become the most common one. */}
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label">{copy.fields.aiSpend}</legend>
+        <div className="choice-group">
+          {copy.fields.aiSpendOptions.map((option) => (
+            <label className="choice" key={option.value}>
+              <input type="radio" name="aiSpend" value={option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+        <p className="field-hint">{copy.fields.aiSpendHint}</p>
+      </fieldset>
 
       {showBotCheck && (
         <Turnstile siteKey={turnstileSiteKey!} lang={lang} onToken={handleToken} />
