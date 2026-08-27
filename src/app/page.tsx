@@ -5,8 +5,10 @@ import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
+import { listWallMembers } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { formatSession, nextThursdays } from "@/lib/sessions";
+import { featuredTopics, groupTopics, type WharfEntry } from "@/lib/wharf";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -45,6 +47,30 @@ export default async function Page({ searchParams }: PageProps) {
   }));
 
   const nextSession = sessions[0];
+
+  /**
+   * The three questions in the Wharf block.
+   *
+   * This is the only database read on the home page, and it is wrapped because
+   * of what this page is: the address people are given, the one a stranger
+   * opens first, and until now the only page that still rendered completely
+   * with Postgres down. A block of questions is worth having; it is not worth
+   * the front door going with it, so a failure here costs the three rows and
+   * nothing else — the heading, the explanation and the link all still render.
+   *
+   * `listWallMembers` is the same call the member wall makes, and it is the
+   * privacy boundary: published, unhidden cards only.
+   */
+  let featured: WharfEntry[] = [];
+  let thisWeekCount = 0;
+
+  try {
+    const { groups } = groupTopics(await listWallMembers(), nextSession.value);
+    featured = featuredTopics(groups);
+    thisWeekCount = groups[0].entries.length;
+  } catch (error) {
+    console.error("[home] the wharf block could not be loaded", error);
+  }
 
   // The document is declared zh-CN in the layout, so the English view
   // re-declares its own language here for screen-reader pronunciation.
@@ -196,6 +222,54 @@ export default async function Page({ searchParams }: PageProps) {
               <Link className="btn btn--secondary" href={langHref("/claim", lang)}>
                 {c.membersTeaser.ctaSecondary}
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── The Wharf ────────────────────────────────────────────
+            Directly after the wall, because they are the same kind of thing:
+            the two parts of this site that get thicker every week. The wall
+            answers "who will be there", this answers "what will they want to
+            talk about", and the second is the one that gets a stranger to
+            walk over to a table.
+
+            Real questions rather than a description of them. Three lines of
+            somebody's actual problem make the case that no amount of copy
+            about the feature can. */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.wharfTeaser.eyebrow}</span>
+              <h2>{c.wharfTeaser.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.wharfTeaser.lede}
+              </p>
+            </div>
+
+            {featured.length > 0 ? (
+              <div className="wharf-rows">
+                {featured.map((entry) => (
+                  <Link
+                    key={entry.slug}
+                    href={langHref(`/members/${entry.slug}`, lang)}
+                    className="wharf-row"
+                  >
+                    <span className="wharf-row__q">{entry.topic}</span>
+                    <span className="wharf-row__who">{entry.name}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "center" }}>
+              <Link className="btn btn--secondary" href={langHref("/wharf", lang)}>
+                {c.wharfTeaser.cta}
+              </Link>
+              <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                {thisWeekCount > 0
+                  ? c.wharfTeaser.count.replace("{n}", String(thisWeekCount))
+                  : c.wharfTeaser.empty}
+              </span>
             </div>
           </div>
         </section>

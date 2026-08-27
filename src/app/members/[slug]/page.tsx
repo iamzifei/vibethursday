@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { assetLabel, langSuffix, weeklyTopic } from "@/components/MemberCard";
+import { assetLabel, cardTopic, langSuffix, topicLabel } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
@@ -48,7 +48,8 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
 
   if (!member) notFound();
 
-  const topic = weeklyTopic(member, nextThursdays(1)[0]);
+  const upcoming = nextThursdays(1)[0];
+  const topic = cardTopic(member);
 
   // Looking at your own card was a dead end: the only ways to edit it were the
   // wall and /me, neither of which you are on when you followed your own QR.
@@ -122,8 +123,8 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
               <dl className="wants wants--lg">
                 {topic && (
                   <div className="wants__row">
-                    <dt>📌 {m.thisWeekTopic}</dt>
-                    <dd>{topic}</dd>
+                    <dt>📌 {topicLabel(topic.session, upcoming, lang, m)}</dt>
+                    <dd>{topic.topic}</dd>
                   </div>
                 )}
                 {member.looking_for && (

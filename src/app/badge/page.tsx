@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { Avatar } from "@/components/Avatar";
 import { BadgeExport } from "@/components/BadgeExport";
 import { KeepAwake } from "@/components/KeepAwake";
-import { langSuffix, weeklyTopic } from "@/components/MemberCard";
+import { cardTopic, langSuffix } from "@/components/MemberCard";
 import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberById } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
@@ -71,7 +71,12 @@ export default async function BadgePage({ searchParams }: PageProps) {
   if (!member) redirect(`/claim${langSuffix(lang)}`);
 
   const cardUrl = `${await origin()}/members/${member.slug}`;
-  const topic = weeklyTopic(member, nextThursdays(1)[0]);
+  // The strict reading, on purpose, and unlike the member wall: this is a
+  // table tent, propped up in the room on the day. A sentence written for a
+  // session three weeks ago would be sitting on the table claiming to be what
+  // its owner wants to talk about right now.
+  const current = cardTopic(member);
+  const topic = current?.session === nextThursdays(1)[0] ? current.topic : null;
 
   // Dark modules on a white field, never inverted: plenty of scanners fail on a
   // light-on-dark code. Same reasoning as the WeChat QR plate on the home page.

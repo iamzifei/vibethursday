@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Member, MemberAsset } from "@/lib/db";
 import { LANG_PARAM, type Copy, type Lang } from "@/lib/content";
+import { formatSession } from "@/lib/sessions";
+import { topicSession } from "@/lib/wharf";
 import { Avatar } from "@/components/Avatar";
 
 type MembersCopy = Copy["members"];
@@ -62,21 +64,45 @@ type Props = {
 };
 
 /**
- * The line to show as this week's topic, if there is one.
+ * The topic line to show on a card, and which session it was written for.
  *
- * Two things had to be true and neither was:
+ * Two things have to be true and neither was true to begin with:
  *
- * - It is only "this week" if they signed up for the upcoming session. A topic
- *   written three weeks ago and never touched again was being labelled 本周.
+ * - The label has to match the date. A topic written three weeks ago and never
+ *   touched again was being labelled 本周.
  * - Claiming a card copies the signup's topic into `looking_for`, so for anyone
  *   who has not edited since, the same sentence appeared twice under two
  *   different headings.
+ *
+ * The first was originally fixed by hiding the topic unless the person was
+ * signed up for the coming Thursday — which is correct about the label and
+ * wrong about everything else. Between a session ending and the next week's
+ * sign-ups opening, that gate hid **every** topic on the site: 35 of them in
+ * the database and none rendered anywhere. So the gate is now on the label,
+ * not on the line. `session` is null when they have never picked a Thursday,
+ * which is its own true thing to say about someone.
  */
-export function weeklyTopic(member: Member, upcoming: string): string | null {
-  if (!member.topic || !member.sessions.includes(upcoming)) return null;
+export function cardTopic(
+  member: Member,
+): { topic: string; session: string | null } | null {
+  if (!member.topic) return null;
 
   const same = member.looking_for?.trim().toLowerCase() === member.topic.trim().toLowerCase();
-  return same ? null : member.topic;
+  if (same) return null;
+
+  return { topic: member.topic, session: topicSession(member.sessions) };
+}
+
+/** 本周想聊 / 8月27日（周四）想聊 / 想聊 — whichever the date makes true. */
+export function topicLabel(
+  session: string | null,
+  upcoming: string,
+  lang: Lang,
+  copy: Pick<MembersCopy, "thisWeekTopic" | "topicOn" | "topicUndated">,
+): string {
+  if (session === null) return copy.topicUndated;
+  if (session >= upcoming) return copy.thisWeekTopic;
+  return copy.topicOn.replace("{date}", formatSession(session, lang));
 }
 
 /**
@@ -90,7 +116,7 @@ const ASSETS_ON_CARD = 3;
 const TAGS_ON_CARD = 4;
 
 export function MemberCard({ member, copy, lang, upcoming }: Props) {
-  const topic = weeklyTopic(member, upcoming);
+  const topic = cardTopic(member);
   const shown = member.assets.slice(0, ASSETS_ON_CARD);
   const overflow = member.assets.length - shown.length;
 
@@ -155,8 +181,8 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
         <dl className="wants">
           {topic && (
             <div className="wants__row">
-              <dt>📌 {copy.thisWeekTopic}</dt>
-              <dd>{topic}</dd>
+              <dt>📌 {topicLabel(topic.session, upcoming, lang, copy)}</dt>
+              <dd>{topic.topic}</dd>
             </div>
           )}
           {member.looking_for && (

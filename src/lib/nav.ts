@@ -13,6 +13,14 @@ import { LANG_PARAM, type Lang } from "./content.ts";
 export const NAV_LINKS = [
   { href: "/#what", label: "about" },
   { href: "/members", label: "members" },
+  // Next to the wall on purpose. These two are the only things on this site
+  // that get thicker over time — every other item describes what happens on a
+  // Thursday, these two are what has accumulated from the Thursdays so far.
+  //
+  // The donation link was deliberately kept out of this bar, on the grounds
+  // that being in it makes something look like a main attribute of the meetup.
+  // That reasoning is why this one belongs in it.
+  { href: "/wharf", label: "wharf" },
   { href: "/#schedule", label: "schedule" },
   { href: "/support", label: "support" },
 ] as const;

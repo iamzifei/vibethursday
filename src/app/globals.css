@@ -94,6 +94,24 @@
      error colour is retuned for legibility in a warning state, and the
      heart would follow it somewhere it was never meant to go. */
   --heart: #ff4d63;
+
+  /* ── The Wharf ─────────────────────────────────────────────────────
+     Two more decorative tokens, given their own names for the same reason
+     --heart has one: they share a value with something else today and must
+     not follow it when that something is retuned.
+
+     --chip is a serve of hot chips, and is exactly --warning's yellow. A
+     warning colour gets adjusted for legibility in a warning state; chips
+     should not move because of that.
+
+     --gull is the bill, legs and eye-ring of a silver gull, which BirdLife
+     Australia describes as "bright orange-red". It is a near neighbour of
+     --error and of --heart and is neither: an error colour and a piece of
+     bird anatomy have nothing to say to each other. */
+  --chip: #ffc93d;
+  --chip-subtle: rgba(255, 201, 61, 0.09);
+  --chip-muted: rgba(255, 201, 61, 0.24);
+  --gull: #ef4a2e;
 }
 
 /* =============================================================================
@@ -1929,4 +1947,244 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   /* On a propped phone the badge is being read, not operated — the export
      button would only eat height it cannot spare. */
   .badge__export { display: none; }
+}
+
+/* =============================================================================
+   The Wharf — /wharf
+   =============================================================================
+   The page is a read model over the sign-up form's "what do you most want to
+   ask" field. No new component vocabulary: the rows are .card, the labels are
+   .pill, the section heads are .eyebrow. What is new here is the scene, and it
+   is decoration with a job — see WharfScene.tsx.
+============================================================================= */
+
+.wharf-hero {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(var(--space-12), 9vw, var(--space-16)) 0;
+}
+
+/* The lime bloom on the home page's hero, warmed to chip yellow. Same idea,
+   quieter: this page is a list, and the list is the thing being read. */
+.wharf-hero::before {
+  content: "";
+  position: absolute;
+  top: -34%;
+  left: 50%;
+  width: min(760px, 140vw);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(255, 201, 61, 0.1) 0%, rgba(255, 201, 61, 0) 62%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wharf-hero > * { position: relative; z-index: 2; }
+
+/* The bird and its line, side by side. */
+.wharf-mascot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+/* Both drawings are ink on off-white paper, so they are presented as paper:
+   a light plate on the dark page, the way the WeChat QR already is. Trying to
+   knock the background out instead would leave the black linework sitting on
+   near-black, where it disappears — the ink *is* the drawing. */
+.wharf-mascot img {
+  display: block;
+  width: clamp(128px, 22vw, 180px);
+  height: auto;
+  border-radius: var(--radius-md);
+  background: #fdfcf7;
+}
+
+/* What the gull says. Anchored to the scene rather than drawn inside it,
+   because it is real text: it carries the count for anyone who cannot see
+   the picture, and it has to reflow. */
+.wharf-say {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--fg3);
+  background: var(--bg-secondary);
+}
+
+.wharf-say b { color: var(--chip); font-weight: var(--weight-semibold); }
+
+/* A session heading: a label with a rule running off to the right. */
+.wharf-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.wharf-group__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg3);
+  white-space: nowrap;
+}
+
+.wharf-group__label--now { color: var(--accent); }
+.wharf-group__rule { flex: 1; height: 1px; background: var(--border-subtle); }
+
+/* One person's question. */
+.wharf-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  padding-left: var(--space-8);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* The status rail. Grey while the question is only sitting there; lime once
+   its author is coming to the next session, which is the one fact on this
+   page that can turn a reader into someone walking over to a table. */
+.wharf-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border-default);
+}
+
+.wharf-item--now::before { background: var(--accent); }
+
+a.wharf-item:hover { border-color: var(--border-default); background: var(--bg-tertiary); }
+a.wharf-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wharf-item__q {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.45;
+}
+
+.wharf-item__who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+  color: var(--fg3);
+}
+
+.wharf-item__name { color: var(--fg2); }
+a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
+
+/* The empty state for a session nobody has written anything for yet. Its own
+   rule rather than a hidden group: "nobody has asked anything for this week
+   yet" is a true and useful sentence, and it is also the ask. */
+.wharf-empty {
+  padding: var(--space-6) var(--space-8);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--fg3);
+  font-size: var(--text-sm);
+}
+
+/* The four-panel strip: a printed thing pinned to a dark board. The paper
+   colour is the drawing's own, so the plate and the artwork are continuous
+   and there is no white seam around the panels. */
+.wharf-strip {
+  margin: 0 auto;
+  padding: var(--space-3);
+  /* Capped. At the full column width the strip is nearly 700px tall and it
+     stops being the aside that explains the list and starts being the page. */
+  max-width: 880px;
+  background: #fdfcf7;
+  border-radius: var(--radius-lg);
+  /* Line art has no soft edge of its own; without this the paper meets the
+     page on a hard 1px step that reads as a rendering fault on a phone. */
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px rgba(0, 0, 0, 0.5);
+  /* Below ~700px four panels side by side are about eighty pixels each,
+     which is not a comic, it is a texture. Swiping through it keeps the
+     drawing at a size where the bird has a face. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wharf-strip img {
+  display: block;
+  width: 100%;
+  min-width: 660px;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+/* How your own question gets here. Chip-coloured because it is the one place
+   on the page that mentions chips. */
+.wharf-how {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-6);
+  border: 1px solid var(--chip-muted);
+  background: var(--chip-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.wharf-how__mark { flex: none; color: var(--chip); margin-top: 2px; }
+.wharf-how__body { font-size: var(--text-sm); color: var(--fg2); line-height: 1.6; }
+.wharf-how__body strong { color: var(--fg1); font-weight: var(--weight-semibold); }
+
+/* The home page's teaser: three questions as rows, not cards. */
+.wharf-rows {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.wharf-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: inherit;
+}
+
+.wharf-row:first-child { border-top: 0; }
+.wharf-row:hover { background: var(--bg-tertiary); }
+.wharf-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.wharf-row__q {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wharf-row__who { font-size: var(--text-sm); color: var(--fg3); white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .wharf-item { padding: var(--space-4); padding-left: var(--space-6); }
+  .wharf-item__q { font-size: var(--text-base); }
+  .wharf-row { padding: var(--space-3) var(--space-4); }
+  /* The row's one job on a phone is the question; the name is on the page
+     it links to anyway. */
+  .wharf-row__who { display: none; }
 }

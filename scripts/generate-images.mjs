@@ -4,7 +4,9 @@
  * Run once, then commit the output — this is not part of the build. The images
  * are deliberately TEXTLESS: every piece of type on the site (including the
  * social card) is rendered as real text, so nothing depends on a model
- * spelling correctly.
+ * spelling correctly. That rule matters twice as much for the comic strip
+ * below: a wordless four-panel gag cannot be misspelt, and a model asked for
+ * a punchline in Chinese will invent characters that are not characters.
  *
  *   OPENAI_API_KEY=... node scripts/generate-images.mjs
  */
@@ -54,6 +56,55 @@ const JOBS = [
       "Absolutely no text, no letters, no numbers, no wordmark.",
       "Flat, crisp, high contrast, geometric. Must stay legible when scaled down to 32 pixels.",
       "No gradients, no shadows, no 3D, no bevel.",
+    ].join(" "),
+  },
+  {
+    file: "wharf-strip.png",
+    size: "1536x1024",
+    prompt: [
+      "A wordless four-panel comic strip, laid out as ONE HORIZONTAL ROW of four equal panels",
+      "with thin black gutters between them. Read left to right. Drawn in black-and-white",
+      "yonkoma / newspaper-strip style: bold confident ink linework of varying weight, solid",
+      "flat blacks, and benday halftone screentone dots for all shading. Off-white paper field.",
+      "The setting is a timber wharf at Darling Harbour, Sydney: heavy decking boards in",
+      "perspective, mooring bollards with rope, water below, and in the far distance the low",
+      "truss span of Pyrmont Bridge with its little control cabin on stilts, plus the needle of",
+      "Sydney Tower on the skyline.",
+      "The character is a single Australian silver gull, drawn as an expressive comic character:",
+      "white body, light grey back, black wingtips, and a bright orange-red bill, legs and",
+      "eye-ring. Same bird in every panel.",
+      "Panel 1: the gull slumped on a bollard, bored out of its mind, staring at nothing.",
+      "Panel 2: its head snaps up — it has spotted something off-panel.",
+      "Panel 3: it is hustling along the decking, low and fast, toward a paper cone of hot chips",
+      "sitting on the boards.",
+      "Panel 4: the gull upright and triumphant, one chip held crosswise in its bill.",
+      "The hot chips are the ONLY colour in the whole image: warm chip yellow (#FFC93D). The",
+      "bird's bill, legs and eye-ring are the one other colour, orange-red (#EF4A2E). Everything",
+      "else is pure black, white and grey screentone.",
+      "Absolutely no text, no letters, no numbers, no speech bubbles, no sound effects, no panel",
+      "numbers, no signature, no watermark. Comedy carried entirely by the bird's posture.",
+      "No 3D, no airbrush, no gradients, no photographic rendering.",
+    ].join(" "),
+  },
+  {
+    file: "gull.png",
+    size: "1024x1024",
+    prompt: [
+      "A single Australian silver gull, drawn as a comic-strip character, on a plain flat",
+      "off-white background with generous empty margin on all sides.",
+      "Standing in profile facing right on a short stretch of timber wharf decking, head cocked,",
+      "deadpan and slightly bored — the expression of a bird waiting for someone to drop a chip.",
+      "Black-and-white yonkoma / newspaper-strip technique: bold confident ink outline of varying",
+      "weight, solid flat blacks, benday halftone screentone dots for the grey of its back. No",
+      "soft shading of any kind.",
+      "Anatomy must be a silver gull specifically: white head, breast and tail, light grey back",
+      "and folded wing, black wingtips with small white spots, and a bright orange-red bill,",
+      "legs and eye-ring.",
+      "The bill, legs and eye-ring are orange-red (#EF4A2E) and are the only colour in the image.",
+      "One warm yellow (#FFC93D) hot chip lies on the decking in front of the bird.",
+      "Absolutely no text, no letters, no numbers, no speech bubble, no signature, no watermark,",
+      "no border, no frame, no panel outline.",
+      "No 3D, no airbrush, no gradients, no photographic rendering.",
     ].join(" "),
   },
 ];

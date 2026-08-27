@@ -8,7 +8,7 @@ type Props = {
   name: string;
   headline: string | null;
   lookingFor: string | null;
-  /** This week's topic, already gated and deduped by weeklyTopic(). */
+  /** This week's topic, already gated and deduped by the page. */
   topic: string | null;
   /** Same-origin, so drawing it into the canvas does not taint it. */
   avatarUrl: string | null;

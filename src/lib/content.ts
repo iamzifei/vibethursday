@@ -71,6 +71,7 @@ export const copy = {
       brand: "Vibe Thursday",
       cta: "报名",
       members: "成员",
+      wharf: "码头",
       about: "这是什么",
       schedule: "流程",
       support: "开销",
@@ -135,7 +136,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 03 — 谁适合来",
+      eyebrow: "§ 04 — 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
         "独立开发者",
@@ -151,7 +152,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 05 — 流程",
+      eyebrow: "§ 06 — 流程",
       title: "每周同一个节奏，不变。",
       slots: [
         {
@@ -178,7 +179,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 04 — 现场",
+      eyebrow: "§ 05 — 现场",
       title: "每一场都留了几张。",
       lede: "为保护参与者，认得出的人脸都遮掉了。点开某一场就能看到那天的全部照片。",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
@@ -233,8 +234,20 @@ export const copy = {
       ctaSecondary: "认领我的名片",
     },
 
+    // § 03。位置是刻意的：紧挨着成员墙，因为这两样是这个站唯一会随时间变厚的
+    // 东西。其余每一节讲的都是「周四会发生什么」，只有这两节讲的是「已经攒下了什么」。
+    wharfTeaser: {
+      eyebrow: "§ 03 — 大家想问什么",
+      title: "周四之前，先知道谁在问什么。",
+      lede: "报名时写的那句「最想问什么」会挂到码头上。看到你答得上来的，周四找他聊十分钟就完了——不用等到现场再从头认人。",
+      cta: "去码头看看",
+      // 只在有内容时出现。数字由页面算，不写死。
+      count: "本周 {n} 个问题",
+      empty: "这周还没有人挂问题上去。",
+    },
+
     rules: {
-      eyebrow: "§ 06 — 几条规矩",
+      eyebrow: "§ 07 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
@@ -246,7 +259,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 07 — 报名",
+      eyebrow: "§ 08 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -404,7 +417,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 08 — 常见问题",
+      eyebrow: "§ 09 — 常见问题",
       title: "先回答几个大概率会问的。",
       items: [
         {
@@ -467,7 +480,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 09 — 联系",
+      eyebrow: "§ 10 — 联系",
       title: "找不到人？加我微信。",
       lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
       caption: "微信扫码加我",
@@ -571,6 +584,11 @@ export const copy = {
       canHelp: "能帮",
       // 直接读报名表最近一次填的「这周想聊点什么」，成员自己不用动。
       thisWeekTopic: "本周想聊",
+      // 同一栏，写在过去某一场的时候用这个。之前只有「本周想聊」一个标签，
+      // 于是不是本周的就干脆不显示——结果整站大部分时间一句都不显示。
+      topicOn: "{date}想聊",
+      // 报名时选了「上午都来不了」的人，那句话不属于任何一场。
+      topicUndated: "想聊",
       visit: "打开",
       back: "← 所有成员",
       filterAll: "全部",
@@ -610,6 +628,55 @@ export const copy = {
         substack: "Substack",
         other: "其他",
       },
+    },
+
+    /**
+     * 码头 —— /wharf。
+     *
+     * 这一页没有任何新的输入框。它显示的是报名表上「这周最想聊什么、或者最想问
+     * 什么」那一栏，四场下来填写率从 19% 涨到了 80%，而在这一页之前，那些句子
+     * 几乎在站上看不见：成员卡只在本人报了「下一场」的时候才显示一句，所以上一场
+     * 结束到下一周报名开始之间，整站一句都不显示。
+     */
+    wharf: {
+      meta: {
+        title: "码头 · Vibe Thursday",
+        description:
+          "来 Vibe Thursday 的人带着什么问题。报名时写的那句「最想问什么」都挂在这儿——周四之前就能知道该找谁聊。",
+      },
+      eyebrow: "§ 码头",
+      title: "大家想问什么。",
+      lede: "这儿挂的都是有人真的想问、但周四那 90 分钟不一定问得完的东西。看到你答得上来的，当天找他聊十分钟就完了。",
+      place: "这个板块叫码头，因为我们真的在码头上——35 Wheat Road, Darling Harbour。",
+      // 海鸥说的话。梗是「今天好无聊，去码头整点薯条」——而它描述的，
+      // 正好是这一页最需要发生的那件事：答得上来的人，闲着的时候过来看一眼。
+      // 所以它不是贴在旁边的笑话，它就是给答题者的那句召唤。
+      //
+      // 冷着说。这个站从头到尾没有一个感叹号，海鸥也不例外。
+      say: {
+        waiting: "今天好无聊…… 本周挂了 {n} 个问题",
+        quiet: "本周还没人挂问题。往下翻，前几周的还在。",
+        empty: "今天好无聊。",
+      },
+      thisWeek: "本周",
+      // 报名时选了「上午都来不了」的人。他们照样能有名片、照样能写问题，
+      // 而且这一页是他们唯一还会被看见的地方。
+      noSession: "周四上午来不了的",
+      comingLabel: "本周四会来",
+      emptyWeek: "这一场还没有人挂问题上去。报名的时候写一句，它就会出现在这儿。",
+      older: "更早的 {n} 场、{m} 个问题不在这一页上——它们还在各自的成员卡上。",
+      langNote: "问题都是本人写的，原样放在这儿，一个字没改。",
+      // 两张画的替代文本。写得具体一点：读屏的人拿不到画，但拿得到这句，
+      // 而这两张画讲的是这一页的梗，不是装饰。
+      gullAlt: "一只银鸥站在木栈道上，面无表情地盯着脚边掉的一根薯条。",
+      stripAlt:
+        "四格漫画：①一只海鸥趴在系船柱上，无聊得要死 ②它猛地抬头，看见了什么 ③它贴着栈道冲向一包薯条 ④它叼着一根薯条，得意地站着。背景是达令港——皮尔蒙特桥和悉尼塔。",
+      how: {
+        title: "想让你的问题出现在这儿？",
+        body: "报名的时候把「最想问什么」填了，并且勾上「把上面这些放到成员墙上」。就这两步，没有第三个地方要填。写得越具体越容易被接上——「怎么做增长」不如「做完的 app 只有自然量，第一批付费用户从哪儿找」。",
+        cta: "去报名",
+      },
+      membersCta: "看成员墙",
     },
 
     claim: {
@@ -734,6 +801,7 @@ export const copy = {
       brand: "Vibe Thursday",
       cta: "Sign up",
       members: "Members",
+      wharf: "The Wharf",
       about: "What this is",
       schedule: "Run of show",
       support: "Costs",
@@ -789,7 +857,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 03 — Who it is for",
+      eyebrow: "§ 04 — Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
         "Indie developers",
@@ -804,7 +872,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 05 — Run of show",
+      eyebrow: "§ 06 — Run of show",
       title: "Same rhythm every week.",
       slots: [
         {
@@ -831,7 +899,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 04 — The room",
+      eyebrow: "§ 05 — The room",
       title: "A few shots from every session.",
       lede: "Recognisable faces are covered to protect the people who came. Open a session to see everything from that morning.",
       sessions: [
@@ -882,8 +950,17 @@ export const copy = {
       ctaSecondary: "Claim my card",
     },
 
+    wharfTeaser: {
+      eyebrow: "§ 03 — What people are asking",
+      title: "Know what people are asking, before Thursday.",
+      lede: "The line people write on the sign-up form — what they most want to ask — ends up on the Wharf. See one you can answer, and Thursday is ten minutes with that person instead of an hour working out who to talk to.",
+      cta: "Go down to the Wharf",
+      count: "{n} questions this week",
+      empty: "Nobody has put a question up for this week yet.",
+    },
+
     rules: {
-      eyebrow: "§ 06 — House rules",
+      eyebrow: "§ 07 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
@@ -895,7 +972,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 07 — Sign up",
+      eyebrow: "§ 08 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
@@ -1004,7 +1081,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 08 — Questions",
+      eyebrow: "§ 09 — Questions",
       title: "The ones people ask first.",
       items: [
         {
@@ -1067,7 +1144,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 09 — Contact",
+      eyebrow: "§ 10 — Contact",
       title: "Can't find us? Add me on WeChat.",
       lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
       caption: "Scan with WeChat",
@@ -1164,6 +1241,8 @@ export const copy = {
       lookingFor: "Looking for",
       canHelp: "Can help with",
       thisWeekTopic: "This week",
+      topicOn: "Wanted to talk about, {date}",
+      topicUndated: "Wants to talk about",
       visit: "Open",
       back: "← All members",
       filterAll: "All",
@@ -1201,6 +1280,38 @@ export const copy = {
         substack: "Substack",
         other: "Other",
       },
+    },
+
+    wharf: {
+      meta: {
+        title: "The Wharf · Vibe Thursday",
+        description:
+          "What people are bringing to Vibe Thursday. The one line everyone writes on the sign-up form — what they most want to ask — all in one place, so you know who to talk to before Thursday.",
+      },
+      eyebrow: "§ The Wharf",
+      title: "What people are asking.",
+      lede: "Things somebody genuinely wants to ask, and that ninety minutes on a Thursday will not always get to. See one you can answer, and Thursday is ten minutes with that person.",
+      place: "This section is called the Wharf because we are on one — 35 Wheat Road, Darling Harbour.",
+      say: {
+        waiting: "Bored… {n} questions up this week",
+        quiet: "Nothing up for this week yet. The earlier ones are below.",
+        empty: "Nothing doing.",
+      },
+      thisWeek: "This week",
+      noSession: "Cannot do Thursday mornings",
+      comingLabel: "Coming this Thursday",
+      emptyWeek: "Nothing up for this one yet. Write a line when you sign up and it lands here.",
+      older: "{n} earlier sessions and {m} questions are not on this page — they are still on the cards they came from.",
+      langNote: "The questions are in Mandarin. That is the language the room runs in, and they are printed here exactly as they were written.",
+      gullAlt: "A silver gull standing on wharf decking, staring deadpan at a single chip lying in front of it.",
+      stripAlt:
+        "A four-panel comic. One: a seagull slumped on a mooring bollard, bored stiff. Two: its head snaps up, having spotted something. Three: it hurtles along the decking toward a cone of hot chips. Four: it stands triumphant with a chip in its bill. Behind it, Darling Harbour — Pyrmont Bridge and Sydney Tower.",
+      how: {
+        title: "Want your question up here?",
+        body: "Fill in «what do you most want to ask» when you sign up, and tick «put this on the member wall». Two steps, nothing else to fill in anywhere. The more specific it is, the more likely someone picks it up — «how do I grow» does much less than «my app only gets organic installs, where does the first paying user come from».",
+        cta: "Sign up",
+      },
+      membersCta: "See the member wall",
     },
 
     claim: {
