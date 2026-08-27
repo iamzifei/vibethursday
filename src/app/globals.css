@@ -961,6 +961,24 @@ select.field {
   transition: border-color var(--dur-normal), background var(--dur-normal), color var(--dur-normal);
 }
 
+/* The member wall's search box.
+   A row on every width: the input takes what is left, the button sizes to its
+   own word. Stacking these on a phone would put the button on its own line for
+   no gain — the field is already full width there. */
+.wall-search {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.wall-search .field { flex: 1 1 auto; min-width: 0; }
+.wall-search .btn { flex: none; }
+
+/* Safari draws its own clear affordance inside type="search" and it does not
+   match anything else on this site. */
+.wall-search input[type="search"]::-webkit-search-decoration,
+.wall-search input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
 /* Compact variant of the choice group.
    Options size to their own text and wrap, instead of each taking an equal
    share of a grid row. Nine equally-sized cards read as nine decisions to make;
@@ -1949,6 +1967,7 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   .badge__export { display: none; }
 }
 
+
 /* =============================================================================
    The Wharf — /wharf
    =============================================================================
@@ -2108,6 +2127,15 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
    and there is no white seam around the panels. */
 .wharf-strip {
   margin: 0 auto;
+  /* Load-bearing, and not obvious. The `margin: 0 auto` above centres this on
+     a wide screen, but auto cross-axis margins also switch off `align-items:
+     stretch` — and this figure's parent (`.shell.stack-8`) is a column flex
+     container. Without an explicit width the figure therefore sizes to its
+     content, which the `min-width: 660px` on the image below pins at 684px.
+     On a 390px phone that made the whole page scroll sideways rather than the
+     strip scrolling inside itself, which is the one thing the overflow-x
+     below exists to prevent. Measured at 390px: scrollWidth was 700. */
+  width: 100%;
   padding: var(--space-3);
   /* Capped. At the full column width the strip is nearly 700px tall and it
      stops being the aside that explains the list and starts being the page. */

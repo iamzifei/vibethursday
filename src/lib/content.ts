@@ -572,6 +572,10 @@ export const copy = {
       claimCta: "认领我的名片",
       editCta: "编辑我的名片",
       thisWeek: "本周四会来",
+      // 同一组，但墙正在回头看的时候用这个。周四中午一过，「下一场」就滚到
+      // 下周，今天这批人会整组消失——而中午到下午恰恰是有人在想「刚才跟我
+      // 聊的是谁」的时候。见 sessions.ts 的 sessionInFocus。
+      lastSession: "上一场来了",
       everyone: "所有成员",
       // 用在「本周四会来」那组存在的时候。第二组装的是「其余的人」，
       // 管它叫「所有成员」是错的——本周那几位并不在里面。
@@ -593,6 +597,14 @@ export const copy = {
       back: "← 所有成员",
       filterAll: "全部",
       clearTag: "清除标签筛选",
+      // 想不起名字是这面墙最常见的用法：聊得很好，散了场，脑子里只剩
+      // 「那个做 SEO 的」。角色 chip 筛不出这种——它只有六个大类。
+      // 所以搜索框搜的是自由文本那几栏，不是名字。
+      searchLabel: "在成员里搜",
+      searchPlaceholder: "想不起名字？搜他在做什么，比如「SEO」「投广告」",
+      searchSubmit: "搜",
+      searchClear: "清除搜索",
+      searchEmpty: "没搜到「{q}」。换个词试试，或者他可能还没认领名片。",
       roles: {
         builder: "在做产品",
         business: "有公司 / 业务",
@@ -1230,6 +1242,7 @@ export const copy = {
       claimCta: "Claim my card",
       editCta: "Edit my card",
       thisWeek: "Coming this Thursday",
+      lastSession: "At the last session",
       everyone: "Everyone",
       others: "Everyone else",
       empty: "Nobody has claimed a card yet. Be first.",
@@ -1246,6 +1259,11 @@ export const copy = {
       visit: "Open",
       back: "← All members",
       filterAll: "All",
+      searchLabel: "Search members",
+      searchPlaceholder: "Forgotten the name? Search what they do — \"SEO\", \"ads\"",
+      searchSubmit: "Search",
+      searchClear: "Clear search",
+      searchEmpty: "Nothing matches \u201c{q}\u201d. Try another word — or they may not have claimed a card yet.",
       clearTag: "Clear tag filter",
       roles: {
         builder: "Building a product",

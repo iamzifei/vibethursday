@@ -7,10 +7,10 @@ import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/co
 import { listWallMembers, type Member } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { ROLES, type Role } from "@/lib/members";
-import { formatSession, nextThursdays } from "@/lib/sessions";
+import { focusSession, formatSession } from "@/lib/sessions";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string; role?: string; tag?: string }>;
+  searchParams: Promise<{ lang?: string; role?: string; tag?: string; q?: string }>;
 };
 
 // Reads from Postgres on every request. The wall changes whenever anyone edits
@@ -43,6 +43,39 @@ export default async function MembersPage({ searchParams }: PageProps) {
     : null;
   const tag = params.tag?.trim() || null;
 
+  // Capped, because it is echoed back into the input and into the empty-state
+  // message. A paragraph pasted in here should not become the page.
+  const query = params.q?.trim().slice(0, 80) || null;
+
+  /**
+   * Everything about a member that someone might remember them by.
+   *
+   * Names are the *last* thing that survives a conversation — "the one doing
+   * SEO" is what is left an hour later, and the role chips cannot express it:
+   * there are six of them and they are categories, not descriptions. So the
+   * free-text columns are what this searches, and the name comes along only
+   * because leaving it out would be strange.
+   */
+  const haystack = (member: Member) =>
+    [
+      member.display_name,
+      member.headline,
+      member.bio,
+      member.looking_for,
+      member.can_help,
+      member.topic,
+      ...member.tags,
+      ...member.assets.flatMap((asset) => [asset.title, asset.tagline]),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+  // Every word has to appear somewhere, so "seo 悉尼" narrows rather than
+  // widens. Splitting on whitespace also does the right thing for Chinese,
+  // which arrives as a single token and is matched as a substring.
+  const terms = query ? query.toLowerCase().split(/\s+/).filter(Boolean) : [];
+
   const everyone = await listWallMembers();
   const signedIn = (await currentMemberId()) !== null;
 
@@ -51,6 +84,12 @@ export default async function MembersPage({ searchParams }: PageProps) {
   const filtered = everyone.filter((member) => {
     if (role && !member.roles.includes(role)) return false;
     if (tag && !member.tags.some((t) => t.toLowerCase() === tag.toLowerCase())) return false;
+
+    if (terms.length > 0) {
+      const text = haystack(member);
+      if (!terms.every((term) => text.includes(term))) return false;
+    }
+
     return true;
   });
 
@@ -61,18 +100,34 @@ export default async function MembersPage({ searchParams }: PageProps) {
   // regular who has been to six sessions is listed once, not six times, and
   // someone who has never picked a session still appears — in the second group,
   // just without an attendance count.
-  const upcoming = nextThursdays(1)[0];
+  //
+  // `focusSession` rather than the next Thursday: after noon on a Thursday the
+  // next-Thursday answer jumps a week, which used to empty this group out the
+  // moment a session finished. See sessions.ts for the measurement.
+  const { date: upcoming, past: lookingBack } = focusSession();
   const comingThisWeek = filtered.filter((member) => member.sessions.includes(upcoming));
   const rest = filtered.filter((member) => !member.sessions.includes(upcoming));
 
   const filterHref = (value: Role | null) => {
-    const query = new URLSearchParams();
-    if (value) query.set("role", value);
-    if (tag) query.set("tag", tag);
-    if (LANG_PARAM[lang]) query.set("lang", LANG_PARAM[lang]!);
-    const search = query.toString();
+    const params = new URLSearchParams();
+    if (value) params.set("role", value);
+    if (tag) params.set("tag", tag);
+    // Carried through, so picking a role narrows a search rather than losing it.
+    if (query) params.set("q", query);
+    if (LANG_PARAM[lang]) params.set("lang", LANG_PARAM[lang]!);
+    const search = params.toString();
     return search ? `/members?${search}` : "/members";
   };
+
+  /** The same view with the search cleared and every other filter kept. */
+  const clearSearchHref = (() => {
+    const params = new URLSearchParams();
+    if (role) params.set("role", role);
+    if (tag) params.set("tag", tag);
+    if (LANG_PARAM[lang]) params.set("lang", LANG_PARAM[lang]!);
+    const search = params.toString();
+    return search ? `/members?${search}` : "/members";
+  })();
 
   return (
     <div lang={c.htmlLang}>
@@ -115,6 +170,32 @@ export default async function MembersPage({ searchParams }: PageProps) {
               )}
             </div>
 
+            {/* A plain GET form, like the role filter below it: no client JS,
+                and the result is a URL that can be pasted into the group. The
+                other filters ride along as hidden fields so searching does not
+                silently drop the role someone had picked. */}
+            <form className="wall-search" method="get" action="/members" role="search">
+              {role && <input type="hidden" name="role" value={role} />}
+              {tag && <input type="hidden" name="tag" value={tag} />}
+              {LANG_PARAM[lang] && <input type="hidden" name="lang" value={LANG_PARAM[lang]!} />}
+
+              <label className="visually-hidden" htmlFor="wall-q">
+                {m.searchLabel}
+              </label>
+              <input
+                className="field"
+                id="wall-q"
+                name="q"
+                type="search"
+                defaultValue={query ?? ""}
+                placeholder={m.searchPlaceholder}
+                maxLength={80}
+              />
+              <button className="btn btn--secondary" type="submit">
+                {m.searchSubmit}
+              </button>
+            </form>
+
             {/* Role filter. Plain links, so it works with JavaScript off and
                 every filtered view is a URL someone can paste into the group. */}
             <div className="filters">
@@ -135,15 +216,27 @@ export default async function MembersPage({ searchParams }: PageProps) {
                   #{tag} ✕
                 </Link>
               )}
+              {query && (
+                <Link className="chip chip--link chip--on" href={clearSearchHref}>
+                  {`"${query}" ✕`}
+                  <span className="visually-hidden"> — {m.searchClear}</span>
+                </Link>
+              )}
             </div>
 
             {filtered.length === 0 ? (
-              <p className="alert">{everyone.length === 0 ? m.empty : m.emptyFiltered}</p>
+              <p className="alert">
+                {everyone.length === 0
+                  ? m.empty
+                  : query
+                    ? m.searchEmpty.replace("{q}", query)
+                    : m.emptyFiltered}
+              </p>
             ) : (
               <>
                 {comingThisWeek.length > 0 && (
                   <Group
-                    title={`${m.thisWeek} · ${formatSession(upcoming, lang)}`}
+                    title={`${lookingBack ? m.lastSession : m.thisWeek} · ${formatSession(upcoming, lang)}`}
                     count={m.countLabel.replace("{n}", String(comingThisWeek.length))}
                     members={comingThisWeek}
                     copy={m}

@@ -100,6 +100,66 @@ export function nextThursdays(count = 6): string[] {
   return upcoming;
 }
 
+/**
+ * How close the next session has to be before the wall looks forward.
+ *
+ * Three days puts the switch on the Sunday/Monday boundary: Monday through
+ * Thursday the wall is about the session coming up, Thursday noon through
+ * Sunday it is about the one that just happened.
+ */
+const LOOK_AHEAD_DAYS = 3;
+
+/**
+ * Which session the member wall should be grouped around right now.
+ *
+ * Deliberately not `nextThursdays(1)[0]`, which is right for the signup form
+ * and wrong here. That value rolls over to next week at noon on a Thursday —
+ * so the moment a session ended, everyone who had been at it dropped out of
+ * the wall's first group and the page fell back to one flat list.
+ *
+ * Measured 2026-08-27 21:50, the evening of the fourth session: the wall's
+ * only heading was "所有成员". The people who had spent the morning together
+ * were no longer grouped anywhere, and lunch — when someone is trying to work
+ * out who it was they had just been talking to — is exactly when that grouping
+ * is worth the most. The page was turning itself off during its best hours.
+ *
+ * The rule is "whichever Thursday is nearer", which needs no story about how
+ * long a memory lasts: within three days of the next session the wall looks
+ * forward, otherwise it looks back at the last one.
+ *
+ * Never returns a Thursday before the meetup existed — early on there is no
+ * previous session to look back at, so the next one stands.
+ */
+export function sessionInFocus(nextSession: string, today: string): string {
+  const day = 24 * 60 * 60 * 1000;
+  const daysAway = Math.round(
+    (Date.parse(`${nextSession}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / day,
+  );
+
+  if (daysAway <= LOOK_AHEAD_DAYS) return nextSession;
+
+  const previous = new Date(`${nextSession}T00:00:00Z`);
+  previous.setUTCDate(previous.getUTCDate() - 7);
+
+  const iso = previous.toISOString().slice(0, 10);
+  return iso >= FIRST_SESSION ? iso : nextSession;
+}
+
+/**
+ * `sessionInFocus` against the real clock, plus which way it is looking.
+ *
+ * `past` is derived from the same call rather than by comparing the date with
+ * today, because on a Thursday evening the session in focus *is* today and a
+ * date comparison would call that "upcoming" — the one case the whole helper
+ * exists for. Reading it off the branch that was actually taken cannot drift.
+ */
+export function focusSession(): { date: string; past: boolean } {
+  const next = nextThursdays(1)[0];
+  const date = sessionInFocus(next, sydneyToday().toISOString().slice(0, 10));
+
+  return { date, past: date !== next };
+}
+
 /** Formats an ISO date for display, e.g. "8月13日（周四）" or "Thu 13 Aug". */
 export function formatSession(isoDate: string, lang: Lang): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
