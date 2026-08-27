@@ -35,6 +35,15 @@ const DRAFT_KEY = "vt.signup.draft";
 const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
 
 /**
+ * What lives inside the folded section at the bottom of the form.
+ *
+ * Only used to decide whether a restored draft should open it. `aiModels` is a
+ * checkbox group and the draft does not round-trip those, so it is not listed —
+ * see the note on `saveDraft`.
+ */
+const EXTRA_FIELDS = ["source", "aiSpend"];
+
+/**
  * Reads the profile left by this browser's last successful signup.
  *
  * Deliberately localStorage and not an account: this form has no login, no
@@ -155,6 +164,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
      useStates purely to enable autosave. */
   const formRef = useRef<HTMLFormElement>(null);
 
+  /* The folded section at the bottom. Held so a restored draft can open it —
+     see the effect below. */
+  const extrasRef = useRef<HTMLDetailsElement>(null);
+
   useEffect(() => {
     const draft = readDraft<Record<string, string>>(DRAFT_KEY);
     const form = formRef.current;
@@ -170,8 +183,15 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         (element as { value: string }).value = value;
       }
     }
-    // Restoring is silent: it is the visitor's own typing reappearing where
-    // they left it, which needs no explanation. The editor is different —
+    // Someone who opened the fold and answered something must not come back to
+    // find it closed again over their own answers — that reads as the draft
+    // having been lost, and re-opening to check costs more than the section
+    // ever saved.
+    if (EXTRA_FIELDS.some((name) => draft[name]) && extrasRef.current) {
+      extrasRef.current.open = true;
+    }
+    // Restoring is otherwise silent: it is the visitor's own typing reappearing
+    // where they left it, which needs no explanation. The editor is different —
     // there a draft can shadow something already saved.
   }, [returning]);
 
@@ -181,6 +201,12 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
 
     const entries: Record<string, string> = {};
 
+    // One value per name, so a checkbox group (availability, aiModels) keeps
+    // only whichever box is last in the DOM — and the restore above cannot put
+    // even that one back, because setting `.value` on a RadioNodeList only
+    // picks a matching *radio*. Those two groups therefore do not survive a
+    // draft. Known and left alone: it costs a couple of re-ticks on a path
+    // almost nobody takes, and the submit path is unaffected.
     for (const [name, value] of new FormData(form).entries()) {
       if (DRAFT_SKIP.has(name) || typeof value !== "string") continue;
       entries[name] = value;
@@ -552,69 +578,91 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           <p className="field-hint">{copy.fields.availabilityHint}</p>
         </fieldset>
 
-        <div>
-          <label className="label" htmlFor={fieldId("source")}>
-            {copy.fields.source}
-          </label>
-          <input
-            className="field"
-            id={fieldId("source")}
-            name="source"
-            type="text"
-            placeholder={copy.fields.sourcePlaceholder}
-          />
-        </div>
       </div>
 
-      {/* Both AI questions sit here, at the end, next to "how did you hear
-          about this" — they are the two fields on this form that serve the
-          organiser rather than the person filling it in, so they must not come
-          before the session picker.
+      {/* The three questions on this form that serve the organiser rather than
+          the person filling it in, folded away behind one line.
 
-          Being last is what killed `topic` (3 of the first 49 filled it), but
-          that was a textarea asking someone to think. These are tappable
-          chips, like the availability group two fields up. */}
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-        <legend className="label">{copy.fields.aiModels}</legend>
+          Open, they were roughly a third of the form's height — which read as
+          two thirds of the work, because a wall of choices is what someone
+          scrolls past when deciding whether to bother at all. Nothing here is
+          required, and nothing here is worth a signup.
 
-        {/* One checkbox group split into two labelled rows rather than two
-            separate fields: overseas-vs-China is the split being measured, so
-            showing it is also what makes the question quick to answer. The
-            name is shared, so the server sees one flat list. */}
-        <div className="stack-3">
-          {copy.fields.aiModelGroups.map((group) => (
-            <div key={group.label}>
-              <p className="choice-subhead">{group.label}</p>
-              <div className="choice-group">
-                {group.options.map((option) => (
-                  <label className="choice" key={option.value}>
-                    <input type="checkbox" name="aiModels" value={option.value} />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+          Native <details>: it opens with no JavaScript, is keyboard operable,
+          and announces its own expanded state. Fields inside a closed
+          <details> are still in the form, so they still submit and the draft
+          still saves them. */}
+      <details className="disclosure" ref={extrasRef}>
+        <summary>{copy.fields.extras}</summary>
 
-        <p className="field-hint">{copy.fields.aiModelsHint}</p>
-      </fieldset>
-
-      {/* No defaultChecked anywhere in this group, unlike demoIntent: a radio
-          cannot be un-picked, so a pre-selected band would be indistinguishable
-          from an answer and would quietly become the most common one. */}
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-        <legend className="label">{copy.fields.aiSpend}</legend>
-        <div className="choice-group">
-          {copy.fields.aiSpendOptions.map((option) => (
-            <label className="choice" key={option.value}>
-              <input type="radio" name="aiSpend" value={option.value} />
-              <span>{option.label}</span>
+        <div className="disclosure__body stack-6">
+          <div>
+            <label className="label" htmlFor={fieldId("source")}>
+              {copy.fields.source}
             </label>
-          ))}
+            <input
+              className="field"
+              id={fieldId("source")}
+              name="source"
+              type="text"
+              placeholder={copy.fields.sourcePlaceholder}
+            />
+          </div>
+
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">{copy.fields.aiModels}</legend>
+
+            {/* One checkbox group split into two labelled rows rather than two
+                separate fields: overseas-vs-China is the split being measured,
+                so showing it is also what makes the question quick to answer.
+                The name is shared, so the server sees one flat list.
+
+                Pills, not the full-width cards used for "host a table": these
+                are nine optional ticks, and giving each the weight of a real
+                decision is what made the section feel like work. */}
+            <div className="stack-3">
+              {copy.fields.aiModelGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="choice-subhead">{group.label}</p>
+                  <div className="choice-group choice-group--compact">
+                    {group.options.map((option) => (
+                      <label className="choice" key={option.value}>
+                        <input type="checkbox" name="aiModels" value={option.value} />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="field-hint">{copy.fields.aiModelsHint}</p>
+          </fieldset>
+
+          {/* A select rather than five radio cards. The bands are one ordered
+              scale and the labels are long, which is the case a dropdown is
+              actually for — and it collapses five rows into one.
+
+              It also fixes what the radios could not: a radio cannot be
+              un-picked, so someone who tapped a band by accident was stuck
+              with an answer they never meant to give. Here they pick the empty
+              first option and are back to having said nothing. */}
+          <div>
+            <label className="label" htmlFor={fieldId("aiSpend")}>
+              {copy.fields.aiSpend}
+            </label>
+            <select className="field" id={fieldId("aiSpend")} name="aiSpend" defaultValue="">
+              <option value="">{copy.fields.aiSpendSkip}</option>
+              {copy.fields.aiSpendOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="field-hint">{copy.fields.aiSpendHint}</p>
+          </div>
         </div>
-        <p className="field-hint">{copy.fields.aiSpendHint}</p>
-      </fieldset>
+      </details>
 
       {showBotCheck && (
         <Turnstile siteKey={turnstileSiteKey!} lang={lang} onToken={handleToken} />

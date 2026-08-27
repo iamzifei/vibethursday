@@ -317,12 +317,17 @@ export const copy = {
           { value: "weekend_day", label: "周末白天" },
           { value: "weekend_evening", label: "周末晚上" },
         ],
+        // 表单末尾那一折的标题。里面三栏都是只对我有用、对填表的人没用的问题，
+        // 所以默认收起来——它们不该给这张表增加长度。
+        //
+        // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
+        // 区没人会去点开，这是折叠这个做法最常见的失败方式。
+        extras: "再多问几个（都可跳过）：怎么知道这个活动的、平时用什么 AI",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
-        // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。放在表单末尾，
-        // 和 source 一组——它们对报名的人本身没有用处，不该挡在场次前面。
+        // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
         // 之前 topic 那个文本框放末尾只有 49 份里 3 个人填，但那是要动脑写字的；
-        // 这两栏是点两下的方块，和 availability 一样，不是同一件事。
+        // 这两栏是点一下的方块，和 availability 一样，不是同一件事。
         aiModels: "平时主要用哪些 AI？",
         aiModelsHint:
           "选填，可多选。我想知道这屋子里海外模型和国内模型各占多少——现场演示用什么、值不值得聊拼车订阅和国内 API，都看这个。",
@@ -356,6 +361,10 @@ export const copy = {
         aiSpend: "每个月在 AI 上大概花多少？",
         aiSpendHint:
           "选填。不用去翻账单，下面哪条最像你就选哪条。问的是用得有多重，不是钱本身。按美元算。",
+        // 下拉的第一项，也是默认项。空值＝没回答，跟没点开这一折是同一个结果。
+        // 用下拉而不是五个单选方块，除了省掉四行高度，还顺手解决了单选点了
+        // 取消不掉的问题——想反悔的人选回这一项就行。
+        aiSpendSkip: "（跳过）",
         aiSpendOptions: [
           { value: "free", label: "只用免费的" },
           { value: "lt_50", label: "一两个订阅（50 以内）" },
@@ -933,9 +942,9 @@ export const copy = {
           { value: "weekend_day", label: "Weekend daytime" },
           { value: "weekend_evening", label: "Weekend evenings" },
         ],
-        // Two optional questions about AI usage. See the Chinese block above for
-        // why they sit here at the end and why the second one asks about money
-        // rather than about tokens.
+        // See the Chinese block above for why these three are folded away, and
+        // why the spend question asks about money rather than about tokens.
+        extras: "A few more, all skippable: how you heard about this, which AI you use",
         aiModels: "Which AI models do you mostly use?",
         aiModelsHint:
           "Optional, pick as many as apply. It tells me how the room splits between overseas and Chinese models — which decides what gets demoed on the day, and whether shared subscriptions or China-hosted APIs are worth a table.",
@@ -963,6 +972,7 @@ export const copy = {
         aiSpend: "Roughly what do you spend on AI a month?",
         aiSpendHint:
           "Optional. No need to open a billing page — pick whichever line sounds most like you. This is about how heavily you use the stuff, not about the money. In USD.",
+        aiSpendSkip: "(Skip)",
         aiSpendOptions: [
           { value: "free", label: "Free tiers only" },
           { value: "lt_50", label: "A subscription or two (under 50)" },

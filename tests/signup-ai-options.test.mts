@@ -103,6 +103,53 @@ test("every model value says which side of the wall it is on", () => {
   }
 });
 
+test("the spend dropdown's skip option is not itself an answer", () => {
+  // The dropdown's first entry is rendered with an empty value, which is what
+  // makes "I would rather not say" reachable — a radio group could not offer
+  // that at all. A skip entry that ever acquired a real value would be counted
+  // as a spend band on /admin, and would be the one everybody "picked".
+  for (const lang of LANGS) {
+    const fields = copy[lang].signup.fields;
+
+    assert.ok(
+      typeof fields.aiSpendSkip === "string" && fields.aiSpendSkip.trim().length > 0,
+      `${lang} spend dropdown has no skip entry, so an accidental pick cannot be undone`,
+    );
+
+    // Widened on purpose: the literal types already rule "" out at compile time,
+    // and comparing against it is the point of the assertion.
+    const values: string[] = fields.aiSpendOptions.map((option) => option.value);
+    assert.ok(
+      !values.includes(""),
+      `${lang} lists an empty value among the real bands, which would double the skip entry`,
+    );
+  }
+});
+
+test("the folded section names what is inside it", () => {
+  // A disclosure whose contents cannot be guessed does not get opened — that is
+  // the standard way this pattern fails. The summary therefore has to mention
+  // the questions it hides, not just say "more".
+  const namesContents: Record<(typeof LANGS)[number], RegExp> = {
+    zh: /AI/,
+    en: /AI/i,
+  };
+
+  for (const lang of LANGS) {
+    const summary = copy[lang].signup.fields.extras;
+
+    assert.ok(
+      typeof summary === "string" && summary.trim().length > 0,
+      `${lang} has no label on the folded section`,
+    );
+    assert.match(
+      summary,
+      namesContents[lang],
+      `${lang} folds three questions away behind a label that does not say what they are`,
+    );
+  }
+});
+
 test("both questions say out loud that they are optional", () => {
   // Neither helps the person filling the form in — they exist for the
   // organiser. Someone who cannot answer must be able to see that skipping is a
