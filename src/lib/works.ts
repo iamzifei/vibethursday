@@ -38,6 +38,22 @@ export type Work = {
 };
 
 /**
+ * Whether a title is a title.
+ *
+ * The editor accepts whatever gets typed, and at least one card on the wall
+ * carries a single hyphen in both the name and the tagline — somebody filling
+ * a required field to move past it. On a card among that person's own things
+ * it reads as what it is; on a page of everything the room has built it reads
+ * as a broken row.
+ *
+ * This is a judgement about the string, not about the product: anything with
+ * a letter, a digit or a CJK character in it stays, however short.
+ */
+function isTitle(value: string): boolean {
+  return /[\p{L}\p{N}]/u.test(value);
+}
+
+/**
  * Flattens the wall into a list of products.
  *
  * ★ Order is the wall's own order — most recently seen first — and not the
@@ -54,6 +70,7 @@ export function listWorks(members: readonly WorkSource[], stage?: string | null)
   for (const member of members) {
     for (const asset of member.assets) {
       if (asset.kind !== "product") continue;
+      if (!isTitle(asset.title)) continue;
       if (stage && asset.stage !== stage) continue;
 
       works.push({

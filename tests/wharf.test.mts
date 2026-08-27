@@ -28,6 +28,7 @@ import {
   topicSession,
   type TopicSource,
 } from "../src/lib/wharf.ts";
+import { countByStage, listWorks } from "../src/lib/works.ts";
 
 /**
  * Source with the comments taken out.
@@ -253,4 +254,33 @@ test("the home page's section numbers are 01..N with no gaps or repeats", () => 
       `${lang}'s section numbers are ${found.join(", ")}`,
     );
   }
+});
+
+// ── Works ───────────────────────────────────────────────────────────
+
+test("a placeholder is not a work", () => {
+  // Somebody typed a hyphen into a required field to get past it. That is a
+  // legible thing on their own card and a broken row on a page of everything
+  // the room has built.
+  const wall = [
+    {
+      slug: "a",
+      display_name: "A",
+      topic: null,
+      sessions: [],
+      assets: [
+        { kind: "product", title: "-", tagline: "-", url: null, stage: "revenue" },
+        { kind: "product", title: "影笺", tagline: null, url: null, stage: "local" },
+        { kind: "media", title: "小红书", tagline: null, url: null, stage: null },
+      ],
+    },
+  ];
+
+  assert.deepEqual(
+    listWorks(wall).map((work) => work.title),
+    ["影笺"],
+  );
+  // Counting has to agree with listing, or the filter chip promises a row
+  // that is not there.
+  assert.equal(countByStage(wall).get("revenue"), undefined);
 });
