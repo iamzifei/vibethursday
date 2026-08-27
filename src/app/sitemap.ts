@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
  * The pages worth crawling.
  *
  * Only what a stranger is meant to find: the home page, the member wall, the
- * Wharf, what running the meetup costs, and the claim page. `/me`, `/badge` and `/admin`
+ * Wharf, the session archive, what running the meetup costs, and the claim page. `/me`, `/badge` and `/admin`
  * are all signed-in views of one person's own data and are excluded here as
  * well as in robots.txt.
  *
@@ -42,6 +42,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     everyLanguage("/", { changeFrequency: "weekly", priority: 1 }),
     everyLanguage("/members", { changeFrequency: "weekly", priority: 0.8 }),
     everyLanguage("/wharf", { changeFrequency: "weekly", priority: 0.8 }),
+    everyLanguage("/sessions", { changeFrequency: "weekly", priority: 0.7 }),
+    everyLanguage("/works", { changeFrequency: "weekly", priority: 0.7 }),
     everyLanguage("/support", { changeFrequency: "monthly", priority: 0.5 }),
     everyLanguage("/claim", { changeFrequency: "yearly", priority: 0.3 }),
   ];

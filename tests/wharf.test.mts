@@ -29,8 +29,30 @@ import {
   type TopicSource,
 } from "../src/lib/wharf.ts";
 
-const wharfPage = readFileSync(path.join(process.cwd(), "src/app/wharf/page.tsx"), "utf8");
-const homePage = readFileSync(path.join(process.cwd(), "src/app/page.tsx"), "utf8");
+/**
+ * Source with the comments taken out.
+ *
+ * The check below is a substring search, and a substring search cannot tell
+ * code from prose. Each of these pages carries a comment explaining *why* it
+ * does not call `listSignups`, and that sentence was enough to fail the test
+ * it was describing. Stripping first means a page can go on documenting its
+ * own rule.
+ *
+ * Only whole-line `//` comments are removed, never trailing ones: a URL in a
+ * string literal contains `//` and taking everything after it would quietly
+ * delete real code from what is being inspected.
+ */
+function code(file: string): string {
+  return readFileSync(path.join(process.cwd(), file), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("//"))
+    .join("\n");
+}
+
+const wharfPage = code("src/app/wharf/page.tsx");
+const homePage = code("src/app/page.tsx");
+const sessionsPage = code("src/app/sessions/page.tsx");
 
 function person(slug: string, topic: string | null, sessions: string[] = []): TopicSource {
   return { slug, display_name: slug, topic, sessions };
@@ -45,12 +67,16 @@ test("the Wharf can only read published, unhidden cards", () => {
   for (const [name, source] of [
     ["/wharf", wharfPage],
     ["the home page's Wharf block", homePage],
+    ["/sessions", sessionsPage],
   ] as const) {
     assert.ok(
       source.includes("listWallMembers"),
       `${name} must get its rows from listWallMembers()`,
     );
 
+    // `countSignups` is allowed and `listSignups` is not, and the difference
+    // is the whole point: one returns a number, the other returns a table of
+    // names, emails and WeChat IDs. A public page may have the number.
     for (const forbidden of ["listSignups", "listAllMembers", "getPool", "SELECT "]) {
       assert.ok(
         !source.includes(forbidden),

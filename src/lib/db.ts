@@ -652,6 +652,25 @@ export async function claimMember(name: string, contact: string): Promise<string
  * filtering by — a free-text field with no prompt produces thirty spellings of
  * the same idea and a filter nobody can use.
  */
+/**
+ * How many people have ever signed up. A count, and nothing else.
+ *
+ * Deliberately not `listSignups().length`: that returns names, emails and
+ * WeChat IDs, and this number is wanted by a public page. A page that only
+ * needs a total should not be handed the table to get it.
+ *
+ * ⚠️ It is a count of *people*, not of attendances, and not of who turned up.
+ * Four sessions in, signing up and being in the room are measurably different
+ * numbers, so nothing built on this may call it attendance.
+ */
+export async function countSignups(): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ n: string }>(`SELECT count(*)::text AS n FROM signups`);
+
+  return Number(result.rows[0].n);
+}
+
 export async function listPublishedTags(limit = 24): Promise<string[]> {
   await ensureSchema();
 

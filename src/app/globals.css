@@ -2253,3 +2253,187 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
      it links to anyway. */
   .wharf-row__who { display: none; }
 }
+
+/* =============================================================================
+   The archive — /sessions
+   =============================================================================
+   One row per session, newest first. It reuses .wharf-item for the questions
+   on purpose: a question looks the same wherever it is shown, and the second
+   place it appears is not a reason for a second design.
+============================================================================= */
+
+/* The running totals. A row of numbers, not cards — cards would give four
+   plain integers the weight of four sections. */
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.totals__item { display: flex; flex-direction: column-reverse; gap: var(--space-1); }
+
+.totals__value {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--accent);
+  line-height: 1;
+}
+
+.totals__unit {
+  margin-left: 2px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--fg3);
+}
+
+.totals__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+.archive {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+/* A rule down the left, so the sessions read as one run rather than as a
+   stack of unrelated blocks. */
+.archive__row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-left: var(--space-6);
+  border-left: 2px solid var(--border-subtle);
+}
+
+.archive__row::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
+/* Every session but the most recent gets a quieter marker: the newest one is
+   the answer to "what happened last week", which is why people open this. */
+.archive__row:not(:first-child)::before { background: var(--border-strong); }
+
+.archive__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.archive__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.archive__date { font-size: var(--text-sm); color: var(--fg3); }
+.archive__note { color: var(--fg2); max-width: 62ch; }
+
+.archive__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+/* Scrolls sideways rather than wrapping into a grid: a session has four
+   photos and a grid of four would take a screen to itself. */
+.archive__photos {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.archive__photos img {
+  display: block;
+  width: auto;
+  height: clamp(120px, 20vw, 168px);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.archive__people { margin: 0; color: var(--fg2); line-height: 1.9; }
+.archive__people a { color: var(--fg1); text-decoration: none; border-bottom: 1px solid var(--border-default); }
+.archive__people a:hover { border-bottom-color: var(--accent); }
+
+/* =============================================================================
+   Works — /works
+   =============================================================================
+   The member wall's products, gathered. Cards rather than wall cards: the
+   subject here is the thing, not the person, and the person is the byline.
+============================================================================= */
+
+.works {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.work {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.work__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.work__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+}
+
+.work__tagline { margin: 0; color: var(--fg2); font-size: var(--text-sm); line-height: 1.6; }
+
+/* Pushed to the bottom so every card's byline sits on the same line however
+   long the tagline above it runs. */
+.work__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.work__maker { color: var(--fg2); text-decoration: none; border-bottom: 1px solid var(--border-default); }
+.work__maker:hover { color: var(--fg1); border-bottom-color: var(--accent); }
+.work__link { font-size: var(--text-sm); color: var(--accent); text-decoration: none; white-space: nowrap; }
+.work__link:hover { text-decoration: underline; }

@@ -316,6 +316,15 @@ export default async function Page({ searchParams }: PageProps) {
               </p>
             </div>
 
+            {/* The albums stay here — they are the most persuasive thing on
+                this page — but the full record of a session lives on its own
+                page now, and this is the only link to it. */}
+            <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+              <Link className="btn btn--secondary" href={langHref("/sessions", lang)}>
+                {c.gallery.archiveCta}
+              </Link>
+            </div>
+
             {/* One album per session, newest first, each closed and shown as a
                 stack of prints. Sorting here rather than relying on the order in
                 content.ts means adding a session is a one-entry edit that cannot

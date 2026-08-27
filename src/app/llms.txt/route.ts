@@ -70,6 +70,8 @@ export async function GET(): Promise<Response> {
 - [首页 / Home](${base}/): ${zh.hero.subtitle} — ${en.hero.subtitle}
 - [成员墙 / Member wall](${base}/members): ${zh.members.lede}
 - [码头 / The Wharf](${base}/wharf): ${zh.wharf.lede} — ${en.wharf.lede}
+- [场次 / Sessions](${base}/sessions): ${zh.archive.lede} — ${en.archive.lede}
+- [作品 / Works](${base}/works): ${zh.works.lede} — ${en.works.lede}
 - [这个活动的开销 / What it costs](${base}/support): ${zh.support.title} ${en.support.title}
 - [认领名片 / Claim your card](${base}/claim): ${zh.claim.lede}
 

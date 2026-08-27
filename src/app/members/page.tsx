@@ -168,6 +168,13 @@ export default async function MembersPage({ searchParams }: PageProps) {
                   {m.claimCta}
                 </Link>
               )}
+
+              {/* The same cards, viewed by what is hanging off them. It lives
+                  here rather than in the nav because it is a second view of
+                  this page's data, not a fifth part of the site. */}
+              <Link className="btn btn--secondary" href={`/works${langSuffix(lang)}`}>
+                {c.works.eyebrow.replace("§ ", "")}
+              </Link>
             </div>
 
             {/* A plain GET form, like the role filter below it: no client JS,

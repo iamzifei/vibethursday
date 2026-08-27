@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Copy } from "@/lib/content";
+import { ACCENT, FG1, FG2, FG3, INK, MONO, SANS, wrap } from "@/components/canvas-kit";
 
 type Props = {
   copy: Copy["badge"];
@@ -25,66 +26,6 @@ const W = 1080;
 const H = 1440;
 const PAD = 88;
 
-const INK = "#0a0b0d";
-const FG1 = "#f2f5f3";
-const FG2 = "#a4acb4";
-const FG3 = "#6b7480";
-const ACCENT = "#c6ff3d";
-
-/** The site's font stack, so the exported image matches what is on screen. */
-const SANS =
-  'ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", sans-serif';
-const MONO = 'ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace';
-
-/**
- * Wraps by measuring, because the text is mixed Chinese and English.
- *
- * Breaking on spaces alone would never break a Chinese line at all; breaking on
- * every character would split English words. So: try word boundaries first, and
- * fall back to per-character when a single "word" is itself too wide.
- */
-function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
-  const lines: string[] = [];
-  let line = "";
-
-  const flush = () => {
-    if (line) lines.push(line);
-    line = "";
-  };
-
-  for (const char of text) {
-    const next = line + char;
-
-    if (ctx.measureText(next).width <= maxWidth) {
-      line = next;
-      continue;
-    }
-
-    // Prefer breaking at the last space so English words stay whole.
-    const lastSpace = line.lastIndexOf(" ");
-
-    if (lastSpace > 0 && ctx.measureText(line.slice(lastSpace + 1) + char).width < maxWidth * 0.5) {
-      const carry = line.slice(lastSpace + 1);
-      line = line.slice(0, lastSpace);
-      flush();
-      line = carry + char;
-    } else {
-      flush();
-      line = char;
-    }
-
-    if (lines.length >= maxLines) break;
-  }
-
-  flush();
-
-  if (lines.length > maxLines) {
-    lines.length = maxLines;
-    lines[maxLines - 1] = lines[maxLines - 1].replace(/.$/, "…");
-  }
-
-  return lines;
-}
 
 /**
  * Lays out the text block, and optionally paints it.

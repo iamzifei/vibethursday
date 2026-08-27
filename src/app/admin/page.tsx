@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import QRCode from "qrcode";
+import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
-import { listAllMembers, listSignups } from "@/lib/db";
-import { nextThursdays } from "@/lib/sessions";
+import { getCopy } from "@/lib/content";
+import { listAllMembers, listSignups, listWallMembers } from "@/lib/db";
+import { formatSession, nextThursdays } from "@/lib/sessions";
+import { siteUrl } from "@/lib/site";
+import { groupTopics } from "@/lib/wharf";
 import { countPerSession } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
@@ -33,7 +38,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [signups, members] = await Promise.all([listSignups(), listAllMembers()]);
+  const [signups, members, wall] = await Promise.all([
+    listSignups(),
+    listAllMembers(),
+    listWallMembers(),
+  ]);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
@@ -92,12 +101,60 @@ export default async function AdminPage({ searchParams }: PageProps) {
     ...SPEND_BANDS.map((band) => ({ label: `Spend ${band}`, value: countSpend(band) })),
   ];
 
+  /**
+   * Everything the week's poster needs.
+   *
+   * The questions come from the same call the Wharf and the member wall use,
+   * so the poster can only ever show what is already public — a sentence from
+   * someone who never ticked "put me on the member wall" cannot reach it.
+   *
+   * The QR is drawn here rather than in the browser for the same reason the
+   * badge's is: `qrcode` is already a dependency, and a server-rendered SVG is
+   * one less thing that can be wrong on someone's phone.
+   */
+  const poster = {
+    date: formatSession(nextSession, "zh"),
+    time: "10:00 开门 · 10:30 开始",
+    // Found by its map link rather than by index. The venue is one of three
+    // fact cards on the home page and the poster must not start announcing
+    // the opening time as the address because somebody reordered them.
+    venue:
+      getCopy("zh").hero.facts.find((fact) => fact.href?.includes("maps.google"))?.value ??
+      getCopy("zh").hero.facts[1].value,
+    signups: nextSessionRow?.total ?? 0,
+    questions: groupTopics(wall, nextSession).groups[0].entries.map((entry) => ({
+      text: entry.topic,
+      name: entry.name,
+    })),
+    url: `${siteUrl()}/wharf`,
+    qrSvg: await QRCode.toString(`${siteUrl()}/wharf`, {
+      type: "svg",
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: { dark: "#0a0b0d", light: "#ffffff" },
+    }),
+  };
+
   return (
     <main className="shell section stack-8">
       <div className="stack-4">
         <span className="eyebrow">Vibe Thursday · admin</span>
         <h1>Signups</h1>
       </div>
+
+      {/* ── The week's poster ────────────────────────────────────────
+          This site cannot notify anyone: no mail, no push, and most people
+          never left an email address. The WeChat group is the channel, and
+          this is the thing that gets pasted into it. */}
+      <section className="stack-4">
+        <div className="group-head">
+          <h2 className="h3">本周海报</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {poster.date} · 发群公告 / 置顶用
+          </span>
+        </div>
+        <PosterExport {...poster} />
+      </section>
 
       <dl className="grid-auto" style={{ margin: 0 }}>
         {stats.map((stat) => (

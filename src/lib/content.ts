@@ -182,6 +182,7 @@ export const copy = {
       eyebrow: "§ 05 — 现场",
       title: "每一场都留了几张。",
       lede: "为保护参与者，认得出的人脸都遮掉了。点开某一场就能看到那天的全部照片。",
+      archiveCta: "每一场的完整记录",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
       sessions: [
         {
@@ -720,6 +721,69 @@ export const copy = {
       membersCta: "看成员墙",
     },
 
+    /**
+     * 场次存档 —— /sessions。
+     *
+     * 每一场是一个对象，而不是三个页面各知道一部分：照片在首页、问题在码头、
+     * 人在成员墙（还是按最近出席排的）。在这一页之前，站上没有任何地方能回答
+     * 「第三场那天发生了什么」。
+     */
+    archive: {
+      meta: {
+        title: "场次 · Vibe Thursday",
+        description:
+          "每一场 Vibe Thursday：那天的照片、那天大家想问什么、那天来了谁。",
+      },
+      eyebrow: "§ 场次",
+      title: "每一场，和那天发生的事。",
+      lede: "照片、那天挂在码头上的问题、那天来的人——之前它们在三个页面上，现在在一条线上。",
+      totals: {
+        sessions: "已办",
+        sessionsUnit: "场",
+        signups: "报过名",
+        signupsUnit: "人",
+        cards: "成员卡",
+        cardsUnit: "张",
+        questions: "码头问题",
+        questionsUnit: "条",
+      },
+      // ⚠️ 这一句不是免责声明，是口径。报名和到场是两个可以差出好几个人的数，
+      // 而这个站只量得到前一个——第四场就出现过没报名直接来、且是全场最受欢迎
+      // 展示者的情况。每一场真实的到场人数写在那一场自己的那句话里。
+      totalsNote: "「报过名」不是到场。每一场实际来了多少人，写在那一场下面那句话里。",
+      questionsLabel: "那天挂在码头上的问题",
+      peopleLabel: "那天来的（已经上墙的）",
+      // 只数已发布的成员卡，所以它一定小于真实到场数，说清楚免得被当成人数。
+      peopleNote: "只数了认领过名片的人，所以这个数比当天实际到场少。",
+      empty: "这一场还没有人上墙。",
+      photoAlt: "点开看这一场的照片",
+      backToWharf: "去码头",
+    },
+
+    /**
+     * 作品 —— /works。
+     *
+     * 成员墙的第二个视图，不是第二面墙：墙的主体是人，产品只是卡上能挂的
+     * 五类东西之一，而「以产品为主体」这个模型早就被否掉了——会把只来听的
+     * 那批人整个挡在外面。这一页只回答一个更窄的问题：来这儿的人做出了什么。
+     */
+    works: {
+      meta: {
+        title: "作品 · Vibe Thursday",
+        description: "来 Vibe Thursday 的人做出来的东西。已上线的、还在内测的、只在自己电脑上跑的，都在这儿。",
+      },
+      eyebrow: "§ 作品",
+      title: "这些人做出来的东西。",
+      lede: "全部来自成员墙上的卡片。顺序跟墙一样——最近来过的在前面，不按做到哪一步排：卡在某个地方往往比已经上线更有的聊。",
+      countLabel: "{n} 件",
+      by: "来自",
+      visit: "打开",
+      all: "全部",
+      empty: "这个阶段还没有东西。",
+      emptyAll: "墙上还没有人挂产品。",
+      wallCta: "看成员墙",
+    },
+
     claim: {
       meta: {
         title: "认领名片 · Vibe Thursday",
@@ -943,6 +1007,7 @@ export const copy = {
       eyebrow: "§ 05 — The room",
       title: "A few shots from every session.",
       lede: "Recognisable faces are covered to protect the people who came. Open a session to see everything from that morning.",
+      archiveCta: "The full record of each session",
       sessions: [
         {
           date: "2026-08-06",
@@ -1381,6 +1446,52 @@ export const copy = {
         cta: "Sign up",
       },
       membersCta: "See the member wall",
+    },
+
+    archive: {
+      meta: {
+        title: "Sessions · Vibe Thursday",
+        description:
+          "Every Vibe Thursday: the photos from that morning, what people wanted to ask, and who was there.",
+      },
+      eyebrow: "§ Sessions",
+      title: "Every session, and what happened.",
+      lede: "The photos, the questions that were on the Wharf that week, and who came. They used to live on three different pages.",
+      totals: {
+        sessions: "Sessions",
+        sessionsUnit: "",
+        signups: "Have signed up",
+        signupsUnit: "people",
+        cards: "Member cards",
+        cardsUnit: "",
+        questions: "Questions",
+        questionsUnit: "",
+      },
+      totalsNote:
+        "«Have signed up» is not attendance. How many actually turned up to a session is in the line under that session.",
+      questionsLabel: "On the Wharf that week",
+      peopleLabel: "There that morning (of the people with a card)",
+      peopleNote: "Only counts people who have claimed a card, so it is lower than the number in the room.",
+      empty: "Nobody from this session has a card yet.",
+      photoAlt: "Photos from this session",
+      backToWharf: "Go to the Wharf",
+    },
+
+    works: {
+      meta: {
+        title: "Works · Vibe Thursday",
+        description: "What the people who come to Vibe Thursday have built. Shipped, in beta, or still only running on a laptop.",
+      },
+      eyebrow: "§ Works",
+      title: "What this room has built.",
+      lede: "All of it comes off the member wall. Ordered the way the wall is — most recently around first — and not by how far along it is: being stuck somewhere is usually the more interesting conversation.",
+      countLabel: "{n}",
+      by: "by",
+      visit: "Open",
+      all: "All",
+      empty: "Nothing at this stage yet.",
+      emptyAll: "Nobody has put a product on the wall yet.",
+      wallCta: "See the member wall",
     },
 
     claim: {
