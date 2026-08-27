@@ -1,5 +1,6 @@
 /**
- * Paints the poster for a session, in the style of a Studio Ghibli background.
+ * Draws the poster for a session, in coloured pencil, from that morning's own
+ * photographs.
  *
  *   OPENAI_API_KEY=... node scripts/session-poster.mjs 05
  *   OPENAI_API_KEY=... node scripts/session-poster.mjs all
@@ -13,22 +14,31 @@
  * happened that morning — so adding a session to the gallery is still a
  * one-entry edit, and its poster is one command afterwards.
  *
- * Two rules the prompt below is built around, and neither is decoration:
+ * ★ It is image-to-image, not text-to-image: the session's own photos go in as
+ * references, so the poster is that room — the actual windows, the actual
+ * light, the actual arrangement of tables — rather than a plausible café.
+ *
+ * Three rules the prompt below is built around, and none is decoration:
  *
  * - **No text, anywhere in the picture.** Every word on this site is real text
  *   so that it exists in three languages and can be read aloud. It is also the
  *   only way a wordless image cannot be misspelt, which matters twice over
  *   here because the note fed into the prompt is in Chinese and a model asked
  *   to paint Chinese will invent characters that are not characters.
- * - **Nobody recognisable.** The photographs on this site have every
- *   identifiable face covered, and a painting of the same room should not
- *   quietly reintroduce what the photo policy removes. People are seen from
- *   behind, at a distance, or turned away.
+ * - 🔴 **Nobody recognisable, and this one got sharper the moment the source
+ *   became a photograph.** Every identifiable face in those photos is covered
+ *   by a sticker. A model asked to redraw the picture will happily paint a
+ *   face back where the sticker was, which would undo the entire policy by
+ *   accident. The prompt says so twice, and the output is checked by eye
+ *   before it ships.
+ * - **The place, not the people.** What is worth keeping from the photograph
+ *   is the room: the windows, the water outside, the tables, the morning
+ *   light. The people are shapes in it.
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -42,21 +52,16 @@ const MODEL = "gpt-image-2";
    screen. */
 const SIZE = "1536x1024";
 
-/** Shared so every poster in the run belongs to the same set of paintings. */
+/** Shared so every poster in the run belongs to the same set of drawings. */
 const STYLE = [
-  "A hand-painted illustration in the style of a Studio Ghibli background:",
-  "soft gouache and watercolour texture on paper, warm natural morning light,",
-  "gentle saturated colour, painterly clouds, and ordinary everyday objects",
-  "rendered with real affection — cups, cables, notebooks, a plant on a sill.",
-  "Calm and warm. The feeling of an ordinary weekday morning that is quietly",
-  "going well. No digital gloss, no hard vector outlines, no 3D, no lens flare.",
-].join(" ");
-
-const SETTING = [
-  "The place is a café on the water in Darling Harbour, Sydney, on a Thursday",
-  "morning: tall windows, the harbour and moored boats outside, a couple of",
-  "silver gulls on the railing, warm timber and pale walls inside, laptops and",
-  "coffee cups on the tables.",
+  "Redraw this scene as a coloured pencil drawing on lightly textured paper.",
+  "Visible pencil strokes and cross-hatching, layered colour built up by hand,",
+  "slightly uneven edges, the tooth of the paper showing through in the light",
+  "areas, gentle unsaturated colour with warm morning light. It should look",
+  "drawn by a person sitting in the room, not filtered or traced: proportions",
+  "a little loose, some areas finished and some left as sketch.",
+  "No digital gloss, no smooth airbrush gradients, no vector outlines, no 3D,",
+  "no photographic detail, no oil or watercolour wash.",
 ].join(" ");
 
 /**
@@ -69,19 +74,21 @@ const SETTING = [
  * sentence printed two sections above it on the same site.
  */
 const FORMAT = [
-  "This is not a talk and must not look like one. Unless the description below",
-  "explicitly says somebody was presenting, there is no stage, no speaker",
-  "standing at a screen or whiteboard, and no rows of chairs facing forward:",
-  "people sit around tables facing one another, talking in twos and threes,",
-  "laptops turned so a neighbour can see.",
+  "Keep the room from the photographs: the same windows and the water and boats",
+  "beyond them, the same tables and chairs and their arrangement, the same",
+  "light. Keep roughly the same number of people, in roughly the same places.",
 ].join(" ");
 
 const RULES = [
+  "🔴 NO FACES. This is the most important instruction. Draw nobody's face:",
+  "every person is seen from behind, from above, or turned away, and any head",
+  "that would show a face is drawn as hair and shoulders with no features at",
+  "all — no eyes, no nose, no mouth. Where the source photograph has a sticker",
+  "or a blur over someone's head, do NOT reconstruct a face there: draw the",
+  "back or side of a head instead. Nobody in this drawing may be identifiable.",
   "🔴 Absolutely no text of any kind: no letters, no Chinese characters, no",
   "numbers, no signage, no writing on screens, no logos, no watermark, no",
   "signature. Any surface that would carry words is left blank or turned away.",
-  "🔴 No recognisable faces. Everyone is seen from behind, from a distance, in",
-  "profile turned away, or softly out of focus. No portraits.",
 ].join(" ");
 
 /** The sessions in the copy bundle, read rather than duplicated here. */
@@ -106,27 +113,61 @@ async function sessions() {
 function prompt(session) {
   return [
     STYLE,
-    SETTING,
-    "What to paint is that particular morning, described here by the person who",
-    `ran it: 「${session.note}」`,
-    "Paint the room as those sentences describe it — how many people, how they",
-    "are arranged, whether it is one long table or several, what is happening at",
-    "the front — and let the rest of the picture be the light and the harbour.",
+    "The reference photographs are one morning of a weekly meetup in a café on",
+    "the water at Darling Harbour, Sydney.",
+    `The person who ran it described it this way: 「${session.note}」`,
     FORMAT,
     RULES,
   ].join(" ");
 }
 
+/**
+ * That session's own photographs, largest first.
+ *
+ * The 1600px derivatives rather than anything larger, because that is the
+ * largest thing in the repository — the originals are not committed, and this
+ * is plenty for a reference.
+ */
+async function references(session) {
+  const dir = join(root, "public", "photos");
+  const files = (await readdir(dir))
+    .filter((name) => name.startsWith(`session-${session.n}-`) && name.endsWith("-1600.jpg"))
+    .sort();
+
+  if (files.length === 0) {
+    throw new Error(`${session.n}: no photographs to draw from in ${dir}`);
+  }
+
+  // Four is enough to establish the room and keeps the request small. They are
+  // sorted, so the same four go in every time and a re-run is comparable.
+  return files.slice(0, 4).map((name) => join(dir, name));
+}
+
 async function paint(session) {
   process.stdout.write(`→ ${session.title} (${session.date}) … `);
 
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
+  const photos = await references(session);
+  process.stdout.write(`${photos.length} 张原图 … `);
+
+  // The edits endpoint, not generations: this is a drawing *of* those
+  // photographs. multipart/form-data, and every reference goes in under the
+  // same `image[]` field.
+  const form = new FormData();
+  form.set("model", MODEL);
+  form.set("prompt", prompt(session));
+  form.set("size", SIZE);
+  form.set("quality", "high");
+  form.set("n", "1");
+
+  for (const path of photos) {
+    const bytes = await readFile(path);
+    form.append("image[]", new File([bytes], basename(path), { type: "image/jpeg" }));
+  }
+
+  const response = await fetch("https://api.openai.com/v1/images/edits", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({ model: MODEL, prompt: prompt(session), size: SIZE, quality: "high", n: 1 }),
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: form,
   });
 
   if (!response.ok) {
@@ -140,10 +181,9 @@ async function paint(session) {
   const master = join(artDir, `session-${session.n}-poster.png`);
   await writeFile(master, Buffer.from(b64, "base64"));
 
-  // Quantised for the same reason the comic's master is: these are flat
-  // painted images with few real colours, 160 of them is more than they
-  // contain, and it takes a master from megabytes to a few hundred kilobytes
-  // with no visible difference.
+  // Quantised for the same reason the comic's master is: these are drawings
+  // with few real colours, 160 of them is more than they contain, and it takes
+  // a master from megabytes to a few hundred kilobytes with no visible change.
   execFileSync("magick", [
     master, "-strip", "-dither", "None", "-colors", "160",
     "-define", "png:compression-level=9", `PNG8:${master}`,
