@@ -659,7 +659,10 @@ export const copy = {
       eyebrow: "§ 码头",
       title: "大家想问什么。",
       lede: "这儿挂的都是有人真的想问、但周四那 90 分钟不一定问得完的东西。看到你答得上来的，当天找他聊十分钟就完了。",
-      place: "这个板块叫码头，因为我们真的在码头上——35 Wheat Road, Darling Harbour。",
+      // 原来这儿写的是「因为我们真的在码头上——35 Wheat Road, Darling Harbour」。
+      // 删掉了：那句话把一个板块的名字焊死在一个地址上，而场地是会换的。
+      // 名字得能自己站住，换成梗本身就够了。
+      place: "去码头搞点薯条。",
       // 海鸥说的话。梗是「今天好无聊，去码头整点薯条」——而它描述的，
       // 正好是这一页最需要发生的那件事：答得上来的人，闲着的时候过来看一眼。
       // 所以它不是贴在旁边的笑话，它就是给答题者的那句召唤。
@@ -680,9 +683,23 @@ export const copy = {
       langNote: "问题都是本人写的，原样放在这儿，一个字没改。",
       // 两张画的替代文本。写得具体一点：读屏的人拿不到画，但拿得到这句，
       // 而这两张画讲的是这一页的梗，不是装饰。
+      // 四格漫画的台词。★ 它们是文字，不是画进图里的——图里的气泡是空的。
+      // 这样中/繁/英三份都成立，能被选中、能被读屏念出来，也不用把别人的画
+      // 整张搬过来。梗的原作是知乎上流传的那张两只海鸥的四格。
+      strip: {
+        // 第一格没有对话：两只鸟并排站着，看海。
+        q1: "我们要飞向何方",
+        a1: "我打算待会去码头搞点薯条",
+        q2: "你误会我了伙计，我说的是咱们这一辈子的终极目标。归根结底，活着是为了什么",
+        a2: "为了待会去码头搞点薯条",
+      },
       gullAlt: "一只银鸥站在木栈道上，面无表情地盯着脚边掉的一根薯条。",
-      stripAlt:
-        "四格漫画：①一只海鸥趴在系船柱上，无聊得要死 ②它猛地抬头，看见了什么 ③它贴着栈道冲向一包薯条 ④它叼着一根薯条，得意地站着。背景是达令港——皮尔蒙特桥和悉尼塔。",
+      panelAlt: [
+        "两只银鸥并排站在码头的木栏上，望着海，谁也没说话。",
+        "小的那只转过头去看大的那只，两只都张着嘴。",
+        "大的那只的特写，嘴张着，眼神认真。",
+        "小的那只的特写，嘴张着，一脸面无表情。",
+      ],
       how: {
         title: "想让你的问题出现在这儿？",
         body: "报名的时候把「最想问什么」填了，并且勾上「把上面这些放到成员墙上」。就这两步，没有第三个地方要填。写得越具体越容易被接上——「怎么做增长」不如「做完的 app 只有自然量，第一批付费用户从哪儿找」。",
@@ -1309,7 +1326,7 @@ export const copy = {
       eyebrow: "§ The Wharf",
       title: "What people are asking.",
       lede: "Things somebody genuinely wants to ask, and that ninety minutes on a Thursday will not always get to. See one you can answer, and Thursday is ten minutes with that person.",
-      place: "This section is called the Wharf because we are on one — 35 Wheat Road, Darling Harbour.",
+      place: "Down the wharf for a serve of chips.",
       say: {
         waiting: "Bored… {n} questions up this week",
         quiet: "Nothing up for this week yet. The earlier ones are below.",
@@ -1321,9 +1338,19 @@ export const copy = {
       emptyWeek: "Nothing up for this one yet. Write a line when you sign up and it lands here.",
       older: "{n} earlier sessions and {m} questions are not on this page — they are still on the cards they came from.",
       langNote: "The questions are in Mandarin. That is the language the room runs in, and they are printed here exactly as they were written.",
+      strip: {
+        q1: "Where are we flying to?",
+        a1: "Down the wharf for chips, I reckon",
+        q2: "You have misunderstood me, mate. I mean the ultimate point of it. What are we living for?",
+        a2: "Chips. Down the wharf.",
+      },
       gullAlt: "A silver gull standing on wharf decking, staring deadpan at a single chip lying in front of it.",
-      stripAlt:
-        "A four-panel comic. One: a seagull slumped on a mooring bollard, bored stiff. Two: its head snaps up, having spotted something. Three: it hurtles along the decking toward a cone of hot chips. Four: it stands triumphant with a chip in its bill. Behind it, Darling Harbour — Pyrmont Bridge and Sydney Tower.",
+      panelAlt: [
+        "Two silver gulls side by side on a wharf rail, looking out to sea, neither of them saying anything.",
+        "The smaller gull has turned to the larger one; both beaks are open.",
+        "Close-up of the larger gull, beak open, looking earnest.",
+        "Close-up of the smaller gull, beak open, completely deadpan.",
+      ],
       how: {
         title: "Want your question up here?",
         body: "Fill in «what do you most want to ask» when you sign up, and tick «put this on the member wall». Two steps, nothing else to fill in anywhere. The more specific it is, the more likely someone picks it up — «how do I grow» does much less than «my app only gets organic installs, where does the first paying user come from».",

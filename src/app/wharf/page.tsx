@@ -165,30 +165,43 @@ export default async function WharfPage({ searchParams }: PageProps) {
               </p>
             ) : null}
 
-            {/* The four-panel strip, and it belongs here rather than at the
-                top of the page for two reasons. It *is* the explanation —
-                bored, wanders down to the wharf, finds chips — so it sits
-                against the paragraph that explains the same thing in words.
-                And down here it can be lazy: it is 117 KB, which is a lot to
-                put in front of a reader who came to read a list. */}
-            <figure className="wharf-strip">
-              <picture>
-                <source
-                  type="image/avif"
-                  srcSet="/wharf/strip-800.avif 800w, /wharf/strip-1200.avif 1200w, /wharf/strip-1600.avif 1600w"
-                  sizes="(max-width: 48rem) 100vw, 1032px"
-                />
-                <img
-                  src="/wharf/strip-1200.jpg"
-                  srcSet="/wharf/strip-800.jpg 800w, /wharf/strip-1200.jpg 1200w"
-                  sizes="(max-width: 48rem) 100vw, 1032px"
-                  alt={w.stripAlt}
-                  width={1532}
-                  height={1019}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </picture>
+            {/* The comic, and it belongs here rather than at the top of the
+                page for two reasons. It *is* the explanation — the grand
+                question, the entirely practical answer — so it sits against
+                the paragraph that makes the same point in prose. And down
+                here it can be lazy, which the top of a page a reader came to
+                read a list on cannot.
+
+                ★ The speech bubbles in the artwork are EMPTY. Every word is
+                real text laid over them, which is what lets the joke exist in
+                all three languages, be selected, and be read aloud. Baking
+                the dialogue into the picture would have made it a Simplified
+                Chinese image sitting on an English page. */}
+            <figure className="comic">
+              {[0, 1, 2, 3].map((i) => (
+                <div className="comic__panel" key={i}>
+                  <picture>
+                    <source type="image/avif" srcSet={`/wharf/panel${i + 1}-500.avif`} />
+                    <img
+                      src={`/wharf/panel${i + 1}-500.jpg`}
+                      alt={w.panelAlt[i]}
+                      width={500}
+                      height={500}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </picture>
+
+                  {i === 1 && (
+                    <>
+                      <p className="bubble bubble--2a">{w.strip.q1}</p>
+                      <p className="bubble bubble--2b">{w.strip.a1}</p>
+                    </>
+                  )}
+                  {i === 2 && <p className="bubble bubble--3">{w.strip.q2}</p>}
+                  {i === 3 && <p className="bubble bubble--4">{w.strip.a2}</p>}
+                </div>
+              ))}
             </figure>
 
             <div className="wharf-how">

@@ -2122,42 +2122,79 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   font-size: var(--text-sm);
 }
 
-/* The four-panel strip: a printed thing pinned to a dark board. The paper
-   colour is the drawing's own, so the plate and the artwork are continuous
-   and there is no white seam around the panels. */
-.wharf-strip {
+/* ── The comic ──────────────────────────────────────────────────────
+   Four panels in a 2x2 on a desktop, one column on a phone. Cut apart
+   rather than served as one image precisely so it can do that, and so each
+   speech bubble can be positioned against its own panel instead of against
+   a whole page of artwork.
+
+   Capped at 720px. A panel is 500px at source, so this puts it on screen at
+   about 350px — roughly 1.4x, which is where flat painted fills still look
+   clean — and it stops the comic from becoming the page. */
+.comic {
   margin: 0 auto;
-  /* Load-bearing, and not obvious. The `margin: 0 auto` above centres this on
-     a wide screen, but auto cross-axis margins also switch off `align-items:
-     stretch` — and this figure's parent (`.shell.stack-8`) is a column flex
-     container. Without an explicit width the figure therefore sizes to its
-     content, which the `min-width: 660px` on the image below pins at 684px.
-     On a 390px phone that made the whole page scroll sideways rather than the
-     strip scrolling inside itself, which is the one thing the overflow-x
-     below exists to prevent. Measured at 390px: scrollWidth was 700. */
+  /* Explicit, and not redundant: each panel below is a `container-type:
+     inline-size` element, which contributes nothing to intrinsic width. If
+     this figure is ever sized shrink-to-fit, both `1fr` tracks resolve
+     against that nothing, the columns collapse and the whole comic renders
+     as an 8px gap with no picture. Measured, not guessed. */
   width: 100%;
-  padding: var(--space-3);
-  /* Capped. At the full column width the strip is nearly 700px tall and it
-     stops being the aside that explains the list and starts being the page. */
-  max-width: 880px;
-  background: #fdfcf7;
-  border-radius: var(--radius-lg);
-  /* Line art has no soft edge of its own; without this the paper meets the
-     page on a hard 1px step that reads as a rendering fault on a phone. */
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px rgba(0, 0, 0, 0.5);
-  /* Below ~700px four panels side by side are about eighty pixels each,
-     which is not a comic, it is a texture. Swiping through it keeps the
-     drawing at a size where the bird has a face. */
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  max-width: 720px;
 }
 
-.wharf-strip img {
+.comic__panel {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.comic__panel img {
   display: block;
   width: 100%;
-  min-width: 660px;
   height: auto;
-  border-radius: var(--radius-sm);
+}
+
+/* The words. The artwork's bubbles are empty; these sit inside them.
+   Every position is a percentage of the panel, which is why the panels are
+   separate images — one big picture would have made each of these depend on
+   the size of the whole thing.
+
+   ⚠️ These four boxes are the largest rectangle that fits inside each drawn
+   bubble, computed off the artwork rather than eyeballed — nudging by hand
+   got the text overhanging two of the four. Regenerate the comic and all
+   four are wrong: re-run the measurement, do not adjust these by eye. */
+.bubble {
+  position: absolute;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #14181c;
+  font-weight: var(--weight-medium);
+  line-height: 1.35;
+  /* Scales with the panel, not with the viewport: the panel is a percentage
+     of a capped figure, so `cqw` keeps the type the same size relative to the
+     bubble it is sitting in at every width. */
+  font-size: clamp(9px, 4.4cqw, 15px);
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.comic__panel { container-type: inline-size; }
+
+.bubble--2a { left: 8.4%;  top: 6.6%;  width: 32.8%; height: 24.0%; }
+.bubble--2b { left: 58.4%; top: 10.6%; width: 31.6%; height: 23.2%; }
+.bubble--3  { left: 42.6%; top: 6.4%;  width: 48.8%; height: 29.8%; font-size: clamp(8px, 3.2cqw, 12px); }
+.bubble--4  { left: 9.2%;  top: 6.6%;  width: 49.4%; height: 30.8%; }
+
+@media (max-width: 640px) {
+  .comic {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+  }
 }
 
 /* How your own question gets here. Chip-coloured because it is the one place
