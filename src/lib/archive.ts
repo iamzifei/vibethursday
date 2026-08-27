@@ -34,6 +34,14 @@ export type ArchiveRow = {
   date: string;
   title: string;
   note: string;
+  /**
+   * The painted poster for that morning, without a width or an extension.
+   *
+   * Numbered by ascending date, which has to match `scripts/session-poster.mjs`
+   * exactly: it is the same numbering for the same reason — adding an older
+   * session must not silently repoint every other session's picture.
+   */
+  poster: string;
   photos: ArchiveSession["photos"];
   /** What was on the Wharf for that session, in wall order. */
   questions: { slug: string; name: string; topic: string }[];
@@ -56,7 +64,14 @@ export function buildArchive(
   sessions: readonly ArchiveSession[],
   members: readonly (TopicSource & { display_name: string })[],
 ): ArchiveRow[] {
-  return [...sessions]
+  const numbered = [...sessions]
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map((session, index) => ({
+      ...session,
+      poster: `/sessions/session-${String(index + 1).padStart(2, "0")}`,
+    }));
+
+  return numbered
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map((session) => {
       const people: ArchiveRow["people"] = [];

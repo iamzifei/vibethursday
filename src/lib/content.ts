@@ -72,6 +72,8 @@ export const copy = {
       cta: "报名",
       members: "成员",
       wharf: "码头",
+      works: "作品",
+      sessions: "场次",
       about: "这是什么",
       schedule: "流程",
       support: "开销",
@@ -136,7 +138,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 04 — 谁适合来",
+      eyebrow: "§ 03 — 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
         "独立开发者",
@@ -152,7 +154,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 06 — 流程",
+      eyebrow: "§ 07 — 流程",
       title: "每周同一个节奏，不变。",
       slots: [
         {
@@ -179,7 +181,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 05 — 现场",
+      eyebrow: "§ 06 — 现场",
       title: "每一场都留了几张。",
       lede: "为保护参与者，认得出的人脸都遮掉了。点开某一场就能看到那天的全部照片。",
       archiveCta: "每一场的完整记录",
@@ -250,7 +252,7 @@ export const copy = {
     // § 03。位置是刻意的：紧挨着成员墙，因为这两样是这个站唯一会随时间变厚的
     // 东西。其余每一节讲的都是「周四会发生什么」，只有这两节讲的是「已经攒下了什么」。
     wharfTeaser: {
-      eyebrow: "§ 03 — 大家想问什么",
+      eyebrow: "§ 04 — 大家想问什么",
       title: "周四之前，先知道谁在问什么。",
       lede: "报名时写的那句「最想问什么」会挂到码头上。看到你答得上来的，周四找他聊十分钟就完了——不用等到现场再从头认人。",
       cta: "去码头看看",
@@ -259,8 +261,17 @@ export const copy = {
       empty: "这周还没有人挂问题上去。",
     },
 
+    // § 05。放在「大家想问什么」后面：那两节从相反的两端回答同一个疑问——
+    // 这些人想要什么，以及他们真的做完过什么。
+    worksTeaser: {
+      eyebrow: "§ 05 — 做出来的东西",
+      title: "这屋子做出来的东西。",
+      lede: "十来个产品，一半已经上线或者有收入，也有还只在自己电脑上跑的。全部来自成员墙上的卡片——卡在某个地方往往比已经上线更有的聊。",
+      cta: "看大家做的东西",
+    },
+
     rules: {
-      eyebrow: "§ 07 — 几条规矩",
+      eyebrow: "§ 08 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
@@ -272,7 +283,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 08 — 报名",
+      eyebrow: "§ 09 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -430,7 +441,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 09 — 常见问题",
+      eyebrow: "§ 10 — 常见问题",
       title: "先回答几个大概率会问的。",
       items: [
         {
@@ -493,7 +504,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 10 — 联系",
+      eyebrow: "§ 11 — 联系",
       title: "找不到人？加我微信。",
       lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
       caption: "微信扫码加我",
@@ -752,6 +763,11 @@ export const copy = {
       // 展示者的情况。每一场真实的到场人数写在那一场自己的那句话里。
       totalsNote: "「报过名」不是到场。每一场实际来了多少人，写在那一场下面那句话里。",
       questionsLabel: "那天挂在码头上的问题",
+      // 一场十几条问题，四场排下来页面就长得没人往下翻了。前三条摊开，其余折起来。
+      moreQuestions: "还有 {n} 条",
+      morePhotos: "那天的另外 {n} 张",
+      // 画出来的，不是拍的。alt 要说清楚，不然读屏的人会以为那是现场照片。
+      posterAlt: "{title}的手绘插画：达令港边一间临水的咖啡馆，几张桌子围坐着人，窗外是船和海鸥。",
       peopleLabel: "那天来的（已经上墙的）",
       // 只数已发布的成员卡，所以它一定小于真实到场数，说清楚免得被当成人数。
       peopleNote: "只数了认领过名片的人，所以这个数比当天实际到场少。",
@@ -907,6 +923,8 @@ export const copy = {
       cta: "Sign up",
       members: "Members",
       wharf: "The Wharf",
+      works: "Works",
+      sessions: "Sessions",
       about: "What this is",
       schedule: "Run of show",
       support: "Costs",
@@ -962,7 +980,7 @@ export const copy = {
     },
 
     who: {
-      eyebrow: "§ 04 — Who it is for",
+      eyebrow: "§ 03 — Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
         "Indie developers",
@@ -977,7 +995,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 06 — Run of show",
+      eyebrow: "§ 07 — Run of show",
       title: "Same rhythm every week.",
       slots: [
         {
@@ -1004,7 +1022,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 05 — The room",
+      eyebrow: "§ 06 — The room",
       title: "A few shots from every session.",
       lede: "Recognisable faces are covered to protect the people who came. Open a session to see everything from that morning.",
       archiveCta: "The full record of each session",
@@ -1069,7 +1087,7 @@ export const copy = {
     },
 
     wharfTeaser: {
-      eyebrow: "§ 03 — What people are asking",
+      eyebrow: "§ 04 — What people are asking",
       title: "Know what people are asking, before Thursday.",
       lede: "The line people write on the sign-up form — what they most want to ask — ends up on the Wharf. See one you can answer, and Thursday is ten minutes with that person instead of an hour working out who to talk to.",
       cta: "Go down to the Wharf",
@@ -1077,8 +1095,15 @@ export const copy = {
       empty: "Nobody has put a question up for this week yet.",
     },
 
+    worksTeaser: {
+      eyebrow: "§ 05 — What has been built",
+      title: "What this room has built.",
+      lede: "A dozen products, half of them shipped or earning, and some that still only run on somebody's laptop. All of it comes off the member wall — being stuck somewhere is usually the more interesting conversation.",
+      cta: "See what people have built",
+    },
+
     rules: {
-      eyebrow: "§ 07 — House rules",
+      eyebrow: "§ 08 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
@@ -1090,7 +1115,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 08 — Sign up",
+      eyebrow: "§ 09 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
@@ -1199,7 +1224,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 09 — Questions",
+      eyebrow: "§ 10 — Questions",
       title: "The ones people ask first.",
       items: [
         {
@@ -1262,7 +1287,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 10 — Contact",
+      eyebrow: "§ 11 — Contact",
       title: "Can't find us? Add me on WeChat.",
       lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
       caption: "Scan with WeChat",
@@ -1470,6 +1495,9 @@ export const copy = {
       totalsNote:
         "«Have signed up» is not attendance. How many actually turned up to a session is in the line under that session.",
       questionsLabel: "On the Wharf that week",
+      moreQuestions: "{n} more",
+      morePhotos: "{n} more photos from that morning",
+      posterAlt: "An illustration of {title}: a café on the water at Darling Harbour, people around tables, boats and gulls outside the windows.",
       peopleLabel: "There that morning (of the people with a card)",
       peopleNote: "Only counts people who have claimed a card, so it is lower than the number in the room.",
       empty: "Nobody from this session has a card yet.",

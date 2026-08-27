@@ -20,8 +20,13 @@ export const NAV_LINKS = [
   // The donation link was deliberately kept out of this bar, on the grounds
   // that being in it makes something look like a main attribute of the meetup.
   // That reasoning is why this one belongs in it.
+  { href: "/works", label: "works" },
   { href: "/wharf", label: "wharf" },
-  { href: "/#schedule", label: "schedule" },
+  { href: "/sessions", label: "sessions" },
+  // "流程" used to sit here and no longer does. It is an anchor a third of the
+  // way down the home page, and anyone reading the home page reaches it by
+  // scrolling; the bar's remaining slots are worth more to the four pages that
+  // are not on the home page at all.
   { href: "/support", label: "support" },
 ] as const;
 

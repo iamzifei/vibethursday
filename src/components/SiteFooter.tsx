@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { Copy, Lang } from "@/lib/content";
-import { langHref } from "@/lib/nav";
+import { langHref, NAV_LINKS } from "@/lib/nav";
 import { FOOTER_SLOGAN, SOURCE_URL } from "@/lib/site";
 
 type Props = {
@@ -35,11 +35,21 @@ export function SiteFooter({ lang, copy, support = false }: Props) {
             {copy.footer.location}
           </span>
 
-          {support && (
-            <span className="body-sm">
-              <Link href={langHref("/support", lang)}>{copy.footer.supportLink}</Link>
-            </span>
-          )}
+          {/* A second way to every page, for the reader who has scrolled to
+              the bottom rather than reached for the bar at the top.
+
+              ⚠️ `/support` is filtered out unless this page asked for it. The
+              member wall deliberately carries no money link, for the same
+              reason its cards carry no donation marker, and a site map in the
+              footer must not be the thing that quietly puts one under every
+              card on it. */}
+          <nav className="footer__map" aria-label={copy.nav.menu}>
+            {NAV_LINKS.filter((link) => support || link.href !== "/support").map((link) => (
+              <Link key={link.href} href={langHref(link.href, lang)}>
+                {copy.nav[link.label]}
+              </Link>
+            ))}
+          </nav>
         </div>
 
         <span className="body-sm footer__meta">

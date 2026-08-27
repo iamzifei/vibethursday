@@ -226,6 +226,37 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* ── Who ──────────────────────────────────────────────────── */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.who.eyebrow}</span>
+              <h2>{c.who.title}</h2>
+            </div>
+
+            <ul
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "var(--space-2)",
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+              }}
+            >
+              {c.who.groups.map((group) => (
+                <li className="pill" key={group} style={{ textTransform: "none", letterSpacing: 0 }}>
+                  {group}
+                </li>
+              ))}
+            </ul>
+
+            <p className="body-sm" style={{ maxWidth: "62ch", color: "var(--fg3)" }}>
+              {c.who.note}
+            </p>
+          </div>
+        </section>
+
         {/* ── The Wharf ────────────────────────────────────────────
             Directly after the wall, because they are the same kind of thing:
             the two parts of this site that get thicker every week. The wall
@@ -274,34 +305,26 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── Who ──────────────────────────────────────────────────── */}
+        {/* ── Works ────────────────────────────────────────────────
+            The strongest recruiting evidence this site has, and until now it
+            was only reachable one card at a time. It sits after the questions
+            because the two answer the same doubt from opposite ends: what do
+            these people want, and what have they actually finished. */}
         <section className="section">
           <div className="shell stack-8">
             <div className="stack-4">
-              <span className="eyebrow">{c.who.eyebrow}</span>
-              <h2>{c.who.title}</h2>
+              <span className="eyebrow">{c.worksTeaser.eyebrow}</span>
+              <h2>{c.worksTeaser.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.worksTeaser.lede}
+              </p>
             </div>
 
-            <ul
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "var(--space-2)",
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-              }}
-            >
-              {c.who.groups.map((group) => (
-                <li className="pill" key={group} style={{ textTransform: "none", letterSpacing: 0 }}>
-                  {group}
-                </li>
-              ))}
-            </ul>
-
-            <p className="body-sm" style={{ maxWidth: "62ch", color: "var(--fg3)" }}>
-              {c.who.note}
-            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+              <Link className="btn btn--secondary" href={langHref("/works", lang)}>
+                {c.worksTeaser.cta}
+              </Link>
+            </div>
           </div>
         </section>
 
