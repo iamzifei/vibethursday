@@ -14,7 +14,7 @@
  * no request, nothing to shift the layout while it loads, and at low opacity it
  * reads as texture rather than as a picture somebody has to look past.
  *
- * ⚠️ Everything that matters is drawn between x=130 and x=1035. On a phone the
+ * ⚠️ Everything with height is drawn between x=560 and x=1110. On a phone the
  * band is wider than the screen and the overflow is clipped, so anything out
  * near the edges of the viewBox is simply not there for half the audience.
  *
@@ -29,15 +29,28 @@
 const WATER = 216;
 const DECK = 182;
 
-/** Pyrmont Bridge runs across the middle; the swing span's tower is its middle. */
-const BRIDGE_START = 130;
-const BRIDGE_END = 700;
-const BAY = 63.33; // nine bays, so the tower lands on a joint
-const TOWER_X = 383;
+/**
+ * ★ The layout is driven by what covers it, not by the harbour.
+ *
+ * On this page the seagull's card sits at the lower left of the hero and blocks
+ * roughly viewBox 280–550 on a wide screen; the bird's line blocks the strip
+ * below it. The first version put the bridge and its tower squarely in that
+ * band, so the one drawing anybody would recognise was the one part nobody
+ * could see.
+ *
+ * So: the long low approach runs left, where being behind a card costs nothing,
+ * and everything with height — the swing span, its control cabin, the masts,
+ * the Anzac pylons — sits from 560 rightward, which is open on a wide screen
+ * and inside the crop on a phone (that shows viewBox 350–850).
+ */
+const BRIDGE_START = 60;
+const BRIDGE_END = 720;
+const BAY = 66; // ten bays, so the tower lands on a joint
+const TOWER_X = 621;
 
 export function DarlingHarbour() {
-  const bays = Array.from({ length: 9 }, (_, i) => BRIDGE_START + i * BAY);
-  const piles = Array.from({ length: 19 }, (_, i) => BRIDGE_START + 6 + i * 31);
+  const bays = Array.from({ length: 10 }, (_, i) => BRIDGE_START + i * BAY);
+  const piles = Array.from({ length: 22 }, (_, i) => BRIDGE_START + 6 + i * 31);
 
   return (
     <svg
@@ -86,7 +99,7 @@ export function DarlingHarbour() {
             <rect x={TOWER_X - 2} y={DECK - 98} width={4} height={17} />
 
             {/* ── Masts, moored off the Maritime Museum ──────────── */}
-            {[726, 758, 788].map((x, i) => {
+            {[762, 794, 824].map((x, i) => {
               const top = [118, 100, 128][i];
               return (
                 <g key={x}>
@@ -97,7 +110,7 @@ export function DarlingHarbour() {
               );
             })}
             {/* Hulls, so the masts are standing on something. */}
-            <rect x={712} y={WATER - 12} width={96} height={12} />
+            <rect x={748} y={WATER - 12} width={96} height={12} />
 
             {/* ── Anzac Bridge, beyond ───────────────────────────── */}
             {/* Two A-frames with a cable fan each. The pylons are what people
@@ -105,9 +118,9 @@ export function DarlingHarbour() {
                 halftone, which makes them coarser than life and legible. */}
             {/* Long enough to catch the outermost cable at each end: the fans reach
                 90 units either side of an apex, so the deck has to run from
-                888-90 to 982+90 or the cables end in mid-air. */}
-            <rect x={790} y={DECK - 14} width={290} height={7} />
-            {[888, 982].map((apex) => (
+                916-90 to 1020+90 or the cables end in mid-air. */}
+            <rect x={818} y={DECK - 14} width={300} height={7} />
+            {[916, 1020].map((apex) => (
               <g key={apex}>
                 {/* Legs, meeting at the top. Bolder than life so the A survives
                     the dot grid — thin legs plus a cable fan read as a fir

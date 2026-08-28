@@ -1992,7 +1992,14 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
 .wharf-hero {
   position: relative;
   overflow: hidden;
-  padding-block: clamp(var(--space-12), 9vw, var(--space-16)) 0;
+  /* ★ The bottom padding is the backdrop's room, not whitespace. The harbour
+     band is anchored to the foot of this element, and the seagull's card and
+     line are the last things in it — with no padding they sat directly on top
+     of each other and the drawing was only ever visible in the gaps. This is
+     enough for the band's upper half, the half with the tower and the pylons
+     in it, to clear the card entirely. */
+  padding-block: clamp(var(--space-12), 9vw, var(--space-16))
+    clamp(var(--space-8), 11vh, var(--space-16));
 }
 
 /* The lime bloom on the home page's hero, warmed to chip yellow. Same idea,
@@ -2813,10 +2820,12 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   aspect-ratio: 24 / 5;
   height: auto;
   color: var(--accent);
-  /* Stronger than the home page's arch needed. That one is a single big mass;
-     this is trusses, piles, masts and cables — thin shapes that the dot grid
-     eats. The same opacity on finer linework reads as almost nothing. */
-  opacity: 0.26;
+  /* Well past the home page's 0.26, for two reasons. That drawing is a single
+     big mass; this is trusses, piles, masts and cables, and the dot grid eats
+     thin shapes — the same number on finer linework reads as almost nothing.
+     And it now lives in the empty right half of the hero rather than under a
+     headline, so there is nothing here for it to compete with. */
+  opacity: 0.4;
   pointer-events: none;
   /* Semi-transparent and fading out upward — but the fade has to start ABOVE
      the drawing, not through it. The arch peaks at viewBox y=70, which is 72%
@@ -2856,6 +2865,6 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
        can actually be seen. */
     width: 108%;
     aspect-ratio: 2 / 1;
-    opacity: 0.32;
+    opacity: 0.44;
   }
 }
