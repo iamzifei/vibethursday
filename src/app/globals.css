@@ -2785,3 +2785,62 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
     white-space: normal;
   }
 }
+
+/* The skyline on the Wharf. Same drawing as the home page, quieter and lower:
+   there it sits behind a headline and can carry some weight, here it sits
+   behind a list of questions and must not compete with a single one of them.
+
+   z-index 1 puts it above the chip-yellow bloom (0) and below the content,
+   which `.wharf-hero > *` pins at 2 — this rule is more specific, so the svg
+   opts out of that and everything else keeps it. */
+.wharf-hero > .skyline {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  /* ⚠️ These two are a ratio, not two independent numbers. The svg is
+     `xMidYMax slice` over a 1200×250 viewBox (4.8:1), so a box wider than 4.8:1
+     scales to cover the width and crops the top — and the top is where the
+     arch and the sails are. The first version was 1400×198 (7.07:1) and cropped
+     everything above viewBox y=80, leaving two dotted waterlines and no
+     landmark at all.
+
+     So the ratio is declared, not clamped into place. A height in `vh` looked
+     right at one window size and cropped at another — which is how the second
+     attempt passed a check at 1100×900 and still lost the arch on a shorter
+     screen. */
+  width: min(1040px, 100%);
+  aspect-ratio: 24 / 5;
+  height: auto;
+  color: var(--accent);
+  opacity: 0.22;
+  pointer-events: none;
+  /* Semi-transparent and fading out upward — but the fade has to start ABOVE
+     the drawing, not through it. The arch peaks at viewBox y=70, which is 72%
+     of the way up the box; a fade beginning at 45% put the bridge at roughly
+     half strength and left the Opera House as the only thing anyone could make
+     out. Solid to 72%, gone by the top, where there is nothing drawn anyway. */
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 72%, transparent 100%);
+  /* Slower than the home page's 26s. That hero already breathes and sweeps, so
+     the drift reads as one motion among several; this page is still, and the
+     same speed here would be the only thing moving on it.
+     (Reduced motion is handled globally at the top of this file, by a `*` rule
+     that zeroes every animation-duration — not by the `.skyline` entry further
+     down, which specificity would lose to this line anyway.) */
+  animation: skyline-drift 44s ease-in-out infinite;
+
+  /* ⚠️ Not mirrored, though mirroring would move the arch out from behind the
+     seagull and into open space. The Opera House sits east of the bridge and
+     everybody reading this page lives here — a flipped harbour is the kind of
+     thing a local sees immediately. A bird on a wharf post standing in front of
+     the bridge is also just a truer picture than an unobstructed silhouette. */
+}
+
+@media (max-width: 48rem) {
+  .wharf-hero > .skyline {
+    /* The aspect ratio carries over; only the width and the weight change. */
+    width: 165%;
+    opacity: 0.18;
+  }
+}

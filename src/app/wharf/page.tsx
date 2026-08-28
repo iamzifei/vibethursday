@@ -3,6 +3,7 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SydneySkyline } from "@/components/SydneySkyline";
 import { AnswerForm, AskBox, CloseForm, ComingButton } from "@/components/WharfActions";
 import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
@@ -110,6 +111,14 @@ export default async function WharfPage({ searchParams }: PageProps) {
 
       <main id="main">
         <header className="wharf-hero">
+          {/* The bridge and the Opera House, the same halftone silhouette the
+              home page opens with. It belongs here more than it belongs there:
+              this page is named after a wharf, and the joke it is named after
+              only lands if the wharf is recognisably this harbour. Faded
+              further than the home page's — that one sits under a headline,
+              this one sits under a list somebody has to read. */}
+          <SydneySkyline />
+
           <div className="shell stack-4">
             <span className="eyebrow">{w.eyebrow}</span>
             <h1>{w.title}</h1>
