@@ -2165,9 +2165,11 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
+  /* The lighter background and the radius already separate an answer from
+     the question it sits under. A border down one side on top of that was
+     doing no work. */
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  border-left: 2px solid var(--border-default);
 }
 
 .answer__body { margin: 0; color: var(--fg1); line-height: 1.65; white-space: pre-wrap; }
