@@ -95,6 +95,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
     );
 
   const asking = inLane("question");
+  const vague = inLane("vague");
   const chatting = inLane("chat");
   const live = asking.filter((row) => row.status === "open").length;
 
@@ -182,6 +183,43 @@ export default async function WharfPage({ searchParams }: PageProps) {
                 ))
               )}
             </div>
+
+            {/* ★ Between the two. These are real questions from people who
+                really want an answer — they just do not say enough for a
+                reader to tell whether they are the right person. Filing them
+                under "想聊的" would put words in their mouth; leaving them at
+                the top of the question list buries the ones somebody can act
+                on. The follow-up is shown because it is the useful part: it
+                tells you what to ask this person when you find them. */}
+            {vague.length > 0 && (
+              <div className="stack-4">
+                <div className="wharf-group">
+                  <span className="wharf-group__label">
+                    {w.laneVague} · {vague.length}
+                  </span>
+                  <span className="wharf-group__rule" />
+                </div>
+                <p className="body-sm" style={{ color: "var(--fg3)" }}>
+                  {w.laneVagueNote}
+                </p>
+
+                <div className="wharf-rows">
+                  {vague.map(({ question }) => (
+                    <Link
+                      key={question.id}
+                      href={`/members/${question.slug}${langSuffix(lang)}`}
+                      className="wharf-row"
+                    >
+                      <span className="wharf-row__q">{question.text}</span>
+                      {question.coach_ask && (
+                        <span className="wharf-row__gap">{question.coach_ask}</span>
+                      )}
+                      <span className="wharf-row__who">{question.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {chatting.length > 0 && (
               <div className="stack-4">

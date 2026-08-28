@@ -13,8 +13,18 @@
  * old one.
  */
 
-/** Which of the two lanes a question sits in. */
-export type Lane = "question" | "chat";
+/**
+ * Which lane a question sits in.
+ *
+ * `vague` arrived later than the other two and is a different kind of thing: it
+ * is not a judgement about what somebody wanted, it is a judgement about
+ * whether anybody can act on the sentence. "AI工作流" is a real question from
+ * somebody who really wants an answer — it just does not say which workflow, so
+ * no reader can tell whether they are the right person. Filing that under
+ * "想聊的" would put words in their mouth; leaving it at the top of the question
+ * list makes the answerable ones harder to find.
+ */
+export type Lane = "question" | "vague" | "chat";
 
 export type QuestionStatus = "open" | "claimed" | "closed" | "sunk";
 

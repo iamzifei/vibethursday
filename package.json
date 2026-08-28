@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test \"tests/*.test.mts\"",
-    "coach:eval": "node --experimental-strip-types scripts/coach-eval.mjs"
+    "coach:eval": "node --experimental-strip-types scripts/coach-eval.mjs",
+    "coach:triage": "node --experimental-strip-types scripts/coach-triage.mjs"
   },
   "dependencies": {
     "next": "16.2.12",

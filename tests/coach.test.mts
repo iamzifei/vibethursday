@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { buildSystem, EXAMPLES, GAPS, readCoaching } from "../src/lib/coach-prompt.ts";
+import { copy } from "../src/lib/content.ts";
 
 /**
  * The ask-box helper's contract with the model.
@@ -135,4 +136,39 @@ test("★ the graded drafts and the examples share nothing", () => {
   }
 
   assert.ok(fixture.drafts.length >= 15, "too few graded drafts for the score to mean much");
+});
+
+test("★ the vague lane is a third thing, not a synonym for the chat lane", () => {
+  // These two say different things about a person. "想聊的" says they came to
+  // meet people; "还没问清楚" says they want an answer and did not say enough
+  // to get one. Sharing copy would tell a whole group of people they wanted
+  // something they did not.
+  assert.notEqual(copy.zh.wharf.laneVague, copy.zh.wharf.laneChat);
+  assert.notEqual(copy.zh.wharf.laneVagueNote, copy.zh.wharf.laneChatNote);
+  assert.notEqual(copy.en.wharf.laneVague, copy.en.wharf.laneChat);
+});
+
+test("★ a triage pass never touches a question somebody has acted on", () => {
+  // A claim or an answer is stronger evidence that a question was answerable
+  // than any opinion about its wording. Demoting one would tell the person who
+  // answered that the thing they answered was not a real question.
+  const sql = readFileSync(path.join(process.cwd(), "src/lib/db.ts"), "utf8");
+  const query = sql.slice(sql.indexOf("listTriageCandidates"));
+
+  assert.match(query, /NOT EXISTS[\s\S]{0,120}wharf_replies/, "must skip claimed or answered rows");
+  assert.match(query, /closed_at IS NULL/, "must skip closed rows");
+  assert.match(query, /lane = 'question'/, "must only look at rows nobody has moved yet");
+});
+
+test("★ the triage script does not write unless told to", () => {
+  // It demotes people's sentences based on a model that is right about four
+  // times in five. Fine as a suggestion, not fine as something that happens
+  // quietly while nobody is looking.
+  const script = readFileSync(path.join(process.cwd(), "scripts/coach-triage.mjs"), "utf8");
+
+  assert.match(script, /--apply/);
+  assert.ok(
+    script.indexOf("if (!APPLY)") < script.indexOf("setQuestionLane(move.id"),
+    "the dry-run exit must come before any write",
+  );
 });

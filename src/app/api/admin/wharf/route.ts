@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   if (action === "lane") {
     const lane = form.get("lane");
-    if (lane !== "question" && lane !== "chat") {
+    if (lane !== "question" && lane !== "vague" && lane !== "chat") {
       return NextResponse.json({ error: "bad_lane" }, { status: 400 });
     }
     await setQuestionLane(id, lane);

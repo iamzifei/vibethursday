@@ -1,7 +1,9 @@
 import { Pool } from "pg";
-import { spendFrom } from "@/lib/coach-budget";
-import { classifyLane } from "@/lib/questions";
-import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "@/lib/members";
+import { spendFrom } from "./coach-budget.ts";
+import { classifyLane, type Lane } from "./questions.ts";
+// Relative, not "@/": scripts/ and tests/ load this through Node's type stripper,
+// which cannot resolve the tsconfig path alias.
+import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 
 /**
  * Postgres access.
@@ -217,7 +219,7 @@ export function ensureSchema(): Promise<void> {
         -- can never do Thursday mornings, which is its own true thing to say.
         session     date,
         text        text NOT NULL,
-        -- 'question' or 'chat'. Sorting, never hiding: see classifyLane().
+        -- 'question', 'vague' or 'chat'. Sorting, never hiding: see classifyLane().
         lane        text NOT NULL DEFAULT 'question',
         -- 'signup' or 'site'.
         source      text NOT NULL DEFAULT 'signup',
@@ -280,6 +282,12 @@ export function ensureSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS wharf_replies_question_idx
       ON wharf_replies (question_id, created_at)
     `);
+
+    // What the coach asked back about a question already on the board, kept so
+    // the lane it justifies can show its reason. Nullable: most questions have
+    // never been through it, and that is not the same as "it had nothing to
+    // say" — a blank reason must not read as an endorsement.
+    await pool.query(`ALTER TABLE wharf_questions ADD COLUMN IF NOT EXISTS coach_ask text`);
 
     // ★ One row per day, holding a count and nothing else.
     //
@@ -780,7 +788,9 @@ export type WharfQuestion = {
   name: string;
   session: string | null;
   text: string;
-  lane: "question" | "chat";
+  lane: Lane;
+  /** The follow-up the coach asked, when one has been run over this row. */
+  coach_ask: string | null;
   source: string;
   closed_at: string | null;
   outcome: string | null;
@@ -861,6 +871,7 @@ export async function listWharfQuestions(): Promise<WharfQuestion[]> {
             to_char(q.session, 'YYYY-MM-DD') AS session,
             q.text,
             q.lane,
+            q.coach_ask,
             q.source,
             q.closed_at::text     AS closed_at,
             q.outcome,
@@ -1062,10 +1073,23 @@ export async function openQuestionCount(memberId: string): Promise<number> {
 }
 
 /** Moves one question between lanes. The admin override the heuristic needs. */
-export async function setQuestionLane(questionId: string, lane: string): Promise<void> {
+export async function setQuestionLane(id: string, lane: Lane, coachAsk?: string | null): Promise<void> {
   await ensureSchema();
 
-  await getPool().query(`UPDATE wharf_questions SET lane = $2 WHERE id = $1`, [questionId, lane]);
+  // `coach_ask` is only written when a reason is supplied. Moving a question by
+  // hand from /admin passes none and leaves whatever was there, because the
+  // organiser's judgement and the model's are different things and overwriting
+  // one with the other loses the audit trail of why a row moved.
+  if (coachAsk === undefined) {
+    await getPool().query(`UPDATE wharf_questions SET lane = $2 WHERE id = $1`, [id, lane]);
+    return;
+  }
+
+  await getPool().query(`UPDATE wharf_questions SET lane = $2, coach_ask = $3 WHERE id = $1`, [
+    id,
+    lane,
+    coachAsk,
+  ]);
 }
 
 /** An answer's picture. Returned as bytes, like an avatar. */
@@ -1337,4 +1361,31 @@ export async function spendCoachCall(limit: number): Promise<boolean> {
   await ensureSchema();
 
   return spendFrom((sql, params) => pool.query(sql, params), limit);
+}
+
+/**
+ * The questions a triage pass may touch.
+ *
+ * ⚠️ Three exclusions, and each one is a row that must not be demoted:
+ * closed ones are finished, ones with a claim or an answer have already proved
+ * somebody could act on them (whatever a model thinks of the wording), and ones
+ * already out of the question lane are somebody's earlier decision.
+ */
+export async function listTriageCandidates(): Promise<
+  { id: string; text: string; lane: Lane }[]
+> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ id: string; text: string; lane: Lane }>(
+    `SELECT q.id::text AS id, q.text, q.lane
+       FROM wharf_questions q
+       JOIN members m ON m.id = q.member_id
+      WHERE m.published_at IS NOT NULL AND NOT m.hidden
+        AND q.lane = 'question'
+        AND q.closed_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM wharf_replies r WHERE r.question_id = q.id)
+      ORDER BY q.created_at DESC`,
+  );
+
+  return result.rows;
 }

@@ -236,6 +236,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
           <h2 className="h3">Wharf</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
             {questions.filter((q) => q.lane === "question").length} questions ·{" "}
+            {questions.filter((q) => q.lane === "vague").length} not-clear-yet ·{" "}
             {questions.filter((q) => q.lane === "chat").length} looking-to-meet ·{" "}
             {questions.reduce((n, q) => n + q.replies.length, 0)} replies
           </span>
@@ -279,19 +280,29 @@ export default async function AdminPage({ searchParams }: PageProps) {
                         ))}
                   </td>
                   <td>
-                    <form method="post" action="/api/admin/wharf">
-                      <input type="hidden" name="key" value={key} />
-                      <input type="hidden" name="action" value="lane" />
-                      <input type="hidden" name="id" value={question.id} />
-                      <input
-                        type="hidden"
-                        name="lane"
-                        value={question.lane === "question" ? "chat" : "question"}
-                      />
-                      <button className="linkish" type="submit">
-                        → {question.lane === "question" ? "chat" : "question"}
-                      </button>
-                    </form>
+                    {/* One button per lane it is not already in. A toggle was
+                        enough while there were two lanes; with three, a toggle
+                        silently makes one of them unreachable — and `vague` is
+                        the one a triage pass writes, so it is exactly the one
+                        that needs undoing by hand. */}
+                    {(["question", "vague", "chat"] as const)
+                      .filter((lane) => lane !== question.lane)
+                      .map((lane) => (
+                        <form
+                          key={lane}
+                          method="post"
+                          action="/api/admin/wharf"
+                          style={{ display: "inline" }}
+                        >
+                          <input type="hidden" name="key" value={key} />
+                          <input type="hidden" name="action" value="lane" />
+                          <input type="hidden" name="id" value={question.id} />
+                          <input type="hidden" name="lane" value={lane} />
+                          <button className="linkish" type="submit">
+                            → {lane}{" "}
+                          </button>
+                        </form>
+                      ))}
                   </td>
                 </tr>
               ))}

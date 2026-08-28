@@ -36,6 +36,18 @@ const MODEL = "deepseek-chat";
 const TIMEOUT_MS = 8_000;
 
 /**
+ * How many earlier rounds go back with the draft.
+ *
+ * Four is well past where this should ever get: the prompt tells the model to
+ * let somebody go after two rounds. This is the ceiling that keeps a stuck loop
+ * from growing the request without bound, not a target.
+ */
+const MAX_HISTORY = 4;
+
+/** One earlier round: what they wrote, and what came back. */
+export type Round = { draft: string; gap: Coaching["gap"]; ask: string };
+
+/**
  * Whether the feature exists at all in this deployment.
  *
  * The page calls this and hides the button when it is false, so the site runs
@@ -53,7 +65,11 @@ export function coachAvailable(): boolean {
  * Asks the model what is missing. Returns null when there is nothing to say —
  * and also when anything at all goes wrong.
  */
-export async function coachDraft(draft: string): Promise<Coaching | null> {
+export async function coachDraft(
+  draft: string,
+  /** Earlier rounds of the same person sharpening the same sentence. */
+  history: Round[] = [],
+): Promise<Coaching | null> {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) return null;
 
@@ -79,8 +95,17 @@ export async function coachDraft(draft: string): Promise<Coaching | null> {
         max_tokens: 120,
         // The contract is a two-field object; ask for it rather than hope.
         response_format: { type: "json_object" },
+        // ★ The earlier rounds go back as real turns, which is the whole
+        //   difference between a helper and a slot machine. Without them every
+        //   press is the model's first sight of the sentence: it re-asks what
+        //   it just asked, or wanders to a different gap, and the person gets
+        //   no sense of getting closer because they are not getting closer.
         messages: [
           { role: "system", content: buildSystem() },
+          ...history.slice(-MAX_HISTORY).flatMap((round) => [
+            { role: "user" as const, content: `草稿：${round.draft}` },
+            { role: "assistant" as const, content: JSON.stringify({ gap: round.gap, ask: round.ask }) },
+          ]),
           { role: "user", content: `草稿：${draft}` },
         ],
       }),
@@ -103,8 +128,4 @@ export async function coachDraft(draft: string): Promise<Coaching | null> {
   }
 }
 
-/** Just the follow-up, for the route. Empty verdicts come back as null. */
-export async function coachQuestion(draft: string): Promise<string | null> {
-  const coaching = await coachDraft(draft);
-  return coaching?.ask ? coaching.ask : null;
-}
+

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { coachAvailable, coachDraft } from "@/lib/coach";
+import { coachAvailable, coachDraft, type Round } from "@/lib/coach";
 import { spendCoachCall } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -20,6 +20,9 @@ export const dynamic = "force-dynamic";
  */
 
 const MAX_DRAFT = 300;
+
+/** Rounds accepted from the page. The model is told to stop well before this. */
+const MAX_ROUNDS = 4;
 
 /**
  * How many of these the whole site may make in a day. Not per member — total.
@@ -42,6 +45,42 @@ const MAX_DRAFT = 300;
  */
 const CALLS_PER_DAY = Number(process.env.COACH_DAILY_LIMIT ?? 300);
 
+/**
+ * Reads the rounds the page sent back, dropping anything malformed.
+ *
+ * ⚠️ This arrives from the browser, so it is not evidence of anything — a
+ * crafted request could claim any history it likes. That is fine here and worth
+ * being explicit about: the history only steers what one person is asked next
+ * about their own sentence. It reaches no database and grants nothing. What it
+ * must not do is grow without bound, hence the slice.
+ */
+function readHistory(raw: FormDataEntryValue | null | undefined): Round[] {
+  if (typeof raw !== "string") return [];
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter(
+        (round): round is Round =>
+          !!round &&
+          typeof round === "object" &&
+          typeof (round as Round).draft === "string" &&
+          typeof (round as Round).ask === "string" &&
+          typeof (round as Round).gap === "string",
+      )
+      .slice(-MAX_ROUNDS)
+      .map((round) => ({
+        draft: round.draft.slice(0, MAX_DRAFT),
+        gap: round.gap,
+        ask: round.ask.slice(0, 200),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function POST(request: Request) {
   if (!coachAvailable()) return NextResponse.json({ error: "off" }, { status: 404 });
 
@@ -59,6 +98,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "missing_body" }, { status: 400 });
   }
 
+  // The rounds so far, sent by the page. Held on the client rather than stored
+  // because a half-finished sentence is not something this site should keep:
+  // close the tab and the draft is gone, which is the correct amount of memory
+  // for something somebody has not decided to publish yet.
+  const history = readHistory(form?.get("history"));
+
   // Charged before the call, not after: a request that fails upstream has still
   // been paid for by then, and a counter that only counts successes is a
   // counter an attacker can drive to zero cost by making the calls fail.
@@ -66,7 +111,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "spent" }, { status: 429 });
   }
 
-  const coaching = await coachDraft(draft.trim().slice(0, MAX_DRAFT));
+  const coaching = await coachDraft(draft.trim().slice(0, MAX_DRAFT), history);
 
   // ⚠️ `gap` goes back with the hint because "nothing to ask" is two different
   // findings and the box has to tell them apart. Collapsing them shipped a lie:

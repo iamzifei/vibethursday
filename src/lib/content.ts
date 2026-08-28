@@ -712,6 +712,11 @@ export const copy = {
       // 「想聊的」里，丢的是一次真实撮合；反过来只是多一行。所以判据只在
       // 有明确社交信号时才移出问题栏，拿不准的一律留在能被回答的那一栏。
       laneQuestion: "问题",
+      // 第三栏。跟「想聊的」是两回事：这些人是真想要一个答案的，
+      // 只是没写清是什么，没人判断得了自己接不接得上。
+      // 归到「想聊的」等于替他们改口，留在问题栏又把能接的那些压下去。
+      laneVague: "还没问清楚",
+      laneVagueNote: "这些是真问题，但还看不出该找谁。旁边那句是缺的那一块——当天碰到本人，先问这句。",
       laneChat: "想聊的",
       laneChatNote: "这些不是问题，是想认识什么人——它们不会有回答，但值得被看见。",
       status: {
@@ -739,6 +744,11 @@ export const copy = {
       // 这个按钮只做一件事：把缺的那一块问回去，让本人自己补一句。
       // ★ 它不改写、不拦截、不打分。写的还是他自己的话。
       coachCta: "帮我问得更具体",
+      // 第二轮之后按钮换字。「再看一遍」说的是在磨同一句话，
+      // 而「帮我问得更具体」说的是重新开始——同一个按钮，两个意思。
+      coachAgain: "再看一遍",
+      // 磨过一轮之后说「够具体了」是在自夸；这句把功劳给他。
+      coachSharper: "这样就够了——比刚才那句好接多了，发吧。",
       coachEnough: "这句已经够具体了，直接发。",
       // ⚠️ 不能跟上面那句共用。「这不是个问题」和「这句够具体了」是两回事，
       // 合并之后线上真的发生过：有人写「聊产品,找需求,出主意」，模型判对了
@@ -1518,6 +1528,8 @@ export const copy = {
       emptyWeek: "Nothing up for this one yet. Write a line when you sign up and it lands here.",
       older: "{n} earlier sessions and {m} questions are not on this page — they are still on the cards they came from.",
       laneQuestion: "Questions",
+      laneVague: "Not clear yet",
+      laneVagueNote: "Real questions, but you cannot tell yet whether you are the right person. The line beside each one is what is missing — ask that first if you run into them.",
       laneChat: "Looking to meet",
       laneChatNote: "Not questions — people saying who they would like to meet. Nothing to answer here, but worth seeing.",
       status: {
@@ -1540,6 +1552,8 @@ export const copy = {
       askSession: "For which Thursday",
       askNoSession: "No particular session",
       coachCta: "Help me make it specific",
+      coachAgain: "Look again",
+      coachSharper: "That will do. Much easier to pick up than the first one. Post it.",
       coachEnough: "That one is specific enough. Post it.",
       coachSocial: "This will sit in the looking-to-meet lane. Nothing there gets answered, but it does get read. Want an answer, make it a question about one specific thing.",
       coachSpent: "That button is out for today. Post anyway — it never blocked you.",

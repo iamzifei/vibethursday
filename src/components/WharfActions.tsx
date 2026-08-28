@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import type { Round } from "@/lib/coach";
 import type { Copy } from "@/lib/content";
 
 type WharfCopy = Copy["wharf"];
@@ -313,30 +314,36 @@ export function AskBox({
   // Three states, not two: no hint yet, a hint, or "this one is fine as it is".
   // The third has to be distinguishable, otherwise pressing the button on an
   // already-good question looks like the button is broken.
-  // Four states, and the fourth is the one worth spelling out. "The model had
-  // nothing to add" and "the button is out of budget for today" both end with
-  // no hint on screen, and saying "your question is specific enough" in the
-  // second case would be telling somebody their draft passed a check that never
-  // ran. Cheap to get wrong, and wrong in the direction that misleads.
-  const [hint, setHint] = useState<string | null>(null);
-  const [enough, setEnough] = useState(false);
-  const [social, setSocial] = useState(false);
-  const [spent, setSpent] = useState(false);
+  /**
+   * The rounds so far, oldest first.
+   *
+   * ★ This is what makes it feel like sharpening rather than a slot machine.
+   * Before, each press replaced the last answer, so the screen never showed
+   * that anything had moved — and neither did the model, which saw every press
+   * as its first sight of the sentence. Keeping the rounds fixes both halves:
+   * the person sees their own sentence getting sharper, and the rounds go back
+   * with the next request so the follow-up builds on the last one.
+   *
+   * Client-side only. A half-written question is not something this site should
+   * store, so closing the tab forgets it — which is the right amount of memory
+   * for something nobody has decided to publish.
+   */
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [verdict, setVerdict] = useState<"none" | "social" | "spent" | null>(null);
   const [thinking, setThinking] = useState(false);
 
   function clearAdvice() {
-    setHint(null);
-    setEnough(false);
-    setSocial(false);
-    setSpent(false);
+    setRounds([]);
+    setVerdict(null);
   }
 
   async function askTheCoach() {
     setThinking(true);
-    clearAdvice();
+    setVerdict(null);
 
     const body = new FormData();
     body.set("text", text);
+    body.set("history", JSON.stringify(rounds));
 
     try {
       const response = await fetch("/api/wharf/coach", { method: "POST", body });
@@ -344,22 +351,29 @@ export function AskBox({
       if (response.status === 429) {
         // Either this person's own hourly allowance or the whole site's daily
         // one. The difference does not change what they should do next.
-        setSpent(true);
+        setVerdict("spent");
       } else {
         const payload = await response.json();
 
         // ★ Three outcomes, not two. "Nothing to ask" splits into "this is
         //   already answerable" and "this is not a question at all", and only
         //   the first of those is praise.
-        if (typeof payload.hint === "string") setHint(payload.hint);
-        else if (payload.gap === "social") setSocial(true);
-        else setEnough(true);
+        if (typeof payload.hint === "string") {
+          setRounds((previous) => [
+            ...previous,
+            { draft: text, gap: payload.gap ?? "object", ask: payload.hint },
+          ]);
+        } else if (payload.gap === "social") {
+          setVerdict("social");
+        } else {
+          setVerdict("none");
+        }
       }
     } catch (failure) {
       // ★ Nothing happens, and posting is unaffected. This button is help,
       //   never a gate — see the note at the top of src/lib/coach.ts.
       console.error("[wharf] the coach did not answer", failure);
-      setSpent(true);
+      setVerdict("spent");
     }
 
     setThinking(false);
@@ -380,25 +394,45 @@ export function AskBox({
         aria-label={copy.askCta}
       />
 
-      {/* The answer comes back as a question, deliberately. It is a prompt to
-          write one more sentence, not a correction to accept or reject — so
-          there is nothing here to click, only something to read. */}
-      {hint && (
-        <p className="qa__hint" role="status">
-          {hint}
+      {/* The rounds, oldest first. Each one shows what they wrote and what
+          came back, because the point being made is that the sentence is
+          moving — and a single line that keeps getting replaced makes exactly
+          the opposite point. The answer is a question, deliberately: there is
+          nothing here to accept or reject, only something to read and then
+          write one more sentence about. */}
+      {rounds.length > 0 && (
+        <ol className="coach">
+          {rounds.map((round, index) => (
+            <li key={index} className="coach__round">
+              <span className="coach__draft">{round.draft}</span>
+              <span className="coach__ask">{round.ask}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {thinking && (
+        /* Something has to move while it waits. The button going quiet reads
+           as a button that did not work — and this call routinely takes two or
+           three seconds, which is a long time to wonder. */
+        <p className="coach__thinking" role="status" aria-label={copy.working}>
+          <span />
+          <span />
+          <span />
         </p>
       )}
-      {enough && (
+
+      {verdict === "none" && (
         <p className="qa__hint qa__hint--fine" role="status">
-          {copy.coachEnough}
+          {rounds.length > 0 ? copy.coachSharper : copy.coachEnough}
         </p>
       )}
-      {social && (
+      {verdict === "social" && (
         <p className="qa__hint qa__hint--fine" role="status">
           {copy.coachSocial}
         </p>
       )}
-      {spent && (
+      {verdict === "spent" && (
         <p className="qa__hint qa__hint--fine" role="status">
           {copy.coachSpent}
         </p>
@@ -426,7 +460,7 @@ export function AskBox({
             disabled={thinking || text.trim().length === 0}
             onClick={() => void askTheCoach()}
           >
-            {thinking ? copy.working : copy.coachCta}
+            {rounds.length > 0 ? copy.coachAgain : copy.coachCta}
           </button>
         )}
 
