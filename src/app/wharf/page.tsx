@@ -4,12 +4,12 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DarlingHarbour } from "@/components/DarlingHarbour";
-import { AnswerForm, AskBox, CloseForm, ComingButton } from "@/components/WharfActions";
+import { AnswerForm, AskBox, CloseForm, ComingButton, EditForm } from "@/components/WharfActions";
 import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { listWharfQuestions, openQuestionCount, type WharfQuestion } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
-import { byNewest, canClaim, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
+import { byNewest, canClaim, canEdit, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
 import { gullMood } from "@/lib/wharf";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
@@ -212,18 +212,28 @@ export default async function WharfPage({ searchParams }: PageProps) {
                 </p>
 
                 <div className="wharf-rows">
-                  {vague.map(({ question }) => (
-                    <Link
-                      key={question.id}
-                      href={`/members/${question.slug}${langSuffix(lang)}`}
-                      className="wharf-row"
-                    >
-                      <span className="wharf-row__q">{question.text}</span>
-                      {question.coach_ask && (
-                        <span className="wharf-row__gap">{question.coach_ask}</span>
+                  {vague.map(({ question, status }) => (
+                    <div key={question.id} className="wharf-row-wrap">
+                      <Link
+                        href={`/members/${question.slug}${langSuffix(lang)}`}
+                        className="wharf-row"
+                      >
+                        <span className="wharf-row__q">{question.text}</span>
+                        {question.coach_ask && (
+                          <span className="wharf-row__gap">{question.coach_ask}</span>
+                        )}
+                        <span className="wharf-row__who">{question.name}</span>
+                      </Link>
+
+                      {/* ★ The door out of this lane, and the reason the lane is
+                          defensible at all. Outside the link rather than in it,
+                          because a button inside an anchor is not a button. */}
+                      {memberId && question.member_id === memberId && canEdit(status) && (
+                        <div className="wharf-row__edit">
+                          <EditForm questionId={question.id} text={question.text} copy={w} />
+                        </div>
                       )}
-                      <span className="wharf-row__who">{question.name}</span>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -354,6 +364,11 @@ function QuestionCard({
 
       <span className="wharf-item__q">{question.text}</span>
 
+      {/* ⚠️ Load-bearing. The page tells readers the questions are printed
+          exactly as written; one that has been rewritten has to say so, or
+          that sentence stops being true. */}
+      {question.original_text && <span className="wharf-item__edited">{copy.edited}</span>}
+
       <span className="wharf-item__who">
         <Link className="wharf-item__name" href={`/members/${question.slug}${langSuffix(lang)}`}>
           {question.name}
@@ -406,6 +421,9 @@ function QuestionCard({
 
       {signedIn && (
         <div className="wharf-item__actions">
+          {mine && canEdit(status) && (
+            <EditForm questionId={question.id} text={question.text} copy={copy} />
+          )}
           {canClaim(status) && !mine && (
             <>
               <ComingButton questionId={question.id} sessions={sessions} copy={copy} />

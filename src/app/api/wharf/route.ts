@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   answerQuestion,
   askQuestion,
+  editQuestion,
   claimQuestion,
   closeQuestion,
   openQuestionCount,
@@ -113,6 +114,33 @@ export async function POST(request: Request) {
       // Not theirs, or already closed. Both are "no" and neither is worth
       // telling apart to the caller.
       if (!closed) return NextResponse.json({ error: "not_yours" }, { status: 403 });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "edit") {
+      if (!questionId) return NextResponse.json({ error: "missing_question" }, { status: 400 });
+
+      const body = text(form.get("text"), MAX_QUESTION);
+      if (!body) return NextResponse.json({ error: "missing_body" }, { status: 400 });
+
+      // ★ The lane is recomputed rather than kept. A question filed under
+      //   "还没问清楚" and then rewritten must not keep wearing that label:
+      //   the verdict was about words that no longer exist. If the new wording
+      //   is still vague, the next triage pass will say so — with a reason
+      //   that matches what is actually written.
+      const outcome = await editQuestion(questionId, memberId, body, classifyLane(body));
+
+      if (outcome === "duplicate") {
+        return NextResponse.json({ error: "duplicate" }, { status: 409 });
+      }
+
+      // Not theirs, closed, or somebody has already claimed or answered it.
+      // All three mean "no", and telling them apart would only tell a stranger
+      // which questions have replies.
+      if (outcome === "not_yours") {
+        return NextResponse.json({ error: "not_yours" }, { status: 403 });
+      }
+
       return NextResponse.json({ ok: true });
     }
 

@@ -184,3 +184,36 @@ test("a placeholder is not a work", () => {
   // that is not there.
   assert.equal(countByStage(wall).get("revenue"), undefined);
 });
+
+test("★ editing is guarded in the UPDATE, not in the caller", () => {
+  // Ownership, not-closed and nothing-attached are all in the WHERE. Checked in
+  // TypeScript they would be checks two concurrent requests can both pass, and
+  // the one that matters protects somebody else's answer.
+  const db = readFileSync(path.join(process.cwd(), "src/lib/db.ts"), "utf8");
+  const fn = db.slice(db.indexOf("export async function editQuestion"));
+  const body = fn.slice(0, fn.indexOf("\n}"));
+
+  assert.match(body, /member_id = \$2/, "must check ownership");
+  assert.match(body, /closed_at IS NULL/, "must refuse a closed question");
+  assert.match(body, /NOT EXISTS[\s\S]{0,90}wharf_replies/, "must refuse once anyone has replied");
+  assert.match(body, /coalesce\(q\.original_text, q\.text\)/, "must keep the FIRST wording");
+});
+
+test("★ the sign-up sync will not resurrect an edited question's original", () => {
+  // ⚠️ Measured, not assumed: without this the dedupe index (on md5(text)) no
+  // longer recognises the row it made, and one edit puts the old sentence back
+  // on the board beside the new one.
+  const db = readFileSync(path.join(process.cwd(), "src/lib/db.ts"), "utf8");
+  const sync = db.slice(db.indexOf("async function syncQuestionsFromSignups"));
+  const query = sync.slice(0, sync.indexOf("if (candidates.rows.length"));
+
+  assert.match(query, /original_text = btrim\(g\.topic\)/);
+});
+
+test("★ an edited question says so, in every language", () => {
+  // /wharf tells readers the questions are printed exactly as written. The
+  // exceptions have to be able to contradict that, or the sentence is a lie.
+  for (const lang of ["zh", "en"] as const) {
+    assert.ok(copy[lang].wharf.edited.trim().length > 0);
+  }
+});

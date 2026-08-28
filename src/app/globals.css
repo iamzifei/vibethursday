@@ -656,7 +656,7 @@ section[id] { scroll-margin-top: 76px; }
   background: radial-gradient(circle, rgba(198, 255, 61, 0.18) 0%, rgba(198, 255, 61, 0) 62%);
   pointer-events: none;
   z-index: 0;
-  animation: bloom 7s ease-in-out infinite;
+  animation: bloom 13s ease-in-out infinite;
 }
 
 .hero > * { position: relative; z-index: 2; }
@@ -678,7 +678,7 @@ section[id] { scroll-margin-top: 76px; }
   transform: perspective(420px) rotateX(62deg);
   transform-origin: bottom center;
   background-image:
-    repeating-linear-gradient(to right, rgba(198, 255, 61, 0.42) 0 1px, transparent 1px 84px),
+    repeating-linear-gradient(to right, rgba(198, 255, 61, 0.32) 0 1px, transparent 1px 84px),
     repeating-linear-gradient(to bottom, rgba(61, 220, 255, 0.3) 0 1px, transparent 1px 84px);
   /* Dissolve toward the horizon so the grid does not end on a hard line.
      After the rotation the element's own "top" is the receding direction. */
@@ -686,27 +686,51 @@ section[id] { scroll-margin-top: 76px; }
   mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, transparent 86%);
   pointer-events: none;
   z-index: 0;
-  /* Scrolling by exactly one 84px tile makes the loop seamless. */
-  animation: grid-run 2.6s linear infinite;
+  /* Scrolling by exactly one 84px tile makes the loop seamless.
+     ⚠️ 2.6s put roughly 32px a second of motion in the reader's peripheral
+     vision, continuously, for as long as they stayed on the page. Nobody looks
+     at it and everybody's eye tracks it. Slower is the whole fix. */
+  animation: grid-run 7.5s linear infinite;
 }
 
 /* Layer 2 — a beam that sweeps down the hero, like a scanner passing over it. */
+/* ⚠️ Rewritten because the first version was tiring to sit in front of. It was
+   a 2px bar at 0.85 opacity with an 18px glow, crossing the hero every five
+   seconds — twelve hard-edged, high-contrast passes a minute, which is close to
+   a recipe for eye strain. Four things caused that and all four changed:
+
+     the hard edge   — a 2px line has two edges; this is a 150px band whose
+                       gradient reaches zero at both ends, so it has none
+     the contrast    — peak opacity 0.85 -> 0.14
+     the glow        — the box-shadow is gone; that halo was most of the dazzle
+     the metronome   — 5s -> 19s, and it fades in and out over most of the pass
+
+   It is still there and you still see it go by. It just stops being something
+   your eye has to keep dealing with. */
 .hero__scan {
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent) 45%, var(--spark) 55%, transparent);
-  box-shadow: 0 0 18px 2px rgba(198, 255, 61, 0.45);
+  height: 150px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(198, 255, 61, 0.5) 42%,
+    rgba(61, 220, 255, 0.5) 58%,
+    transparent 100%
+  );
   opacity: 0;
   pointer-events: none;
   z-index: 1;
-  animation: scan 5s var(--ease-standard) infinite;
+  animation: scan 19s var(--ease-standard) infinite;
 }
 
+/* A 14% swell every seven seconds is a lot of breathing for something the size
+   of the hero. Half the amplitude, twice the period: still alive, no longer
+   pumping. */
 @keyframes bloom {
-  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
-  50%      { opacity: 1;   transform: translateX(-50%) scale(1.14); }
+  0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1;   transform: translateX(-50%) scale(1.06); }
 }
 
 @keyframes grid-run {
@@ -715,9 +739,11 @@ section[id] { scroll-margin-top: 76px; }
 }
 
 @keyframes scan {
-  0%        { top: -4%; opacity: 0; }
-  6%        { opacity: 0.85; }
-  88%       { opacity: 0.85; }
+  /* Held dark for the first third: the pass becomes an occasional thing that
+     happens rather than a beat you start anticipating. */
+  0%, 30%   { top: -18%; opacity: 0; }
+  46%       { opacity: 0.14; }
+  74%       { opacity: 0.14; }
   100%      { top: 104%; opacity: 0; }
 }
 
@@ -739,8 +765,12 @@ section[id] { scroll-margin-top: 76px; }
   opacity: 0;
   pointer-events: none;
   /* steps(1) makes each keyframe snap rather than tween — a tweened glitch
-     reads as a wobble, a snapped one reads as digital. */
-  animation-duration: 6s;
+     reads as a wobble, a snapped one reads as digital.
+     ⚠️ 6s meant two bursts every six seconds, forever, on the largest element
+     on the page. One flicker is character; one every three seconds is a tic,
+     and it was part of what made sitting on this page tiring. Slowed, not
+     removed — the snap is the point and it stays. */
+  animation-duration: 17s;
   animation-timing-function: steps(1);
   animation-iteration-count: infinite;
 }
@@ -750,22 +780,22 @@ section[id] { scroll-margin-top: 76px; }
 
 @keyframes glitch-lime {
   0%, 6%, 48%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
-  1%  { opacity: 0.9; transform: translate(-5px, -2px); clip-path: inset(12% 0 60% 0); }
-  2%  { opacity: 0.9; transform: translate(5px, 2px);   clip-path: inset(56% 0 20% 0); }
-  3%  { opacity: 0.9; transform: translate(-3px, 1px);  clip-path: inset(32% 0 44% 0); }
-  4%  { opacity: 0.9; transform: translate(6px, -1px);  clip-path: inset(72% 0 8% 0); }
-  50% { opacity: 0.9; transform: translate(-6px, 2px);  clip-path: inset(24% 0 52% 0); }
-  51% { opacity: 0.9; transform: translate(4px, -2px);  clip-path: inset(64% 0 14% 0); }
+  1%  { opacity: 0.9; transform: translate(-3px, -1px); clip-path: inset(12% 0 60% 0); }
+  2%  { opacity: 0.9; transform: translate(3px, 1px);   clip-path: inset(56% 0 20% 0); }
+  3%  { opacity: 0.9; transform: translate(-2px, 1px);  clip-path: inset(32% 0 44% 0); }
+  4%  { opacity: 0.9; transform: translate(4px, -1px);  clip-path: inset(72% 0 8% 0); }
+  50% { opacity: 0.9; transform: translate(-4px, 1px);  clip-path: inset(24% 0 52% 0); }
+  51% { opacity: 0.9; transform: translate(3px, -1px);  clip-path: inset(64% 0 14% 0); }
 }
 
 @keyframes glitch-cyan {
   0%, 6%, 48%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
-  1%  { opacity: 0.85; transform: translate(5px, 2px);   clip-path: inset(40% 0 34% 0); }
-  2%  { opacity: 0.85; transform: translate(-6px, -2px); clip-path: inset(8% 0 70% 0); }
-  3%  { opacity: 0.85; transform: translate(4px, 2px);   clip-path: inset(66% 0 12% 0); }
-  4%  { opacity: 0.85; transform: translate(-4px, -1px); clip-path: inset(20% 0 58% 0); }
-  50% { opacity: 0.85; transform: translate(6px, 1px);   clip-path: inset(50% 0 28% 0); }
-  51% { opacity: 0.85; transform: translate(-5px, -2px); clip-path: inset(10% 0 66% 0); }
+  1%  { opacity: 0.85; transform: translate(3px, 1px);   clip-path: inset(40% 0 34% 0); }
+  2%  { opacity: 0.85; transform: translate(-3px, -1px); clip-path: inset(8% 0 70% 0); }
+  3%  { opacity: 0.85; transform: translate(3px, 1px);   clip-path: inset(66% 0 12% 0); }
+  4%  { opacity: 0.85; transform: translate(-3px, -1px); clip-path: inset(20% 0 58% 0); }
+  50% { opacity: 0.85; transform: translate(4px, 1px);   clip-path: inset(50% 0 28% 0); }
+  51% { opacity: 0.85; transform: translate(-3px, -1px); clip-path: inset(10% 0 66% 0); }
 }
 
 /* A terminal cursor after the eyebrow. Cheap, and it sets the register. */
@@ -2867,4 +2897,23 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
     aspect-ratio: 2 / 1;
     opacity: 0.44;
   }
+}
+
+/* A vague-lane row plus, for its author, the way out of that lane. The button
+   sits under the row rather than inside it: the row is a link, and a button
+   nested in an anchor is not a button. */
+.wharf-row-wrap { border-top: 1px solid var(--border-subtle); }
+.wharf-row-wrap:first-child { border-top: 0; }
+.wharf-row-wrap > .wharf-row { border-top: 0; }
+
+.wharf-row__edit {
+  padding: 0 var(--space-6) var(--space-4);
+  margin-top: calc(var(--space-3) * -1);
+}
+
+/* Said quietly, but said. The page claims these sentences are printed exactly
+   as written, so the exceptions have to be visible. */
+.wharf-item__edited {
+  font-size: var(--text-xs);
+  color: var(--fg3);
 }

@@ -735,6 +735,16 @@ export const copy = {
       imageChosen: "换一张",
       // ⚠️ 这一句比这个功能本身重要。截图里常常有比你以为的多得多的东西。
       imageWarning: "⚠️ 这是公开页面。发截图之前看一眼里面还有什么——营收数字、客户名字、别的标签页、key。",
+      // 只有本人、且还没人接过或答过的时候才出现。有人接了就锁死——
+      // 改一句已经有人回答的问题，等于把别人写的东西挪到另一个问题底下，
+      // 而他不会知道。
+      editCta: "改一下",
+      editSubmit: "改好了",
+      editPlaceholder: "补上缺的那一块，写成一句别人能判断自己接不接得上的话。",
+      // ⚠️ 这一句是承重的。页脚写着「问题都是本人写的，原样放在这儿，一个字没改」，
+      // 改过的那条必须自己说出来，否则那句话就是假的。
+      edited: "本人改过",
+      editDuplicate: "你已经有一条一模一样的了。",
       askCta: "问一个",
       askPlaceholder: "一句话，越具体越容易被接上。",
       askSession: "哪一场想聊",
@@ -1547,6 +1557,11 @@ export const copy = {
       imageCta: "Add a picture",
       imageChosen: "Change it",
       imageWarning: "⚠️ This page is public. Before you post a screenshot, look at what else is in it — revenue, customer names, other tabs, a key.",
+      editCta: "Edit",
+      editSubmit: "Save",
+      editPlaceholder: "Add the missing piece, so a reader can tell whether they are the right person.",
+      edited: "edited by the author",
+      editDuplicate: "You already have that exact question up.",
       askCta: "Ask one",
       askPlaceholder: "One line. The more specific, the more likely somebody picks it up.",
       askSession: "For which Thursday",

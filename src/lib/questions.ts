@@ -120,6 +120,25 @@ export function canClaim(status: QuestionStatus): boolean {
 }
 
 /**
+ * Whether the author may still change the words.
+ *
+ * ★ **Only while nothing hangs off it.** The moment somebody claims or answers,
+ * the sentence stops being only the asker's: an answer written for "怎么做增长"
+ * would silently end up under "怎么给澳洲会计所卖 SaaS" if the asker rewrote it,
+ * and the person who spent ten minutes on that answer would never know their
+ * words had been repurposed. That is the harm the immutability note at the top
+ * of this file is about, and it is a harm to somebody else, which is why it
+ * outranks the asker's convenience.
+ *
+ * `sunk` stays editable on purpose. Nothing is attached to it either, and
+ * rewriting a question nobody picked up is exactly the right response to
+ * nobody picking it up.
+ */
+export function canEdit(status: QuestionStatus): boolean {
+  return status === "open" || status === "sunk";
+}
+
+/**
  * Ordering for one lane of the board.
  *
  * Newest first inside a session, and questions with somebody on them are NOT

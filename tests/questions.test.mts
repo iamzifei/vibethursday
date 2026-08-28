@@ -10,7 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { canClaim, classifyLane, statusOf, SINK_AFTER_DAYS } from "../src/lib/questions.ts";
+import { SINK_AFTER_DAYS, canClaim, canEdit, classifyLane, statusOf } from "../src/lib/questions.ts";
 
 test("a question with no question mark is still a question", () => {
   // The case that kills every "must end in ?" rule: written by somebody who
@@ -86,4 +86,14 @@ test("a sunk question can still be picked up", () => {
   assert.ok(canClaim("sunk"));
   assert.ok(canClaim("open"));
   assert.ok(!canClaim("closed"));
+});
+
+test("★ a question is editable only while nothing hangs off it", () => {
+  // The harm is to the answerer, not the asker: rewriting a question somebody
+  // has already answered silently re-parents their words.
+  assert.equal(canEdit("open"), true);
+  // Nobody picked it up, so rewriting it is the right response to that.
+  assert.equal(canEdit("sunk"), true);
+  assert.equal(canEdit("claimed"), false);
+  assert.equal(canEdit("closed"), false);
 });

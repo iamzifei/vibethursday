@@ -289,6 +289,12 @@ export function ensureSchema(): Promise<void> {
     // say" — a blank reason must not read as an endorsement.
     await pool.query(`ALTER TABLE wharf_questions ADD COLUMN IF NOT EXISTS coach_ask text`);
 
+    // The sentence as it was first written, kept from the first edit onward.
+    // Two jobs: /wharf claims the questions on it are "原样放在这儿，一个字没改",
+    // so an edited one has to be able to say otherwise — and the sign-up sync
+    // below matches against this to know it has already seen that topic.
+    await pool.query(`ALTER TABLE wharf_questions ADD COLUMN IF NOT EXISTS original_text text`);
+
     // ★ One row per day, holding a count and nothing else.
     //
     // This is the only thing standing between a stranger and this site's
@@ -791,6 +797,8 @@ export type WharfQuestion = {
   lane: Lane;
   /** The follow-up the coach asked, when one has been run over this row. */
   coach_ask: string | null;
+  /** What it said before the author edited it. Null means never edited. */
+  original_text: string | null;
   source: string;
   closed_at: string | null;
   outcome: string | null;
@@ -828,6 +836,17 @@ async function syncQuestionsFromSignups(): Promise<void> {
        AND NOT m.hidden
        AND g.topic IS NOT NULL
        AND btrim(g.topic) <> ''
+       -- ⚠️ Without this, editing a question puts the sign-up's original
+       -- sentence straight back on the board as a second row. The dedupe index
+       -- is on md5(text), so once the text changes the sync no longer
+       -- recognises the row it already made. Measured, not assumed: one edit
+       -- produced the edited question AND a fresh copy of the old one.
+       AND NOT EXISTS (
+             SELECT 1
+               FROM wharf_questions q
+              WHERE q.member_id = m.id
+                AND q.original_text = btrim(g.topic)
+           )
   `);
 
   if (candidates.rows.length === 0) return;
@@ -872,6 +891,7 @@ export async function listWharfQuestions(): Promise<WharfQuestion[]> {
             q.text,
             q.lane,
             q.coach_ask,
+            q.original_text,
             q.source,
             q.closed_at::text     AS closed_at,
             q.outcome,
@@ -1388,4 +1408,49 @@ export async function listTriageCandidates(): Promise<
   );
 
   return result.rows;
+}
+
+/**
+ * Rewrites a question, if it is still the author's alone to rewrite.
+ *
+ * The guard is in the WHERE, not in the caller: ownership, not closed, and
+ * nothing attached. A check done in TypeScript would be a check two concurrent
+ * requests can both pass.
+ *
+ * `coalesce(original_text, text)` keeps the FIRST wording across any number of
+ * edits — the point of the column is what the person originally wrote, not what
+ * they wrote one revision ago.
+ */
+export async function editQuestion(
+  id: string,
+  memberId: string,
+  text: string,
+  lane: Lane,
+): Promise<"ok" | "not_yours" | "duplicate"> {
+  await ensureSchema();
+
+  try {
+    const result = await getPool().query(
+      `UPDATE wharf_questions q
+          SET text = $3,
+              original_text = coalesce(q.original_text, q.text),
+              lane = $4,
+              -- The follow-up was about the old wording. Keeping it would
+              -- caption a new sentence with an old complaint.
+              coach_ask = NULL
+        WHERE q.id = $1
+          AND q.member_id = $2
+          AND q.closed_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM wharf_replies r WHERE r.question_id = q.id)
+        RETURNING q.id`,
+      [id, memberId, text, lane],
+    );
+
+    return result.rowCount === 1 ? "ok" : "not_yours";
+  } catch (error) {
+    // The unique index is (member, session, md5(text)): editing one question
+    // into the exact words of another of your own is the one way to hit it.
+    if ((error as { code?: string }).code === "23505") return "duplicate";
+    throw error;
+  }
 }

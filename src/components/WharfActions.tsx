@@ -289,6 +289,76 @@ export function CloseForm({
 }
 
 /**
+ * Rewriting your own question, while it is still only yours to rewrite.
+ *
+ * Shown to the author, and only while nothing is attached — the page decides
+ * that with `canEdit`, and the server checks it again in the UPDATE's WHERE,
+ * because a check the client makes is a check a crafted request skips.
+ *
+ * This is the other half of the "还没问清楚" lane. Telling somebody their
+ * question does not say enough, and then giving them no way to add it, is worse
+ * than saying nothing: it is a complaint with no door out of it.
+ */
+export function EditForm({
+  questionId,
+  text: current,
+  copy,
+}: {
+  questionId: string;
+  /** What it says now, so the box opens on their own words rather than empty. */
+  text: string;
+  copy: WharfCopy;
+}) {
+  const { busy, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(current);
+
+  if (!open) {
+    return (
+      <button type="button" className="btn btn--secondary btn--sm" onClick={() => setOpen(true)}>
+        {copy.editCta}
+      </button>
+    );
+  }
+
+  return (
+    <div className="qa qa--form">
+      <textarea
+        className="field"
+        rows={2}
+        value={draft}
+        placeholder={copy.editPlaceholder}
+        onChange={(event) => setDraft(event.target.value)}
+        aria-label={copy.editCta}
+      />
+
+      <div className="qa__row">
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          disabled={busy || draft.trim().length === 0 || draft.trim() === current.trim()}
+          onClick={() => {
+            const form = new FormData();
+            form.set("action", "edit");
+            form.set("question", questionId);
+            form.set("text", draft);
+            void run(form, () => setOpen(false));
+          }}
+        >
+          {busy ? copy.working : copy.editSubmit}
+        </button>
+      </div>
+
+      {error && (
+        <span className="qa__error">
+          {error === "duplicate" ? copy.editDuplicate : copy.failed}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
  * Asking directly, rather than waiting for the next sign-up form.
  *
  * One unfinished question each, enforced on the server. That rule is doing the
