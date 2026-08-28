@@ -313,29 +313,47 @@ export function AskBox({
   // Three states, not two: no hint yet, a hint, or "this one is fine as it is".
   // The third has to be distinguishable, otherwise pressing the button on an
   // already-good question looks like the button is broken.
+  // Four states, and the fourth is the one worth spelling out. "The model had
+  // nothing to add" and "the button is out of budget for today" both end with
+  // no hint on screen, and saying "your question is specific enough" in the
+  // second case would be telling somebody their draft passed a check that never
+  // ran. Cheap to get wrong, and wrong in the direction that misleads.
   const [hint, setHint] = useState<string | null>(null);
   const [enough, setEnough] = useState(false);
+  const [spent, setSpent] = useState(false);
   const [thinking, setThinking] = useState(false);
+
+  function clearAdvice() {
+    setHint(null);
+    setEnough(false);
+    setSpent(false);
+  }
 
   async function askTheCoach() {
     setThinking(true);
-    setHint(null);
-    setEnough(false);
+    clearAdvice();
 
     const body = new FormData();
     body.set("text", text);
 
     try {
       const response = await fetch("/api/wharf/coach", { method: "POST", body });
-      const payload = await response.json();
-      // A null hint is the model saying the draft is already specific enough.
-      if (typeof payload.hint === "string") setHint(payload.hint);
-      else setEnough(true);
+
+      if (response.status === 429) {
+        // Either this person's own hourly allowance or the whole site's daily
+        // one. The difference does not change what they should do next.
+        setSpent(true);
+      } else {
+        const payload = await response.json();
+        // A null hint is the model saying the draft is already specific enough.
+        if (typeof payload.hint === "string") setHint(payload.hint);
+        else setEnough(true);
+      }
     } catch (failure) {
       // ★ Nothing happens, and posting is unaffected. This button is help,
       //   never a gate — see the note at the top of src/lib/coach.ts.
       console.error("[wharf] the coach did not answer", failure);
-      setEnough(true);
+      setSpent(true);
     }
 
     setThinking(false);
@@ -367,6 +385,11 @@ export function AskBox({
       {enough && (
         <p className="qa__hint qa__hint--fine" role="status">
           {copy.coachEnough}
+        </p>
+      )}
+      {spent && (
+        <p className="qa__hint qa__hint--fine" role="status">
+          {copy.coachSpent}
         </p>
       )}
 
@@ -407,8 +430,7 @@ export function AskBox({
             if (session) form.set("session", session);
             void run(form, () => {
               setText("");
-              setHint(null);
-              setEnough(false);
+              clearAdvice();
             });
           }}
         >

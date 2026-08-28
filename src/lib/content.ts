@@ -740,6 +740,8 @@ export const copy = {
       // ★ 它不改写、不拦截、不打分。写的还是他自己的话。
       coachCta: "帮我问得更具体",
       coachEnough: "这句已经够具体了，直接发。",
+      // 用完了不能说「你这句挺好」——那是在告诉人家他通过了一个根本没跑的检查。
+      coachSpent: "这个按钮今天用完了。直接发也行，本来就不拦你。",
       // 这个站没有统计、没有 CDN 字体、没有任何嵌入。这个按钮是唯一
       // 一处把访客写的东西发出去的地方，所以必须写在按钮旁边。
       coachNote: "按了上面那个按钮，才会把你写的这句发给 DeepSeek 换一句追问回来；不按就不会发。",
@@ -1534,6 +1536,7 @@ export const copy = {
       askNoSession: "No particular session",
       coachCta: "Help me make it specific",
       coachEnough: "That one is specific enough. Post it.",
+      coachSpent: "That button is out for today. Post anyway — it never blocked you.",
       coachNote: "Pressing that button — and nothing else on this site — sends what you wrote to DeepSeek and asks it for one follow-up question back.",
       oneAtATime: "You already have one open question. Close that one first — that way every question has somebody on the hook for it.",
       closeCta: "This one is done",

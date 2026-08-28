@@ -279,6 +279,22 @@ export function ensureSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS wharf_replies_question_idx
       ON wharf_replies (question_id, created_at)
     `);
+
+    // ★ One row per day, holding a count and nothing else.
+    //
+    // This is the only thing standing between a stranger and this site's
+    // DeepSeek balance, so it lives in Postgres rather than in memory: the
+    // per-member rate limiter resets to zero on every redeploy, and a spend cap
+    // you can reset by waiting for a deploy is not a spend cap.
+    //
+    // Deliberately no member id and no text. The point is to bound spending,
+    // not to build a record of who typed what.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS coach_budget (
+        day date PRIMARY KEY,
+        calls integer NOT NULL DEFAULT 0
+      )
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -1299,4 +1315,36 @@ export async function saveMember(id: string, profile: ProfileInput): Promise<voi
   } finally {
     client.release();
   }
+}
+
+/**
+ * Takes one call out of today's budget. Returns false when the day is spent.
+ *
+ * ⚠️ **The per-member rate limit is not a spend cap, and this is why.** The
+ * member cookie is self-serve: two POSTs — one to /api/signup, one to /api/claim
+ * — mint a fresh one, the sign-up form's bot challenge is advisory by design
+ * (a missing token is accepted so that WeChat's in-app browser can still sign
+ * people up), and the cookie then lasts six months. So "6 an hour each" bounds
+ * one person and bounds nothing in total: the number of people is the thing an
+ * attacker controls.
+ *
+ * One statement, so two requests arriving together cannot both read the same
+ * count and both decide they are under the line. The WHERE is what makes it a
+ * cap: when it fails, no row comes back and the caller is over budget.
+ */
+export async function spendCoachCall(limit: number): Promise<boolean> {
+  if (limit <= 0) return false;
+
+  const pool = getPool();
+  await ensureSchema();
+
+  const result = await pool.query(
+    `INSERT INTO coach_budget (day, calls) VALUES (current_date, 1)
+     ON CONFLICT (day) DO UPDATE SET calls = coach_budget.calls + 1
+     WHERE coach_budget.calls < $1
+     RETURNING calls`,
+    [limit],
+  );
+
+  return result.rowCount === 1;
 }
