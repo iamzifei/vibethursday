@@ -1,6 +1,6 @@
 /**
- * Draws the poster for a session, in coloured pencil, from that morning's own
- * photographs.
+ * Draws the poster for a session from that morning's own photographs, in the
+ * site's own palette.
  *
  *   OPENAI_API_KEY=... node scripts/session-poster.mjs 05
  *   OPENAI_API_KEY=... node scripts/session-poster.mjs all
@@ -34,6 +34,14 @@
  * - **The place, not the people.** What is worth keeping from the photograph
  *   is the room: the windows, the water outside, the tables, the morning
  *   light. The people are shapes in it.
+ *
+ * ★ The palette is the site's, not the style's. A generic cyberpunk picture is
+ * magenta and violet; this one is the same near-black, electric lime and
+ * electric cyan as everything else here, which is what makes a poster sit on
+ * the page as part of it rather than as a picture that has been pasted on.
+ * It is also why these read on a dark background at all — the two previous
+ * attempts were paintings on white paper, which had to be framed as objects to
+ * stop them glaring.
  */
 
 import { execFileSync } from "node:child_process";
@@ -52,16 +60,31 @@ const MODEL = "gpt-image-2";
    screen. */
 const SIZE = "1536x1024";
 
-/** Shared so every poster in the run belongs to the same set of drawings. */
+/** Shared so every poster in the run belongs to the same set of pictures. */
 const STYLE = [
-  "Redraw this scene as a coloured pencil drawing on lightly textured paper.",
-  "Visible pencil strokes and cross-hatching, layered colour built up by hand,",
-  "slightly uneven edges, the tooth of the paper showing through in the light",
-  "areas, gentle unsaturated colour with warm morning light. It should look",
-  "drawn by a person sitting in the room, not filtered or traced: proportions",
-  "a little loose, some areas finished and some left as sketch.",
-  "No digital gloss, no smooth airbrush gradients, no vector outlines, no 3D,",
-  "no photographic detail, no oil or watercolour wash.",
+  "Redraw this scene as a minimal near-future line illustration: thin, confident,",
+  "luminous linework over flat blocks of colour, most of the frame left as empty",
+  "dark space. Reduce everything to its essential silhouette — a chair is a few",
+  "lines, a person is a shape. Sharp, quiet, graphic, closer to a screen-printed",
+  "poster than to a painting. Suggest a city at night lit from within: glowing",
+  "edges, thin horizontal light lines, a faint scanline or grid where a wall or",
+  "the water would be.",
+  "No texture, no brush strokes, no paper grain, no photographic detail, no",
+  "airbrush gradients, no 3D, no lens flare, no chrome.",
+].join(" ");
+
+/**
+ * The site's palette, word for word as `generate-images.mjs` states it.
+ *
+ * Repeated rather than imported because the two scripts are run years apart
+ * and one of them should not quietly change what the other produces; if this
+ * ever needs to change, it needs to change in both, deliberately.
+ */
+const PALETTE = [
+  "Strict palette: near-black background (#0A0B0D), electric lime green",
+  "(#C6FF3D) as the dominant accent, electric cyan (#3DDCFF) as a secondary",
+  "spark, cool dark grey mid-tones. No other hues — no magenta, no violet, no",
+  "orange, none of the usual neon-noir colours.",
 ].join(" ");
 
 /**
@@ -74,9 +97,10 @@ const STYLE = [
  * sentence printed two sections above it on the same site.
  */
 const FORMAT = [
-  "Keep the room from the photographs: the same windows and the water and boats",
-  "beyond them, the same tables and chairs and their arrangement, the same",
-  "light. Keep roughly the same number of people, in roughly the same places.",
+  "Keep the room from the photographs: the same windows and the water beyond",
+  "them, the same tables and chairs and their arrangement, the same viewpoint.",
+  "Keep roughly the same number of people, in roughly the same places. The room",
+  "should be recognisable to somebody who was in it, from its shape alone.",
 ].join(" ");
 
 const RULES = [
@@ -113,6 +137,7 @@ async function sessions() {
 function prompt(session) {
   return [
     STYLE,
+    PALETTE,
     "The reference photographs are one morning of a weekly meetup in a café on",
     "the water at Darling Harbour, Sydney.",
     `The person who ran it described it this way: 「${session.note}」`,
@@ -181,11 +206,11 @@ async function paint(session) {
   const master = join(artDir, `session-${session.n}-poster.png`);
   await writeFile(master, Buffer.from(b64, "base64"));
 
-  // Quantised for the same reason the comic's master is: these are drawings
-  // with few real colours, 160 of them is more than they contain, and it takes
-  // a master from megabytes to a few hundred kilobytes with no visible change.
+  // 64 colours, down from 160: flat blocks and thin lines in a three-colour
+  // palette genuinely contain that few, and dithering stays off so the flats
+  // stay flat.
   execFileSync("magick", [
-    master, "-strip", "-dither", "None", "-colors", "160",
+    master, "-strip", "-dither", "None", "-colors", "64",
     "-define", "png:compression-level=9", `PNG8:${master}`,
   ]);
 

@@ -768,7 +768,7 @@ export const copy = {
       morePhotos: "那天的另外 {n} 张",
       // 画出来的，不是拍的——但它是照着那天的照片画的，所以画的确实是那个房间。
       // alt 要把这两件事都说清楚，不然读屏的人要么以为是照片，要么以为是随便画的。
-      posterAlt: "{title}的彩铅画，照着那天的照片画的：临水的咖啡馆，几张桌子围坐着人，窗外是达令港。画里的人都是背影。",
+      posterAlt: "{title}的线稿插画，照着那天的照片画的：深色底上的青柠色线条勾出临水的咖啡馆、几张长桌和围坐的人，窗外是达令港的夜景。画里的人都是背影。",
       peopleLabel: "那天来的（已经上墙的）",
       // 只数已发布的成员卡，所以它一定小于真实到场数，说清楚免得被当成人数。
       peopleNote: "只数了认领过名片的人，所以这个数比当天实际到场少。",
@@ -1498,7 +1498,7 @@ export const copy = {
       questionsLabel: "On the Wharf that week",
       moreQuestions: "{n} more",
       morePhotos: "{n} more photos from that morning",
-      posterAlt: "A coloured pencil drawing of {title}, made from that morning’s own photographs: the café on the water at Darling Harbour, people around tables, everyone seen from behind.",
+      posterAlt: "A minimal line illustration of {title}, drawn from that morning’s own photographs: lime linework on near-black picking out the café on the water at Darling Harbour, the long tables and the people around them, everyone seen from behind.",
       peopleLabel: "There that morning (of the people with a card)",
       peopleNote: "Only counts people who have claimed a card, so it is lower than the number in the room.",
       empty: "Nobody from this session has a card yet.",
