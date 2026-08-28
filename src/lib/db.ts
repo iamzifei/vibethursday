@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { classifyLane } from "@/lib/questions";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "@/lib/members";
 
 /**
@@ -196,6 +197,88 @@ export function ensureSchema(): Promise<void> {
     // Bumped on every upload so the URL changes and caches do not serve the
     // previous face for a month.
     await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS avatar_version int NOT NULL DEFAULT 0`);
+
+    // ── The Wharf ────────────────────────────────────────────────────
+    // A question, once it is a row instead of a column.
+    //
+    // `signups.topic` is overwritten every time somebody signs up again. That
+    // was survivable while the Wharf only displayed it — the worst case was
+    // showing a sentence under the wrong week — and stops being survivable the
+    // moment an answer hangs off it, because the answer would end up under a
+    // question its author never asked, silently. So the sentence is copied out
+    // once, here, and never edited again; changing the form later makes a new
+    // question rather than rewriting the old one.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wharf_questions (
+        id          bigserial PRIMARY KEY,
+        member_id   bigint NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        -- The Thursday it was written for. NULL for the people who said they
+        -- can never do Thursday mornings, which is its own true thing to say.
+        session     date,
+        text        text NOT NULL,
+        -- 'question' or 'chat'. Sorting, never hiding: see classifyLane().
+        lane        text NOT NULL DEFAULT 'question',
+        -- 'signup' or 'site'.
+        source      text NOT NULL DEFAULT 'signup',
+        -- The only state anybody enters. Everything else is derived from what
+        -- is attached and how old it is, so a status column cannot drift away
+        -- from the rows it claims to summarise.
+        closed_at   timestamptz,
+        -- What the asker said they got, when they closed it.
+        outcome     text,
+        -- The one reply they thanked. A receipt on that reply, never a total
+        -- on a person: this site has decided four separate times that it does
+        -- not rank its members.
+        thanked_id  bigint,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // One row per sentence per person per session. This is what makes the
+    // copy-out from `signups` safe to run on every page load: re-running it
+    // inserts nothing, and editing the form inserts exactly one new row.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS wharf_questions_unique_idx
+      ON wharf_questions (member_id, coalesce(session, DATE '1970-01-01'), md5(text))
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wharf_questions_session_idx
+      ON wharf_questions (session DESC NULLS LAST, created_at DESC)
+    `);
+
+    // Claims and answers are the same table with a `kind`, because they are the
+    // same act — somebody taking a question — differing only in whether it gets
+    // settled in the room or on the page. A person may do both.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wharf_replies (
+        id           bigserial PRIMARY KEY,
+        question_id  bigint NOT NULL REFERENCES wharf_questions(id) ON DELETE CASCADE,
+        member_id    bigint NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        -- 'coming' carries a session and no body; 'answer' the reverse.
+        kind         text NOT NULL,
+        session      date,
+        body         text,
+        -- One picture per answer, in the row for the same reason avatars are:
+        -- at this size a bucket is a second system to configure, secure and pay
+        -- for in exchange for nothing. Capped hard in the browser first.
+        image        bytea,
+        image_mime   text,
+        created_at   timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Somebody may only say they are coming to a given session once.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS wharf_replies_coming_idx
+      ON wharf_replies (question_id, member_id, coalesce(session, DATE '1970-01-01'))
+      WHERE kind = 'coming'
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS wharf_replies_question_idx
+      ON wharf_replies (question_id, created_at)
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -652,6 +735,276 @@ export async function claimMember(name: string, contact: string): Promise<string
  * filtering by — a free-text field with no prompt produces thirty spellings of
  * the same idea and a filter nobody can use.
  */
+/**
+ * Everything on the Wharf, questions and what is attached to them.
+ *
+ * ⚠️ Published, unhidden cards only — the same gate as everywhere else public
+ * on this site, and here it does double duty: a question can only exist for a
+ * member row, and a member row only exists once somebody has claimed their
+ * card. Someone who filled in the form and never ticked "put me on the wall"
+ * has no question here to answer.
+ */
+export type WharfReply = {
+  id: string;
+  member_id: string;
+  slug: string;
+  name: string;
+  kind: "coming" | "answer";
+  session: string | null;
+  body: string | null;
+  has_image: boolean;
+  created_at: string;
+};
+
+export type WharfQuestion = {
+  id: string;
+  member_id: string;
+  slug: string;
+  name: string;
+  session: string | null;
+  text: string;
+  lane: "question" | "chat";
+  source: string;
+  closed_at: string | null;
+  outcome: string | null;
+  thanked_id: string | null;
+  created_at: string;
+  replies: WharfReply[];
+};
+
+/**
+ * Copies any sentence in `signups.topic` that is not yet a question row.
+ *
+ * Run before every read of the board rather than on a schedule or a hook. It is
+ * one INSERT with an ON CONFLICT, it touches a table of tens of rows, and doing
+ * it here means the board can never be stale for the most annoying possible
+ * reason — somebody filled in the form and their question did not appear.
+ *
+ * The `md5(text)` in the unique index is what makes it idempotent. Editing the
+ * form later inserts a second row rather than rewriting the first, which is the
+ * entire point of these being immutable.
+ */
+async function syncQuestionsFromSignups(): Promise<void> {
+  const pool = getPool();
+
+  // Read, classify here, then write. An earlier version did the whole thing in
+  // one INSERT ... SELECT with the lane hard-coded, which meant `classifyLane`
+  // never ran for a single question — and every question comes in this way, so
+  // the lane split silently did nothing at all.
+  const candidates = await pool.query<{ member_id: string; session: string | null; text: string }>(`
+    SELECT m.id::text AS member_id,
+           to_char((SELECT max(s) FROM unnest(g.sessions) AS s), 'YYYY-MM-DD') AS session,
+           btrim(g.topic) AS text
+      FROM members m
+      JOIN signups g ON g.id = m.signup_id
+     WHERE m.published_at IS NOT NULL
+       AND NOT m.hidden
+       AND g.topic IS NOT NULL
+       AND btrim(g.topic) <> ''
+  `);
+
+  if (candidates.rows.length === 0) return;
+
+  // One statement for the lot. ON CONFLICT against the (member, session,
+  // md5(text)) index is what makes this safe to run before every read: a
+  // re-run inserts nothing, and editing the form inserts exactly one row.
+  const values: unknown[] = [];
+  const tuples = candidates.rows.map((row, index) => {
+    values.push(row.member_id, row.session, row.text, classifyLane(row.text));
+    const at = index * 4;
+    return `($${at + 1}::bigint, $${at + 2}::date, $${at + 3}, $${at + 4})`;
+  });
+
+  await pool.query(
+    `INSERT INTO wharf_questions (member_id, session, text, lane)
+     VALUES ${tuples.join(", ")}
+     ON CONFLICT DO NOTHING`,
+    values,
+  );
+}
+
+/**
+ * The board.
+ *
+ * One query for the questions and one for everything attached, rather than a
+ * join that would multiply each question by its replies and leave the caller
+ * to undo that. Same shape as the member wall's `withAssets`.
+ */
+export async function listWharfQuestions(): Promise<WharfQuestion[]> {
+  await ensureSchema();
+  await syncQuestionsFromSignups();
+
+  const pool = getPool();
+
+  const questions = await pool.query<Omit<WharfQuestion, "replies">>(
+    `SELECT q.id::text            AS id,
+            q.member_id::text     AS member_id,
+            m.slug,
+            m.display_name        AS name,
+            to_char(q.session, 'YYYY-MM-DD') AS session,
+            q.text,
+            q.lane,
+            q.source,
+            q.closed_at::text     AS closed_at,
+            q.outcome,
+            q.thanked_id::text    AS thanked_id,
+            q.created_at::text    AS created_at
+       FROM wharf_questions q
+       JOIN members m ON m.id = q.member_id
+      WHERE m.published_at IS NOT NULL AND NOT m.hidden
+      ORDER BY q.session DESC NULLS LAST, q.created_at DESC`,
+  );
+
+  if (questions.rows.length === 0) return [];
+
+  const replies = await pool.query<WharfReply & { question_id: string }>(
+    `SELECT r.id::text           AS id,
+            r.question_id::text  AS question_id,
+            r.member_id::text    AS member_id,
+            m.slug,
+            m.display_name       AS name,
+            r.kind,
+            to_char(r.session, 'YYYY-MM-DD') AS session,
+            r.body,
+            (r.image IS NOT NULL) AS has_image,
+            r.created_at::text   AS created_at
+       FROM wharf_replies r
+       JOIN members m ON m.id = r.member_id
+      WHERE r.question_id = ANY($1::bigint[])
+      ORDER BY r.created_at`,
+    [questions.rows.map((row) => row.id)],
+  );
+
+  const byQuestion = new Map<string, WharfReply[]>();
+
+  for (const { question_id, ...reply } of replies.rows) {
+    const list = byQuestion.get(question_id);
+    if (list) list.push(reply);
+    else byQuestion.set(question_id, [reply]);
+  }
+
+  return questions.rows.map((question) => ({
+    ...question,
+    replies: byQuestion.get(question.id) ?? [],
+  }));
+}
+
+/** Says "I will be at that session for this one". Idempotent by index. */
+export async function claimQuestion(
+  questionId: string,
+  memberId: string,
+  session: string,
+): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `INSERT INTO wharf_replies (question_id, member_id, kind, session)
+     VALUES ($1, $2, 'coming', $3)
+     ON CONFLICT DO NOTHING`,
+    [questionId, memberId, session],
+  );
+}
+
+/** Answers on the site. One person may answer more than once. */
+export async function answerQuestion(
+  questionId: string,
+  memberId: string,
+  body: string,
+  image: { bytes: Buffer; mime: string } | null,
+): Promise<string> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ id: string }>(
+    `INSERT INTO wharf_replies (question_id, member_id, kind, body, image, image_mime)
+     VALUES ($1, $2, 'answer', $3, $4, $5)
+     RETURNING id::text AS id`,
+    [questionId, memberId, body, image?.bytes ?? null, image?.mime ?? null],
+  );
+
+  return result.rows[0].id;
+}
+
+/**
+ * The asker closes their own question.
+ *
+ * ⚠️ `member_id = $2` in the WHERE is the authorisation, not a nicety: without
+ * it anybody signed in could close anybody's question.
+ */
+export async function closeQuestion(
+  questionId: string,
+  memberId: string,
+  outcome: string | null,
+  thankedId: string | null,
+): Promise<boolean> {
+  await ensureSchema();
+
+  const result = await getPool().query(
+    `UPDATE wharf_questions
+        SET closed_at = now(), outcome = $3, thanked_id = $4
+      WHERE id = $1 AND member_id = $2 AND closed_at IS NULL`,
+    [questionId, memberId, outcome, thankedId],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Somebody with a card asks something directly, outside the form. */
+export async function askQuestion(memberId: string, text: string, session: string | null, lane: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `INSERT INTO wharf_questions (member_id, session, text, lane, source)
+     VALUES ($1, $2, $3, $4, 'site')
+     ON CONFLICT DO NOTHING`,
+    [memberId, session, text, lane],
+  );
+}
+
+/** How many of this person's questions are still open. The one-at-a-time gate. */
+export async function openQuestionCount(memberId: string): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ n: string }>(
+    `SELECT count(*)::text AS n
+       FROM wharf_questions
+      WHERE member_id = $1 AND closed_at IS NULL AND source = 'site'`,
+    [memberId],
+  );
+
+  return Number(result.rows[0].n);
+}
+
+/** Moves one question between lanes. The admin override the heuristic needs. */
+export async function setQuestionLane(questionId: string, lane: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(`UPDATE wharf_questions SET lane = $2 WHERE id = $1`, [questionId, lane]);
+}
+
+/** An answer's picture. Returned as bytes, like an avatar. */
+export async function getReplyImage(
+  replyId: string,
+): Promise<{ bytes: Buffer; mime: string } | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ image: Buffer | null; image_mime: string | null }>(
+    `SELECT image, image_mime FROM wharf_replies WHERE id = $1`,
+    [replyId],
+  );
+
+  const row = result.rows[0];
+  if (!row?.image || !row.image_mime) return null;
+
+  return { bytes: row.image, mime: row.image_mime };
+}
+
+/** Deletes one reply. Admin only — the escape hatch for a bad screenshot. */
+export async function deleteReply(replyId: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(`DELETE FROM wharf_replies WHERE id = $1`, [replyId]);
+}
+
 /**
  * How many people have ever signed up. A count, and nothing else.
  *

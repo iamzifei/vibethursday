@@ -5,10 +5,10 @@ import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
-import { listWallMembers } from "@/lib/db";
+import { listWharfQuestions } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { formatSession, nextThursdays } from "@/lib/sessions";
-import { featuredTopics, groupTopics, type WharfEntry } from "@/lib/wharf";
+
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -61,13 +61,26 @@ export default async function Page({ searchParams }: PageProps) {
    * `listWallMembers` is the same call the member wall makes, and it is the
    * privacy boundary: published, unhidden cards only.
    */
-  let featured: WharfEntry[] = [];
+  let featured: { slug: string; name: string; text: string }[] = [];
   let thisWeekCount = 0;
 
   try {
-    const { groups } = groupTopics(await listWallMembers(), nextSession.value);
-    featured = featuredTopics(groups);
-    thisWeekCount = groups[0].entries.length;
+    // The same rows the Wharf itself shows, not a second derivation of them:
+    // two pages disagreeing about what is on the board is exactly the drift
+    // that is invisible until somebody notices.
+    const questions = (await listWharfQuestions()).filter(
+      (question) => question.lane === "question",
+    );
+
+    featured = questions.slice(0, 3).map((question) => ({
+      slug: question.slug,
+      name: question.name,
+      text: question.text,
+    }));
+
+    thisWeekCount = questions.filter(
+      (question) => question.session === nextSession.value,
+    ).length;
   } catch (error) {
     console.error("[home] the wharf block could not be loaded", error);
   }
@@ -285,7 +298,7 @@ export default async function Page({ searchParams }: PageProps) {
                     href={langHref(`/members/${entry.slug}`, lang)}
                     className="wharf-row"
                   >
-                    <span className="wharf-row__q">{entry.topic}</span>
+                    <span className="wharf-row__q">{entry.text}</span>
                     <span className="wharf-row__who">{entry.name}</span>
                   </Link>
                 ))}

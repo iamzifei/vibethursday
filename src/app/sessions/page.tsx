@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { archiveTotals, buildArchive } from "@/lib/archive";
 import { getCopy, resolveLang } from "@/lib/content";
-import { countSignups, listWallMembers } from "@/lib/db";
+import { countSignups, listWallMembers, listWharfQuestions } from "@/lib/db";
 import { formatSession } from "@/lib/sessions";
 
 type PageProps = {
@@ -54,10 +54,19 @@ export default async function SessionsPage({ searchParams }: PageProps) {
   const c = getCopy(lang);
   const a = c.archive;
 
-  const [wall, signups] = await Promise.all([listWallMembers(), countSignups()]);
+  const [wall, questions, signups] = await Promise.all([
+    listWallMembers(),
+    listWharfQuestions(),
+    countSignups(),
+  ]);
 
-  const rows = buildArchive(c.gallery.sessions, wall);
-  const totals = archiveTotals(rows, wall, signups);
+  const rows = buildArchive(c.gallery.sessions, wall, questions);
+  const totals = archiveTotals(
+    rows,
+    wall.length,
+    signups,
+    questions.filter((question) => question.lane === "question").length,
+  );
 
   const stats = [
     { label: a.totals.sessions, value: totals.sessions, unit: a.totals.sessionsUnit },

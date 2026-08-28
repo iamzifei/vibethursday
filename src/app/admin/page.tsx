@@ -3,10 +3,10 @@ import QRCode from "qrcode";
 import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { listAllMembers, listSignups, listWallMembers } from "@/lib/db";
+import { listAllMembers, listSignups, listWharfQuestions } from "@/lib/db";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
-import { groupTopics } from "@/lib/wharf";
+
 import { countPerSession } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
@@ -38,10 +38,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [signups, members, wall] = await Promise.all([
+  const [signups, members, questions] = await Promise.all([
     listSignups(),
     listAllMembers(),
-    listWallMembers(),
+    listWharfQuestions(),
   ]);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
@@ -122,10 +122,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
       getCopy("zh").hero.facts.find((fact) => fact.href?.includes("maps.google"))?.value ??
       getCopy("zh").hero.facts[1].value,
     signups: nextSessionRow?.total ?? 0,
-    questions: groupTopics(wall, nextSession).groups[0].entries.map((entry) => ({
-      text: entry.topic,
-      name: entry.name,
-    })),
+    questions: questions
+      .filter((question) => question.lane === "question" && question.session === nextSession)
+      .map((question) => ({ text: question.text, name: question.name })),
     url: `${siteUrl()}/wharf`,
     qrSvg: await QRCode.toString(`${siteUrl()}/wharf`, {
       type: "svg",
@@ -212,6 +211,80 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       {/* Headcount per Thursday. Deliberately only headcounts: see the note in
           signup-stats.ts for why "how many are new" cannot be answered here. */}
+      {/* ── The Wharf ────────────────────────────────────────────────
+          Two controls, and the first is the one that matters: the lane rule
+          is a heuristic and this button is what makes it acceptable for it to
+          stay simple. Moving two a week beats any rule that could be written
+          for twenty sentences. */}
+      <section className="stack-4" id="wharf">
+        <div className="group-head">
+          <h2 className="h3">Wharf</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {questions.filter((q) => q.lane === "question").length} questions ·{" "}
+            {questions.filter((q) => q.lane === "chat").length} looking-to-meet ·{" "}
+            {questions.reduce((n, q) => n + q.replies.length, 0)} replies
+          </span>
+        </div>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Lane</th>
+                <th>Question</th>
+                <th>Who</th>
+                <th>Replies</th>
+                <th>Move</th>
+              </tr>
+            </thead>
+            <tbody>
+              {questions.map((question) => (
+                <tr key={question.id}>
+                  <td>{question.lane}</td>
+                  <td style={{ whiteSpace: "normal", maxWidth: "36ch" }}>{question.text}</td>
+                  <td>{question.name}</td>
+                  <td>
+                    {question.replies.length === 0
+                      ? "—"
+                      : question.replies.map((reply) => (
+                          <form
+                            key={reply.id}
+                            method="post"
+                            action="/api/admin/wharf"
+                            style={{ display: "inline" }}
+                          >
+                            <input type="hidden" name="key" value={key} />
+                            <input type="hidden" name="action" value="delete-reply" />
+                            <input type="hidden" name="id" value={reply.id} />
+                            <button className="linkish" type="submit">
+                              {reply.kind === "answer" ? "answer" : "coming"}
+                              {reply.has_image ? " 🖼" : ""} ×
+                            </button>
+                          </form>
+                        ))}
+                  </td>
+                  <td>
+                    <form method="post" action="/api/admin/wharf">
+                      <input type="hidden" name="key" value={key} />
+                      <input type="hidden" name="action" value="lane" />
+                      <input type="hidden" name="id" value={question.id} />
+                      <input
+                        type="hidden"
+                        name="lane"
+                        value={question.lane === "question" ? "chat" : "question"}
+                      />
+                      <button className="linkish" type="submit">
+                        → {question.lane === "question" ? "chat" : "question"}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="stack-4" id="sessions">
         <div className="group-head">
           <h2 className="h3">Per session</h2>

@@ -2099,7 +2099,128 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   background: var(--border-default);
 }
 
-.wharf-item--now::before { background: var(--accent); }
+/* The four states, as the colour of the rail. Grey while it is only sitting
+   there; lime once somebody is on it; chip yellow when the asker has closed
+   it; barely there once it has sunk. */
+.wharf-item--open::before { background: var(--fg3); }
+.wharf-item--claimed::before { background: var(--accent); }
+.wharf-item--closed::before { background: var(--chip); }
+.wharf-item--sunk::before { background: var(--border-subtle); }
+.wharf-item--sunk { opacity: 0.62; }
+
+.wharf-item__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.wharf-item__date { font-size: var(--text-xs); color: var(--fg3); letter-spacing: var(--tracking-label); }
+
+/* The question's own address. Quiet until you go looking for it — it exists so
+   one question can be dropped into the group chat, which is the only channel
+   this site has. */
+.wharf-item__anchor {
+  margin-left: auto;
+  color: var(--fg-disabled);
+  text-decoration: none;
+  font-family: var(--font-mono);
+}
+
+.wharf-item:hover .wharf-item__anchor { color: var(--fg3); }
+.wharf-item__anchor:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wharf-item__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-top: var(--space-2);
+}
+
+.pill--open { color: var(--fg2); }
+.pill--claimed { border-color: var(--accent-muted); color: var(--accent); background: var(--accent-subtle); }
+.pill--closed { border-color: var(--chip-muted); color: var(--chip); background: var(--chip-subtle); }
+.pill--sunk { border-color: var(--border-subtle); color: var(--fg3); background: transparent; }
+
+/* The receipt. One line, chip-coloured, and attached to a reply rather than
+   totalled onto a person — this site has decided four separate times that it
+   does not rank its members. */
+.q__receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--chip-muted);
+  border-radius: var(--radius-full);
+  background: var(--chip-subtle);
+  color: var(--chip);
+  font-size: var(--text-sm);
+}
+
+/* ── An answer ───────────────────────────────────────────────────── */
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border-left: 2px solid var(--border-default);
+}
+
+.answer__body { margin: 0; color: var(--fg1); line-height: 1.65; white-space: pre-wrap; }
+
+.answer__image {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+}
+
+.answer__by { font-size: var(--text-sm); color: var(--fg3); }
+.answer__by a { color: var(--fg2); text-decoration: none; border-bottom: 1px solid var(--border-default); }
+
+/* ── The controls ────────────────────────────────────────────────── */
+.qa {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.qa--form {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 620px;
+}
+
+.qa__row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+
+/* Narrow, because it holds a date and the button beside it is the point. */
+.qa__session { width: auto; min-width: 10rem; padding-block: var(--space-2); }
+
+/* The real input is hidden behind a button: a bare file input is the one
+   control on this site that cannot be made to look like the rest of it. */
+.qa__file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.qa__warn {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--warning);
+  line-height: 1.55;
+}
+
+.qa__error { font-size: var(--text-sm); color: var(--error); }
+
+@media (max-width: 560px) {
+  .qa__session { width: 100%; }
+  .qa--form { max-width: none; }
+}
 
 a.wharf-item:hover { border-color: var(--border-default); background: var(--bg-tertiary); }
 a.wharf-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -2497,3 +2618,17 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .work__maker:hover { color: var(--fg1); border-bottom-color: var(--accent); }
 .work__link { font-size: var(--text-sm); color: var(--accent); text-decoration: none; white-space: nowrap; }
 .work__link:hover { text-decoration: underline; }
+
+/* A button that reads as a link. /admin only, where the controls are plain
+   form posts and a row of real buttons would out-shout the data. */
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0 var(--space-2) 0 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--fg3);
+  cursor: pointer;
+}
+
+.linkish:hover { color: var(--accent); }

@@ -3,17 +3,18 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCopy, resolveLang } from "@/lib/content";
-import { listWallMembers } from "@/lib/db";
+import { AnswerForm, AskBox, CloseForm, ComingButton } from "@/components/WharfActions";
+import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
+import { listWharfQuestions, openQuestionCount, type WharfQuestion } from "@/lib/db";
+import { currentMemberId } from "@/lib/member-auth";
+import { byNewest, canClaim, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
+import { gullMood } from "@/lib/wharf";
 import { formatSession, nextThursdays } from "@/lib/sessions";
-import { groupTopics, gullMood } from "@/lib/wharf";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
 };
 
-// Reads Postgres on every request. The contents change whenever anyone signs
-// up, which is most evenings in the two days before a session.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -31,43 +32,75 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 /**
- * The Wharf — everything people said they wanted to ask, in one place.
+ * The Wharf.
  *
- * This page adds no way to put anything into the site. Every sentence on it
- * comes from one field on the sign-up form, and it is here because that field
- * went from a 19% fill rate to 80% over four sessions while being almost
- * invisible: a member card only shows the sentence while its author is signed
- * up for the *next* Thursday, so for most of any given week the site displayed
- * none of them. The bottleneck was never the input.
+ * Two lanes, because about two thirds of what people write in the sign-up
+ * box is not a question — it is "I want to see what everyone is building".
+ * Those are true things to want and they are exactly what the member wall
+ * trades in; they are simply not answerable, and mixing them into a list of
+ * answerable questions buries the answerable ones. ⚠️ **The rule sorts and
+ * never hides**, for the reason set out in `classifyLane`: the two ways of
+ * being wrong cost very different amounts.
  *
- * **Nobody appears here who did not ask to appear.** The only rows this page
- * can see are the ones `listWallMembers()` returns, and that query filters on
- * `published_at IS NOT NULL AND NOT hidden` in SQL — the same gate the member
- * wall uses. Someone who filled in a question but never ticked "put me on the
- * member wall" is not reachable from this code path at all, which is what the
- * form promised them. There is a test pinning that down; do not replace this
- * call with a wider query.
+ * A question can be taken two ways — somebody says they will be at a named
+ * Thursday for it, or somebody answers here. Both exist because a claim
+ * assumes the two people end up in a room together, and that assumption only
+ * holds for this week's questions. For one from three weeks ago it is usually
+ * false, which is the hole this release exists to close.
+ *
+ * **Privacy, unchanged:** every question and every reply belongs to a
+ * published member card. `listWharfQuestions` filters on `published_at IS NOT
+ * NULL AND NOT hidden`, and a question cannot exist without a member row.
+ *
+ * **Anti-spam, and why there is none:** writing anything here needs the member
+ * cookie, which is only issued at /claim, which only matches somebody who has
+ * already signed up for a session. A stranger cannot reach the write path at
+ * all. See `api/wharf/route.ts`.
  */
 export default async function WharfPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
   const c = getCopy(lang);
   const w = c.wharf;
 
-  const upcoming = nextThursdays(1)[0];
-  const { groups, total, olderSessions, olderEntries } = groupTopics(
-    await listWallMembers(),
-    upcoming,
-  );
+  const memberId = await currentMemberId();
 
-  const thisWeek = groups[0].entries.length;
-  const mood = gullMood(thisWeek, total);
+  const [questions, openCount] = await Promise.all([
+    listWharfQuestions(),
+    memberId ? openQuestionCount(memberId) : Promise.resolve(0),
+  ]);
 
+  const now = new Date();
+  const upcoming = nextThursdays(4).map((value) => ({
+    value,
+    label: formatSession(value, lang),
+  }));
+
+  const rows = questions.map((question) => ({
+    question,
+    status: statusOf(
+      {
+        closed_at: question.closed_at,
+        created_at: question.created_at,
+        claims: question.replies.filter((reply) => reply.kind === "coming").length,
+        answers: question.replies.filter((reply) => reply.kind === "answer").length,
+      },
+      now,
+    ),
+  }));
+
+  const inLane = (which: Lane) =>
+    byNewest(rows.filter((row) => row.question.lane === which).map((row) => row.question)).map(
+      (question) => rows.find((row) => row.question.id === question.id)!,
+    );
+
+  const asking = inLane("question");
+  const chatting = inLane("chat");
+  const live = asking.filter((row) => row.status === "open").length;
+
+  // The bird reports the board it is standing on: how many nobody has taken.
+  const mood = gullMood(live, asking.length);
   const say =
-    mood === "waiting"
-      ? w.say.waiting.replace("{n}", String(thisWeek))
-      : mood === "quiet"
-        ? w.say.quiet
-        : w.say.empty;
+    mood === "waiting" ? w.say.waiting.replace("{n}", String(live)) : w.say[mood];
 
   return (
     <div lang={c.htmlLang}>
@@ -84,13 +117,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
             <p className="body-sm" style={{ maxWidth: "56ch", color: "var(--fg3)" }}>
               {w.place}
             </p>
-            {/* The bird and its line, side by side. The drawing is the
-                character; the sentence is real text because it carries the
-                count, and the count is the only thing on this page that
-                changes hour to hour.
 
-                Eager, not lazy: it is the first thing on the page and it is
-                8 KB. */}
             <div className="wharf-mascot">
               <picture>
                 <source
@@ -108,75 +135,101 @@ export default async function WharfPage({ searchParams }: PageProps) {
                   decoding="async"
                 />
               </picture>
-              <p className="wharf-say">
-                {mood === "waiting" ? <Line text={say} /> : say}
-              </p>
+              <p className="wharf-say">{say}</p>
             </div>
           </div>
         </header>
 
         <section className="section" style={{ paddingTop: "var(--space-8)" }}>
           <div className="shell stack-8">
-            {groups.map((group) => {
-              const isNow = group.session === upcoming;
+            {/* Asking directly. Until now the only way a question could exist
+                was the sign-up form, so anything that came up between two
+                Thursdays had nowhere to go. */}
+            <div className="stack-3">
+              <span className="archive__label">{w.askCta}</span>
+              {memberId ? (
+                <AskBox sessions={upcoming} atLimit={openCount >= 1} copy={w} />
+              ) : (
+                <p className="wharf-empty">
+                  {w.signedOutNote} <Link href={`/claim${langSuffix(lang)}`}>{w.signInCta}</Link>
+                </p>
+              )}
+            </div>
 
-              return (
-                <div className="stack-4" key={group.session ?? "none"}>
-                  <div className="wharf-group">
-                    <span
-                      className={`wharf-group__label${isNow ? " wharf-group__label--now" : ""}`}
-                    >
-                      {group.session === null
-                        ? w.noSession
-                        : isNow
-                          ? `${w.thisWeek} · ${formatSession(group.session, lang)}`
-                          : formatSession(group.session, lang)}
-                    </span>
-                    <span className="wharf-group__rule" />
-                  </div>
+            <div className="stack-4">
+              <div className="wharf-group">
+                <span className="wharf-group__label wharf-group__label--now">
+                  {w.laneQuestion} · {asking.length}
+                </span>
+                <span className="wharf-group__rule" />
+              </div>
 
-                  {group.entries.length === 0 ? (
-                    <p className="wharf-empty">{w.emptyWeek}</p>
-                  ) : (
-                    group.entries.map((entry) => (
-                      <Link
-                        key={entry.slug}
-                        href={`/members/${entry.slug}${langSuffix(lang)}`}
-                        className={`wharf-item${isNow ? " wharf-item--now" : ""}`}
-                      >
-                        <span className="wharf-item__q">{entry.topic}</span>
-                        <span className="wharf-item__who">
-                          <span className="wharf-item__name">{entry.name}</span>
-                          {isNow ? <span className="pill pill--live">{w.comingLabel}</span> : null}
-                        </span>
-                      </Link>
-                    ))
-                  )}
+              {asking.length === 0 ? (
+                <p className="wharf-empty">{w.emptyWeek}</p>
+              ) : (
+                asking.map(({ question, status }) => (
+                  <QuestionCard
+                    key={question.id}
+                    question={question}
+                    status={status}
+                    lang={lang}
+                    copy={w}
+                    sessions={upcoming}
+                    signedIn={Boolean(memberId)}
+                    mine={question.member_id === memberId}
+                  />
+                ))
+              )}
+            </div>
+
+            {chatting.length > 0 && (
+              <div className="stack-4">
+                <div className="wharf-group">
+                  <span className="wharf-group__label">
+                    {w.laneChat} · {chatting.length}
+                  </span>
+                  <span className="wharf-group__rule" />
                 </div>
-              );
-            })}
+                <p className="body-sm" style={{ color: "var(--fg3)" }}>
+                  {w.laneChatNote}
+                </p>
 
-            {/* Said out loud rather than just stopping: a list that quietly
-                ends at four headings reads as "that is all there has ever
-                been", which would be false. */}
-            {olderSessions > 0 ? (
-              <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                {w.older.replace("{n}", String(olderSessions)).replace("{m}", String(olderEntries))}
-              </p>
-            ) : null}
+                <div className="wharf-rows">
+                  {chatting.map(({ question }) => (
+                    <Link
+                      key={question.id}
+                      href={`/members/${question.slug}${langSuffix(lang)}`}
+                      className="wharf-row"
+                    >
+                      <span className="wharf-row__q">{question.text}</span>
+                      <span className="wharf-row__who">{question.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {/* The comic, and it belongs here rather than at the top of the
-                page for two reasons. It *is* the explanation — the grand
-                question, the entirely practical answer — so it sits against
-                the paragraph that makes the same point in prose. And down
-                here it can be lazy, which the top of a page a reader came to
-                read a list on cannot.
+            <div className="wharf-how">
+              <ChipMark />
+              <div className="stack-3">
+                <h2 className="h3" style={{ margin: 0 }}>
+                  {w.how.title}
+                </h2>
+                <p className="wharf-how__body">{w.how.body}</p>
+                <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                  <Link className="btn btn--primary" href={`/${langSuffix(lang)}#signup`}>
+                    {w.how.cta}
+                  </Link>
+                  <Link className="btn btn--secondary" href={`/members${langSuffix(lang)}`}>
+                    {w.membersCta}
+                  </Link>
+                </div>
+              </div>
+            </div>
 
-                ★ The speech bubbles in the artwork are EMPTY. Every word is
-                real text laid over them, which is what lets the joke exist in
-                all three languages, be selected, and be read aloud. Baking
-                the dialogue into the picture would have made it a Simplified
-                Chinese image sitting on an English page. */}
+            {/* The comic. It *is* the explanation, and down here it can be
+                lazy — 117 KB in front of a reader who came for a list is a
+                bad trade. */}
             <figure className="comic">
               {[0, 1, 2, 3].map((i) => (
                 <div className="comic__panel" key={i}>
@@ -204,24 +257,6 @@ export default async function WharfPage({ searchParams }: PageProps) {
               ))}
             </figure>
 
-            <div className="wharf-how">
-              <ChipMark />
-              <div className="stack-3">
-                <h2 className="h3" style={{ margin: 0 }}>
-                  {w.how.title}
-                </h2>
-                <p className="wharf-how__body">{w.how.body}</p>
-                <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
-                  <Link className="btn btn--primary" href={`/${langSuffix(lang)}#signup`}>
-                    {w.how.cta}
-                  </Link>
-                  <Link className="btn btn--secondary" href={`/members${langSuffix(lang)}`}>
-                    {w.membersCta}
-                  </Link>
-                </div>
-              </div>
-            </div>
-
             <p className="body-sm" style={{ color: "var(--fg3)" }}>
               {w.langNote}
             </p>
@@ -234,16 +269,112 @@ export default async function WharfPage({ searchParams }: PageProps) {
   );
 }
 
-/** Splits "… {n} 个问题" so the number can carry the chip colour. */
-function Line({ text }: { text: string }) {
-  const match = text.match(/^(.*?)(\d+.*)$/);
-  if (!match) return <>{text}</>;
+function QuestionCard({
+  question,
+  status,
+  lang,
+  copy,
+  sessions,
+  signedIn,
+  mine,
+}: {
+  question: WharfQuestion;
+  status: QuestionStatus;
+  lang: Lang;
+  copy: Copy["wharf"];
+  sessions: { value: string; label: string }[];
+  signedIn: boolean;
+  mine: boolean;
+}) {
+  const coming = question.replies.filter((reply) => reply.kind === "coming");
+  const answers = question.replies.filter((reply) => reply.kind === "answer");
+  const thanked = question.replies.find((reply) => reply.id === question.thanked_id);
 
   return (
-    <>
-      {match[1]}
-      <b>{match[2]}</b>
-    </>
+    // The id is the question's own address, and it is the point: it makes a
+    // single question something you can drop into the group chat, which is the
+    // only channel this site actually has.
+    <article className={`wharf-item wharf-item--${status}`} id={`q-${question.id}`}>
+      <div className="wharf-item__head">
+        <span className={`pill pill--${status}`}>{copy.status[status]}</span>
+        {question.session && (
+          <span className="wharf-item__date mono">{formatSession(question.session, lang)}</span>
+        )}
+        <a className="wharf-item__anchor" href={`#q-${question.id}`} aria-label={copy.copyLink}>
+          #
+        </a>
+      </div>
+
+      <span className="wharf-item__q">{question.text}</span>
+
+      <span className="wharf-item__who">
+        <Link className="wharf-item__name" href={`/members/${question.slug}${langSuffix(lang)}`}>
+          {question.name}
+        </Link>
+      </span>
+
+      {coming.length > 0 && (
+        <p className="body-sm" style={{ color: "var(--accent)", margin: 0 }}>
+          {copy.comingNote.replace("{names}", coming.map((reply) => reply.name).join("、"))}
+        </p>
+      )}
+
+      {answers.map((answer) => (
+        <div className="answer" key={answer.id}>
+          <p className="answer__body">{answer.body}</p>
+
+          {answer.has_image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className="answer__image"
+              src={`/api/wharf/image/${answer.id}`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+
+          <span className="answer__by">
+            <Link href={`/members/${answer.slug}${langSuffix(lang)}`}>
+              {copy.answeredBy.replace("{name}", answer.name)}
+            </Link>
+          </span>
+        </div>
+      ))}
+
+      {question.outcome && (
+        <p className="body-sm" style={{ color: "var(--fg2)", margin: 0 }}>
+          {copy.outcomeShown.replace("{text}", question.outcome)}
+        </p>
+      )}
+
+      {/* A receipt on one reply, never a total on a person. This site has
+          decided four separate times that it does not rank its members. */}
+      {thanked && (
+        <span className="q__receipt">
+          <ChipMark small />
+          {copy.thanked.replace("{asker}", question.name).replace("{helper}", thanked.name)}
+        </span>
+      )}
+
+      {signedIn && (
+        <div className="wharf-item__actions">
+          {canClaim(status) && !mine && (
+            <>
+              <ComingButton questionId={question.id} sessions={sessions} copy={copy} />
+              <AnswerForm questionId={question.id} copy={copy} />
+            </>
+          )}
+          {mine && !question.closed_at && (
+            <CloseForm
+              questionId={question.id}
+              replies={question.replies.map((reply) => ({ id: reply.id, name: reply.name }))}
+              copy={copy}
+            />
+          )}
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -251,17 +382,18 @@ function Line({ text }: { text: string }) {
  * A serve of hot chips: three of them and the box.
  *
  * Drawn rather than an emoji so the yellow is the page's own token and the
- * shape is the same on every platform. Worth knowing if you edit it: the
- * chips have to splay noticeably wider than the mouth of the box and stand
- * well clear of it. An earlier version had them short and rounded, and at
- * this size the whole mark read as a crown.
+ * shape is the same on every platform. The chips have to splay noticeably
+ * wider than the mouth of the box — an earlier version had them short and
+ * rounded, and at this size the whole mark read as a crown.
  */
-function ChipMark() {
+function ChipMark({ small = false }: { small?: boolean }) {
+  const size = small ? 16 : 22;
+
   return (
     <svg
       className="wharf-how__mark"
-      width="22"
-      height="22"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"

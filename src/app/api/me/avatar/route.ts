@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { clearMemberAvatar, saveMemberAvatar } from "@/lib/db";
+import { sniffImage } from "@/lib/image-sniff";
 import { currentMemberId } from "@/lib/member-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -13,25 +14,6 @@ export const dynamic = "force-dynamic";
  */
 const MAX_BYTES = 400 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-/**
- * Confirms the bytes really are the image type they claim to be.
- *
- * Trusting the declared MIME would let anyone store arbitrary bytes that a
- * browser is later told to interpret as an image, so the magic number is
- * checked instead of the label.
- */
-function sniff(bytes: Buffer): string | null {
-  if (bytes.length > 12) {
-    if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-    if (bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])))
-      return "image/png";
-    if (bytes.subarray(0, 4).toString() === "RIFF" && bytes.subarray(8, 12).toString() === "WEBP")
-      return "image/webp";
-  }
-
-  return null;
-}
 
 export async function POST(request: Request) {
   const memberId = await currentMemberId();
@@ -56,7 +38,7 @@ export async function POST(request: Request) {
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());
-  const mime = sniff(bytes);
+  const mime = sniffImage(bytes);
 
   if (!mime || !ALLOWED.has(mime)) {
     return NextResponse.json({ error: "bad_type" }, { status: 415 });
