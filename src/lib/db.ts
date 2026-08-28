@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { spendFrom } from "@/lib/coach-budget";
 import { classifyLane } from "@/lib/questions";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "@/lib/members";
 
@@ -1328,23 +1329,12 @@ export async function saveMember(id: string, profile: ProfileInput): Promise<voi
  * one person and bounds nothing in total: the number of people is the thing an
  * attacker controls.
  *
- * One statement, so two requests arriving together cannot both read the same
- * count and both decide they are under the line. The WHERE is what makes it a
- * cap: when it fails, no row comes back and the caller is over budget.
+ * The decision itself is in `coach-budget.ts`, where it can be tested. This is
+ * the wrapper that hands it the pool.
  */
 export async function spendCoachCall(limit: number): Promise<boolean> {
-  if (limit <= 0) return false;
-
   const pool = getPool();
   await ensureSchema();
 
-  const result = await pool.query(
-    `INSERT INTO coach_budget (day, calls) VALUES (current_date, 1)
-     ON CONFLICT (day) DO UPDATE SET calls = coach_budget.calls + 1
-     WHERE coach_budget.calls < $1
-     RETURNING calls`,
-    [limit],
-  );
-
-  return result.rowCount === 1;
+  return spendFrom((sql, params) => pool.query(sql, params), limit);
 }
