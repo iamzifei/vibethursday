@@ -3,7 +3,7 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { SydneySkyline } from "@/components/SydneySkyline";
+import { DarlingHarbour } from "@/components/DarlingHarbour";
 import { AnswerForm, AskBox, CloseForm, ComingButton } from "@/components/WharfActions";
 import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
@@ -111,13 +111,12 @@ export default async function WharfPage({ searchParams }: PageProps) {
 
       <main id="main">
         <header className="wharf-hero">
-          {/* The bridge and the Opera House, the same halftone silhouette the
-              home page opens with. It belongs here more than it belongs there:
-              this page is named after a wharf, and the joke it is named after
-              only lands if the wharf is recognisably this harbour. Faded
-              further than the home page's — that one sits under a headline,
-              this one sits under a list somebody has to read. */}
-          <SydneySkyline />
+          {/* Pyrmont Bridge, the tall ship's masts and the Anzac Bridge
+              pylons — Darling Harbour, eighty metres from the room this page is
+              about. Deliberately not the home page's Harbour Bridge: repeating
+              it would make the two pages look like one, and it is the wrong
+              harbour anyway. */}
+          <DarlingHarbour />
 
           <div className="shell stack-4">
             <span className="eyebrow">{w.eyebrow}</span>

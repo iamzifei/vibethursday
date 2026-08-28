@@ -2809,11 +2809,14 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
      right at one window size and cropped at another — which is how the second
      attempt passed a check at 1100×900 and still lost the arch on a shorter
      screen. */
-  width: min(1040px, 100%);
+  width: min(1120px, 104%);
   aspect-ratio: 24 / 5;
   height: auto;
   color: var(--accent);
-  opacity: 0.22;
+  /* Stronger than the home page's arch needed. That one is a single big mass;
+     this is trusses, piles, masts and cables — thin shapes that the dot grid
+     eats. The same opacity on finer linework reads as almost nothing. */
+  opacity: 0.26;
   pointer-events: none;
   /* Semi-transparent and fading out upward — but the fade has to start ABOVE
      the drawing, not through it. The arch peaks at viewBox y=70, which is 72%
@@ -2839,8 +2842,20 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 
 @media (max-width: 48rem) {
   .wharf-hero > .skyline {
-    /* The aspect ratio carries over; only the width and the weight change. */
-    width: 165%;
-    opacity: 0.18;
+    /* ★ A taller box, not a wider one — and the difference matters.
+       `slice` crops whichever side overflows, so going PAST 4.8:1 crops the top
+       (which is how the landmarks were lost twice), while going under it crops
+       the sides and scales everything up. 2:1 keeps the full height of the
+       drawing and shows the middle 500 units of it: the swing-span tower, the
+       masts, and the near Anzac pylon, at more than twice desktop's size.
+
+       The height matters for a second reason. At the hero's foot the phone
+       layout is solid content — the gull's card, then the seagull's line — so a
+       short band lands entirely behind them. A tall one reaches up into the
+       open column beside the card, which is the only place on this screen it
+       can actually be seen. */
+    width: 108%;
+    aspect-ratio: 2 / 1;
+    opacity: 0.32;
   }
 }
