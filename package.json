@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test \"tests/*.test.mts\""
+    "test": "node --experimental-strip-types --test \"tests/*.test.mts\"",
+    "coach:eval": "node --experimental-strip-types scripts/coach-eval.mjs"
   },
   "dependencies": {
     "next": "16.2.12",

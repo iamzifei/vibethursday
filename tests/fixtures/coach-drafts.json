@@ -1,0 +1,133 @@
+{
+  "note": [
+    "Graded drafts for `npm run coach:eval`.",
+    "",
+    "★ Every draft here is real, off the live board, EXCEPT the few marked",
+    "  synthetic:true — those cover shapes the board has not produced yet but",
+    "  will (a draft with a result but no surprise, an English one).",
+    "",
+    "⚠️ NOTHING here may also appear in EXAMPLES in src/lib/coach-prompt.ts.",
+    "  Grading a model on its own few-shot measures copying, not judgement.",
+    "  There is a test asserting the two sets stay disjoint.",
+    "",
+    "`gap` is the verdict a careful person would give. Where two are defensible",
+    "the second is listed in `alsoOk` and both count as correct — the score is",
+    "meant to catch the model asking a beginner what surprised them, not to",
+    "punish it for a reasonable difference of opinion."
+  ],
+  "drafts": [
+    {
+      "draft": "会计事务所 ai 税务系统",
+      "gap": "object",
+      "alsoOk": [
+        "phenomenon"
+      ]
+    },
+    {
+      "draft": "会计事务所 ai 流程化",
+      "gap": "object",
+      "alsoOk": [
+        "phenomenon"
+      ]
+    },
+    {
+      "draft": "怎么搭建后端，部署，落地",
+      "gap": "object"
+    },
+    {
+      "draft": "聊产品,找需求,出主意",
+      "gap": "social",
+      "alsoOk": [
+        "object"
+      ]
+    },
+    {
+      "draft": "想聊 AI 怎么帮助自我提升、管理生活和财务。",
+      "gap": "object"
+    },
+    {
+      "draft": "想请问大家对于agent trading的需求",
+      "gap": "object",
+      "alsoOk": [
+        "phenomenon"
+      ],
+      "why": "线上原句。想问的是市场需求还是他自己在做，看不出来"
+    },
+    {
+      "draft": "想认识做 AI 的人",
+      "gap": "social"
+    },
+    {
+      "draft": "AI剪辑流程加固",
+      "gap": "phenomenon",
+      "alsoOk": [
+        "object"
+      ]
+    },
+    {
+      "draft": "如何批量生产好的Youtube封面",
+      "gap": "object"
+    },
+    {
+      "draft": "怎么做增长",
+      "gap": "object"
+    },
+    {
+      "draft": "想听听大家一般会往 agents.md 里面写什么东西，怎么管理 context window 的限制",
+      "gap": "none",
+      "why": "有对象、有具体的坎，房间里做 agent 的人扫一眼就知道自己接不接得上"
+    },
+    {
+      "draft": "做完的小工具发了推，两百个赞，一个注册都没有",
+      "gap": "conflict",
+      "synthetic": true,
+      "why": "有对象有现象，缺的是他预期赞会变成什么"
+    },
+    {
+      "draft": "我的 SaaS 增长卡住了",
+      "gap": "phenomenon",
+      "alsoOk": [
+        "object"
+      ]
+    },
+    {
+      "draft": "投了两个月 Google Ads，点击不少，注册六个，付费零个，不知道该砍还是该改落地页",
+      "gap": "none",
+      "synthetic": true,
+      "why": "对象现象冲突都有，还带了约束。这条不该被追问"
+    },
+    {
+      "draft": "AI 小白，完全不知道从哪开始",
+      "gap": "object",
+      "why": "★ 老版本在这类草稿上问「你预期什么没发生」——他什么都没做过"
+    },
+    {
+      "draft": "想找人一起做点东西",
+      "gap": "social"
+    },
+    {
+      "draft": "I built a Chrome extension, nobody installs it, no idea where to start",
+      "gap": "conflict",
+      "synthetic": true,
+      "why": "英文；有对象有现象，缺预期差"
+    },
+    {
+      "draft": "Anyone here doing RAG on Chinese documents?",
+      "gap": "phenomenon",
+      "alsoOk": [
+        "none"
+      ],
+      "synthetic": true
+    },
+    {
+      "draft": "ai 视频",
+      "gap": "object"
+    },
+    {
+      "draft": "公司想上 AI 客服，但老板要求不能把客户数据发到国外",
+      "gap": "phenomenon",
+      "synthetic": true,
+      "why": "有对象有约束，缺的是走到哪一步了"
+    }
+  ]
+}

@@ -1,41 +1,127 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
-import { readHint } from "../src/lib/coach.ts";
+import { buildSystem, EXAMPLES, GAPS, readCoaching } from "../src/lib/coach-prompt.ts";
 
 /**
- * The parsing half of the ask-box helper. The request half is not tested here
- * on purpose: it would need a key and a network, and everything that can go
- * wrong in it has exactly one outcome anyway — null, and the button did
- * nothing.
+ * The ask-box helper's contract with the model.
+ *
+ * The request itself is not tested here on purpose: it needs a key and a
+ * network, and everything that can go wrong in it has one outcome anyway —
+ * null, and the button did nothing. What is worth pinning down is the parsing,
+ * because that is where a broken answer could become a confident-looking one,
+ * and the shape of the prompt, because the prompt is now an artefact rather
+ * than a string.
+ *
+ * How good the answers actually are is a different question and a different
+ * instrument: `npm run coach:eval`, which grades against real drafts.
  */
 
-test("a follow-up question comes through as written", () => {
-  assert.equal(readHint("你在推的是什么东西，现在卡在哪一步"), "你在推的是什么东西，现在卡在哪一步");
+test("a named gap and a question come through", () => {
+  assert.deepEqual(readCoaching('{"gap":"object","ask":"你在跑的是什么工作流"}'), {
+    gap: "object",
+    ask: "你在跑的是什么工作流",
+  });
 });
 
-test("the leave-it-alone token means there is nothing to say", () => {
-  assert.equal(readHint("OK"), null);
-  assert.equal(readHint(" ok "), null);
-  // Observed: the token sometimes arrives with punctuation stuck to it.
-  assert.equal(readHint("OK。"), null);
+test("the two leave-it-alone verdicts carry no question", () => {
+  assert.deepEqual(readCoaching('{"gap":"none","ask":""}'), { gap: "none", ask: "" });
+  assert.deepEqual(readCoaching('{"gap":"social","ask":""}'), { gap: "social", ask: "" });
 });
 
-test("quotes the model wrapped around its one-liner are stripped", () => {
-  assert.equal(readHint('"你在做什么"'), "你在做什么");
-  assert.equal(readHint("「你在做什么」"), "你在做什么");
+test("a question attached to a leave-it-alone verdict is dropped, not shown", () => {
+  // Contradictory output. Showing the question would contradict the verdict the
+  // same response just gave, so the verdict wins.
+  assert.deepEqual(readCoaching('{"gap":"none","ask":"你在做什么"}'), { gap: "none", ask: "" });
 });
 
-test("an empty or blank answer is nothing, not an empty hint", () => {
-  assert.equal(readHint(""), null);
-  assert.equal(readHint("   \n "), null);
+test("★ an unknown gap is refused rather than coerced into a plausible one", () => {
+  // Falling back to a default here would file advice under a category the model
+  // did not choose, and the eval score would then be measuring the fallback.
+  assert.equal(readCoaching('{"gap":"vibes","ask":"你在做什么"}'), null);
+  assert.equal(readCoaching('{"ask":"你在做什么"}'), null);
 });
 
-test("a question mark survives — it is the point of the sentence", () => {
-  assert.equal(readHint("你在哪个国家报税？"), "你在哪个国家报税？");
+test("a gap with no question is nothing to show", () => {
+  assert.equal(readCoaching('{"gap":"object","ask":""}'), null);
+  assert.equal(readCoaching('{"gap":"object","ask":"   "}'), null);
 });
 
-test("a model that ignores the length rule is cut, not passed through", () => {
-  const rambling = "啊".repeat(200);
-  const hint = readHint(rambling);
-  assert.ok(hint && hint.length <= 80);
+test("a fenced or chatty answer is still read", () => {
+  // JSON mode is requested, but a model that ignores it wraps rather than gives
+  // up. Recovering costs one regex.
+  assert.deepEqual(readCoaching('```json\n{"gap":"object","ask":"你在做什么"}\n```'), {
+    gap: "object",
+    ask: "你在做什么",
+  });
+});
+
+test("junk is null, not a crash and not a guess", () => {
+  assert.equal(readCoaching(""), null);
+  assert.equal(readCoaching("抱歉，我不能帮你"), null);
+  assert.equal(readCoaching("[1,2,3]"), null);
+});
+
+test("a model ignoring the length rule is cut", () => {
+  const long = readCoaching(JSON.stringify({ gap: "object", ask: "啊".repeat(300) }));
+  assert.ok(long && long.ask.length <= 80);
+});
+
+test("★ no example carries its label inside the text a person would read", () => {
+  // The first version wrote the gap as a parenthetical after the question, and
+  // the model copied the parenthetical into live answers — users saw
+  // "你在推的是什么东西（缺对象）". The label belongs in its own field.
+  for (const example of EXAMPLES) {
+    for (const gap of GAPS) {
+      assert.ok(!example.ask.includes(gap), `${example.draft}: leaks "${gap}" into the question`);
+    }
+    assert.ok(!/[（(]缺/.test(example.ask), `${example.draft}: leaks an annotation`);
+  }
+});
+
+test("★ the examples cover every verdict the parser accepts", () => {
+  // A label with no example is a label the model has only been told about. The
+  // one that mattered was `social`: described in prose and, for one release,
+  // shown nowhere.
+  const shown = new Set(EXAMPLES.map((e) => e.gap));
+  for (const gap of GAPS) {
+    assert.ok(shown.has(gap), `no example shows "${gap}"`);
+  }
+});
+
+test("★ leave-it-alone examples are silent, gap examples are not", () => {
+  for (const example of EXAMPLES) {
+    const quiet = example.gap === "none" || example.gap === "social";
+    assert.equal(example.ask === "", quiet, `${example.draft}: ask and gap disagree`);
+  }
+});
+
+test("the prompt asks for json, which DeepSeek's json mode requires", () => {
+  assert.match(buildSystem(), /json/);
+});
+
+test("every example reaches the prompt", () => {
+  const system = buildSystem();
+  for (const example of EXAMPLES) {
+    assert.ok(system.includes(example.draft), `${example.draft} is not in the prompt`);
+  }
+});
+
+test("★ the graded drafts and the examples share nothing", () => {
+  // Grading a model on the sentences it was shown measures copying. The eval
+  // score is only worth reading while these two sets stay disjoint, and it is
+  // very easy to fix a miss by quietly promoting the failing draft into the
+  // few-shot — which scores 100% and teaches nothing.
+  const fixture = JSON.parse(
+    readFileSync(path.join(process.cwd(), "tests/fixtures/coach-drafts.json"), "utf8"),
+  ) as { drafts: { draft: string }[] };
+
+  const shown = new Set(EXAMPLES.map((e) => e.draft));
+
+  for (const row of fixture.drafts) {
+    assert.ok(!shown.has(row.draft), `"${row.draft}" is both an example and a graded draft`);
+  }
+
+  assert.ok(fixture.drafts.length >= 15, "too few graded drafts for the score to mean much");
 });
