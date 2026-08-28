@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { coachAvailable, coachQuestion } from "@/lib/coach";
+import { coachAvailable, coachDraft } from "@/lib/coach";
 import { spendCoachCall } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -66,9 +66,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "spent" }, { status: 429 });
   }
 
-  const hint = await coachQuestion(draft.trim().slice(0, MAX_DRAFT));
+  const coaching = await coachDraft(draft.trim().slice(0, MAX_DRAFT));
 
-  // null is a real answer, not a failure: it means the draft is already good
-  // enough to leave alone. The box says so rather than showing an error.
-  return NextResponse.json({ hint });
+  // ⚠️ `gap` goes back with the hint because "nothing to ask" is two different
+  // findings and the box has to tell them apart. Collapsing them shipped a lie:
+  // somebody typed three bare topics, the model correctly said "this is not a
+  // question", and the box answered "this one is specific enough".
+  return NextResponse.json({ hint: coaching?.ask || null, gap: coaching?.gap ?? null });
 }

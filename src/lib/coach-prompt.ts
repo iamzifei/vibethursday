@@ -116,6 +116,16 @@ export const EXAMPLES: { draft: string; gap: Gap; ask: string }[] = [
   },
   // Wanting to build something with somebody is wanting to meet people.
   { draft: "想找个人一起搞个小项目", gap: "social", ask: "" },
+  // ⚠️ A bare topic with no subject. The shape that made the rule above lead
+  //    with "what they want is people": one of these came back `social` in
+  //    production and the box told its author the sentence was specific
+  //    enough. Vague is fixable; wanting company is not, and they are not the
+  //    same thing.
+  //
+  //    (The draft that actually surfaced this lives in the graded set, not
+  //    here. Teaching on the failing case and then scoring on it is how a
+  //    prompt reaches 100% and learns nothing.)
+  { draft: "想聊聊定价这块", gap: "object", ask: "你要定价的是什么东西，卖给谁" },
 ];
 
 const RULES = `你在帮一个悉尼线下 AI 聚会的参加者打磨他要挂到问题板上的一句话。
@@ -139,9 +149,13 @@ const RULES = `你在帮一个悉尼线下 AI 聚会的参加者打磨他要挂�
 - none        —— 够别人判断了，不要追问。
                  只要**有对象 + 有一个具体的坎**就算够，不需要凑满三项。
                  已经带了数字、带了约束、带了「该 A 还是该 B」的，一律 none。
-- social      —— 整句都是想认识什么人、想看看大家在做什么、想找人一起做点什么。
-                 那不是问题，不要追问。
-                 ⚠️ 半句社交半句真问题的，按真问题处理，判那个真问题缺什么。
+- social      —— ★ 判据是「他要的是人」，不是「他写得泛」。
+                 想认识谁、想看看别人在做什么、想找人一起做点东西——目的是人，判 social。
+                 ⚠️ **只是话题写得泛，不是 social，是缺 object。**
+                 「聊产品，找需求，出主意」「AI工作流」「想聊 AI 怎么帮助自我提升」
+                 这些都是话题，只是没说清是哪个产品、哪条工作流、哪件事——那是 object。
+                 分界线：**泛，是可以问具体的；要认识人，没什么可问的。**
+                 半句社交半句真问题的，按真问题处理。
 
 写追问的规则：
 

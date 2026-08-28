@@ -105,7 +105,10 @@ test("★ the route charges before it calls out, not after", () => {
   // free by making the calls fail. The charge has to happen first.
   const route = body("src/app/api/wharf/coach/route.ts");
   const charge = route.indexOf("spendCoachCall(");
-  const call = route.indexOf("coachQuestion(");
+  // Matches whichever of the two entry points the route uses. Named loosely on
+  // purpose: this test is about ordering, and it should survive a rename of the
+  // thing being ordered — it already failed once for that and nothing else.
+  const call = route.search(/\bcoach(Draft|Question)\(/);
 
   assert.ok(charge > 0, "the route must take the call out of the budget");
   assert.ok(call > 0, "the route must still ask the model something");

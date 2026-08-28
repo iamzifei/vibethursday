@@ -117,10 +117,21 @@ test("★ the graded drafts and the examples share nothing", () => {
     readFileSync(path.join(process.cwd(), "tests/fixtures/coach-drafts.json"), "utf8"),
   ) as { drafts: { draft: string }[] };
 
-  const shown = new Set(EXAMPLES.map((e) => e.draft));
+  // ⚠️ Normalised, because the first near-collision differed only in whether
+  // its commas were full-width. An exact-match check passes that and the score
+  // silently counts a memorised answer.
+  const key = (draft: string) =>
+    draft
+      .replace(/[，,、。.！!？?：:；;\s]/g, "")
+      .toLowerCase();
+
+  const shown = new Set(EXAMPLES.map((e) => key(e.draft)));
 
   for (const row of fixture.drafts) {
-    assert.ok(!shown.has(row.draft), `"${row.draft}" is both an example and a graded draft`);
+    assert.ok(
+      !shown.has(key(row.draft)),
+      `"${row.draft}" is both an example and a graded draft (punctuation aside)`,
+    );
   }
 
   assert.ok(fixture.drafts.length >= 15, "too few graded drafts for the score to mean much");

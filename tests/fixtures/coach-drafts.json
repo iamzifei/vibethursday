@@ -13,7 +13,10 @@
     "`gap` is the verdict a careful person would give. Where two are defensible",
     "the second is listed in `alsoOk` and both count as correct — the score is",
     "meant to catch the model asking a beginner what surprised them, not to",
-    "punish it for a reasonable difference of opinion."
+    "punish it for a reasonable difference of opinion.",
+    "",
+    "⚠️ 标注本身会错。「聊产品,找需求,出主意」原来标的是 social，于是模型判 social 被算成对，",
+    "  而线上真实的后果是那个人被告知「这句已经够具体了」。改标签之前，分数是在替错误背书。"
   ],
   "drafts": [
     {
@@ -36,10 +39,8 @@
     },
     {
       "draft": "聊产品,找需求,出主意",
-      "gap": "social",
-      "alsoOk": [
-        "object"
-      ]
+      "gap": "object",
+      "why": "★ 我原来标成 social，错的。它是三个话题没有主语——泛，不是社交。James 在线上用出来的。"
     },
     {
       "draft": "想聊 AI 怎么帮助自我提升、管理生活和财务。",

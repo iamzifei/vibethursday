@@ -320,12 +320,14 @@ export function AskBox({
   // ran. Cheap to get wrong, and wrong in the direction that misleads.
   const [hint, setHint] = useState<string | null>(null);
   const [enough, setEnough] = useState(false);
+  const [social, setSocial] = useState(false);
   const [spent, setSpent] = useState(false);
   const [thinking, setThinking] = useState(false);
 
   function clearAdvice() {
     setHint(null);
     setEnough(false);
+    setSocial(false);
     setSpent(false);
   }
 
@@ -345,8 +347,12 @@ export function AskBox({
         setSpent(true);
       } else {
         const payload = await response.json();
-        // A null hint is the model saying the draft is already specific enough.
+
+        // ★ Three outcomes, not two. "Nothing to ask" splits into "this is
+        //   already answerable" and "this is not a question at all", and only
+        //   the first of those is praise.
         if (typeof payload.hint === "string") setHint(payload.hint);
+        else if (payload.gap === "social") setSocial(true);
         else setEnough(true);
       }
     } catch (failure) {
@@ -385,6 +391,11 @@ export function AskBox({
       {enough && (
         <p className="qa__hint qa__hint--fine" role="status">
           {copy.coachEnough}
+        </p>
+      )}
+      {social && (
+        <p className="qa__hint qa__hint--fine" role="status">
+          {copy.coachSocial}
         </p>
       )}
       {spent && (

@@ -740,6 +740,11 @@ export const copy = {
       // ★ 它不改写、不拦截、不打分。写的还是他自己的话。
       coachCta: "帮我问得更具体",
       coachEnough: "这句已经够具体了，直接发。",
+      // ⚠️ 不能跟上面那句共用。「这不是个问题」和「这句够具体了」是两回事，
+      // 合并之后线上真的发生过：有人写「聊产品,找需求,出主意」，模型判对了
+      // ——那不是问题——而框子回他「这句已经够具体了」。
+      // 这句不劝退也不拦，只说清会发生什么，剩下的他自己定。
+      coachSocial: "这句会挂到「想聊的」那一栏——那栏不会有人来回答，但会被看见。想让人接得上，把它改成一个具体的问题。",
       // 用完了不能说「你这句挺好」——那是在告诉人家他通过了一个根本没跑的检查。
       coachSpent: "这个按钮今天用完了。直接发也行，本来就不拦你。",
       // 这个站没有统计、没有 CDN 字体、没有任何嵌入。这个按钮是唯一
@@ -1536,6 +1541,7 @@ export const copy = {
       askNoSession: "No particular session",
       coachCta: "Help me make it specific",
       coachEnough: "That one is specific enough. Post it.",
+      coachSocial: "This will sit in the looking-to-meet lane. Nothing there gets answered, but it does get read. Want an answer, make it a question about one specific thing.",
       coachSpent: "That button is out for today. Post anyway — it never blocked you.",
       coachNote: "Pressing that button — and nothing else on this site — sends what you wrote to DeepSeek and asks it for one follow-up question back.",
       oneAtATime: "You already have one open question. Close that one first — that way every question has somebody on the hook for it.",
