@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
-import { deleteReply, setQuestionLane } from "@/lib/db";
+import { coachAvailable, coachDraft } from "@/lib/coach";
+import { deleteReply, listTriageCandidates, setQuestionLane } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+
+/** Most rows one press of the triage button may look at. */
+const MAX_TRIAGE = 40;
+
+/** Triage is a slow, paid pass; give it room past the platform default. */
+export const maxDuration = 120;
 
 /**
  * The two things only the organiser can do to the Wharf.
@@ -12,6 +19,13 @@ export const dynamic = "force-dynamic";
  * it will be wrong; a human moving two a week is more accurate than any rule
  * that could be written, and it is the reason the rule is allowed to stay
  * simple instead of growing into a model.
+ *
+ * **Running a triage pass** is the same lane move, done in bulk by the model
+ * instead of by hand. It lives here rather than in the script next to it
+ * because the production database is only reachable from inside the container,
+ * so a script on somebody's laptop cannot touch the rows it is about. It stays
+ * bounded, it skips anything anyone has acted on, and every row it moves is
+ * undone by one click in the table above it.
  *
  * **Deleting a reply** exists for one specific thing: somebody posts a
  * screenshot with more in it than they meant. There is a warning beside the
@@ -30,6 +44,35 @@ export async function POST(request: Request) {
   }
 
   const action = form.get("action");
+  if (action === "triage") {
+    if (!coachAvailable()) return NextResponse.json({ error: "no_coach" }, { status: 400 });
+
+    // A ceiling on one press. The board holds tens of rows, not thousands, and
+    // an admin button that can make an unbounded number of paid calls is a
+    // slipped finger away from being expensive.
+    const candidates = (await listTriageCandidates()).slice(0, MAX_TRIAGE);
+
+    for (const row of candidates) {
+      const coaching = await coachDraft(row.text);
+
+      // No answer means no opinion, and no opinion must never move a row.
+      if (!coaching || coaching.gap === "none") continue;
+
+      await setQuestionLane(
+        row.id,
+        coaching.gap === "social" ? "chat" : "vague",
+        coaching.ask || null,
+      );
+    }
+
+    return NextResponse.redirect(
+      new URL(`/admin?key=${encodeURIComponent(key)}#wharf`, request.url),
+      { status: 303 },
+    );
+  }
+
+  // ⚠️ Below the triage branch on purpose: triage acts on the whole board and
+  // carries no id, so this per-row guard would reject it.
   const id = form.get("id");
 
   if (typeof id !== "string" || !/^\d+$/.test(id)) {

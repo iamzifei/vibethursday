@@ -172,3 +172,18 @@ test("★ the triage script does not write unless told to", () => {
     "the dry-run exit must come before any write",
   );
 });
+
+test("★ the admin triage button is behind the key, and above the per-row guard", () => {
+  const route = readFileSync(path.join(process.cwd(), "src/app/api/admin/wharf/route.ts"), "utf8");
+
+  const auth = route.indexOf("isAdmin(key)");
+  const triage = route.indexOf('action === "triage"');
+  const idGuard = route.indexOf('error: "bad_id"');
+
+  assert.ok(auth > 0 && triage > 0 && idGuard > 0);
+  // It spends money and rewrites lanes in bulk. The key comes first, always.
+  assert.ok(auth < triage, "triage must sit behind the admin key");
+  // And it acts on the whole board, so it carries no id — putting it below the
+  // per-row guard rejected it with "bad_id", which is what happened first time.
+  assert.ok(triage < idGuard, "triage carries no id and must answer before that guard");
+});

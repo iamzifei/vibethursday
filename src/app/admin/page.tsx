@@ -243,6 +243,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
 
         <div className="table-scroll">
+          {/* Runs the coach over every question nobody has acted on and files
+              the ones it cannot make sense of under "not clear yet". It costs
+              a fraction of a cent, takes about a second a row, and every move
+              it makes is undone by one click in the table below. */}
+          <form method="post" action="/api/admin/wharf" style={{ marginBottom: "var(--space-4)" }}>
+            <input type="hidden" name="key" value={key} />
+            <input type="hidden" name="action" value="triage" />
+            <button className="btn btn--secondary btn--sm" type="submit">
+              Sort the vague ones out
+            </button>
+          </form>
+
           <table className="table">
             <thead>
               <tr>
