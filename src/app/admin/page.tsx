@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { listAllMembers, listSignups, listWharfQuestions } from "@/lib/db";
+import { listAllMembers, listRecentAnswers, listSignups, listWharfQuestions } from "@/lib/db";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
 
@@ -38,10 +38,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [signups, members, questions] = await Promise.all([
+  const [signups, members, questions, answers] = await Promise.all([
     listSignups(),
     listAllMembers(),
     listWharfQuestions(),
+    listRecentAnswers(),
   ]);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
@@ -122,9 +123,23 @@ export default async function AdminPage({ searchParams }: PageProps) {
       getCopy("zh").hero.facts.find((fact) => fact.href?.includes("maps.google"))?.value ??
       getCopy("zh").hero.facts[1].value,
     signups: nextSessionRow?.total ?? 0,
+    // ⚠️ `!closed_at` is not decoration. This poster goes into the group as
+    // "here is what people want to ask on Thursday", and a question its own
+    // author has already marked settled is an invitation to answer something
+    // that is finished. Nothing could be closed when this filter was written.
     questions: questions
-      .filter((question) => question.lane === "question" && question.session === nextSession)
+      .filter(
+        (question) =>
+          question.lane === "question" &&
+          question.session === nextSession &&
+          !question.closed_at,
+      )
       .map((question) => ({ text: question.text, name: question.name })),
+    // ★ Who answered what this week, printed on the poster that goes into the
+    // group. The strongest thing this community can give somebody for
+    // answering is to say their name in front of everybody, and the Wednesday
+    // announcement is the only channel this site has.
+    answers: answers.map((answer) => ({ name: answer.answerer, text: answer.question })),
     url: `${siteUrl()}/wharf`,
     qrSvg: await QRCode.toString(`${siteUrl()}/wharf`, {
       type: "svg",

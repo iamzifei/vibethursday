@@ -2217,6 +2217,30 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
   line-height: 1.55;
 }
 
+/* The follow-up question. Cyan rather than lime: it is the site's second
+   voice — a remark from the side, not the page telling you something. */
+.qa__hint {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--spark);
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  line-height: 1.55;
+}
+
+.qa__hint--fine { border-left-color: var(--border-default); }
+
+/* The disclosure under the ask box. Deliberately NOT --warning: the amber on
+   this page belongs to the screenshot warning, where the cost of ignoring it is
+   somebody's API key in public. Spending the same colour on "this button calls
+   an API" is what makes the real one stop being read. */
+.qa__note {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--fg3);
+  line-height: 1.55;
+}
+
 .qa__error { font-size: var(--text-sm); color: var(--error); }
 
 @media (max-width: 560px) {

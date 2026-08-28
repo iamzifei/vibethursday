@@ -297,15 +297,49 @@ export function CloseForm({
 export function AskBox({
   sessions,
   atLimit,
+  coach,
   copy,
 }: {
   sessions: { value: string; label: string }[];
   atLimit: boolean;
+  /** Whether this deployment has a key for the follow-up question. */
+  coach: boolean;
   copy: WharfCopy;
 }) {
   const { busy, error, run } = useAction();
   const [text, setText] = useState("");
   const [session, setSession] = useState("");
+
+  // Three states, not two: no hint yet, a hint, or "this one is fine as it is".
+  // The third has to be distinguishable, otherwise pressing the button on an
+  // already-good question looks like the button is broken.
+  const [hint, setHint] = useState<string | null>(null);
+  const [enough, setEnough] = useState(false);
+  const [thinking, setThinking] = useState(false);
+
+  async function askTheCoach() {
+    setThinking(true);
+    setHint(null);
+    setEnough(false);
+
+    const body = new FormData();
+    body.set("text", text);
+
+    try {
+      const response = await fetch("/api/wharf/coach", { method: "POST", body });
+      const payload = await response.json();
+      // A null hint is the model saying the draft is already specific enough.
+      if (typeof payload.hint === "string") setHint(payload.hint);
+      else setEnough(true);
+    } catch (failure) {
+      // ★ Nothing happens, and posting is unaffected. This button is help,
+      //   never a gate — see the note at the top of src/lib/coach.ts.
+      console.error("[wharf] the coach did not answer", failure);
+      setEnough(true);
+    }
+
+    setThinking(false);
+  }
 
   if (atLimit) {
     return <p className="wharf-empty">{copy.oneAtATime}</p>;
@@ -322,6 +356,20 @@ export function AskBox({
         aria-label={copy.askCta}
       />
 
+      {/* The answer comes back as a question, deliberately. It is a prompt to
+          write one more sentence, not a correction to accept or reject — so
+          there is nothing here to click, only something to read. */}
+      {hint && (
+        <p className="qa__hint" role="status">
+          {hint}
+        </p>
+      )}
+      {enough && (
+        <p className="qa__hint qa__hint--fine" role="status">
+          {copy.coachEnough}
+        </p>
+      )}
+
       <div className="qa__row">
         <select
           className="field qa__session"
@@ -337,6 +385,17 @@ export function AskBox({
           ))}
         </select>
 
+        {coach && (
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
+            disabled={thinking || text.trim().length === 0}
+            onClick={() => void askTheCoach()}
+          >
+            {thinking ? copy.working : copy.coachCta}
+          </button>
+        )}
+
         <button
           type="button"
           className="btn btn--primary btn--sm"
@@ -346,12 +405,21 @@ export function AskBox({
             form.set("action", "ask");
             form.set("text", text);
             if (session) form.set("session", session);
-            void run(form, () => setText(""));
+            void run(form, () => {
+              setText("");
+              setHint(null);
+              setEnough(false);
+            });
           }}
         >
           {busy ? copy.working : copy.askCta}
         </button>
       </div>
+
+      {/* ⚠️ The draft leaves this server when — and only when — the button
+          above is pressed. Nothing else on this site sends anything anywhere,
+          so this line is the whole disclosure and it has to stay visible. */}
+      {coach && <p className="qa__note">{copy.coachNote}</p>}
 
       {error && (
         <span className="qa__error">{error === "one_at_a_time" ? copy.oneAtATime : copy.failed}</span>

@@ -889,6 +889,76 @@ export async function listWharfQuestions(): Promise<WharfQuestion[]> {
   }));
 }
 
+/**
+ * What one person has answered on the Wharf.
+ *
+ * ★ This is the reward, and it is deliberately not a number. "He answered
+ * these four things" is evidence of what somebody knows and it is matchmaking
+ * information — which is what this whole site trades in. "He has 47 points"
+ * is a rank, and this site has decided four separate times that it does not
+ * rank its members.
+ *
+ * Only answers, not claims: turning up is not a thing to be scored, and a list
+ * of "said they would come" on somebody's card would quietly become an
+ * attendance record.
+ */
+export async function listAnswersBy(
+  memberId: string,
+): Promise<{ question: string; slug: string; asker: string; thanked: boolean }[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<{
+    question: string;
+    slug: string;
+    asker: string;
+    thanked: boolean;
+  }>(
+    `SELECT q.text          AS question,
+            m.slug,
+            m.display_name  AS asker,
+            (q.thanked_id = r.id) AS thanked
+       FROM wharf_replies r
+       JOIN wharf_questions q ON q.id = r.question_id
+       JOIN members m ON m.id = q.member_id
+      WHERE r.member_id = $1
+        AND r.kind = 'answer'
+        AND m.published_at IS NOT NULL AND NOT m.hidden
+      ORDER BY r.created_at DESC`,
+    [memberId],
+  );
+
+  return result.rows;
+}
+
+/**
+ * The week's answers, for the poster that gets pasted into the group.
+ *
+ * The other half of the same idea: the strongest thing this community can give
+ * somebody for answering is to say their name in front of everybody, and the
+ * Wednesday announcement is the only channel it has.
+ */
+export async function listRecentAnswers(
+  days = 7,
+): Promise<{ answerer: string; question: string }[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ answerer: string; question: string }>(
+    `SELECT am.display_name AS answerer, q.text AS question
+       FROM wharf_replies r
+       JOIN wharf_questions q ON q.id = r.question_id
+       JOIN members am ON am.id = r.member_id
+       JOIN members qm ON qm.id = q.member_id
+      WHERE r.kind = 'answer'
+        AND r.created_at > now() - ($1 || ' days')::interval
+        AND am.published_at IS NOT NULL AND NOT am.hidden
+        AND qm.published_at IS NOT NULL AND NOT qm.hidden
+      ORDER BY r.created_at DESC`,
+    [String(days)],
+  );
+
+  return result.rows;
+}
+
 /** Says "I will be at that session for this one". Idempotent by index. */
 export async function claimQuestion(
   questionId: string,

@@ -4,6 +4,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AnswerForm, AskBox, CloseForm, ComingButton } from "@/components/WharfActions";
+import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { listWharfQuestions, openQuestionCount, type WharfQuestion } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
@@ -148,7 +149,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
             <div className="stack-3">
               <span className="archive__label">{w.askCta}</span>
               {memberId ? (
-                <AskBox sessions={upcoming} atLimit={openCount >= 1} copy={w} />
+                <AskBox sessions={upcoming} atLimit={openCount >= 1} coach={coachAvailable()} copy={w} />
               ) : (
                 <p className="wharf-empty">
                   {w.signedOutNote} <Link href={`/claim${langSuffix(lang)}`}>{w.signInCta}</Link>

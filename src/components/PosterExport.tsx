@@ -19,6 +19,8 @@ type Props = {
   signups: number;
   /** What is on the Wharf for this session, longest-standing first. */
   questions: PosterQuestion[];
+  /** Who answered something in the last week, and what. */
+  answers: PosterQuestion[];
   /** Rendered server-side by `qrcode`, same as the badge's. */
   qrSvg: string;
   /** Printed under the QR, so a screenshot still says where to go. */
@@ -131,7 +133,7 @@ export function PosterExport(props: Props) {
             ? "没画出来，看一眼 console"
             : preview
               ? "手机上长按图片保存或转发；电脑上已经下载了"
-              : `${props.questions.length} 个问题会印在上面`}
+              : `${props.questions.length} 个问题${props.answers.length > 0 ? ` · ${props.answers.length} 条这周的回答` : ""}会印在上面`}
         </span>
       </div>
 
@@ -154,7 +156,7 @@ export function PosterExport(props: Props) {
 }
 
 function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement) {
-  const { date, time, venue, signups, questions, url } = props;
+  const { date, time, venue, signups, questions, answers, url } = props;
   const maxWidth = W - PAD * 2;
 
   ctx.fillStyle = INK;
@@ -269,6 +271,29 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
     ctx.fillStyle = FG3;
     ctx.font = `400 30px ${SANS}`;
     ctx.fillText(`还有 ${hidden} 个在码头上 →`, PAD + 34, y);
+    y += 46;
+  }
+
+  // ★ Who answered this week. It goes under the open questions rather than
+  // above them, because the poster's first job is still to get somebody to
+  // come — but it is on here at all because being named in front of the whole
+  // group is the only reward this site can actually give for answering.
+  if (answers.length > 0 && y + 120 < limit) {
+    y += 16;
+    ctx.fillStyle = ACCENT;
+    ctx.font = `500 28px ${MONO}`;
+    ctx.fillText(`这周有人答了 ${answers.length} 条`, PAD, y);
+    y += 48;
+
+    for (const answer of answers) {
+      if (y + 40 > limit) break;
+
+      ctx.fillStyle = FG2;
+      ctx.font = `400 30px ${SANS}`;
+      const line = wrap(ctx, `${answer.name} → ${answer.text}`, maxWidth - 20, 1)[0] ?? "";
+      ctx.fillText(line, PAD + 20, y);
+      y += 42;
+    }
   }
 
   // ── QR on a white plate, with the address beside it ───────────────

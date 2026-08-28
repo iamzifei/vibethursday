@@ -6,7 +6,7 @@ import { assetLabel, cardTopic, langSuffix, topicLabel } from "@/components/Memb
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
-import { getMemberBySlug } from "@/lib/db";
+import { getMemberBySlug, listAnswersBy } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
@@ -53,6 +53,15 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
 
   // Looking at your own card was a dead end: the only ways to edit it were the
   // wall and /me, neither of which you are on when you followed your own QR.
+  /**
+   * What this person has answered on the Wharf.
+   *
+   * ★ The reward for answering, and it is deliberately a list rather than a
+   * count. "He answered these four things" says what somebody knows, which is
+   * the thing this site exists to make findable; a number would be a rank.
+   */
+  const answers = await listAnswersBy(member.id);
+
   const isMine = (await currentMemberId()) === member.id;
 
   return (
@@ -117,6 +126,29 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
               <p className="body-lg" style={{ maxWidth: "62ch", whiteSpace: "pre-wrap" }}>
                 {member.bio}
               </p>
+            )}
+
+            {answers.length > 0 && (
+              <div className="stack-3">
+                <span className="archive__label">
+                  {m.answered.replace("{n}", String(answers.length))}
+                </span>
+                <div className="wharf-rows">
+                  {answers.map((answer, index) => (
+                    <Link
+                      key={index}
+                      href={`/wharf${langSuffix(lang)}`}
+                      className="wharf-row"
+                    >
+                      <span className="wharf-row__q">{answer.question}</span>
+                      <span className="wharf-row__who">
+                        {answer.thanked ? "🍟 " : ""}
+                        {answer.asker}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             {(topic || member.looking_for || member.can_help) && (

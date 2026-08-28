@@ -611,6 +611,9 @@ export const copy = {
       lookingFor: "想找",
       canHelp: "能帮",
       // 直接读报名表最近一次填的「这周想聊点什么」，成员自己不用动。
+      // ★ 回答的回报，刻意做成一个列表而不是一个数字：「他答过这四件事」说明
+      // 他懂什么，那是撮合信息；「他有 47 分」是名次。
+      answered: "在码头上答过 {n} 条",
       thisWeekTopic: "本周想聊",
       // 同一栏，写在过去某一场的时候用这个。之前只有「本周想聊」一个标签，
       // 于是不是本周的就干脆不显示——结果整站大部分时间一句都不显示。
@@ -731,6 +734,15 @@ export const copy = {
       askPlaceholder: "一句话，越具体越容易被接上。",
       askSession: "哪一场想聊",
       askNoSession: "不指定场次",
+      // ── 发问时的追问（DeepSeek）─────────────────────────────────
+      // 挂上来的句子里有相当一部分太笼统，笼统的那些没人接，三周后沉底。
+      // 这个按钮只做一件事：把缺的那一块问回去，让本人自己补一句。
+      // ★ 它不改写、不拦截、不打分。写的还是他自己的话。
+      coachCta: "帮我问得更具体",
+      coachEnough: "这句已经够具体了，直接发。",
+      // 这个站没有统计、没有 CDN 字体、没有任何嵌入。这个按钮是唯一
+      // 一处把访客写的东西发出去的地方，所以必须写在按钮旁边。
+      coachNote: "按了上面那个按钮，才会把你写的这句发给 DeepSeek 换一句追问回来；不按就不会发。",
       oneAtATime: "你还有一条没结的问题。结了那条再问下一条——这样每条问题都有人负责。",
       closeCta: "这条结了",
       closeSubmit: "结帖",
@@ -1430,6 +1442,7 @@ export const copy = {
       attended: "Sessions: {n}",
       lookingFor: "Looking for",
       canHelp: "Can help with",
+      answered: "Answered {n} on the Wharf",
       thisWeekTopic: "This week",
       topicOn: "Wanted to talk about, {date}",
       topicUndated: "Wants to talk about",
@@ -1519,6 +1532,9 @@ export const copy = {
       askPlaceholder: "One line. The more specific, the more likely somebody picks it up.",
       askSession: "For which Thursday",
       askNoSession: "No particular session",
+      coachCta: "Help me make it specific",
+      coachEnough: "That one is specific enough. Post it.",
+      coachNote: "Pressing that button — and nothing else on this site — sends what you wrote to DeepSeek and asks it for one follow-up question back.",
       oneAtATime: "You already have one open question. Close that one first — that way every question has somebody on the hook for it.",
       closeCta: "This one is done",
       closeSubmit: "Close it",
