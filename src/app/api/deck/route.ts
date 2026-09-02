@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
 import { closeStaleDecks, createDeck } from "@/lib/db";
+import { requestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,13 @@ export async function POST(request: Request) {
   // The presenter key lands in the URL of the page it redirects to, which is
   // where it is meant to live: that link is the thing you send to the phone you
   // will actually be presenting from.
-  const target = new URL(`/present/${deck.code}`, request.url);
+  //
+  // ⚠️ Built from `requestOrigin()`, NOT from `request.url`. In production this
+  // process sits behind a proxy and `request.url` is the address the container
+  // answers on — `https://localhost:8080/...`, which is a link nobody can open
+  // and which is not obviously wrong until somebody tries. The same helper
+  // builds the QR code on the page this lands on, so the two always agree.
+  const target = new URL(`/present/${deck.code}`, await requestOrigin());
   target.searchParams.set("k", deck.presenterKey);
 
   return NextResponse.redirect(target, 303);

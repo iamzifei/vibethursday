@@ -21,7 +21,18 @@ export async function requestOrigin(): Promise<string> {
   if (configured) return configured;
 
   const store = await headers();
-  const raw = store.get("host") ?? "";
+
+  // `x-forwarded-host` first. In production this process sits behind a proxy,
+  // and a proxy that rewrites `Host` to the address it is forwarding to leaves
+  // `host` reading `localhost:8080` — which produces a link nobody outside the
+  // container can open. The forwarded pair is what exists to answer this, and
+  // where there is no proxy neither header is set and `host` is the truth.
+  //
+  // Both are still client-supplied and are validated below exactly as `host`
+  // always was. NEXT_PUBLIC_SITE_URL above outranks both, so a deployment that
+  // sets it never depends on any of this.
+  const forwarded = store.get("x-forwarded-host");
+  const raw = (forwarded ?? store.get("host") ?? "").split(",")[0].trim();
 
   // The Host header is client-supplied. Nothing downstream would be injectable
   // (the QR encoder turns its input into modules, not markup), but a crafted
@@ -31,6 +42,12 @@ export async function requestOrigin(): Promise<string> {
 
   // Loopback is the only case that is not HTTPS. Matching on "localhost" alone
   // gave a 127.0.0.1 dev server an https:// QR that nothing could open.
+  //
+  // Deliberately NOT read from `x-forwarded-proto`, unlike the host above. The
+  // dev server sets that header to `http` on every request, so trusting it
+  // would emit `http://` links from a site that is https everywhere except
+  // loopback — a regression traded for nothing, since this heuristic already
+  // gets the only two cases this site has right.
   const proto = /^(localhost|127\.0\.0\.1)(:|$)/.test(host) ? "http" : "https";
 
   return `${proto}://${host}`;
