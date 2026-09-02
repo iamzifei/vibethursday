@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
+import { requestOrigin } from "@/lib/request-origin";
 import { setMemberHidden } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -33,5 +34,5 @@ export async function POST(request: Request) {
   await setMemberHidden(id, hidden);
 
   // 303 so the browser follows with GET; a 307 would repost the form on reload.
-  return NextResponse.redirect(new URL(`/admin?key=${encodeURIComponent(key)}#members`, request.url), 303);
+  return NextResponse.redirect(new URL(`/admin?key=${encodeURIComponent(key)}#members`, await requestOrigin()), 303);
 }

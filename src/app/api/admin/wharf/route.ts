@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
+import { requestOrigin } from "@/lib/request-origin";
 import { coachAvailable, coachDraft } from "@/lib/coach";
 import { deleteReply, listTriageCandidates, setQuestionLane } from "@/lib/db";
 
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.redirect(
-      new URL(`/admin?key=${encodeURIComponent(key)}#wharf`, request.url),
+      new URL(`/admin?key=${encodeURIComponent(key)}#wharf`, await requestOrigin()),
       { status: 303 },
     );
   }
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.redirect(
-    new URL(`/admin?key=${encodeURIComponent(key)}#wharf`, request.url),
+    new URL(`/admin?key=${encodeURIComponent(key)}#wharf`, await requestOrigin()),
     { status: 303 },
   );
 }

@@ -1684,20 +1684,35 @@ export async function setDeckIndex(
   return { index: row.current_index, rev: row.rev, slideCount: Number(row.slide_count) };
 }
 
-/** The rooms opened recently, for the admin page's list. Never includes the
- *  presenter key — that is handed over once, at creation. */
+/**
+ * The rooms opened recently, for the admin page's list.
+ *
+ * ⚠️ This DOES return the presenter key, and an earlier version deliberately
+ * did not — on the reasoning that a key is a secret and a list is a list. That
+ * was wrong twice over. It protects nothing: the only page that calls this is
+ * behind ADMIN_TOKEN, and anyone holding that can mint unlimited new rooms and
+ * keys anyway. And it made a room unrecoverable — close the tab and the room
+ * is gone, which is a bad property five minutes before somebody presents.
+ */
 export async function listRecentDecks(limit = 10): Promise<
-  Array<{ code: string; title: string | null; slideCount: number; createdAt: Date }>
+  Array<{
+    code: string;
+    title: string | null;
+    presenterKey: string;
+    slideCount: number;
+    createdAt: Date;
+  }>
 > {
   await ensureSchema();
 
   const result = await getPool().query<{
     code: string;
     title: string | null;
+    presenter_key: string;
     slide_count: string;
     created_at: Date;
   }>(
-    `SELECT d.code, d.title, d.created_at,
+    `SELECT d.code, d.title, d.presenter_key, d.created_at,
             (SELECT count(*) FROM deck_slides s WHERE s.code = d.code) AS slide_count
        FROM decks d
       ORDER BY d.created_at DESC
@@ -1708,9 +1723,23 @@ export async function listRecentDecks(limit = 10): Promise<
   return result.rows.map((row) => ({
     code: row.code,
     title: row.title,
+    presenterKey: row.presenter_key,
     slideCount: Number(row.slide_count),
     createdAt: row.created_at,
   }));
+}
+
+/**
+ * Closes one room by hand.
+ *
+ * The seven-day sweep below is the rule; this is for the ordinary case of
+ * having opened one by mistake, or of a talk finishing and the slides not
+ * being something anyone wants sitting on a server until Thursday next week.
+ * `ON DELETE CASCADE` on `deck_slides` takes the pages with it.
+ */
+export async function deleteDeck(code: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`DELETE FROM decks WHERE code = $1`, [code]);
 }
 
 /**

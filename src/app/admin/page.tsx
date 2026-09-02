@@ -174,12 +174,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
       {/* ── Casting a demo to the room ───────────────────────────────
           There is no projector at the venue, so a demo is either three people
           leaning over one laptop or it does not happen. Opening a room here
-          hands back a presenter link; everyone else scans the code.
+          gives back two links: one to present from, one for the room to scan.
 
           It sits next to "Want to demo" on purpose — that number is how many
           people said on the sign-up form that they had something to show, and
           this is the thing to do about it. */}
-      <section className="stack-4">
+      <section className="stack-4" id="deck">
         <div className="group-head">
           <h2 className="h3">投屏</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
@@ -206,20 +206,56 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         </form>
 
-        {decks.length > 0 && (
-          <ul className="stack-2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        {decks.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>
+            还没有开过房间。房间七天后自己消失。
+          </p>
+        ) : (
+          <ul className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {decks.map((deck) => (
-              <li key={deck.code} className="body-sm">
-                {/* The viewer's link only. The presenter key is handed over once,
-                    at creation, and is not readable back out of the database —
-                    so a lost presenter link means opening a new room, which
-                    takes one click and is the safer of the two designs. */}
-                <span className="mono hl">{deck.code}</span>{" "}
-                <a href={`/d/${deck.code}`}>/d/{deck.code}</a>{" "}
-                <span style={{ color: "var(--fg3)" }}>
-                  {deck.title ? `· ${deck.title} ` : ""}· {deck.slideCount} 页 ·{" "}
-                  {deck.createdAt.toISOString().slice(0, 10)}
-                </span>
+              <li key={deck.code} className="card stack-3">
+                <div className="deck-build__join">
+                  <span className="deck__code-big">{deck.code}</span>
+                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                    {deck.title ? `${deck.title} · ` : ""}
+                    {deck.slideCount} 页 · {deck.createdAt.toISOString().slice(0, 10)}
+                  </span>
+                </div>
+
+                {/* ★ Both links, every time.
+                    The presenter one used to be handed over once, in the
+                    redirect, and never shown again — so closing the tab lost
+                    the room. That is a bad property five minutes before
+                    somebody stands up, and it protects nothing: this page can
+                    already mint as many rooms and keys as it likes. */}
+                <div className="stack-2">
+                  <p className="body-sm">
+                    <strong>我来演示</strong> ——{" "}
+                    <a className="mono hl" href={`/present/${deck.code}?k=${deck.presenterKey}`}>
+                      /present/{deck.code}
+                    </a>{" "}
+                    <span style={{ color: "var(--fg3)" }}>
+                      传幻灯片、拿二维码、翻页都在这一页。这条链接就是控制权，可以发给今天讲的人。
+                    </span>
+                  </p>
+                  <p className="body-sm">
+                    <strong>大家跟着看</strong> ——{" "}
+                    <a className="mono" href={`/d/${deck.code}`}>
+                      /d/{deck.code}
+                    </a>{" "}
+                    <span style={{ color: "var(--fg3)" }}>
+                      念房间号 {deck.code}，或者让他们扫演示页上的二维码。
+                    </span>
+                  </p>
+                </div>
+
+                <form method="post" action="/api/admin/deck">
+                  <input type="hidden" name="key" value={key} />
+                  <input type="hidden" name="code" value={deck.code} />
+                  <button className="btn btn--secondary" type="submit">
+                    关掉这个房间
+                  </button>
+                </form>
               </li>
             ))}
           </ul>

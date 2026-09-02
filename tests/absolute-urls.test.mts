@@ -33,7 +33,13 @@ test("★ no absolute URL is built from request.url", () => {
   // `new URL(anything, request.url)` — the second argument is the base, and
   // that is the part that is wrong behind a proxy. Reading `request.url` to get
   // at a query string is fine and stays allowed.
-  const asBase = /new URL\([^)]*,\s*(?:request|req)\.url\s*\)/;
+  //
+  // ⚠️ The first version of this pattern was `[^)]*` for the first argument,
+  // which stops at the first `)` — so it walked straight past the three that
+  // were already in the tree, every one of them written as
+  // `new URL(`/admin?key=${encodeURIComponent(key)}`, request.url)`. One level
+  // of nesting is enough for anything that belongs in a URL literal.
+  const asBase = /new URL\((?:[^()]|\([^()]*\))*,\s*(?:request|req)\.url\s*\)/;
 
   const offenders = sourceFiles(root).filter((file) =>
     asBase.test(readFileSync(file, "utf8")),
