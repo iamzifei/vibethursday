@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Avatar } from "@/components/Avatar";
@@ -11,6 +10,7 @@ import { getCopy, resolveLang } from "@/lib/content";
 import { getMemberById } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { nextThursdays } from "@/lib/sessions";
+import { requestOrigin } from "@/lib/request-origin";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -25,30 +25,6 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-/**
- * The absolute origin, for a URL that has to survive being scanned by a phone
- * that is not this one. NEXT_PUBLIC_SITE_URL is the answer in production; the
- * request host covers local development, where that variable is usually unset.
- */
-async function origin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (configured) return configured;
-
-  const store = await headers();
-  const raw = store.get("host") ?? "";
-
-  // The Host header is client-supplied. Nothing downstream would be injectable
-  // (the QR encoder turns its input into modules, not markup), but a crafted
-  // host would still produce a code pointing somewhere else, so anything that
-  // is not a plain hostname[:port] is discarded rather than trusted.
-  const host = /^[A-Za-z0-9.-]+(:\d+)?$/.test(raw) ? raw : "localhost:3000";
-
-  // Loopback is the only case that is not HTTPS. Matching on "localhost" alone
-  // gave a 127.0.0.1 dev server an https:// QR that nothing could open.
-  const proto = /^(localhost|127\.0\.0\.1)(:|$)/.test(host) ? "http" : "https";
-
-  return `${proto}://${host}`;
-}
 
 /**
  * A name badge for the table.
@@ -70,7 +46,7 @@ export default async function BadgePage({ searchParams }: PageProps) {
   const member = await getMemberById(memberId);
   if (!member) redirect(`/claim${langSuffix(lang)}`);
 
-  const cardUrl = `${await origin()}/members/${member.slug}`;
+  const cardUrl = `${await requestOrigin()}/members/${member.slug}`;
   // The strict reading, on purpose, and unlike the member wall: this is a
   // table tent, propped up in the room on the day. A sentence written for a
   // session three weeks ago would be sitting on the table claiming to be what

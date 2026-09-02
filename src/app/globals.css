@@ -2996,3 +2996,256 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   font-size: var(--text-xs);
   color: var(--fg3);
 }
+
+/* =============================================================================
+   Deck — the room's phones as the projector
+   =============================================================================
+   Two surfaces: the presenter building and running a deck, and the viewer
+   following one. The viewer is the harder of the two and drives the rules here.
+
+   A 16:9 slide dropped into a portrait phone occupies about a quarter of the
+   screen, which is how this feature fails: everything is technically working
+   and nobody can read a word. So the viewer is full-bleed with no site chrome,
+   and it ships a rotate control — see `.deck__frame--turned`.
+
+   There is deliberately NO custom zoom or pan here. The document already
+   allows pinch-zoom (see `viewport` in layout.tsx, which keeps it on
+   purpose), and a hand-rolled gesture handler would be a worse copy of
+   something the browser already does correctly on both platforms.
+============================================================================= */
+
+.deck {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Black, not --bg-primary: this is a screen showing someone else's artwork,
+     and the site's ink would tint the letterboxing around every slide. */
+}
+
+.deck__stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/**
+ * The box a slide is drawn in.
+ *
+ * Centred by transform rather than by flex so that the turned variant below is
+ * one extra function on the same declaration instead of a second layout.
+ */
+.deck__frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--dur-normal) var(--ease-standard);
+}
+
+/**
+ * ★ The readability lever.
+ *
+ * Swaps the box's dimensions and rotates it, so a landscape slide runs the
+ * long way down a portrait phone — roughly twice the linear size, which is the
+ * difference between reading a slide and recognising that there is text on it.
+ *
+ * The reason this is a button rather than "please turn your phone sideways":
+ * rotation lock. A large share of any room has it on, and for those people
+ * turning the phone does nothing at all. This works regardless.
+ */
+.deck__frame--turned {
+  width: 100dvh;
+  height: 100dvw;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.deck__slide {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  /* No drag ghost when someone swipes across the slide to turn the page. */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/** Tap targets for turning the page, over the slide and invisible. */
+.deck__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  /* No focus ring drawn over the artwork; the bar below is the keyboard path. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.deck__zone--prev { left: 0; }
+.deck__zone--next { right: 0; }
+
+/**
+ * The control strip.
+ *
+ * Sits above the home indicator on iOS — without the safe-area inset the
+ * follow button lands exactly where the system swipe-up gesture lives, and
+ * every second press dismisses the page instead.
+ */
+.deck__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--space-3) var(--space-4);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.72), transparent);
+  pointer-events: none;
+}
+
+.deck__bar > * { pointer-events: auto; }
+
+.deck__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 0.55);
+  color: var(--fg1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.deck__btn:hover:not(:disabled) { background: rgb(0 0 0 / 0.78); }
+.deck__btn:active:not(:disabled) { transform: scale(0.97); }
+.deck__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/** The one accented control: it is the way back to the room's page. */
+.deck__btn--follow {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}
+
+.deck__btn--follow:hover:not(:disabled) { background: var(--accent-hover); }
+
+.deck__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--fg2);
+  padding-inline: var(--space-2);
+}
+
+/** Shown while the deck is empty or the room has not been found. */
+.deck__notice {
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--fg2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.deck__code-big {
+  font-family: var(--font-mono);
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+/* ── Presenter: building the deck ──────────────────────────────────────── */
+
+.deck-build__join {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.deck-build__qr {
+  width: 168px;
+  height: 168px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  padding: var(--space-2);
+  flex: none;
+}
+
+/**
+ * ★ The slide as it will actually appear on a phone, at life size.
+ *
+ * This is the only thing on the site that changes how somebody makes their
+ * slides, and it does it by showing rather than telling: a deck whose body
+ * text is unreadable is unreadable *here*, on the presenter's own screen,
+ * minutes before they stand up. No automated check could give that verdict
+ * as reliably, and none would be believed as quickly.
+ */
+.deck-build__preview {
+  width: min(100%, 300px);
+  aspect-ratio: 9 / 19.5;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-2xl);
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+
+.deck-build__preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.deck-build__strip {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.deck-build__thumb {
+  width: 96px;
+  flex: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+.deck-build__thumb img { width: 100%; height: 100%; object-fit: contain; }
+.deck-build__thumb--on { border-color: var(--accent); }
+
+.deck-build__file { display: none; }

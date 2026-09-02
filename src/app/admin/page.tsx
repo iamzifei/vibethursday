@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { listAllMembers, listRecentAnswers, listSignups, listWharfQuestions } from "@/lib/db";
+import { listAllMembers, listRecentAnswers, listRecentDecks, listSignups, listWharfQuestions } from "@/lib/db";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
 
@@ -38,11 +38,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [signups, members, questions, answers] = await Promise.all([
+  const [signups, members, questions, answers, decks] = await Promise.all([
     listSignups(),
     listAllMembers(),
     listWharfQuestions(),
     listRecentAnswers(),
+    listRecentDecks(),
   ]);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
@@ -168,6 +169,61 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </span>
         </div>
         <PosterExport {...poster} />
+      </section>
+
+      {/* ── Casting a demo to the room ───────────────────────────────
+          There is no projector at the venue, so a demo is either three people
+          leaning over one laptop or it does not happen. Opening a room here
+          hands back a presenter link; everyone else scans the code.
+
+          It sits next to "Want to demo" on purpose — that number is how many
+          people said on the sign-up form that they had something to show, and
+          this is the thing to do about it. */}
+      <section className="stack-4">
+        <div className="group-head">
+          <h2 className="h3">投屏</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            没有投影仪 · 开一个房间，大家扫码跟着看
+          </span>
+        </div>
+
+        {/* An ordinary form: the route answers with a 303 to the presenter's
+            page, so this needs no script. */}
+        <form method="post" action="/api/deck" className="stack-3">
+          <input type="hidden" name="key" value={key} />
+          <div className="deck-build__join">
+            <input
+              className="field"
+              type="text"
+              name="title"
+              placeholder="谁讲什么（可留空）"
+              maxLength={120}
+              style={{ maxWidth: "20rem" }}
+            />
+            <button className="btn btn--primary" type="submit">
+              开一个房间
+            </button>
+          </div>
+        </form>
+
+        {decks.length > 0 && (
+          <ul className="stack-2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {decks.map((deck) => (
+              <li key={deck.code} className="body-sm">
+                {/* The viewer's link only. The presenter key is handed over once,
+                    at creation, and is not readable back out of the database —
+                    so a lost presenter link means opening a new room, which
+                    takes one click and is the safer of the two designs. */}
+                <span className="mono hl">{deck.code}</span>{" "}
+                <a href={`/d/${deck.code}`}>/d/{deck.code}</a>{" "}
+                <span style={{ color: "var(--fg3)" }}>
+                  {deck.title ? `· ${deck.title} ` : ""}· {deck.slideCount} 页 ·{" "}
+                  {deck.createdAt.toISOString().slice(0, 10)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <dl className="grid-auto" style={{ margin: 0 }}>

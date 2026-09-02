@@ -4,6 +4,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 // Relative, not "@/": scripts/ and tests/ load this through Node's type stripper,
 // which cannot resolve the tsconfig path alias.
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
+import { newDeckCode, newPresenterKey } from "./deck.ts";
 
 /**
  * Postgres access.
@@ -308,6 +309,47 @@ export function ensureSchema(): Promise<void> {
       CREATE TABLE IF NOT EXISTS coach_budget (
         day date PRIMARY KEY,
         calls integer NOT NULL DEFAULT 0
+      )
+    `);
+
+    // A deck someone is presenting in the room, and the pages of it.
+    //
+    // `current_index` is the whole point: it is what every phone in the room
+    // reads to know which page to be on. It lives here rather than only in
+    // memory so that a viewer joining late, reconnecting after the tunnel on
+    // the way in, or arriving after a redeploy lands on the page the room is
+    // actually looking at.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS decks (
+        code           text PRIMARY KEY,
+        title          text,
+        -- What separates the one person who can turn the page from the room.
+        presenter_key  text NOT NULL,
+        current_index  integer NOT NULL DEFAULT 0,
+        created_at     timestamptz NOT NULL DEFAULT now(),
+        updated_at     timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Pages, in the row like every other image on this site. Same reasoning as
+    // the Wharf's pictures: at a few hundred kilobytes a page, object storage
+    // is a second system to configure, secure and pay for in exchange for
+    // nothing. The browser shrinks each page before it is ever uploaded.
+    // Bumped whenever a deck is thrown away and rebuilt. Slide URLs repeat
+    // (`/slide/0` is always the first page) and are served `immutable`, so
+    // without this a presenter who uploaded the wrong deck and re-uploaded
+    // would have every phone that had already loaded page one keep showing it.
+    // A wrong slide that nobody can tell is wrong is the worst failure this
+    // feature has, and it is invisible from the presenter's own screen.
+    await pool.query(`ALTER TABLE decks ADD COLUMN IF NOT EXISTS rev integer NOT NULL DEFAULT 0`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS deck_slides (
+        code       text NOT NULL REFERENCES decks(code) ON DELETE CASCADE,
+        idx        integer NOT NULL,
+        image      bytea NOT NULL,
+        image_mime text NOT NULL,
+        PRIMARY KEY (code, idx)
       )
     `);
   })().catch((error) => {
@@ -1453,4 +1495,239 @@ export async function editQuestion(
     if ((error as { code?: string }).code === "23505") return "duplicate";
     throw error;
   }
+}
+
+/* ── Decks ──────────────────────────────────────────────────────────────────
+ *
+ * The phone-as-projector feature. See `@/lib/deck` for why the page number is
+ * the only thing that moves while a deck is being presented.
+ * ------------------------------------------------------------------------- */
+
+export type DeckRow = {
+  code: string;
+  title: string | null;
+  presenterKey: string;
+  currentIndex: number;
+  slideCount: number;
+  /** Cache generation for this deck's slide URLs. See the column's comment. */
+  rev: number;
+  createdAt: Date;
+};
+
+/**
+ * Opens a room, retrying if the four-digit code is already taken.
+ *
+ * The code is short on purpose (it gets read out loud), so collisions are
+ * expected rather than exceptional and are handled here instead of by making
+ * it longer. Only a live room can collide: `closeStaleDecks` frees the codes
+ * of old ones, so the space this is drawing from is "rooms from the last few
+ * days", not "every room ever".
+ */
+export async function createDeck(title: string | null): Promise<DeckRow> {
+  await ensureSchema();
+
+  const pool = getPool();
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = newDeckCode();
+    const presenterKey = newPresenterKey();
+
+    try {
+      const result = await pool.query<{ created_at: Date }>(
+        `INSERT INTO decks (code, title, presenter_key) VALUES ($1, $2, $3) RETURNING created_at`,
+        [code, title, presenterKey],
+      );
+
+      return {
+        code,
+        title,
+        presenterKey,
+        currentIndex: 0,
+        slideCount: 0,
+        rev: 0,
+        createdAt: result.rows[0].created_at,
+      };
+    } catch (error) {
+      // 23505 is unique_violation: this code is in use. Anything else is a
+      // real failure and must not be retried into a loop.
+      if ((error as { code?: string }).code !== "23505") throw error;
+    }
+  }
+
+  throw new Error("could not allocate a deck code");
+}
+
+export async function getDeck(code: string): Promise<DeckRow | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{
+    code: string;
+    title: string | null;
+    presenter_key: string;
+    current_index: number;
+    rev: number;
+    slide_count: string;
+    created_at: Date;
+  }>(
+    `SELECT d.code, d.title, d.presenter_key, d.current_index, d.rev, d.created_at,
+            (SELECT count(*) FROM deck_slides s WHERE s.code = d.code) AS slide_count
+       FROM decks d
+      WHERE d.code = $1`,
+    [code],
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+
+  return {
+    code: row.code,
+    title: row.title,
+    presenterKey: row.presenter_key,
+    currentIndex: row.current_index,
+    rev: row.rev,
+    // count() comes back as a string from `pg`; every caller wants a number.
+    slideCount: Number(row.slide_count),
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Appends a page.
+ *
+ * Order comes from the client uploading one page at a time, which is also what
+ * makes a flaky connection retry one small request instead of restarting a
+ * whole deck. The position is nevertheless chosen inside the statement rather
+ * than sent along: a retry that actually succeeded the first time, or a second
+ * browser tab left open on the same deck, would otherwise send a number that is
+ * already taken and be rejected by the primary key — which on a phone looks
+ * exactly like "some of my slides didn't upload".
+ */
+export async function addDeckSlide(
+  code: string,
+  image: { bytes: Buffer; mime: string },
+): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ idx: number }>(
+    `INSERT INTO deck_slides (code, idx, image, image_mime)
+     SELECT $1, coalesce(max(idx) + 1, 0), $2, $3 FROM deck_slides WHERE code = $1
+     RETURNING idx`,
+    [code, image.bytes, image.mime],
+  );
+
+  return result.rows[0].idx;
+}
+
+export async function getDeckSlide(
+  code: string,
+  idx: number,
+): Promise<{ bytes: Buffer; mime: string } | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ image: Buffer; image_mime: string }>(
+    `SELECT image, image_mime FROM deck_slides WHERE code = $1 AND idx = $2`,
+    [code, idx],
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+
+  return { bytes: row.image, mime: row.image_mime };
+}
+
+/** Throws the deck away and starts again. The room code survives, so a QR
+ *  already on the table keeps working. */
+export async function clearDeckSlides(code: string): Promise<number> {
+  await ensureSchema();
+
+  const pool = getPool();
+  await pool.query(`DELETE FROM deck_slides WHERE code = $1`, [code]);
+
+  // The new generation is returned so the caller can broadcast it: every phone
+  // in the room has to be told to stop trusting the pages it already has.
+  const result = await pool.query<{ rev: number }>(
+    `UPDATE decks SET current_index = 0, rev = rev + 1, updated_at = now()
+      WHERE code = $1
+     RETURNING rev`,
+    [code],
+  );
+
+  return result.rows[0]?.rev ?? 0;
+}
+
+/**
+ * Turns the page, and reports where the deck actually ended up.
+ *
+ * The clamp is done in SQL against the live page count rather than against a
+ * number the caller read earlier: the presenter can still be uploading while
+ * the room is watching, so "the last page" is a moving target.
+ */
+export async function setDeckIndex(
+  code: string,
+  index: number,
+): Promise<{ index: number; slideCount: number; rev: number } | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ current_index: number; rev: number; slide_count: string }>(
+    `WITH pages AS (SELECT count(*) AS n FROM deck_slides WHERE code = $1)
+     UPDATE decks
+        SET current_index = greatest(0, least($2::int, (SELECT n FROM pages)::int - 1)),
+            updated_at = now()
+      WHERE code = $1
+     RETURNING current_index, rev, (SELECT n FROM pages) AS slide_count`,
+    [code, index],
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+
+  return { index: row.current_index, rev: row.rev, slideCount: Number(row.slide_count) };
+}
+
+/** The rooms opened recently, for the admin page's list. Never includes the
+ *  presenter key — that is handed over once, at creation. */
+export async function listRecentDecks(limit = 10): Promise<
+  Array<{ code: string; title: string | null; slideCount: number; createdAt: Date }>
+> {
+  await ensureSchema();
+
+  const result = await getPool().query<{
+    code: string;
+    title: string | null;
+    slide_count: string;
+    created_at: Date;
+  }>(
+    `SELECT d.code, d.title, d.created_at,
+            (SELECT count(*) FROM deck_slides s WHERE s.code = d.code) AS slide_count
+       FROM decks d
+      ORDER BY d.created_at DESC
+      LIMIT $1`,
+    [limit],
+  );
+
+  return result.rows.map((row) => ({
+    code: row.code,
+    title: row.title,
+    slideCount: Number(row.slide_count),
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Drops rooms older than a week, and with them their pages.
+ *
+ * Two reasons, and the second is the one that matters. The small one is that
+ * slide images are the largest rows this database holds and a talk is over the
+ * moment it ends. The real one is that these are *other people's* uploads —
+ * whatever somebody put on a slide to show the table for ten minutes, this
+ * site should not still be holding a month later.
+ */
+export async function closeStaleDecks(): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query(
+    `DELETE FROM decks WHERE created_at < now() - interval '7 days'`,
+  );
+
+  return result.rowCount ?? 0;
 }

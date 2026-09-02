@@ -993,6 +993,58 @@ export const copy = {
       exportAlt: "你的名片图，长按可保存",
       exportFailed: "生成失败了，换个浏览器再试一次。",
     },
+
+    /**
+     * 手机投屏。房间没有投影仪，所以每个人的手机就是屏幕。
+     *
+     * 两句话在这里比在别处重要：`previewHint` 是全站唯一一句会改变演示者做幻灯片
+     * 方式的话，`rotate` 是竖屏手机上把 16:9 看清楚的唯一办法。
+     */
+    deck: {
+      meta: { title: "投屏 · Vibe Thursday" },
+      viewerMeta: { title: "跟着看 · Vibe Thursday" },
+
+      title: "投到大家手机上",
+      lede: "房间里没有投影仪。把幻灯片传上来，念一下房间号，你翻页，桌上每个人的手机跟着翻。",
+
+      codeLabel: "房间号",
+      scanHint: "扫码跟着看",
+      orOpen: "或者打开",
+
+      add: "选幻灯片图片",
+      addHint: "Keynote / PPT / Figma 都能导出成图片，截图也行。一次可以多选，顺序按文件名。",
+      adding: "上传中 {done}/{total}…",
+      slideCount: "{n} 页",
+      clear: "清空重传",
+      clearConfirm: "把这份幻灯片全部删掉？房间号不变，二维码还能用。",
+      empty: "还没有幻灯片。",
+
+      preview: "大家手机上是这样",
+      previewHint: "这就是手机上的真实大小。看不清就回去把字放大——一页只讲一件事，比什么都管用。",
+
+      start: "开始演示",
+      exit: "退出演示",
+      page: "{n} / {total}",
+      viewers: "{n} 台手机跟着",
+      viewersNone: "还没有人扫码",
+      keepAwakeNote: "演示期间屏幕不会自动熄灭。",
+
+      failed: "这一页没传上去，再试一次。",
+      tooLarge: "这张图太大了，换一张。",
+      badType: "只收 JPG / PNG / WebP。",
+      tooMany: "最多 {n} 页。",
+
+      prev: "上一页",
+      next: "下一页",
+      follow: "回到演示者",
+      following: "跟随中",
+      waiting: "等演示者上传幻灯片…",
+      ahead: "演示者还没翻到这一页",
+      rotate: "转 90°",
+      rotateBack: "转回来",
+      readHint: "看不清就按「转 90°」，或者双指放大。",
+      notFound: "没有这个房间。房间号是不是听错了？",
+    },
   },
 
   en: {
@@ -1764,6 +1816,52 @@ export const copy = {
       exportLongPress: "Long-press the image below to save or forward it.",
       exportAlt: "Your card as an image — long-press to save",
       exportFailed: "That did not work. Try another browser.",
+    },
+
+    deck: {
+      meta: { title: "Cast · Vibe Thursday" },
+      viewerMeta: { title: "Following · Vibe Thursday" },
+
+      title: "Put it on everyone's phone",
+      lede: "There is no projector in the room. Upload your slides, read out the room number, and when you swipe every phone on the table turns with you.",
+
+      codeLabel: "Room",
+      scanHint: "Scan to follow",
+      orOpen: "or open",
+
+      add: "Choose slide images",
+      addHint: "Keynote, PowerPoint and Figma all export to images, and screenshots work too. Pick them all at once — they go in filename order.",
+      adding: "Uploading {done}/{total}…",
+      slideCount: "{n} slides",
+      clear: "Clear and start over",
+      clearConfirm: "Delete every slide in this deck? The room number stays the same, so the QR code keeps working.",
+      empty: "No slides yet.",
+
+      preview: "What the room sees",
+      previewHint: "That is the real size on a phone. If you cannot read it here, go back and make the type bigger — one point per slide beats everything else.",
+
+      start: "Start presenting",
+      exit: "Stop presenting",
+      page: "{n} / {total}",
+      viewers: "{n} phones following",
+      viewersNone: "Nobody has scanned in yet",
+      keepAwakeNote: "The screen stays awake while you are presenting.",
+
+      failed: "That slide did not upload. Try it again.",
+      tooLarge: "That image is too big. Use another one.",
+      badType: "JPG, PNG or WebP only.",
+      tooMany: "{n} slides is the limit.",
+
+      prev: "Previous slide",
+      next: "Next slide",
+      follow: "Back to the presenter",
+      following: "Following",
+      waiting: "Waiting for the presenter's slides…",
+      ahead: "The presenter has not reached this page",
+      rotate: "Turn 90°",
+      rotateBack: "Turn back",
+      readHint: "Hard to read? Hit \"Turn 90°\", or pinch to zoom.",
+      notFound: "No such room. Could the number have been misheard?",
     },
   },
 } as const;
