@@ -1011,8 +1011,9 @@ export const copy = {
       scanHint: "扫码跟着看",
       orOpen: "或者打开",
 
-      add: "选幻灯片图片",
-      addHint: "Keynote / PPT / Figma 都能导出成图片，截图也行。一次可以多选，顺序按文件名。",
+      add: "选 PDF 或图片",
+      addHint: "Keynote / PPT / Google Slides / Figma 都是一键导出 PDF——传 PDF 最省事，一个文件、顺序天然是对的。截图和导出的图片也收，多选时按文件名排序。",
+      reading: "正在读 PDF…",
       adding: "上传中 {done}/{total}…",
       slideCount: "{n} 页",
       clear: "清空重传",
@@ -1031,7 +1032,8 @@ export const copy = {
 
       failed: "这一页没传上去，再试一次。",
       tooLarge: "这张图太大了，换一张。",
-      badType: "只收 JPG / PNG / WebP。",
+      badType: "只收 PDF / JPG / PNG / WebP。",
+      badFile: "这个文件读不出来。如果是 PDF，换个方式重新导出一次试试。",
       tooMany: "最多 {n} 页。",
 
       prev: "上一页",
@@ -1829,8 +1831,9 @@ export const copy = {
       scanHint: "Scan to follow",
       orOpen: "or open",
 
-      add: "Choose slide images",
-      addHint: "Keynote, PowerPoint and Figma all export to images, and screenshots work too. Pick them all at once — they go in filename order.",
+      add: "Choose a PDF or images",
+      addHint: "Keynote, PowerPoint, Google Slides and Figma all export a PDF in one keystroke — that is the easy path: one file, and the order is right by construction. Screenshots and exported images work too, in filename order.",
+      reading: "Reading the PDF…",
       adding: "Uploading {done}/{total}…",
       slideCount: "{n} slides",
       clear: "Clear and start over",
@@ -1849,7 +1852,8 @@ export const copy = {
 
       failed: "That slide did not upload. Try it again.",
       tooLarge: "That image is too big. Use another one.",
-      badType: "JPG, PNG or WebP only.",
+      badType: "PDF, JPG, PNG or WebP only.",
+      badFile: "That file could not be read. If it is a PDF, try exporting it again.",
       tooMany: "{n} slides is the limit.",
 
       prev: "Previous slide",

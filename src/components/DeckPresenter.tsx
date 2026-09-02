@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Copy } from "@/lib/content";
 import { MAX_SLIDES } from "@/lib/deck";
+import { expandToPages } from "./deck-pages";
 import { KeepAwake } from "./KeepAwake";
 
 type DeckCopy = Copy["deck"];
@@ -19,38 +20,6 @@ type Props = {
   /** The page the room is on. Not always zero — see `index` below. */
   initialIndex: number;
 };
-
-/**
- * Longest edge and quality for an uploaded page.
- *
- * 1600px is about a retina phone's worth of detail for a slide that will be
- * displayed at most at the width of a hand. The reason to shrink in the
- * browser at all is the venue: a presenter uploading a twelve-page deck of
- * 3MB Keynote exports over mobile data is the slowest thing this feature can
- * be asked to do, and it happens minutes before they have to speak.
- */
-const MAX_EDGE = 1600;
-const QUALITY = 0.85;
-
-async function shrink(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("no 2d context");
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-  const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/jpeg", QUALITY),
-  );
-
-  if (!blob) throw new Error("toBlob failed");
-  return blob;
-}
 
 export function DeckPresenter({
   code,
@@ -85,7 +54,7 @@ export function DeckPresenter({
   const fileInput = useRef<HTMLInputElement>(null);
 
   /**
-   * Uploads the chosen pages, one at a time and in filename order.
+   * Uploads whatever was chosen, one page at a time and in filename order.
    *
    * Sequential rather than parallel for two reasons: the server appends, so
    * the order pages arrive in is the order the deck ends up in, and on a
@@ -93,14 +62,27 @@ export function DeckPresenter({
    * consecutive ones while making the progress count meaningless.
    */
   async function upload(files: File[]) {
-    const chosen = [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-
     setError(null);
-    setProgress({ done: 0, total: chosen.length });
+    // A PDF has to be opened before its page count is known, and on a phone
+    // that is a visible pause. Say so rather than showing a button that has
+    // gone quiet.
+    setProgress({ done: 0, total: 0 });
+
+    let pages;
+    try {
+      pages = await expandToPages(files);
+    } catch {
+      setError(copy.badFile);
+      setProgress(null);
+      if (fileInput.current) fileInput.current.value = "";
+      return;
+    }
+
+    setProgress({ done: 0, total: pages.length });
 
     let count = slideCount;
 
-    for (const [position, file] of chosen.entries()) {
+    for (const [position, page] of pages.entries()) {
       if (count >= MAX_SLIDES) {
         setError(copy.tooMany.replace("{n}", String(MAX_SLIDES)));
         break;
@@ -109,7 +91,7 @@ export function DeckPresenter({
       try {
         const body = new FormData();
         body.append("key", presenterKey);
-        body.append("slide", await shrink(file), "slide.jpg");
+        body.append("slide", await page(), "slide.jpg");
 
         const response = await fetch(`/api/deck/${code}/slides`, { method: "POST", body });
 
@@ -135,7 +117,7 @@ export function DeckPresenter({
         break;
       }
 
-      setProgress({ done: position + 1, total: chosen.length });
+      setProgress({ done: position + 1, total: pages.length });
     }
 
     setProgress(null);
@@ -296,7 +278,7 @@ export function DeckPresenter({
           ref={fileInput}
           className="deck-build__file"
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"
           multiple
           onChange={(event) => {
             const files = Array.from(event.target.files ?? []);
@@ -310,11 +292,13 @@ export function DeckPresenter({
             onClick={() => fileInput.current?.click()}
             disabled={progress !== null}
           >
-            {progress
-              ? copy.adding
-                  .replace("{done}", String(progress.done))
-                  .replace("{total}", String(progress.total))
-              : copy.add}
+            {!progress
+              ? copy.add
+              : progress.total === 0
+                ? copy.reading
+                : copy.adding
+                    .replace("{done}", String(progress.done))
+                    .replace("{total}", String(progress.total))}
           </button>
 
           {slideCount > 0 && (

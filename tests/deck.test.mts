@@ -20,6 +20,8 @@ import {
   subscribe,
 } from "../src/lib/deck.ts";
 import { copy } from "../src/lib/content.ts";
+// Pure helpers only — the rendering half of this module is browser-side.
+import { isPdf, sortByName } from "../src/components/deck-pages.ts";
 
 test("a room code is four digits, so it can be read across a table", () => {
   for (let i = 0; i < 200; i += 1) {
@@ -145,4 +147,29 @@ test("the copy that carries numbers keeps its placeholders", () => {
       }
     }
   }
+});
+
+test("pages come out in filename order, counting numerically", () => {
+  // The file picker hands back selection order, which on a phone is the order
+  // a thumb happened to touch things. `slide-10` sorting before `slide-2` is
+  // the classic way a deck ends up shuffled, and it is invisible until the
+  // talk starts.
+  const names = ["slide-10.png", "slide-2.png", "Slide-1.png", "slide-20.png"];
+
+  assert.deepEqual(
+    sortByName(names.map((name) => ({ name }))).map((f) => f.name),
+    ["Slide-1.png", "slide-2.png", "slide-10.png", "slide-20.png"],
+  );
+});
+
+test("a PDF is recognised by type or by extension", () => {
+  // Some Android pickers hand over an empty `type` for anything not chosen
+  // from the gallery, which would otherwise send a PDF down the image path.
+  const as = (name: string, type: string) => ({ name, type }) as File;
+
+  assert.equal(isPdf(as("talk.pdf", "application/pdf")), true);
+  assert.equal(isPdf(as("talk.pdf", "")), true);
+  assert.equal(isPdf(as("TALK.PDF", "")), true);
+  assert.equal(isPdf(as("slide.png", "image/png")), false);
+  assert.equal(isPdf(as("pdf-notes.png", "image/png")), false);
 });
