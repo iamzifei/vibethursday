@@ -50,9 +50,25 @@
   --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
   --radius-2xl: 24px; --radius-full: 9999px;
 
-  /* ── Motion ────────────────────────────────────────────────────── */
+  /* ── Motion ──────────────────────────────────────────────────────
+     Two curves, because entering and moving are not the same job.
+
+     --ease-out is the default for anything appearing, disappearing or
+     responding to a press. It starts at full speed, so the interface moves in
+     the same instant the reader acts — which is the instant they are watching
+     most closely. The old single curve started at cubic-bezier(0.6, 0, ...):
+     six tenths of the way along the timeline before it committed to moving.
+     That reads as lag even at 150ms, because the delay lands at the front.
+
+     --ease-standard keeps that slow-in slow-out shape and keeps its name, but
+     is now only for things travelling across the screen — a chevron flipping,
+     a disclosure arrow turning — where acceleration out of rest and braking
+     into the destination is what real movement looks like. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-standard: cubic-bezier(0.6, 0, 0.2, 1);
   --dur-fast: 150ms; --dur-normal: 250ms; --dur-slow: 400ms;
+  /* Press feedback is faster than anything else: it is a reply, not a move. */
+  --dur-press: 120ms;
 
   /* ── Surfaces — deep ink with a cool blue-green undertone ──────── */
   --bg-primary: #0a0b0d;
@@ -120,7 +136,7 @@
 
 * {
   box-sizing: border-box;
-  transition-timing-function: var(--ease-standard);
+  transition-timing-function: var(--ease-out);
 }
 
 html {
@@ -459,8 +475,11 @@ textarea:focus-visible,
   font-size: var(--text-xs);
   line-height: 1;
   cursor: pointer;
-  transition: color var(--dur-fast), background var(--dur-fast), border-color var(--dur-fast);
+  transition: color var(--dur-fast), background var(--dur-fast),
+    border-color var(--dur-fast), transform var(--dur-press);
 }
+
+.langs__trigger:active { transform: scale(0.97); }
 
 .langs__trigger:hover {
   color: var(--fg1);
@@ -468,7 +487,7 @@ textarea:focus-visible,
   border-color: var(--border-strong);
 }
 
-.langs__chevron { flex: none; transition: transform var(--dur-fast); }
+.langs__chevron { flex: none; transition: transform var(--dur-fast) var(--ease-standard); }
 .langs__trigger[aria-expanded="true"] .langs__chevron { transform: rotate(180deg); }
 
 .langs__menu {
@@ -488,6 +507,25 @@ textarea:focus-visible,
      be read, not seen through. */
   background: var(--bg-elevated);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+
+  /* The menu grows out of the trigger it belongs to, not out of its own middle
+     and not out of nothing. It is anchored to the right edge below the button,
+     so that corner is where it comes from; scaling from the centre would have
+     it drift left on the way in, away from the thing that opened it.
+
+     0.96 rather than 0, because nothing in the world arrives from no size at
+     all — a menu that starts at zero reads as conjured, one that starts nearly
+     full size reads as opened. React unmounts this on close, so there is no
+     exit to animate: closing is instant, which is the right asymmetry anyway.
+     Browsers without @starting-style get today's behaviour, appearing at once. */
+  transform-origin: top right;
+  transition: opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 .langs__opt {
@@ -518,6 +556,8 @@ textarea:focus-visible,
 .nav__panel .langs__menu {
   top: auto;
   bottom: calc(100% + var(--space-2));
+  /* Opening upward, so the corner it grows from moves to the bottom. */
+  transform-origin: bottom right;
 }
 
 /* Outlined, not filled — and this is a hierarchy decision, not a style one.
@@ -558,9 +598,11 @@ textarea:focus-visible,
   background: none;
   color: var(--fg1);
   cursor: pointer;
+  transition: background var(--dur-fast), transform var(--dur-press);
 }
 
 .nav__toggle:hover { background: var(--bg-tertiary); }
+.nav__toggle:active { transform: scale(0.94); }
 
 .nav__toggle svg path {
   transform-origin: center;
@@ -811,16 +853,23 @@ section[id] { scroll-margin-top: 76px; }
   50%, 100% { opacity: 0; }
 }
 
-/* Hero content rises in on load, each block a beat after the one above it. */
+/* Hero content rises in on load, each block a beat after the one above it.
+
+   The whole cascade used to finish at 1060ms — 700ms of travel behind a curve
+   that spent its first third barely moving, stacked on 100ms steps. On a page
+   whose first job is to say when and where the next one is, that is a third of
+   a second of blank space bought with nothing. Now: ease-out so each block is
+   already moving when it appears, 460ms of travel, and 70ms between blocks,
+   which lands the last one at 670ms. Still a cascade, no longer a wait. */
 .rise {
   opacity: 0;
-  animation: rise 700ms var(--ease-standard) forwards;
+  animation: rise 460ms var(--ease-out) forwards;
 }
 
-.rise-1 { animation-delay: 60ms; }
-.rise-2 { animation-delay: 160ms; }
-.rise-3 { animation-delay: 260ms; }
-.rise-4 { animation-delay: 360ms; }
+.rise-1 { animation-delay: 40ms; }
+.rise-2 { animation-delay: 110ms; }
+.rise-3 { animation-delay: 180ms; }
+.rise-4 { animation-delay: 250ms; }
 
 @keyframes rise {
   from { opacity: 0; transform: translateY(16px); }
@@ -910,10 +959,15 @@ a.pill:hover { border-color: var(--border-strong); background: var(--bg-tertiary
   line-height: 1;
   cursor: pointer;
   transition: background var(--dur-normal), color var(--dur-normal),
-    border-color var(--dur-normal), transform var(--dur-fast);
+    border-color var(--dur-normal), transform var(--dur-press);
 }
 
-.btn:active:not(:disabled) { transform: translateY(1px); }
+/* Press feedback. translateY(1px) moved the button without changing it, which
+   on a 48px control is a nudge you have to be looking for. A scale shrinks the
+   label and the border with it, so the whole control acknowledges the press —
+   and it reads the same whether the finger landed on the middle or the edge.
+   Kept at 0.97: enough to feel, not enough to see as an effect. */
+.btn:active:not(:disabled) { transform: scale(0.97); }
 
 .btn--primary { background: var(--accent); color: var(--accent-contrast); }
 .btn--primary:hover:not(:disabled) { background: var(--accent-hover); color: var(--accent-contrast); }
@@ -1097,7 +1151,7 @@ select.field {
   border-right: 1.5px solid var(--fg3);
   border-bottom: 1.5px solid var(--fg3);
   transform: translateY(-2px) rotate(45deg);
-  transition: transform var(--dur-normal);
+  transition: transform var(--dur-normal) var(--ease-standard);
 }
 
 .disclosure[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
@@ -1382,25 +1436,47 @@ select.field {
 .album__stack picture:nth-child(2) img { filter: brightness(0.62); }
 
 /* Fan out a little on the way in. Kept small: a stack that leaps apart draws
-   attention to the effect rather than to the photographs. */
-.album__summary:hover .album__stack picture:nth-child(1),
+   attention to the effect rather than to the photographs.
+
+   ⚠️ The hover half is gated behind a real pointer. A tap on a touch screen
+   fires :hover and then leaves it stuck there — so on a phone the stack fanned
+   open on the way into the album and was still fanned open on the way back,
+   with nothing to put it away. Keyboard users are not affected by the gate:
+   :focus-visible carries the same states and sits outside it. */
+@media (hover: hover) and (pointer: fine) {
+  .album__summary:hover .album__stack picture:nth-child(1) {
+    transform: rotate(-10deg) translate(-8%, 3.5%) scale(0.965);
+  }
+
+  .album__summary:hover .album__stack picture:nth-child(2) {
+    transform: rotate(7.5deg) translate(8%, -2.5%) scale(0.98);
+  }
+
+  .album__summary:hover .album__stack picture:nth-child(3) {
+    transform: translateY(-2%);
+  }
+
+  .album__summary:hover .album__stack picture:nth-child(3) img {
+    box-shadow:
+      0 0 0 1px rgba(198, 255, 61, 0.35),
+      0 16px 36px rgba(0, 0, 0, 0.6);
+  }
+}
+
 .album__summary:focus-visible .album__stack picture:nth-child(1) {
   transform: rotate(-10deg) translate(-8%, 3.5%) scale(0.965);
 }
 
-.album__summary:hover .album__stack picture:nth-child(2),
 .album__summary:focus-visible .album__stack picture:nth-child(2) {
   transform: rotate(7.5deg) translate(8%, -2.5%) scale(0.98);
 }
 
-.album__summary:hover .album__stack picture:nth-child(3),
 .album__summary:focus-visible .album__stack picture:nth-child(3) {
   transform: translateY(-2%);
 }
 
 /* The lift lands on the image, not the wrapper: the wrapper has no radius, so
    a shadow drawn there would be a hard rectangle behind a rounded print. */
-.album__summary:hover .album__stack picture:nth-child(3) img,
 .album__summary:focus-visible .album__stack picture:nth-child(3) img {
   box-shadow:
     0 0 0 1px rgba(198, 255, 61, 0.35),
@@ -1409,9 +1485,12 @@ select.field {
 
 @media (prefers-reduced-motion: reduce) {
   .album__stack picture { transition: none; }
-  .album__summary:hover .album__stack picture { transform: none; }
-  .album__summary:hover .album__stack picture:nth-child(1) { transform: rotate(-6.5deg) translate(-4%, 2%) scale(0.965); }
-  .album__summary:hover .album__stack picture:nth-child(2) { transform: rotate(4.5deg) translate(4%, -1.5%) scale(0.98); }
+  .album__summary:hover .album__stack picture,
+  .album__summary:focus-visible .album__stack picture { transform: none; }
+  .album__summary:hover .album__stack picture:nth-child(1),
+  .album__summary:focus-visible .album__stack picture:nth-child(1) { transform: rotate(-6.5deg) translate(-4%, 2%) scale(0.965); }
+  .album__summary:hover .album__stack picture:nth-child(2),
+  .album__summary:focus-visible .album__stack picture:nth-child(2) { transform: rotate(4.5deg) translate(4%, -1.5%) scale(0.98); }
 }
 
 /* Once open the cover is redundant — the same photo is the first tile of the
@@ -2611,7 +2690,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   border-right: 1.5px solid currentColor;
   border-bottom: 1.5px solid currentColor;
   transform: translateY(-2px) rotate(45deg);
-  transition: transform var(--dur-fast);
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .fold[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
