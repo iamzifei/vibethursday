@@ -874,6 +874,20 @@ export const copy = {
       empty: "这一场还没有人上墙。",
       photoAlt: "点开看这一场的照片",
       backToWharf: "去码头",
+      // ── 现场签到之后才有的 ──
+      // 「到场」是这个站上第一个真正的到场数：来自当天在房间里扫码点名，
+      // 不是报名数。早于签到功能的场次没有这个数，那句话里的数字仍然是口径。
+      sessionN: "第 {n} 场",
+      attended: "到场 {n} 人",
+      attendedNote: "到场数来自当天现场签到，从 2026-09-10 起才有；更早的场次看那句话。",
+      wallTitle: "那天来了谁",
+      wallTitleToday: "今天来了谁",
+      wallLede: "现场签到、并且同意上墙的人。有成员卡的显示卡片，没有的显示名字和在做什么。",
+      unnamed: "另有 {n} 人到场，选择不显示名字。",
+      noCheckins: "这一场没有现场签到记录。",
+      detailCta: "这一场的页面 →",
+      backToArchive: "← 全部场次",
+      detailDescription: "{title}：那天来了谁、那天的照片和问题。",
     },
 
     /**
@@ -987,6 +1001,48 @@ export const copy = {
       avatarWorking: "处理中…",
       avatarHint: "会自动裁成正方形并压缩，只在你自己的卡片上显示。不传就用名字首字。",
       avatarFailed: "上传失败了，换张图或者换个浏览器再试。",
+    },
+
+    /**
+     * 签到 —— /checkin。桌上的二维码打开的那一页。
+     *
+     * 只做一件事：找到自己的名字，点一下。不登录、不填表——报名时填过的
+     * 东西这里不再问。唯一多问的一句是「今天这一场的页面上能不能出现你」，
+     * 而且是用两个按钮问的，不是一个默认打勾的框：默认打勾等于没人给过的授权。
+     */
+    checkin: {
+      meta: { title: "签到 · Vibe Thursday" },
+      eyebrow: "§ 签到",
+      title: "找到你的名字，点一下。",
+      lede: "报了名的人都在这儿。名字一样的，后面带了一句在做什么。",
+      count: "已到 {n} 人",
+      invalidTitle: "这个码不是今天的。",
+      invalidBody: "签到码只在当天有效。扫一下桌上的那个，或者找主办人。",
+      noCodeTitle: "扫桌上的二维码进来。",
+      noCodeBody: "这一页要带上当天的码才能用。",
+      done: "已签到",
+      walkInCta: "我没报名，现场填一下 →",
+      confirmTitle: "你是 {name}？",
+      notMe: "不是我，回去重选",
+      wallExplain: "今天这一场有一个公开页面，上面是今天来了谁。你可以选择出现在上面，也可以只签到。",
+      wallExplainCard: "你有成员卡，上墙显示的就是那张卡。",
+      wallExplainLight: "上墙显示你的名字和「在做什么」，就是报名时填的那句。",
+      yesWall: "签到，并出现在今天的到场墙上",
+      noWall: "只签到，不上墙",
+      walkInTitle: "没报名？现场填一下。",
+      walkInLede: "三格，一分钟。填完就算报了名，下周不用再填。",
+      walkInName: "怎么称呼",
+      walkInBuilding: "在做什么",
+      walkInBuildingPlaceholder: "一句话就行，不用等做完",
+      walkInWechat: "微信号（选填）",
+      walkInWechatHint: "填了才能拉你进群。",
+      walkInMissing: "名字得填一个。",
+      doneTitle: "签到好了。",
+      doneBody: "今天已到 {n} 人。",
+      doneWall: "看看今天来了谁 →",
+      doneHome: "回首页",
+      rateLimited: "点得太快了，等一分钟再试。",
+      failed: "没签上，再点一次；还不行就找主办人。",
     },
 
     // 桌牌。首场复盘里记了一条：后到的人没写名牌，导致「不知道说话的人是谁」。
@@ -1724,6 +1780,17 @@ export const copy = {
       empty: "Nobody from this session has a card yet.",
       photoAlt: "Photos from this session",
       backToWharf: "Go to the Wharf",
+      sessionN: "Session {n}",
+      attended: "{n} turned up",
+      attendedNote: "Turnout comes from checking in on the day, which started on 10 Sep 2026; for earlier sessions, see the line under each one.",
+      wallTitle: "Who was there",
+      wallTitleToday: "Who is here today",
+      wallLede: "People who checked in on the day and agreed to be shown. A member card where there is one, otherwise a name and what they are building.",
+      unnamed: "{n} more checked in and chose not to be named.",
+      noCheckins: "No check-ins were recorded for this session.",
+      detailCta: "This session’s page →",
+      backToArchive: "← All sessions",
+      detailDescription: "{title}: who was there, the photos and the questions from that morning.",
     },
 
     works: {
@@ -1830,6 +1897,41 @@ export const copy = {
       avatarWorking: "Working…",
       avatarHint: "Cropped square and compressed automatically, shown only on your own card. Without one you get your initial.",
       avatarFailed: "That did not upload. Try another image or another browser.",
+    },
+
+    checkin: {
+      meta: { title: "Check in · Vibe Thursday" },
+      eyebrow: "§ Check in",
+      title: "Find your name and tap it.",
+      lede: "Everyone who signed up is here. Where two people share a name, a few words on what they are building tells them apart.",
+      count: "{n} here so far",
+      invalidTitle: "This code is not today’s.",
+      invalidBody: "A check-in code only works on the day. Scan the one on the table, or ask the organiser.",
+      noCodeTitle: "Scan the code on the table to get here.",
+      noCodeBody: "This page needs today’s code.",
+      done: "Checked in",
+      walkInCta: "I didn’t sign up — add me →",
+      confirmTitle: "Are you {name}?",
+      notMe: "Not me, go back",
+      wallExplain: "Today’s session has a public page showing who is here. You can be on it, or just check in.",
+      wallExplainCard: "You have a member card, so that is what the page would show.",
+      wallExplainLight: "The page would show your name and what you are building — the line you gave when you signed up.",
+      yesWall: "Check in and appear on today’s page",
+      noWall: "Just check in, don’t show me",
+      walkInTitle: "Didn’t sign up? Add yourself.",
+      walkInLede: "Three fields, one minute. It counts as signing up, so next week you won’t need to.",
+      walkInName: "Your name",
+      walkInBuilding: "What you are building",
+      walkInBuildingPlaceholder: "One line is fine. It does not have to be finished.",
+      walkInWechat: "WeChat ID (optional)",
+      walkInWechatHint: "Needed to add you to the group.",
+      walkInMissing: "A name is required.",
+      doneTitle: "You’re in.",
+      doneBody: "{n} here today so far.",
+      doneWall: "See who is here today →",
+      doneHome: "Back to the home page",
+      rateLimited: "Too many taps — give it a minute.",
+      failed: "That didn’t go through. Tap again, or ask the organiser.",
     },
 
     badge: {

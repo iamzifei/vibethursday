@@ -16,15 +16,23 @@ import type { Lane } from "./questions.ts";
  * — and the archive showing a different set from the Wharf would be the kind
  * of drift that is invisible until somebody notices two pages disagreeing.
  *
- * ★ What this file deliberately does NOT do is count anybody. Headcounts stay
- * in the hand-written note on each session, because that note says both numbers
- * — how many signed up and how many turned up — and those are measurably
- * different. A live "N signed up" printed next to a photo of the room would be
- * a signup count wearing an attendance count's clothes.
+ * ★ This file does not count signups, and still does not. Headcounts from
+ * before check-in existed stay in the hand-written note on each session,
+ * because that note says both numbers — how many signed up and how many turned
+ * up — and those are measurably different. A live "N signed up" printed next
+ * to a photo of the room would be a signup count wearing an attendance count's
+ * clothes.
  *
- * The one number computed here is how many people **with a published card**
- * signed up for that session. It is not attendance either, and it is labelled
- * as what it is.
+ * The one attendance figure here — `attended` — is the count of people who
+ * checked in on the day, passed in from the check-in table. It is the only
+ * number on this site that measures who was in the room, and it exists only
+ * for sessions since check-in started; earlier rows carry null, not zero.
+ *
+ * The other number is how many people **with a published card** signed up
+ * for that session. It is not attendance, and it is labelled as what it is.
+ *
+ * A session with check-ins but no entry in the copy bundle yet — today's, on
+ * the day — is still a row: title and photos come later, the people came now.
  */
 
 /** A session as `content.ts` describes it. Photos and prose, no numbers. */
@@ -37,17 +45,23 @@ export type ArchiveSession = {
 
 export type ArchiveRow = {
   date: string;
-  title: string;
-  note: string;
+  /** 1-based, by date, across every session including ones not yet written up. */
+  index: number;
+  /** Null until the session has been written up in the copy bundle. */
+  title: string | null;
+  note: string | null;
   /**
    * The painted poster for that morning, without a width or an extension.
    *
-   * Numbered by ascending date, which has to match `scripts/session-poster.mjs`
-   * exactly: it is the same numbering for the same reason — adding an older
-   * session must not silently repoint every other session's picture.
+   * Numbered by ascending date among the written-up sessions, which has to
+   * match `scripts/session-poster.mjs` exactly: it is the same numbering for
+   * the same reason — adding an older session must not silently repoint every
+   * other session's picture. Null for a session that has no write-up yet.
    */
-  poster: string;
+  poster: string | null;
   photos: ArchiveSession["photos"];
+  /** How many checked in on the day. Null before check-in existed. */
+  attended: number | null;
   /** What was on the Wharf for that session, in wall order. */
   questions: { slug: string; name: string; topic: string }[];
   /** People with a published card who signed up for that session. */
@@ -75,18 +89,29 @@ export function buildArchive(
     session: string | null;
     lane: Lane;
   }[],
+  attendance: ReadonlyMap<string, number> = new Map(),
 ): ArchiveRow[] {
-  const numbered = [...sessions]
+  const written = [...sessions]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .map((session, index) => ({
       ...session,
       poster: `/sessions/session-${String(index + 1).padStart(2, "0")}`,
     }));
 
+  // A session that only the check-in table knows about yet.
+  const unwritten = [...attendance.keys()]
+    .filter((date) => !sessions.some((session) => session.date === date))
+    .map((date) => ({ date, title: null, note: null, poster: null, photos: [] as ArchiveSession["photos"] }));
+
+  const numbered = [...written, ...unwritten]
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map((session, index) => ({ ...session, index: index + 1 }));
+
   return numbered
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map((session) => ({
       ...session,
+      attended: attendance.get(session.date) ?? null,
       // Only the answerable lane. The archive is a record of what a morning
       // was about, and "I came to meet people" — true and useful as it is on
       // the wall — is not what that row is for.

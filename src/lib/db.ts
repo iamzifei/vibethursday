@@ -5,6 +5,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 // which cannot resolve the tsconfig path alias.
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
+import type { CheckinSource } from "./checkin.ts";
 
 /**
  * Postgres access.
@@ -352,6 +353,34 @@ export function ensureSchema(): Promise<void> {
         PRIMARY KEY (code, idx)
       )
     `);
+
+    // ── Check-ins ────────────────────────────────────────────────────
+    // Who was actually in the room, one row per person per session. This is
+    // the only attendance record on the site: `signups.sessions` says who
+    // meant to come, this says who tapped their name on the day.
+    //
+    // `on_wall` is the person's own answer at check-in to "may today's page
+    // show your name?". It is asked every time, because the answer is about
+    // one morning, not about them.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS checkins (
+        id          bigserial PRIMARY KEY,
+        session     date NOT NULL,
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        on_wall     boolean NOT NULL DEFAULT true,
+        -- 'qr' from the code in the room, 'walk-in' via the form for people
+        -- who never signed up, 'admin' when the organiser ticked them.
+        source      text NOT NULL,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Tapping twice is one attendance. The same one-row-per-person-per-session
+    // shape as `wharf_replies_coming_idx`.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS checkins_session_signup_idx
+      ON checkins (session, signup_id)
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -581,6 +610,8 @@ export type SignupRow = {
   ai_models: string[];
   /** Monthly AI spend band. Null when they did not answer. */
   ai_spend: string | null;
+  /** Sessions this person checked in to on the day, oldest first. */
+  checked_in: string[];
   created_at: string;
 };
 
@@ -599,6 +630,14 @@ export async function listSignups(): Promise<SignupRow[]> {
             ) AS sessions,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
             availability, ai_models, ai_spend, source, lang, bot_check,
+            -- The days they were actually in the room, from the check-in
+            -- table. Formatted in SQL like sessions above, for the same reason.
+            COALESCE(
+              (SELECT array_agg(to_char(c.session, 'YYYY-MM-DD') ORDER BY c.session)
+                 FROM checkins c
+                WHERE c.signup_id = signups.id),
+              '{}'
+            ) AS checked_in,
             to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
      FROM signups
      ORDER BY created_at DESC`,
@@ -1187,7 +1226,8 @@ export async function deleteReply(replyId: string): Promise<void> {
  *
  * ⚠️ It is a count of *people*, not of attendances, and not of who turned up.
  * Four sessions in, signing up and being in the room are measurably different
- * numbers, so nothing built on this may call it attendance.
+ * numbers, so nothing built on this may call it attendance. Attendance is a
+ * separate record: see `countCheckins` and the check-in section below.
  */
 export async function countSignups(): Promise<number> {
   await ensureSchema();
@@ -1759,4 +1799,148 @@ export async function closeStaleDecks(): Promise<number> {
   );
 
   return result.rowCount ?? 0;
+}
+
+/* =============================================================================
+   Check-ins
+============================================================================= */
+
+/** One person on the day's list, as the check-in page sees them. */
+export type RosterRow = {
+  id: string;
+  name: string;
+  building: string | null;
+  sessions: string[];
+  /** Whether a published, not-hidden card exists — what the wall would show. */
+  has_card: boolean;
+};
+
+/**
+ * Everyone on the list for a session: signed up for it, or already checked in
+ * to it. No contact details — this goes to a page anyone with the day's code
+ * can open, and a name plus a few words of "what I'm building" is all it
+ * takes to find yourself on it.
+ */
+export async function listRoster(session: string): Promise<RosterRow[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<RosterRow>(
+    `SELECT g.id::text AS id, g.name, g.building,
+            COALESCE(
+              (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s) FROM unnest(g.sessions) AS s),
+              '{}'
+            ) AS sessions,
+            EXISTS (
+              SELECT 1 FROM members m
+               WHERE m.signup_id = g.id AND m.published_at IS NOT NULL AND NOT m.hidden
+            ) AS has_card
+       FROM signups g
+      WHERE $1::date = ANY(g.sessions)
+         OR EXISTS (SELECT 1 FROM checkins c WHERE c.signup_id = g.id AND c.session = $1::date)
+      ORDER BY g.created_at`,
+    [session],
+  );
+
+  return result.rows;
+}
+
+export type CheckinRow = {
+  signup_id: string;
+  name: string;
+  building: string | null;
+  wechat: string | null;
+  on_wall: boolean;
+  source: CheckinSource;
+  created_at: string;
+  /** Null when this person never claimed a card. */
+  member: { slug: string; published: boolean; hidden: boolean } | null;
+};
+
+/**
+ * Who has checked in to a session, earliest first.
+ *
+ * Carries the WeChat ID because the organiser's view needs it to tell two
+ * people with the same name apart. The public pages must not pass this row
+ * through: they read it, keep the name, and drop the rest.
+ */
+export async function listCheckins(session: string): Promise<CheckinRow[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<
+    Omit<CheckinRow, "member"> & { slug: string | null; published: boolean | null; hidden: boolean | null }
+  >(
+    `SELECT c.signup_id::text AS signup_id, g.name, g.building, g.wechat,
+            c.on_wall, c.source,
+            to_char(c.created_at AT TIME ZONE 'Australia/Sydney', 'HH24:MI') AS created_at,
+            m.slug, (m.published_at IS NOT NULL) AS published, m.hidden
+       FROM checkins c
+       JOIN signups g ON g.id = c.signup_id
+       LEFT JOIN members m ON m.signup_id = g.id
+      WHERE c.session = $1::date
+      ORDER BY c.created_at, c.id`,
+    [session],
+  );
+
+  return result.rows.map(({ slug, published, hidden, ...row }) => ({
+    ...row,
+    member: slug ? { slug, published: published === true, hidden: hidden === true } : null,
+  }));
+}
+
+/**
+ * Records that someone is in the room.
+ *
+ * Idempotent on (session, person): tapping twice, or tapping after the
+ * organiser already ticked you, keeps one row. When the person taps, their
+ * wall answer replaces the old one, so "actually, do show my name" is a
+ * matter of tapping again — and the source becomes theirs. When the
+ * organiser ticks a name that is already there, nothing changes: the
+ * organiser cannot answer "show my name" on somebody else's behalf, in either
+ * direction.
+ */
+export async function checkIn(input: {
+  session: string;
+  signupId: string;
+  onWall: boolean;
+  source: CheckinSource;
+}): Promise<void> {
+  await ensureSchema();
+
+  const onConflict =
+    input.source === "admin"
+      ? `DO NOTHING`
+      : `DO UPDATE SET on_wall = EXCLUDED.on_wall, source = EXCLUDED.source`;
+
+  await getPool().query(
+    `INSERT INTO checkins (session, signup_id, on_wall, source)
+     VALUES ($1::date, $2, $3, $4)
+     ON CONFLICT (session, signup_id) ${onConflict}`,
+    [input.session, input.signupId, input.onWall, input.source],
+  );
+}
+
+/** Takes a check-in back. For the organiser, when a tap was a mistake. */
+export async function undoCheckin(session: string, signupId: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `DELETE FROM checkins WHERE session = $1::date AND signup_id = $2`,
+    [session, signupId],
+  );
+}
+
+/**
+ * How many checked in, per session that has any. The number the archive
+ * shows as "turned up" — the first figure on this site that is one.
+ */
+export async function countCheckins(): Promise<Map<string, number>> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ session: string; n: string }>(
+    `SELECT to_char(session, 'YYYY-MM-DD') AS session, count(*)::text AS n
+       FROM checkins
+      GROUP BY session`,
+  );
+
+  return new Map(result.rows.map((row) => [row.session, Number(row.n)]));
 }

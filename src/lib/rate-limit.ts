@@ -19,7 +19,15 @@ const MAX_PER_WINDOW = 6;
 const cache = globalThis as unknown as { __vibeThursdayRates?: Map<string, Window> };
 cache.__vibeThursdayRates ??= new Map();
 
-export function checkRateLimit(key: string): { allowed: boolean; retryAfterSeconds: number } {
+/**
+ * `max` overrides the per-window cap for a key. The default fits a signup
+ * form; a room full of phones on one café Wi-Fi shares a single address, so
+ * check-in needs a cap sized for a room, not a person.
+ */
+export function checkRateLimit(
+  key: string,
+  max: number = MAX_PER_WINDOW,
+): { allowed: boolean; retryAfterSeconds: number } {
   const windows = cache.__vibeThursdayRates!;
   const now = Date.now();
 
@@ -38,7 +46,7 @@ export function checkRateLimit(key: string): { allowed: boolean; retryAfterSecon
 
   existing.count += 1;
 
-  if (existing.count > MAX_PER_WINDOW) {
+  if (existing.count > max) {
     return { allowed: false, retryAfterSeconds: Math.ceil((existing.resetAt - now) / 1000) };
   }
 

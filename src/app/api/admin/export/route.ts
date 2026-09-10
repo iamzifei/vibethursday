@@ -10,6 +10,9 @@ const COLUMNS = [
   "demo_intent",
   "first_session",
   "sessions",
+  // Which of those they were actually there for, from check-ins. Empty for
+  // everyone before check-in existed, and for anyone who did not tap.
+  "checked_in",
   "availability",
   "ai_models",
   "ai_spend",

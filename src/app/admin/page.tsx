@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
 import QRCode from "qrcode";
+import { CheckinDesk } from "@/components/CheckinDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { listAllMembers, listRecentAnswers, listRecentDecks, listSignups, listWharfQuestions } from "@/lib/db";
-import { formatSession, nextThursdays } from "@/lib/sessions";
+import { buildRoster, checkinCode } from "@/lib/checkin";
+import {
+  countCheckins,
+  listAllMembers,
+  listCheckins,
+  listRecentAnswers,
+  listRecentDecks,
+  listRoster,
+  listSignups,
+  listWharfQuestions,
+} from "@/lib/db";
+import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
+import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 
 import { countPerSession } from "@/lib/signup-stats";
@@ -38,13 +50,30 @@ export default async function AdminPage({ searchParams }: PageProps) {
     );
   }
 
-  const [signups, members, questions, answers, decks] = await Promise.all([
-    listSignups(),
-    listAllMembers(),
-    listWharfQuestions(),
-    listRecentAnswers(),
-    listRecentDecks(),
-  ]);
+  // The desk is set up for the session in focus, not the next one: on a
+  // Thursday afternoon `nextThursdays` has already rolled to next week, and
+  // the afternoon is when the organiser fixes up who was there this morning.
+  const desk = focusSession().date;
+
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins] =
+    await Promise.all([
+      listSignups(),
+      listAllMembers(),
+      listWharfQuestions(),
+      listRecentAnswers(),
+      listRecentDecks(),
+      countCheckins(),
+      listRoster(desk),
+      listCheckins(desk),
+    ]);
+
+  const deskUrl = `${await requestOrigin()}/checkin?s=${desk}&k=${checkinCode(desk)}`;
+  const deskQr = await QRCode.toString(deskUrl, {
+    type: "svg",
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#0a0b0d", light: "#ffffff" },
+  });
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
@@ -170,6 +199,19 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
         <PosterExport {...poster} />
       </section>
+
+      {/* ── Check-in ─────────────────────────────────────────────────
+          The code for the table and the list of who has tapped it. The one
+          place on the site that knows who was in the room. */}
+      <CheckinDesk
+        adminKey={key!}
+        session={desk}
+        isToday={desk === sydneyToday().toISOString().slice(0, 10)}
+        url={deskUrl}
+        qrSvg={deskQr}
+        roster={buildRoster(desk, deskRoster, deskCheckins)}
+        checkins={deskCheckins}
+      />
 
       {/* ── Casting a demo to the room ───────────────────────────────
           There is no projector at the venue, so a demo is either three people
@@ -419,7 +461,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <div className="group-head">
           <h2 className="h3">Per session</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            Signed up, not turnout — the first session ran at about 70–77% of it.
+            Signed up is not turnout — the first session ran at about 70–77% of it. Turned up
+            is from check-ins, and only exists since they started.
           </span>
         </div>
 
@@ -438,6 +481,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
               <tr>
                 <th scope="col">Session</th>
                 <th scope="col">Signed up</th>
+                <th scope="col">Turned up</th>
                 <th scope="col">Want to demo</th>
               </tr>
             </thead>
@@ -449,6 +493,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     {session.date === nextSession ? " ← next" : ""}
                   </td>
                   <td className="mono">{session.total}</td>
+                  <td className="mono">{attendance.get(session.date) ?? "—"}</td>
                   <td className="mono">{session.wantsToDemo}</td>
                 </tr>
               ))}
