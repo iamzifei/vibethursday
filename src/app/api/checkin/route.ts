@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { checkIn, saveSignup } from "@/lib/db";
+import { checkIn, listRoster, saveSignup } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { sydneyToday } from "@/lib/sessions";
@@ -80,6 +80,12 @@ export async function POST(request: Request) {
 
   try {
     if (signupId && /^\d+$/.test(signupId)) {
+      // Only a name on today's list. Ids are sequential and the code is on a
+      // café table, so without this anyone in the room could walk every past
+      // signup onto today's public page one id at a time.
+      const onRoster = (await listRoster(session)).some((row) => row.id === signupId);
+      if (!onRoster) return back({ err: "failed" });
+
       await checkIn({ session, signupId, onWall, source: "qr" });
       return back({ done: signupId });
     }

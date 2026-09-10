@@ -149,9 +149,9 @@ test("the wall names only those who agreed, and uses a live card when there is o
   assert.equal(wall.total, 5, "everyone who checked in counts");
   assert.equal(wall.unnamed, 1, "Eve chose not to be named, card or no card");
   assert.deepEqual(wall.entries, [
-    { kind: "card", slug: "adam" },
-    { kind: "light", name: "Bea", building: "a draft card" },
-    { kind: "light", name: "Carl", building: "took the card down" },
-    { kind: "light", name: "Dana", building: "no card at all" },
+    { kind: "card", slug: "adam", signup_id: "Adam", name: "Adam", building: null },
+    { kind: "light", signup_id: "Bea", name: "Bea", building: "a draft card" },
+    { kind: "light", signup_id: "Carl", name: "Carl", building: "took the card down" },
+    { kind: "light", signup_id: "Dana", name: "Dana", building: "no card at all" },
   ]);
 });

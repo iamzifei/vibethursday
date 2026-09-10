@@ -86,7 +86,8 @@ assert.equal(rows.length, 2);
 let wall = buildWall(rows);
 assert.equal(wall.total, 2);
 assert.equal(wall.unnamed, 1, "Ben 说了不上墙");
-assert.deepEqual(wall.entries, [{ kind: "card", slug: rows[0].member!.slug }], "Ada 有卡，墙上是她的卡");
+assert.deepEqual(wall.entries.map((entry) => [entry.kind, entry.name]), [["card", "Ada"]], "Ada 有卡，墙上是她的卡");
+assert.equal(wall.entries[0].kind === "card" && wall.entries[0].slug, rows[0].member!.slug);
 check("签到 → 上墙与否照本人的答案");
 
 // 3 ── Tapping twice is one row, and the second answer wins.
@@ -115,10 +116,10 @@ assert.deepEqual(
   ["Ada", "Ben", "Cai", "Dee"],
 );
 wall = buildWall(await listCheckins(TODAY));
-assert.deepEqual(wall.entries.filter((entry) => entry.kind === "light"), [
-  { kind: "light", name: "Ben", building: "在做 B" },
-  { kind: "light", name: "Dee", building: "现场来的" },
-]);
+assert.deepEqual(
+  wall.entries.filter((entry) => entry.kind === "light").map((entry) => [entry.name, entry.building]),
+  [["Ben", "在做 B"], ["Dee", "现场来的"]],
+);
 check("walk-in → 进报名库 + 签到 + 轻卡上墙");
 
 // 6 ── The export says who was there, per session, and nothing more.

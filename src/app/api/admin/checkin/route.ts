@@ -34,12 +34,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
 
-  if (action === "undo") {
-    await undoCheckin(session, signupId);
-  } else {
-    // The organiser ticking a name is a headcount, not a consent: they
-    // cannot answer "show my name on the page" for somebody else.
-    await checkIn({ session, signupId, onWall: false, source: "admin" });
+  try {
+    if (action === "undo") {
+      await undoCheckin(session, signupId);
+    } else {
+      // The organiser ticking a name is a headcount, not a consent: they
+      // cannot answer "show my name on the page" for somebody else.
+      await checkIn({ session, signupId, onWall: false, source: "admin" });
+    }
+  } catch {
+    // An id that is not a signup fails the foreign key; a stale form, not a
+    // server fault.
+    return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
 
   return NextResponse.redirect(

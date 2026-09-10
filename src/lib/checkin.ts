@@ -175,10 +175,12 @@ export type WallCheckin = {
 };
 
 export type WallEntry =
-  /** A live member card; the page renders the full card by slug. */
-  | { kind: "card"; slug: string }
+  /** A live member card; the page renders the full card by slug. Name and
+   *  building ride along so the page can still show the person if the card
+   *  leaves the wall between the check-in and the render. */
+  | { kind: "card"; slug: string; signup_id: string; name: string; building: string | null }
   /** Someone with no live card who agreed to be named: name and what they are building. */
-  | { kind: "light"; name: string; building: string | null };
+  | { kind: "light"; signup_id: string; name: string; building: string | null };
 
 export type Wall = {
   entries: WallEntry[];
@@ -207,10 +209,12 @@ export function buildWall(rows: readonly WallCheckin[]): Wall {
       continue;
     }
 
+    const person = { signup_id: row.signup_id, name: row.name.trim(), building: row.building };
+
     if (row.member && row.member.published && !row.member.hidden) {
-      entries.push({ kind: "card", slug: row.member.slug });
+      entries.push({ kind: "card", slug: row.member.slug, ...person });
     } else {
-      entries.push({ kind: "light", name: row.name.trim(), building: row.building });
+      entries.push({ kind: "light", ...person });
     }
   }
 

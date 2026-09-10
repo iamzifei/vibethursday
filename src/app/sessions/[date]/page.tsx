@@ -142,18 +142,15 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
                         }
                       }
 
-                      const name = entry.kind === "card" ? entry.slug : entry.name;
-                      const building = entry.kind === "light" ? entry.building : null;
-
                       return (
-                        <article className="mcard mcard--light" key={`${entry.kind}-${name}`}>
+                        <article className="mcard mcard--light" key={entry.signup_id}>
                           <div className="mcard__head">
                             <span className="monogram" aria-hidden="true">
-                              {monogram(name)}
+                              {monogram(entry.name)}
                             </span>
                             <div className="mcard__id">
-                              <h3 className="mcard__name">{name}</h3>
-                              {building && <p className="mcard__headline">{building}</p>}
+                              <h3 className="mcard__name">{entry.name}</h3>
+                              {entry.building && <p className="mcard__headline">{entry.building}</p>}
                             </div>
                           </div>
                         </article>
