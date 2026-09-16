@@ -150,7 +150,7 @@ function draw(
 
   ctx.fillStyle = FG3;
   ctx.font = `400 28px ${MONO}`;
-  ctx.fillText("悉尼 · 每周四 10:00", textX, fy);
+  ctx.fillText("悉尼 · 每周四 10:30", textX, fy);
   fy += 56;
 
   // Each wrapped line needs its own baseline — without the increment they were

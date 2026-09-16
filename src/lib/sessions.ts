@@ -57,13 +57,12 @@ function sydneyHour(): number {
 }
 
 /**
- * Doors are at 10:00 and the session proper starts at 10:30; either way it is
- * over by 12:00, which is all this constant needs to know.
+ * Doors and the session proper are both at 10:30 (the venue opens then);
+ * either way it is over by 12:00, which is all this constant needs to know.
  *
  * Keep this in step with the times in `content.ts` — people may stay on
  * afterwards, and usually do, but that is not part of the session anyone signs
- * up for. The 10:30 start is a display-only distinction: it exists because
- * nobody was in the room before then, not because signups behave differently.
+ * up for.
  */
 const SESSION_END_HOUR = 12;
 

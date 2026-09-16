@@ -92,7 +92,7 @@ export const copy = {
       subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
-        { label: "时间", value: "每周四 10:00 开门 · 10:30 开始", href: null, linkLabel: null },
+        { label: "时间", value: "每周四 10:30 开门 · 开门就开始", href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
         // first screen rather than in a message the day before.
         {
@@ -158,17 +158,17 @@ export const copy = {
       title: "每周同一个节奏，不变。",
       slots: [
         {
-          time: "10:00–10:30",
+          time: "10:30–10:45",
           title: "开门 · 点杯喝的 · 随便聊",
-          note: "不急着开场。场地在二楼，上楼前先把饮料点了——中途服务员进来问单会打断正在说话的人。晚到不会错过什么。",
+          note: "不急着开场。进门先把饮料点了——中途服务员进来问单会打断正在说话的人。场地 10:30 才开门，不用来更早；晚到也不会错过什么。",
         },
         {
-          time: "10:30–10:40",
+          time: "10:45–10:55",
           title: "只有新朋友做个自我介绍",
           note: "45 秒，三件事：怎么称呼、在做什么、今天想拿走什么。来过的人不用再讲一遍——三十个人轮一圈要半小时，而且谁也记不住三十个人。",
         },
         {
-          time: "10:40–11:50",
+          time: "10:55–11:50",
           title: "小桌",
           note: "分 3–4 桌，每桌一个话题或一个产品。随时串桌，想听哪个去哪个——不用等到聊不下去才走，走开不用打招呼也不用说再见，这个形式本来就该这么用。",
         },
@@ -252,7 +252,7 @@ export const copy = {
         {
           date: "2026-09-10",
           title: "第六场",
-          note: "报名十九个。这一场没分小桌，一张长桌沿着落地窗坐到底，谁讲大家都听得见；十一点半前后陆续散到吧台边站着聊，最后一拨人一起走去吃了午饭。",
+          note: "报名十九个，照片里数下来二十出头。这一场换了个结构：先是两个人做 Demo——一个面向房产中介的地图应用，一个讲用 AI 剪自媒体视频的经验；接着是全场一起答的 Q&A，那天的题是：AI 时代，普通人该把一项技能钻得更深，还是横着多学几样；最后半小时留给大家认识人。",
           photos: [
             { src: "/photos/session-06-1", alt: "靠窗的长桌坐满了人，窗外是达令港", width: 1600, height: 2133 },
             { src: "/photos/session-06-2", alt: "从长桌另一头看过去，一整排人沿着落地窗坐开", width: 1600, height: 2133 },
@@ -368,7 +368,7 @@ export const copy = {
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
         // weekday mornings pick one without ever noticing the time.
-        sessionTimeSuffix: "上午 10:00",
+        sessionTimeSuffix: "上午 10:30",
         // Without this option someone who works Thursdays has two choices:
         // pick a date they will not attend, or close the page. The first
         // corrupts the headcount the table is booked against; the second is
@@ -605,7 +605,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "Chatswood The Avenue · 每周四 10:00 开门，10:30 开始",
+      location: "Chatswood The Avenue · 每周四 10:30 开门，开门就开始",
       supportLink: "这个活动的开销",
       // The label on the GitHub mark. It is never shown — the mark carries the
       // link — but it is what a screen reader announces, so it is translated
@@ -1166,7 +1166,7 @@ export const copy = {
       subtitle: "Sydney · every Thursday morning",
       lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
-        { label: "When", value: "Thursdays · doors 10am, starts 10:30am", href: null, linkLabel: null },
+        { label: "When", value: "Thursdays · doors 10:30am, starts on the dot", href: null, linkLabel: null },
         {
           label: "Where",
           value: "The Avenue · Chatswood",
@@ -1226,17 +1226,17 @@ export const copy = {
       title: "Same rhythm every week.",
       slots: [
         {
-          time: "10:00–10:30am",
+          time: "10:30–10:45am",
           title: "Doors · order a drink · open chat",
-          note: "No rush to start. We are upstairs, so order downstairs on your way up — a waiter taking orders mid-session cuts across whoever is talking. Arriving late costs you nothing.",
+          note: "No rush to start. Order a drink on your way in — a waiter taking orders mid-session cuts across whoever is talking. The venue does not open before 10:30, so there is nothing to gain by arriving early, and arriving late costs you nothing.",
         },
         {
-          time: "10:30–10:40am",
+          time: "10:45–10:55am",
           title: "First-timers introduce themselves",
           note: "Forty-five seconds, three things: your name, what you are building, what you want to walk away with. Regulars skip it — thirty people take half an hour to go around, and nobody remembers thirty names anyway.",
         },
         {
-          time: "10:40–11:50am",
+          time: "10:55–11:50am",
           title: "Small tables",
           note: "Three or four tables, one topic or one product each. Move between them whenever you like — you do not have to wait until a conversation dries up, and leaving needs no hello and no goodbye. That is how this format is meant to work.",
         },
@@ -1319,7 +1319,7 @@ export const copy = {
         {
           date: "2026-09-10",
           title: "Session six",
-          note: "19 signed up. No small tables this time: one long table ran the length of the windows, so whoever was talking, everyone could hear. Around half past eleven it drifted to people standing at the bar, and the last group walked off to lunch together.",
+          note: "19 signed up; counting from the photographs, a little over twenty came. The structure changed this time. Two demos to open — a map-based app for real-estate agents, and one person's experience of cutting social video with AI — then a Q&A the whole room answered together. That morning's question: in the AI era, should an ordinary person go deeper on one skill or broader across several? The last half hour was left for meeting people.",
           photos: [
             { src: "/photos/session-06-1", alt: "The long table by the windows, every seat taken, Darling Harbour outside", width: 1600, height: 2133 },
             { src: "/photos/session-06-2", alt: "From the far end of the long table, a whole row of people along the glass", width: 1600, height: 2133 },
@@ -1410,7 +1410,7 @@ export const copy = {
         demoIntentHint:
           "The bar is low: it does not have to be finished, there are no slides, and something you are half-way through and stuck on makes for a better table than something that works. You do not even need a product — one question is enough to host a table.",
         session: "Which session are you coming to?",
-        sessionTimeSuffix: "10am",
+        sessionTimeSuffix: "10:30am",
         sessionNone: "Mornings do not work for me (evening or weekend, please)",
         sessionNoneHint:
           "Thursday mornings are working hours for a lot of people. Pick this and you are still on the list — if an evening or weekend one ever happens, this is who I go to.",
@@ -1615,7 +1615,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "The Avenue, Chatswood · Thursdays, doors 10am",
+      location: "The Avenue, Chatswood · Thursdays, doors 10:30am",
       supportLink: "What this costs",
       sourceLink: "This site's source on GitHub",
     },

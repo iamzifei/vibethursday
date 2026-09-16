@@ -11,7 +11,7 @@ export type PosterQuestion = {
 type Props = {
   /** "9月3日（周四）", already formatted and already Sydney's date. */
   date: string;
-  /** "10:00 开门 · 10:30 开始". */
+  /** "10:30 开门 · 开门就开始". */
   time: string;
   /** "The Avenue · Chatswood". */
   venue: string;

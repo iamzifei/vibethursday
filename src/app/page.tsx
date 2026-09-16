@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   // The time is appended here rather than inside formatSession, which is also
   // used on the member wall to list which sessions someone attended — "8月6日
-  // （周四）上午 10:00 · 8月13日（周四）上午 10:00" would be noise there. In the
+  // （周四）上午 10:30 · 8月13日（周四）上午 10:30" would be noise there. In the
   // picker it is the point: a bare date lets someone who works weekday
   // mornings choose one without ever registering that it is a morning.
   const sessions = nextThursdays(6).map((value) => ({
