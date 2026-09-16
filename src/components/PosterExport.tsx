@@ -13,7 +13,7 @@ type Props = {
   date: string;
   /** "10:00 开门 · 10:30 开始". */
   time: string;
-  /** "Vogue Cafe · 达令港". */
+  /** "The Avenue · Chatswood". */
   venue: string;
   /** How many have signed up for this one so far. */
   signups: number;

@@ -4,10 +4,10 @@
  *
  * ★ Not the Harbour Bridge and the Opera House. Those are on the home page, and
  * repeating them here would make the two pages look like one page — but the
- * better reason is that they are the wrong harbour. The meetup happens at
- * 35 Wheat Road, which is on Darling Harbour, about eighty metres from the
- * eastern end of Pyrmont Bridge. This page is named after a wharf; it should be
- * the wharf people are actually standing on.
+ * better reason is that they are the wrong harbour. The first sessions were
+ * held at 35 Wheat Road, which is on Darling Harbour, about eighty metres from
+ * the eastern end of Pyrmont Bridge. This page is named after that wharf, and
+ * the name outlived the venue; the drawing stays with the name.
  *
  * Same halftone technique as `SydneySkyline` — a dot pattern showing through a
  * silhouette mask — and the same reasons: a few hundred bytes of inline SVG,

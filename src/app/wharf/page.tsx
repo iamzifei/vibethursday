@@ -112,8 +112,9 @@ export default async function WharfPage({ searchParams }: PageProps) {
       <main id="main">
         <header className="wharf-hero">
           {/* Pyrmont Bridge, the tall ship's masts and the Anzac Bridge
-              pylons — Darling Harbour, eighty metres from the room this page is
-              about. Deliberately not the home page's Harbour Bridge: repeating
+              pylons — Darling Harbour, eighty metres from the room the first
+              sessions were held in, which is where this page got its name.
+              Deliberately not the home page's Harbour Bridge: repeating
               it would make the two pages look like one, and it is the wrong
               harbour anyway. */}
           <DarlingHarbour />

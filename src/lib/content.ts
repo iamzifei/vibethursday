@@ -97,9 +97,9 @@ export const copy = {
         // first screen rather than in a message the day before.
         {
           label: "地点",
-          value: "Vogue Cafe · 达令港",
-          href: "https://maps.google.com/?q=Vogue+Cafe+Retail+5,+35+Wheat+Road,+Darling+Harbour+NSW+2000",
-          linkLabel: "Retail 5, 35 Wheat Road, Darling Harbour →",
+          value: "The Avenue · Chatswood",
+          href: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
+          linkLabel: "465 Victoria Avenue, Chatswood →",
         },
         // This card is already asking "what does it cost", so it is the one
         // place the cost page can be linked without adding any weight to the
@@ -290,7 +290,7 @@ export const copy = {
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
-        "时间雷打不动，每周四上午同一时段。接下来几场固定在达令港的 Vogue Cafe（地址在首屏），走路到 Town Hall 或 Darling Harbour 都很近。万一临时换场地，前一天发在群里。",
+        "时间雷打不动，每周四上午同一时段。接下来几场固定在 Chatswood 的 The Avenue（地址在首屏），Chatswood 火车站出来就到。万一临时换场地，前一天发在群里。",
         "免费，不售票。报名只是为了估人数。",
         "开一桌永远是可选的。想开就开，不想开就串桌听，只来听的人一样欢迎。",
         "展示可以，插播不行。你做的东西就是你的宣发，在自己那一桌大方讲；别人那一桌不是你的场子。只来收名单、抓人、拉客的，会被请出去。",
@@ -482,7 +482,7 @@ export const copy = {
         },
         {
           q: "具体在哪？",
-          a: "Vogue Cafe，Retail 5, 35 Wheat Road, Darling Harbour NSW 2000——达令港水边、W Sydney 楼下。接下来几场都在这儿。报名后我也会把地址再发你一次。",
+          a: "The Avenue，465 Victoria Avenue, Chatswood NSW 2067——Brown St 和 Railway St 转角那栋圆形的楼，Chatswood 火车站出来就是，从院子那边进。接下来几场都在这儿。报名后我也会把地址再发你一次。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -588,7 +588,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "达令港 Vogue Cafe · 每周四 10:00 开门，10:30 开始",
+      location: "Chatswood The Avenue · 每周四 10:00 开门，10:30 开始",
       supportLink: "这个活动的开销",
       // The label on the GitHub mark. It is never shown — the mark carries the
       // link — but it is what a screen reader announces, so it is translated
@@ -1152,9 +1152,9 @@ export const copy = {
         { label: "When", value: "Thursdays · doors 10am, starts 10:30am", href: null, linkLabel: null },
         {
           label: "Where",
-          value: "Vogue Cafe · Darling Harbour",
-          href: "https://maps.google.com/?q=Vogue+Cafe+Retail+5,+35+Wheat+Road,+Darling+Harbour+NSW+2000",
-          linkLabel: "Retail 5, 35 Wheat Road, Darling Harbour →",
+          value: "The Avenue · Chatswood",
+          href: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
+          linkLabel: "465 Victoria Avenue, Chatswood →",
         },
         {
           label: "Cost",
@@ -1332,7 +1332,7 @@ export const copy = {
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
-        "The time never moves — Thursday mornings, always. The next few sessions are at Vogue Cafe on the Darling Harbour waterfront; the address is on the first screen. If a venue ever has to change, it is posted the day before.",
+        "The time never moves — Thursday mornings, always. The next few sessions are at The Avenue in Chatswood, right by the station; the address is on the first screen. If a venue ever has to change, it is posted the day before.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
         "Hosting a table is always optional. Host one if you want to, otherwise move between them and listen. People who only come to listen are equally welcome.",
         "Show, don't sell. What you built is your marketing — present it properly at your own table, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
@@ -1475,7 +1475,7 @@ export const copy = {
         },
         {
           q: "Where exactly?",
-          a: "Vogue Cafe, Retail 5, 35 Wheat Road, Darling Harbour NSW 2000 — on the Darling Harbour waterfront, below W Sydney. That is the venue for the next few sessions. You get the address again after signing up.",
+          a: "The Avenue, 465 Victoria Avenue, Chatswood NSW 2067 — the round building on the corner of Brown and Railway Streets, right by Chatswood station; come in through the courtyard. That is the venue for the next few sessions. You get the address again after signing up.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -1581,7 +1581,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Vogue Cafe, Darling Harbour · Thursdays, doors 10am",
+      location: "The Avenue, Chatswood · Thursdays, doors 10am",
       supportLink: "What this costs",
       sourceLink: "This site's source on GitHub",
     },
