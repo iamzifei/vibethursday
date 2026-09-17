@@ -32,8 +32,9 @@
  *   accident. The prompt says so twice, and the output is checked by eye
  *   before it ships.
  * - **The place, not the people.** What is worth keeping from the photograph
- *   is the room: the windows, the water outside, the tables, the morning
- *   light. The people are shapes in it.
+ *   is the room: the windows, whatever is outside them, the tables, the
+ *   morning light. The people are shapes in it. Which room depends on the
+ *   date — see `venue()`.
  *
  * ★ The palette is the site's, not the style's. A generic cyberpunk picture is
  * magenta and violet; this one is the same near-black, electric lime and
@@ -97,7 +98,7 @@ const PALETTE = [
  * sentence printed two sections above it on the same site.
  */
 const FORMAT = [
-  "Keep the room from the photographs: the same windows and the water beyond",
+  "Keep the room from the photographs: the same windows and what is beyond",
   "them, the same tables and chairs and their arrangement, the same viewpoint.",
   "Keep roughly the same number of people, in roughly the same places. The room",
   "should be recognisable to somebody who was in it, from its shape alone.",
@@ -134,12 +135,30 @@ async function sessions() {
     .map((session, index) => ({ ...session, n: String(index + 1).padStart(2, "0") }));
 }
 
+/**
+ * Where a session was, by date.
+ *
+ * The meetup moved on 2026-09-17. Told nothing, the model paints the room it
+ * has learned from the earlier posters — the seventh session's first poster
+ * had Darling Harbour outside a window in Chatswood, which is a picture of a
+ * room nobody was in. The venue is part of the scene, so it has to be stated
+ * per session, and it is keyed on the date rather than read from the note
+ * because the note describes the morning, not the building.
+ */
+const MOVED_TO_CHATSWOOD = "2026-09-17";
+
+function venue(session) {
+  return session.date < MOVED_TO_CHATSWOOD
+    ? "in a café on the water at Darling Harbour, Sydney: floor-to-ceiling glass, the harbour and city towers outside."
+    : "on a covered terrace in Chatswood, Sydney: glass walls on the street side, a suburban street and office buildings outside, agave plants along the glass, vines and string lights overhead, a long wooden bench along the wall. There is no water anywhere in this scene.";
+}
+
 function prompt(session) {
   return [
     STYLE,
     PALETTE,
-    "The reference photographs are one morning of a weekly meetup in a café on",
-    "the water at Darling Harbour, Sydney.",
+    "The reference photographs are one morning of a weekly meetup",
+    venue(session),
     `The person who ran it described it this way: 「${session.note}」`,
     FORMAT,
     RULES,
