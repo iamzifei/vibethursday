@@ -8,6 +8,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { buildArchive } from "@/lib/archive";
 import { buildWall, isSessionDate, type WallCheckin } from "@/lib/checkin";
 import { getCopy, resolveLang } from "@/lib/content";
+import { JsonLd } from "@/components/JsonLd";
+import { eventJsonLd, pageAlternates } from "@/lib/seo";
+import { siteUrl } from "@/lib/site";
 import { countCheckins, listCheckins, listWallMembers, listWharfQuestions } from "@/lib/db";
 import { monogram } from "@/lib/members";
 import { formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
@@ -31,6 +34,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const title = `${written?.title ?? formatSession(date, lang)} · Vibe Thursday`;
 
   return {
+    alternates: pageAlternates(`/sessions/${date}`, lang),
     title,
     description: a.detailDescription.replace("{title}", written?.title ?? formatSession(date, lang)),
   };
@@ -86,8 +90,27 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
   const upcoming = nextThursdays(1)[0];
   const isToday = date === sydneyToday().toISOString().slice(0, 10);
 
+  // This morning as an Event, for crawlers: the write-up is its description
+  // and the poster and photographs are its pictures. Only sessions that have
+  // happened reach this page, so it is always a past event.
+  const base = siteUrl();
+  const pictures = [
+    ...(row.poster ? [`${base}${row.poster}-1200.jpg`] : []),
+    ...row.photos.map((photo) => `${base}${photo.src}-1600.jpg`),
+  ];
+
   return (
     <div lang={c.htmlLang}>
+      <JsonLd
+        data={[
+          eventJsonLd(date, lang, c, {
+            past: true,
+            title: row.title ?? undefined,
+            description: row.note ?? undefined,
+            images: pictures,
+          }),
+        ]}
+      />
       <SiteHeader lang={lang} copy={c} path={`/sessions/${date}`} />
 
       <main id="main">

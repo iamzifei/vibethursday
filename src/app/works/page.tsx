@@ -4,6 +4,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
+import { pageAlternates } from "@/lib/seo";
 import { listWallMembers } from "@/lib/db";
 import { PRODUCT_STAGES, type ProductStage } from "@/lib/members";
 import { countByStage, listWorks } from "@/lib/works";
@@ -15,9 +16,11 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = getCopy(resolveLang((await searchParams).lang)).works;
+  const lang = resolveLang((await searchParams).lang);
+  const c = getCopy(lang).works;
 
   return {
+    alternates: pageAlternates("/works", lang),
     title: c.meta.title,
     description: c.meta.description,
     openGraph: {

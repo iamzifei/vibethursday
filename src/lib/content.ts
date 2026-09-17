@@ -62,9 +62,11 @@ export const copy = {
   zh: {
     htmlLang: "zh-CN",
     meta: {
-      title: "Vibe Thursday · 悉尼每周四的 AI 局",
+      // The English tail is there for the search phrase people actually type
+      // ("sydney ai meetup"); the Chinese half is what the room calls it.
+      title: "Vibe Thursday · 悉尼每周四上午的 AI 局 · Sydney AI Meetup",
       description:
-        "每周四上午，悉尼 CBD。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费。",
+        "每周四上午 10:30，悉尼 Chatswood。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
     },
 
     nav: {
@@ -1153,9 +1155,9 @@ export const copy = {
   en: {
     htmlLang: "en-AU",
     meta: {
-      title: "Vibe Thursday · Sydney's weekly AI meetup",
+      title: "Vibe Thursday · Sydney's free weekly AI meetup",
       description:
-        "Every Thursday morning in Sydney CBD. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free.",
+        "Every Thursday at 10:30am in Chatswood, Sydney. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
     },
 
     nav: {

@@ -6,6 +6,7 @@ import { SessionRow } from "@/components/SessionRow";
 import { SiteHeader } from "@/components/SiteHeader";
 import { archiveTotals, buildArchive } from "@/lib/archive";
 import { getCopy, resolveLang } from "@/lib/content";
+import { pageAlternates } from "@/lib/seo";
 import { countCheckins, countSignups, listWallMembers, listWharfQuestions } from "@/lib/db";
 
 type PageProps = {
@@ -16,9 +17,11 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = getCopy(resolveLang((await searchParams).lang)).archive;
+  const lang = resolveLang((await searchParams).lang);
+  const c = getCopy(lang).archive;
 
   return {
+    alternates: pageAlternates("/sessions", lang),
     title: c.meta.title,
     description: c.meta.description,
     openGraph: {

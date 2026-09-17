@@ -47,6 +47,9 @@ export function sydneyToday(): Date {
  */
 const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-06";
 
+/** The launch date, for anything that describes the series as a whole. */
+export const FIRST_SESSION_DATE = FIRST_SESSION;
+
 /** Sydney hour of day, 0-23. */
 function sydneyHour(): number {
   return Number(new Intl.DateTimeFormat("en-GB", {

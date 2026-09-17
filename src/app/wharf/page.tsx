@@ -7,6 +7,7 @@ import { DarlingHarbour } from "@/components/DarlingHarbour";
 import { AnswerForm, AskBox, CloseForm, ComingButton, EditForm } from "@/components/WharfActions";
 import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
+import { pageAlternates } from "@/lib/seo";
 import { listWharfQuestions, openQuestionCount, type WharfQuestion } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { byNewest, canClaim, canEdit, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
@@ -20,9 +21,11 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = getCopy(resolveLang((await searchParams).lang)).wharf;
+  const lang = resolveLang((await searchParams).lang);
+  const c = getCopy(lang).wharf;
 
   return {
+    alternates: pageAlternates("/wharf", lang),
     title: c.meta.title,
     description: c.meta.description,
     openGraph: {

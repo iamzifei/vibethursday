@@ -3,6 +3,7 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
+import { pageAlternates } from "@/lib/seo";
 import { CONTRIBUTORS, SUPPORT_URL } from "@/lib/support";
 
 type PageProps = {
@@ -10,9 +11,10 @@ type PageProps = {
 };
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = getCopy(resolveLang((await searchParams).lang)).support;
+  const lang = resolveLang((await searchParams).lang);
+  const c = getCopy(lang).support;
 
-  return { title: c.meta.title, description: c.meta.description };
+  return { alternates: pageAlternates("/support", lang), title: c.meta.title, description: c.meta.description };
 }
 
 /**

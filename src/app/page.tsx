@@ -5,6 +5,8 @@ import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
+import { JsonLd } from "@/components/JsonLd";
+import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
 import { listWharfQuestions } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { formatSession, nextThursdays } from "@/lib/sessions";
@@ -19,6 +21,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const c = getCopy(lang);
 
   return {
+    alternates: pageAlternates("/", lang),
     title: c.meta.title,
     description: c.meta.description,
     // `images` has to be repeated here. Next.js does not merge openGraph with
@@ -89,6 +92,16 @@ export default async function Page({ searchParams }: PageProps) {
   // re-declares its own language here for screen-reader pronunciation.
   return (
     <div lang={c.htmlLang}>
+      {/* The meetup as facts a crawler can quote: who runs it, when the next
+          two are and where, and the FAQ. All generated from the same copy the
+          page renders — see `@/lib/seo`. */}
+      <JsonLd
+        data={[
+          organizationJsonLd(c),
+          eventSeriesJsonLd(sessions.slice(0, 2).map((session) => session.value), lang, c),
+          faqJsonLd(c),
+        ]}
+      />
       <SiteHeader lang={lang} copy={c} path="/" />
 
       <main id="main">

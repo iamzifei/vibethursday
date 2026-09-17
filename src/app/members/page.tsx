@@ -4,6 +4,7 @@ import { MemberCard, langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/content";
+import { pageAlternates } from "@/lib/seo";
 import { listWallMembers, type Member } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { ROLES, type Role } from "@/lib/members";
@@ -19,9 +20,11 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const c = getCopy(resolveLang((await searchParams).lang)).members;
+  const lang = resolveLang((await searchParams).lang);
+  const c = getCopy(lang).members;
 
   return {
+    alternates: pageAlternates("/members", lang),
     title: c.meta.title,
     description: c.meta.description,
     openGraph: {

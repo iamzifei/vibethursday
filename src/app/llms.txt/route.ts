@@ -1,4 +1,6 @@
 import { copy, type Copy } from "@/lib/content";
+import { SESSION_END, SESSION_START, VENUE } from "@/lib/seo";
+import { formatSession, nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
 
 // The absolute URLs below are only known once the app is running.
@@ -59,11 +61,19 @@ export async function GET(): Promise<Response> {
   const zh = copy.zh;
   const en = copy.en;
 
+  // The one fact a model is most often asked for, stated once at the top with
+  // the date, the hours and the street address, so it never has to be inferred
+  // from the schedule and the venue card separately.
+  const next = nextThursdays(1)[0];
+  const address = `${VENUE.name}, ${VENUE.streetAddress}, ${VENUE.addressLocality} ${VENUE.addressRegion} ${VENUE.postalCode}`;
+
   const body = `# Vibe Thursday
 
 > ${zh.meta.description}
 
 > ${en.meta.description}
+
+- **下一场 / Next session**: ${next} (${formatSession(next, "zh")} · ${formatSession(next, "en")}) · ${SESSION_START}–${SESSION_END} Australia/Sydney · ${address} · 免费 / free
 
 ## 页面 · Pages
 
