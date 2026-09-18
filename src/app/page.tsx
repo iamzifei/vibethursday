@@ -187,10 +187,17 @@ export default async function Page({ searchParams }: PageProps) {
               </div>
 
               {nextSession && (
-                <span className="pill pill--live" style={{ alignSelf: "flex-start" }}>
+                // Links to that Thursday's own page, which before the day is
+                // its introduction: the one address on this site that means
+                // "this coming Thursday", for a person and a crawler alike.
+                <Link
+                  className="pill pill--live"
+                  style={{ alignSelf: "flex-start" }}
+                  href={langHref(`/sessions/${nextSession.value}`, lang)}
+                >
                   <span className="dot dot--pulse" aria-hidden="true" />
                   {`${c.hero.nextPrefix}${nextSession.label}`}
-                </span>
+                </Link>
               )}
 
               <p className="body-sm" style={{ color: "var(--fg3)" }}>

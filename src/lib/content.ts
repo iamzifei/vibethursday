@@ -920,6 +920,16 @@ export const copy = {
       detailCta: "这一场的页面 →",
       backToArchive: "← 全部场次",
       detailDescription: "{title}：那天来了谁、那天的照片和问题。",
+      // ── 还没到那天 ──
+      // 同一个地址在三个时态里各是一样东西：那天之前是介绍，当天是「现在谁在
+      // 房间里」，之后是记录。之前第一个时态是 404，「下一场」在站上没有自己
+      // 的页面——而搜索引擎和回答引擎恰恰只认「一场一页」（2026-09-18 实测：
+      // ChatGPT 转述的是首页正文，Google 的活动结果要求每场有独立地址）。
+      upcomingEyebrow: "§ 下一场",
+      upcomingTitle: "{date}，还没到。",
+      upcomingLede: "到了那天，这一页会变成「今天来了谁」；现在它是那一场的介绍。时间、地点、流程都在下面，报名在首页底部。",
+      upcomingCta: "报名这一场",
+      upcomingDescription: "Vibe Thursday {date}：悉尼 Chatswood，10:30 开门就开始，12:00 结束，免费。这一场还没到，报名入口在这里。",
     },
 
     /**
@@ -1853,6 +1863,11 @@ export const copy = {
       detailCta: "This session’s page →",
       backToArchive: "← All sessions",
       detailDescription: "{title}: who was there, the photos and the questions from that morning.",
+      upcomingEyebrow: "§ Next session",
+      upcomingTitle: "{date}. Not yet.",
+      upcomingLede: "On the day this page becomes \"who is here today\"; until then it is that session's introduction. Time, place and run of show are below; sign-up is at the bottom of the home page.",
+      upcomingCta: "Sign up for this one",
+      upcomingDescription: "Vibe Thursday {date}: Chatswood, Sydney. Doors 10:30am and straight in, done by 12:00pm, free. This one has not happened yet; here is where to sign up.",
     },
 
     works: {

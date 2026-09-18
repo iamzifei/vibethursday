@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getCopy } from "@/lib/content";
 import { countCheckins } from "@/lib/db";
+import { nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
 
 // The deployment's own address is only known at request time.
@@ -16,7 +17,9 @@ export const dynamic = "force-dynamic";
  *
  * Each session's own page IS listed: it is the record of a public morning,
  * written for exactly the stranger a sitemap is for, and everyone on it
- * answered "show me" on the day.
+ * answered "show me" on the day. The next two Thursdays are listed too —
+ * before the day, that page is the session's introduction, and it is the
+ * only address on this site that means "this coming Thursday".
  *
  * Individual member pages are deliberately NOT listed. They are public and
  * linked from the wall, so a crawler that follows links still reaches them —
@@ -62,5 +65,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...[...dates]
       .sort()
       .map((date) => everyLanguage(`/sessions/${date}`, { changeFrequency: "monthly", priority: 0.5 })),
+    ...nextThursdays(2)
+      .filter((date) => !dates.has(date))
+      .map((date) => everyLanguage(`/sessions/${date}`, { changeFrequency: "weekly", priority: 0.6 })),
   ];
 }

@@ -185,16 +185,19 @@ export function organizationJsonLd(c: Copy) {
 /**
  * One session as an Event.
  *
- * `past` sessions link to their own archive page and carry that morning's
- * poster and photographs; upcoming ones link to the sign-up form, because the
- * archive page for a date that has not happened does not exist yet.
+ * `page` says the session has its own page at `/sessions/<date>` — every
+ * session that has happened does, and so do the next few Thursdays, which is
+ * what Google's Event result needs ("each event must have a unique URL").
+ * Past ones carry that morning's poster and photographs; an upcoming one
+ * carries the site's own picture and links to the same page, where the
+ * sign-up is one click away.
  */
 export function eventJsonLd(
   isoDate: string,
   lang: Lang,
   c: Copy,
   options: {
-    past?: boolean;
+    page?: boolean;
     title?: string;
     description?: string;
     images?: readonly string[];
@@ -219,7 +222,7 @@ export function eventJsonLd(
     offers: freeOffer(`${base}/${langQuery(lang)}#signup`),
     inLanguage: inLanguage(lang),
     image: options.images?.length ? [...options.images] : [`${base}/og.jpg`],
-    url: options.past ? `${base}/sessions/${isoDate}${langQuery(lang)}` : `${base}/${langQuery(lang)}#signup`,
+    url: options.page ? `${base}/sessions/${isoDate}${langQuery(lang)}` : `${base}/${langQuery(lang)}#signup`,
   };
 }
 
@@ -259,7 +262,7 @@ export function eventSeriesJsonLd(upcoming: readonly string[], lang: Lang, c: Co
     image: [`${base}/og.jpg`],
     subEvent: upcoming.map((date) => {
       // Sub-events inherit the context from the series.
-      const event: Record<string, unknown> = { ...eventJsonLd(date, lang, c) };
+      const event: Record<string, unknown> = { ...eventJsonLd(date, lang, c, { page: true }) };
       delete event["@context"];
       return event;
     }),

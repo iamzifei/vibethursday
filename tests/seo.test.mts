@@ -99,13 +99,16 @@ test("the series is weekly, free, offline, and lists the given sessions", () => 
   assert.equal(series.subEvent.length, 2);
   assert.equal(series.subEvent[0].startDate, "2026-09-24T10:30:00+10:00");
   assert.equal(series.subEvent[1].startDate, "2026-10-01T10:30:00+10:00");
-  // Sub-events inherit the context from the series rather than repeating it.
+  // Sub-events inherit the context from the series rather than repeating it,
+  // and each points at its own page — the one thing Google's Event result
+  // insists on.
   assert.equal("@context" in series.subEvent[0], false);
+  assert.equal(series.subEvent[0].url, "https://vibethursday.com/sessions/2026-09-24?lang=en");
 });
 
 test("a past session points at its own page and pictures", () => {
   const event = eventJsonLd("2026-09-17", "zh", copy.zh, {
-    past: true,
+    page: true,
     title: "第七场",
     description: "那天的说明",
     images: ["https://vibethursday.com/photos/session-07-1-1600.jpg"],
@@ -117,10 +120,12 @@ test("a past session points at its own page and pictures", () => {
   assert.deepEqual(event.image, ["https://vibethursday.com/photos/session-07-1-1600.jpg"]);
   assert.equal(event.inLanguage, "zh-Hans");
 
-  // An upcoming one sends people to the form, in their language.
-  const upcoming = eventJsonLd("2026-09-24", "en", copy.en);
-  assert.equal(upcoming.url, "https://vibethursday.com/?lang=en#signup");
+  // An upcoming one with its own page links there; without one, to the form.
+  const upcoming = eventJsonLd("2026-09-24", "en", copy.en, { page: true });
+  assert.equal(upcoming.url, "https://vibethursday.com/sessions/2026-09-24?lang=en");
   assert.equal(upcoming.inLanguage, "en-AU");
+  assert.deepEqual(upcoming.image, ["https://vibethursday.com/og.jpg"]);
+  assert.equal(eventJsonLd("2026-09-24", "en", copy.en).url, "https://vibethursday.com/?lang=en#signup");
 });
 
 test("the FAQ is the page's FAQ, with inline links folded back into sentences", () => {
