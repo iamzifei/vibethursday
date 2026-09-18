@@ -156,7 +156,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 07 — 流程",
+      eyebrow: "§ 04 — 流程",
       title: "每周同一个节奏，不变。",
       slots: [
         {
@@ -285,11 +285,18 @@ export const copy = {
       photoCount: (n: number) => `${n} 张`,
     },
 
-    // Sits on the home page between the photos and the house rules: by that
-    // point the reader knows what the room is, and "who is in it" is the next
-    // thing they want.
+    // 首页第二节。成员墙、码头、作品原来各占一节；三节讲的都是「已经攒下了什么」，
+    // 而其余每一节讲的是「周四会发生什么」。三节并成一节：看的人少翻两屏就到流程
+    // 和报名，三样东西挨在一起也更像它们本来的关系——同一批人，他们想聊什么，做出了什么。
+    gathered: {
+      eyebrow: "§ 02 — 攒下来的",
+      title: "你去了会遇到谁，他们在问什么，做出了什么。",
+      lede: "这三样是这个站上唯一会随时间变厚的东西。其余每一节讲的都是周四会发生什么，这一节讲的是已经攒下了什么。",
+    },
+
+    // 下面三块是 § 02 里的三张卡，eyebrow 是卡片的小标题，不带编号。
     membersTeaser: {
-      eyebrow: "§ 02 — 会遇到谁",
+      eyebrow: "成员墙",
       title: "你去了会遇到谁。",
       lede: "每个来过的人都有一张自己的名片：在做的产品、公司业务、自媒体账号、社群，或者只写一句「想找什么」。卡上最管用的是「想找什么」和「能帮什么」这两栏——找合伙人、找第一批用户、找踩过同一个坑的人，多半是从这两栏接上的。没有产品也一样有名片，这个局里听的人本来就比讲的人多。",
       cta: "看成员墙",
@@ -299,7 +306,7 @@ export const copy = {
     // § 03。位置是刻意的：紧挨着成员墙，因为这两样是这个站唯一会随时间变厚的
     // 东西。其余每一节讲的都是「周四会发生什么」，只有这两节讲的是「已经攒下了什么」。
     wharfTeaser: {
-      eyebrow: "§ 04 — 大家想问什么",
+      eyebrow: "码头",
       title: "周四之前，先知道谁在问什么。",
       lede: "报名时写的那句「最想问什么」会挂到码头上。看到你答得上来的，周四找他聊十分钟就完了——不用等到现场再从头认人。",
       cta: "去码头看看",
@@ -311,14 +318,14 @@ export const copy = {
     // § 05。放在「大家想问什么」后面：那两节从相反的两端回答同一个疑问——
     // 这些人想要什么，以及他们真的做完过什么。
     worksTeaser: {
-      eyebrow: "§ 05 — 做出来的东西",
+      eyebrow: "作品",
       title: "这屋子做出来的东西。",
       lede: "十来个产品，一半已经上线或者有收入，也有还只在自己电脑上跑的。全部来自成员墙上的卡片——卡在某个地方往往比已经上线更有的聊。",
       cta: "看大家做的东西",
     },
 
     rules: {
-      eyebrow: "§ 08 — 几条规矩",
+      eyebrow: "§ 07 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
@@ -330,7 +337,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 09 — 报名",
+      eyebrow: "§ 05 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -488,7 +495,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 10 — 常见问题",
+      eyebrow: "§ 08 — 常见问题",
       title: "先回答几个大概率会问的。",
       items: [
         {
@@ -551,7 +558,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 11 — 联系",
+      eyebrow: "§ 09 — 联系",
       title: "找不到人？加我微信。",
       lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
       caption: "微信扫码加我",
@@ -1247,7 +1254,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 07 — Run of show",
+      eyebrow: "§ 04 — Run of show",
       title: "Same rhythm every week.",
       slots: [
         {
@@ -1375,8 +1382,19 @@ export const copy = {
       photoCount: (n: number) => `${n} photo${n === 1 ? "" : "s"}`,
     },
 
+    // Second on the home page. The wall, the Wharf and the works used to be
+    // three sections; all three are "what has accumulated", while every other
+    // section is "what happens on a Thursday". One section now, so the reader
+    // reaches the run of show and the sign-up two screens sooner.
+    gathered: {
+      eyebrow: "§ 02 — What has accumulated",
+      title: "Who you will meet, what they are asking, what they have built.",
+      lede: "These three are the only things on this site that get thicker over time. Every other section describes a Thursday; this one is what the Thursdays so far have left behind.",
+    },
+
+    // The three cards inside § 02; their eyebrows are card labels, unnumbered.
     membersTeaser: {
-      eyebrow: "§ 02 — Who you will meet",
+      eyebrow: "Member wall",
       title: "Who you will actually meet.",
       lede: "Everyone who comes has a card: what they are building, their business, a channel, a community — or just one line about what they are looking for. The two fields that do the work are «looking for» and «can help with» — a cofounder, a first batch of users, someone who has already hit the wall you are hitting, mostly get found through those two. No product needed; there are always more listeners than presenters here.",
       cta: "See the member wall",
@@ -1384,7 +1402,7 @@ export const copy = {
     },
 
     wharfTeaser: {
-      eyebrow: "§ 04 — What people are asking",
+      eyebrow: "The Wharf",
       title: "Know what people are asking, before Thursday.",
       lede: "The line people write on the sign-up form — what they most want to ask — ends up on the Wharf. See one you can answer, and Thursday is ten minutes with that person instead of an hour working out who to talk to.",
       cta: "Go down to the Wharf",
@@ -1393,14 +1411,14 @@ export const copy = {
     },
 
     worksTeaser: {
-      eyebrow: "§ 05 — What has been built",
+      eyebrow: "Works",
       title: "What this room has built.",
       lede: "A dozen products, half of them shipped or earning, and some that still only run on somebody's laptop. All of it comes off the member wall — being stuck somewhere is usually the more interesting conversation.",
       cta: "See what people have built",
     },
 
     rules: {
-      eyebrow: "§ 08 — House rules",
+      eyebrow: "§ 07 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
@@ -1412,7 +1430,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 09 — Sign up",
+      eyebrow: "§ 05 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
@@ -1521,7 +1539,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 10 — Questions",
+      eyebrow: "§ 08 — Questions",
       title: "The ones people ask first.",
       items: [
         {
@@ -1584,7 +1602,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 11 — Contact",
+      eyebrow: "§ 09 — Contact",
       title: "Can't find us? Add me on WeChat.",
       lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
       caption: "Scan with WeChat",

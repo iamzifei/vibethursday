@@ -229,32 +229,83 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── Members ──────────────────────────────────────────────────
-            Third on the page, straight after "what this is", because it is the
-            only section that answers "who would I actually meet" — and that
-            question is the whole decision for two different readers: someone
-            deciding whether to come, and someone looking for a cofounder, a
-            first customer or a partner. It used to sit sixth, behind the
-            photos, which is a long way to scroll for the most persuasive thing
-            here. Concrete people also answer "do I belong" better than the
-            list of categories in "who it is for", which now follows it. */}
-        <section className="section">
+        {/* ── What has accumulated ─────────────────────────────────
+            Second on the page, straight after "what this is", because "who
+            would I actually meet" is the whole decision for two different
+            readers: someone deciding whether to come, and someone looking for
+            a cofounder, a first customer or a partner. The wall, the Wharf and
+            the works used to be three sections here. They are the same kind
+            of thing — the parts of this site that get thicker every week — so
+            they now share one, and the run of show and the sign-up arrive two
+            screens sooner. The three real questions stay: three lines of
+            somebody's actual problem make the case that no copy about the
+            feature can. */}
+        <section className="section" id="gathered">
           <div className="shell stack-8">
             <div className="stack-4">
-              <span className="eyebrow">{c.membersTeaser.eyebrow}</span>
-              <h2>{c.membersTeaser.title}</h2>
+              <span className="eyebrow">{c.gathered.eyebrow}</span>
+              <h2>{c.gathered.title}</h2>
               <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.membersTeaser.lede}
+                {c.gathered.lede}
               </p>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-              <Link className="btn btn--primary" href={langHref("/members", lang)}>
-                {c.membersTeaser.cta}
-              </Link>
-              <Link className="btn btn--secondary" href={langHref("/claim", lang)}>
-                {c.membersTeaser.ctaSecondary}
-              </Link>
+            {featured.length > 0 ? (
+              <div className="wharf-rows">
+                {featured.map((entry) => (
+                  <Link
+                    key={entry.slug}
+                    href={langHref(`/members/${entry.slug}`, lang)}
+                    className="wharf-row"
+                  >
+                    <span className="wharf-row__q">{entry.text}</span>
+                    <span className="wharf-row__who">{entry.name}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="grid-auto">
+              <div className="card stack-3">
+                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.membersTeaser.eyebrow}</span>
+                <h3 className="h3">{c.membersTeaser.title}</h3>
+                <p className="body-sm">{c.membersTeaser.lede}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+                  <Link className="btn btn--primary" href={langHref("/members", lang)}>
+                    {c.membersTeaser.cta}
+                  </Link>
+                  <Link className="btn btn--secondary" href={langHref("/claim", lang)}>
+                    {c.membersTeaser.ctaSecondary}
+                  </Link>
+                </div>
+              </div>
+
+              <div className="card stack-3">
+                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.wharfTeaser.eyebrow}</span>
+                <h3 className="h3">{c.wharfTeaser.title}</h3>
+                <p className="body-sm">{c.wharfTeaser.lede}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "center" }}>
+                  <Link className="btn btn--secondary" href={langHref("/wharf", lang)}>
+                    {c.wharfTeaser.cta}
+                  </Link>
+                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                    {thisWeekCount > 0
+                      ? c.wharfTeaser.count.replace("{n}", String(thisWeekCount))
+                      : c.wharfTeaser.empty}
+                  </span>
+                </div>
+              </div>
+
+              <div className="card stack-3">
+                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.worksTeaser.eyebrow}</span>
+                <h3 className="h3">{c.worksTeaser.title}</h3>
+                <p className="body-sm">{c.worksTeaser.lede}</p>
+                <div>
+                  <Link className="btn btn--secondary" href={langHref("/works", lang)}>
+                    {c.worksTeaser.cta}
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -290,74 +341,57 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── The Wharf ────────────────────────────────────────────
-            Directly after the wall, because they are the same kind of thing:
-            the two parts of this site that get thicker every week. The wall
-            answers "who will be there", this answers "what will they want to
-            talk about", and the second is the one that gets a stranger to
-            walk over to a table.
-
-            Real questions rather than a description of them. Three lines of
-            somebody's actual problem make the case that no amount of copy
-            about the feature can. */}
-        <section className="section">
+        {/* ── Run of show ──────────────────────────────────────────── */}
+        <section className="section" id="schedule">
           <div className="shell stack-8">
             <div className="stack-4">
-              <span className="eyebrow">{c.wharfTeaser.eyebrow}</span>
-              <h2>{c.wharfTeaser.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.wharfTeaser.lede}
-              </p>
+              <span className="eyebrow">{c.schedule.eyebrow}</span>
+              <h2>{c.schedule.title}</h2>
             </div>
 
-            {featured.length > 0 ? (
-              <div className="wharf-rows">
-                {featured.map((entry) => (
-                  <Link
-                    key={entry.slug}
-                    href={langHref(`/members/${entry.slug}`, lang)}
-                    className="wharf-row"
-                  >
-                    <span className="wharf-row__q">{entry.text}</span>
-                    <span className="wharf-row__who">{entry.name}</span>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "center" }}>
-              <Link className="btn btn--secondary" href={langHref("/wharf", lang)}>
-                {c.wharfTeaser.cta}
-              </Link>
-              <span className="body-sm" style={{ color: "var(--fg3)" }}>
-                {thisWeekCount > 0
-                  ? c.wharfTeaser.count.replace("{n}", String(thisWeekCount))
-                  : c.wharfTeaser.empty}
-              </span>
+            <div>
+              {c.schedule.slots.map((slot) => (
+                <div className="slot" key={slot.time}>
+                  <span className="slot__time">{slot.time}</span>
+                  <div className="stack-2">
+                    <span className="slot__title">{slot.title}</span>
+                    <span className="slot__note">{slot.note}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ── Works ────────────────────────────────────────────────
-            The strongest recruiting evidence this site has, and until now it
-            was only reachable one card at a time. It sits after the questions
-            because the two answer the same doubt from opposite ends: what do
-            these people want, and what have they actually finished. */}
-        <section className="section">
+        {/* ── Signup ───────────────────────────────────────────────── */}
+        <section className="section" id="signup">
           <div className="shell stack-8">
             <div className="stack-4">
-              <span className="eyebrow">{c.worksTeaser.eyebrow}</span>
-              <h2>{c.worksTeaser.title}</h2>
+              <span className="eyebrow">{c.signup.eyebrow}</span>
+              <h2>{c.signup.title}</h2>
               <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.worksTeaser.lede}
+                {c.signup.lede}
               </p>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-              <Link className="btn btn--secondary" href={langHref("/works", lang)}>
-                {c.worksTeaser.cta}
+            <SignupForm
+              lang={lang}
+              copy={c.signup}
+              sessions={sessions}
+              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
+            />
+
+            {/* Deliberately outside the form. Someone deciding whether to come
+                should see what a session costs before committing — but the
+                moment it sits among the fields it reads as a step, and an
+                optional thing that looks like a step is no longer optional. */}
+            <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
+              {c.signup.supportNote}
+              <Link href={langHref("/support", lang)}>
+                {c.signup.supportNoteCta}
               </Link>
-            </div>
+              {c.signup.supportNoteTail}
+            </p>
           </div>
         </section>
 
@@ -476,28 +510,6 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── Run of show ──────────────────────────────────────────── */}
-        <section className="section" id="schedule">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.schedule.eyebrow}</span>
-              <h2>{c.schedule.title}</h2>
-            </div>
-
-            <div>
-              {c.schedule.slots.map((slot) => (
-                <div className="slot" key={slot.time}>
-                  <span className="slot__time">{slot.time}</span>
-                  <div className="stack-2">
-                    <span className="slot__title">{slot.title}</span>
-                    <span className="slot__note">{slot.note}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── House rules ──────────────────────────────────────────── */}
         <section className="section">
           <div className="shell stack-8">
@@ -514,38 +526,6 @@ export default async function Page({ searchParams }: PageProps) {
                 </li>
               ))}
             </ol>
-          </div>
-        </section>
-
-        {/* ── Signup ───────────────────────────────────────────────── */}
-        <section className="section" id="signup">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.signup.eyebrow}</span>
-              <h2>{c.signup.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.signup.lede}
-              </p>
-            </div>
-
-            <SignupForm
-              lang={lang}
-              copy={c.signup}
-              sessions={sessions}
-              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
-            />
-
-            {/* Deliberately outside the form. Someone deciding whether to come
-                should see what a session costs before committing — but the
-                moment it sits among the fields it reads as a step, and an
-                optional thing that looks like a step is no longer optional. */}
-            <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
-              {c.signup.supportNote}
-              <Link href={langHref("/support", lang)}>
-                {c.signup.supportNoteCta}
-              </Link>
-              {c.signup.supportNoteTail}
-            </p>
           </div>
         </section>
 
