@@ -346,7 +346,7 @@ export const copy = {
         // {name} is substituted in the client component. Must not be a
         // function: this object is passed from a Server Component into a
         // Client Component, and functions cannot cross that boundary.
-        hello: "{name}，欢迎回来。选个场次就行，其余的我这儿都有。",
+        hello: "{name}，欢迎回来。选个场次、点一下这次来想带走什么就行，其余的我这儿都有。",
         notYou: "不是我，或者要改资料",
       },
       fields: {
@@ -359,6 +359,17 @@ export const copy = {
         wechatPlaceholder: "微信号，不是昵称",
         wechatRequired: true,
         wechatHint: "现阶段活动通知走微信群，留了我拉你进群。",
+        // 必答的单选，用来数「这场来的人里，有几个是带着生意来的」。按场次存，
+        // 同一个人下周换了来意，不会覆盖这周的答案。存储值不能改：按它计数。
+        purpose: "这次来，你最想带走什么？",
+        purposeOptions: [
+          { value: "biz", label: "我在做生意，想让 AI 帮我带客户、省人手" },
+          { value: "product", label: "我在做产品或项目，想找用户、客户或合作" },
+          { value: "tech", label: "我会做 AI / 技术，想找项目或机会" },
+          { value: "learn", label: "学习交流，看看大家在做什么" },
+          { value: "other", label: "其他，现场再说" },
+        ],
+        purposeHint: "选一个最接近的就行。知道谁带着什么来，现场才好帮你找对的人。",
         topic: "这周最想聊什么、或者最想问什么",
         topicPlaceholder: "想找会 iOS 的合伙人 / 想搞懂 R&D 税务抵免怎么申报 / 想看看别人的 AI 工作流",
         // 这里刻意不再以「完全选填」开头。前 49 份报名里只有 3 个人填了这栏，
@@ -491,6 +502,7 @@ export const copy = {
       errorRobot: "人机验证没通过。刷新页面重试一次。",
       errorRequired: "名字和微信号是必填的。",
       errorNeedContact: "至少留一个联系方式，微信号或邮箱都行。",
+      errorPurpose: "选一下「这次来最想带走什么」，一个就行。",
       errorEmail: "这个邮箱地址看起来不太对。",
     },
 
@@ -1434,7 +1446,7 @@ export const copy = {
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
-        hello: "Welcome back, {name}. Just pick a session, I have the rest.",
+        hello: "Welcome back, {name}. Pick a session and what you want out of it this time — I have the rest.",
         notYou: "Not you, or need to change your details?",
       },
       fields: {
@@ -1447,6 +1459,15 @@ export const copy = {
         wechatPlaceholder: "Optional",
         wechatRequired: false,
         wechatHint: "Announcements currently go through a WeChat group. Leave it and I will add you.",
+        purpose: "What do you most want to take away this time?",
+        purposeOptions: [
+          { value: "biz", label: "I run a business and want AI to bring in customers or save staff time" },
+          { value: "product", label: "I'm building a product or project and looking for users, customers or partners" },
+          { value: "tech", label: "I build with AI and I'm looking for projects or opportunities" },
+          { value: "learn", label: "Learning — seeing what everyone is building" },
+          { value: "other", label: "Something else — I'll say on the day" },
+        ],
+        purposeHint: "Pick the closest one. Knowing who is coming for what is how we find you the right people on the day.",
         topic: "What do you most want to talk about, or ask, this week",
         topicPlaceholder: "An iOS cofounder / how the R&D tax offset actually gets claimed / how other people's AI workflows look",
         topicHint:
@@ -1535,6 +1556,7 @@ export const copy = {
       errorRobot: "The bot check did not pass. Reload the page and try again.",
       errorRequired: "Name and email are required.",
       errorNeedContact: "Leave at least one way to reach you — email or WeChat.",
+      errorPurpose: "Pick what you most want to take away this time — just one.",
       errorEmail: "That email address does not look right.",
     },
 

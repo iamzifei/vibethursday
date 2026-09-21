@@ -32,6 +32,15 @@ const AI_MODELS = new Set([
   "cn_other",
 ]);
 
+/**
+ * Why someone is coming this time. Kept in step with `copy.fields.purposeOptions`.
+ *
+ * Required on the form, but never required here: a page opened before the
+ * question existed must still be able to sign someone up, and a lost signup
+ * costs more than one unanswered question.
+ */
+const PURPOSES = new Set(["biz", "product", "tech", "learn", "other"]);
+
 /** Monthly AI spend band. Kept in step with `copy.fields.aiSpendOptions`. */
 const AI_SPEND = new Set(["free", "lt_50", "50_200", "200_1000", "gt_1000"]);
 
@@ -134,6 +143,9 @@ export async function POST(request: Request) {
       ))]
     : [];
 
+  const purposeRaw = clean(body.purpose, 20);
+  const purpose = purposeRaw && PURPOSES.has(purposeRaw) ? purposeRaw : null;
+
   const aiSpendRaw = clean(body.aiSpend, 20);
   const aiSpend = aiSpendRaw && AI_SPEND.has(aiSpendRaw) ? aiSpendRaw : null;
 
@@ -156,6 +168,7 @@ export async function POST(request: Request) {
       availability,
       aiModels,
       aiSpend,
+      purpose,
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,

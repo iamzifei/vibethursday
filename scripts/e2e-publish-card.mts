@@ -28,6 +28,7 @@ const base = {
   availability: [] as string[],
   aiModels: [] as string[],
   aiSpend: null,
+  purpose: null,
   source: null,
   lang: "zh",
   botCheck: "skipped",

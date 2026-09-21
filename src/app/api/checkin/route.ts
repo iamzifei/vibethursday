@@ -108,6 +108,8 @@ export async function POST(request: Request) {
       availability: [],
       aiModels: [],
       aiSpend: null,
+      // A walk-in is signed up at the door; nobody is asked why they came there.
+      purpose: null,
       source: "walk-in",
       lang,
       botCheck: "skipped",

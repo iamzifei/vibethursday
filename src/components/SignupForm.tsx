@@ -168,6 +168,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
      see the effect below. */
   const extrasRef = useRef<HTMLDetailsElement>(null);
 
+  /* The purpose question, so a missing answer can scroll it back into view —
+     on a phone the error message sits at the bottom, far below the question. */
+  const purposeRef = useRef<HTMLFieldSetElement>(null);
+
   useEffect(() => {
     const draft = readDraft<Record<string, string>>(DRAFT_KEY);
     const form = formRef.current;
@@ -259,6 +263,16 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
       return;
     }
 
+    // The one required choice. Enforced here and not on the server: see the
+    // PURPOSES note in the signup route. Not asked of someone who picked "no
+    // morning works": the answer is stored against a session, and they have none.
+    if (data.get("firstSession") !== "none" && !data.get("purpose")) {
+      setStatus("error");
+      setMessage(copy.errorPurpose);
+      purposeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     setStatus("sending");
     setMessage(null);
 
@@ -280,6 +294,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           // Same reason as availability — a checkbox group, so getAll.
           aiModels: data.getAll("aiModels"),
           aiSpend: data.get("aiSpend"),
+          purpose: data.get("purpose"),
           // Boolean, not the browser's "on": the route only publishes on a
           // strict === true, so anything looser would silently never publish.
           publishCard: data.get("publishCard") !== null,
@@ -480,6 +495,26 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         </div>
         </>
       )}
+
+      {/* Outside the identity block, so returning visitors answer it too:
+          the answer is about this morning, not about them. Full-width cards
+          rather than pills — the labels are sentences, and on a phone a
+          sentence-long pill wraps into something hard to tap. No default:
+          a pre-selected option would count everyone who scrolled past. */}
+      <fieldset ref={purposeRef} style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label">
+          {copy.fields.purpose} <span className="required">*</span>
+        </legend>
+        <div className="choice-group choice-group--stack">
+          {copy.fields.purposeOptions.map((option) => (
+            <label className="choice" key={option.value}>
+              <input type="radio" name="purpose" value={option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+        <p className="field-hint">{copy.fields.purposeHint}</p>
+      </fieldset>
 
       {/* Moved above the demo question on purpose. It is the only field that
           collects what someone actually wants out of the morning, and 3 of the

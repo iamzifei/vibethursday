@@ -1091,6 +1091,18 @@ select.field {
   padding: var(--space-2) var(--space-3);
 }
 
+/* One option per row, for options that are whole sentences. In the default
+   auto-fit grid a sentence gets squeezed into half a row and wraps into three
+   lines on a phone; stacked, each reads in one or two lines and the whole row
+   is the tap target. */
+.choice-group--stack {
+  grid-template-columns: 1fr;
+}
+
+.choice-group--stack .choice {
+  line-height: var(--leading-snug);
+}
+
 /* Names one half of a split choice group — the overseas / China rows in the
    signup form. Quieter than .label, which is already taken by the legend
    above it; this is a caption inside a field, not a second field. */

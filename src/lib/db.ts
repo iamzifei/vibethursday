@@ -139,6 +139,12 @@ export function ensureSchema(): Promise<void> {
     // different billing pages, and the column would come back mostly empty.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS ai_spend text`);
 
+    // Why they came, one answer per session: {"2026-09-24": "biz", ...}. A map
+    // rather than a column because the same person can come for a different
+    // reason next week, and a single column would let that overwrite this
+    // week's answer — the failure described at the top of questions.ts.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS purposes jsonb NOT NULL DEFAULT '{}'::jsonb`);
+
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
     // in, which is what keeps the wall to people who actually turned up: there
@@ -406,6 +412,8 @@ export type SignupInput = {
   aiModels: string[];
   /** Monthly AI spend band. Whitelisted by the route. Null = unanswered. */
   aiSpend: string | null;
+  /** Why they are coming to `firstSession`. Whitelisted by the route. Null = unanswered. */
+  purpose: string | null;
   lang: string;
   /** Turnstile verdict for this submission: verified / skipped / unavailable. */
   botCheck: string;
@@ -451,9 +459,13 @@ export async function saveSignup(input: SignupInput): Promise<string> {
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions)
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END)
+               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END,
+               -- Only recorded against a session: an answer to "why are you
+               -- coming" means nothing without the morning it is about.
+               CASE WHEN $6::date IS NULL OR $14::text IS NULL THEN '{}'::jsonb
+                    ELSE jsonb_build_object($6::text, $14::text) END)
        RETURNING id::text AS id`,
       [
         input.name,
@@ -469,6 +481,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
         input.availability,
         input.aiModels,
         input.aiSpend,
+        input.purpose,
       ],
     );
 
@@ -522,6 +535,10 @@ export async function saveSignup(input: SignupInput): Promise<string> {
        ai_models     = CASE WHEN cardinality($13::text[]) = 0
                             THEN ai_models ELSE $13::text[] END,
        ai_spend      = COALESCE($14, ai_spend),
+       -- Merge, keyed by session: this week's answer is added or corrected,
+       -- earlier weeks are left exactly as they were.
+       purposes      = CASE WHEN $7::date IS NULL OR $15::text IS NULL THEN purposes
+                            ELSE purposes || jsonb_build_object($7::text, $15::text) END,
        lang          = $9,
        bot_check     = $10,
        updated_at    = now()
@@ -541,6 +558,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
       input.availability,
       input.aiModels,
       input.aiSpend,
+      input.purpose,
     ],
   );
 
@@ -612,6 +630,8 @@ export type SignupRow = {
   ai_spend: string | null;
   /** Sessions this person checked in to on the day, oldest first. */
   checked_in: string[];
+  /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
+  purposes: string;
   created_at: string;
 };
 
@@ -638,6 +658,12 @@ export async function listSignups(): Promise<SignupRow[]> {
                 WHERE c.signup_id = signups.id),
               '{}'
             ) AS checked_in,
+            -- One flat string so the CSV export needs no special casing.
+            COALESCE(
+              (SELECT string_agg(key || '=' || value, ' ' ORDER BY key)
+                 FROM jsonb_each_text(purposes)),
+              ''
+            ) AS purposes,
             to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
      FROM signups
      ORDER BY created_at DESC`,

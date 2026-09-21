@@ -13,6 +13,8 @@ const COLUMNS = [
   // Which of those they were actually there for, from check-ins. Empty for
   // everyone before check-in existed, and for anyone who did not tap.
   "checked_in",
+  // Why they came, per session: "2026-09-24=biz 2026-10-01=learn".
+  "purposes",
   "availability",
   "ai_models",
   "ai_spend",
