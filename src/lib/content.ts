@@ -580,6 +580,76 @@ export const copy = {
     // ── 开销 ──────────────────────────────────────────────────────────
     // 这一页的第一句必须是「免费」，不是「支持我们」。顺序反过来，
     // 它就从「成本透明」变成了「开始收费的第一步」——那正是要避免的读法。
+    /**
+     * The NSW Small Business Month landing page.
+     *
+     * This is where the "Book now" button on this event's listing on
+     * nsw.gov.au lands. Two things follow from that. It has to answer "is this
+     * for me" for somebody who has never heard of the meetup and arrived from a
+     * government calendar, not from the WeChat group — so it repeats what the
+     * home page assumes you know. And the program's terms forbid an event being
+     * used to promote products or services, so nothing on it is for sale.
+     */
+    sbm: {
+      meta: {
+        title: "NSW 小企业月 · 两场免费 AI 早场 · Vibe Thursday",
+        description:
+          "10 月 8 日与 15 日，Chatswood，免费。NSW 小企业月官方活动，中英双语，专为做生意的人。现场不推销任何产品或服务。",
+      },
+      eyebrow: "§ NSW 小企业月 2026",
+      title: "两个上午，讲 AI 对做生意的人真正有用的部分",
+      lede:
+        "这是 2026 年 NSW 小企业月（NSW Small Business Month）的官方活动之一，由新南威尔士州政府主办的项目。免费、线下、中英双语。",
+      fromGov:
+        "如果你是从 NSW 政府的活动页过来的：这里是报名的地方，往下拉就是表单。",
+
+      sessionsTitle: "两场讲什么",
+      sessions: [
+        {
+          date: "10 月 8 日（周四）· 上午 10:30 – 12:00",
+          title: "这一年 AI 对一门小生意真正变了什么，哪些是噪音",
+          body:
+            "网上关于 AI 的文章，多数是写给做软件的人看的。这一场讲的是另一份清单：真正改变了「找到一个客户、回复一个客户、报出一个价」要花多少成本的那几件事——以及长得多的那份「只是演示」的清单。",
+        },
+        {
+          date: "10 月 15 日（周四）· 上午 10:30 – 12:00",
+          title: "当客户不再搜索、而是去问 AI，你怎么被找到",
+          body:
+            "越来越多人不是在搜索框里打字，而是直接问 AI 要一个推荐。这一场用一个真实例子走一遍：一门生意要先具备哪些东西，AI 才可能报出它的名字——以及哪些做了完全没有区别。",
+        },
+      ],
+
+      formatTitle: "现场是什么样子",
+      format: [
+        "15 分钟的实操分享，不是产品演示。",
+        "一到两位在场的人用五分钟讲讲自己生意里试过的事，包括没试成的那部分。",
+        "开放提问，然后是自由交流的时间——多数人是冲这一段来的。",
+        "中英双语。用中文提问完全没问题。",
+      ],
+
+      newcomerTitle: "第一次来的话",
+      newcomerBody:
+        "Vibe Thursday 是一个每周四上午的悉尼 AI 聚会，从 2026 年 8 月起每周都在办，已经办了八场，每场二十来个人。10 月这两场是它挂进 NSW 小企业月官方日历的场次——形式和平时完全一样，只是这两场我们特意把话说给做生意的人听。",
+      newcomerNote:
+        "不需要懂技术，不需要带电脑，也不需要准备任何东西。",
+
+      noSellingTitle: "这两场不会发生的事",
+      noSelling: [
+        "不介绍、不推广、不销售任何产品或服务。",
+        "没有任何付费的后续安排，也没有「先免费体验再收费」那一套。",
+        "不会有人在散场时拿到一份报价单。",
+      ],
+      noSellingNote:
+        "这是 NSW 小企业月的条款要求，也是我们本来就在做的事——这个活动从第一场起就是免费的。",
+
+      signupTitle: "报名",
+      signupLede:
+        "填一分钟。这是我们唯一能知道要摆几张椅子的方式。",
+
+      acknowledgement:
+        "本活动是 2026 年 NSW 小企业月项目的一部分，与新南威尔士州政府合作举办。主办方：Orris Technology Pty Ltd。",
+      back: "看看平时每周四是什么样",
+    },
     support: {
       meta: {
         title: "这个活动的开销 · Vibe Thursday",
@@ -1634,6 +1704,66 @@ export const copy = {
     // The first sentence has to be "it's free", not "support us". Reversed, the
     // page reads as the first step towards charging — the exact reading this
     // whole design exists to avoid.
+    sbm: {
+      meta: {
+        title: "NSW Small Business Month · Two free AI mornings · Vibe Thursday",
+        description:
+          "8 and 15 October, Chatswood, free. An official NSW Small Business Month event, run bilingually, for people who run a business. Nothing is sold.",
+      },
+      eyebrow: "§ NSW Small Business Month 2026",
+      title: "Two mornings on the part of AI that is useful if you run a business",
+      lede:
+        "These are official events of NSW Small Business Month 2026, a program run by the NSW Government. Free, in person, and run bilingually in English and Mandarin.",
+      fromGov:
+        "If you came from the NSW Government event page: this is where you register. The form is further down.",
+
+      sessionsTitle: "The two sessions",
+      sessions: [
+        {
+          date: "Thursday 8 October · 10:30am – 12:00pm",
+          title: "What actually changed for a small business this year, and what is noise",
+          body:
+            "Most of what gets written about AI is written for people who build software. This is the other list: the few things that changed what it costs to find a customer, answer one, or get a quote out — and the much longer list of things that are demos.",
+        },
+        {
+          date: "Thursday 15 October · 10:30am – 12:00pm",
+          title: "Getting found when your customer asks an AI instead of searching",
+          body:
+            "People increasingly ask an assistant for a recommendation rather than typing into a search box. We work through a real example of what a business needs to have in place before an assistant can name it — and what makes no difference at all.",
+        },
+      ],
+
+      formatTitle: "What the room is like",
+      format: [
+        "A 15-minute practical talk. Not a product demo.",
+        "One or two people in the room take five minutes on something they tried in their own business, including what did not work.",
+        "Open questions, then unstructured time to meet each other — which is what most people come for.",
+        "English and Mandarin. Questions in either are welcome.",
+      ],
+
+      newcomerTitle: "If this is your first one",
+      newcomerBody:
+        "Vibe Thursday is a Sydney AI meetup that runs every Thursday morning. It has run weekly since August 2026 — eight sessions so far, around twenty people at each. These two October mornings are the ones listed on the NSW Small Business Month calendar: the same format as every other week, pitched deliberately at people who run a business.",
+      newcomerNote:
+        "No technical background needed, no laptop needed, nothing to prepare.",
+
+      noSellingTitle: "What will not happen",
+      noSelling: [
+        "Nothing is presented, promoted or sold — no product, no service.",
+        "There is no paid follow-on, and no 'try it free then pay' arrangement behind it.",
+        "Nobody leaves holding a quote.",
+      ],
+      noSellingNote:
+        "That is what the NSW Small Business Month terms require, and it is also what we were already doing: this meetup has been free since the first session.",
+
+      signupTitle: "Register",
+      signupLede:
+        "A minute to fill in. It is the only way we know how many chairs to put out.",
+
+      acknowledgement:
+        "These sessions are part of the 2026 NSW Small Business Month program, in partnership with the NSW Government. Hosted by Orris Technology Pty Ltd.",
+      back: "See what a normal Thursday looks like",
+    },
     support: {
       meta: {
         title: "What this costs · Vibe Thursday",

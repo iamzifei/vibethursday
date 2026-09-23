@@ -60,6 +60,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     everyLanguage("/wharf", { changeFrequency: "weekly", priority: 0.8 }),
     everyLanguage("/sessions", { changeFrequency: "weekly", priority: 0.7 }),
     everyLanguage("/works", { changeFrequency: "weekly", priority: 0.7 }),
+    // Linked from this event's own page on nsw.gov.au for October 2026. It is
+    // the address the government listing sends people to, so it has to be
+    // crawlable in its own right rather than only reachable through the form.
+    everyLanguage("/sbm", { changeFrequency: "weekly", priority: 0.8 }),
     everyLanguage("/support", { changeFrequency: "monthly", priority: 0.5 }),
     everyLanguage("/claim", { changeFrequency: "yearly", priority: 0.3 }),
     ...[...dates]

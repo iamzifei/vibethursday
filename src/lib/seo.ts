@@ -201,6 +201,13 @@ export function eventJsonLd(
     title?: string;
     description?: string;
     images?: readonly string[];
+    /**
+     * Where this event lives, when that is neither the home page nor the
+     * session's own page — /sbm, which is the address the NSW Small Business
+     * Month listing sends people to. Without it the markup would send a
+     * crawler to a home page that does not mention the program.
+     */
+    url?: string;
   } = {},
 ) {
   const base = siteUrl();
@@ -219,10 +226,12 @@ export function eventJsonLd(
     location: place(),
     organizer: { "@id": `${base}/#organization` },
     isAccessibleForFree: true,
-    offers: freeOffer(`${base}/${langQuery(lang)}#signup`),
+    offers: freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`),
     inLanguage: inLanguage(lang),
     image: options.images?.length ? [...options.images] : [`${base}/og.jpg`],
-    url: options.page ? `${base}/sessions/${isoDate}${langQuery(lang)}` : `${base}/${langQuery(lang)}#signup`,
+    url:
+      options.url ??
+      (options.page ? `${base}/sessions/${isoDate}${langQuery(lang)}` : `${base}/${langQuery(lang)}#signup`),
   };
 }
 
