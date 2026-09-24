@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import Link from "next/link";
 import { RELEASES, releaseDate, type Release } from "@/lib/changelog";
 import { getCopy, resolveLang, type Lang } from "@/lib/content";
+import { langHref } from "@/lib/nav";
 import { pageAlternates } from "@/lib/seo";
 import { toTraditional } from "@/lib/traditional";
 
@@ -100,6 +102,18 @@ export default async function ChangelogPage({ searchParams }: PageProps) {
                   </div>
 
                   <p className="body-lg" style={{ margin: 0 }}>{line(release, lang)}</p>
+
+                  {/* Only the entries that left something a reader can open
+                      carry one. The rest changed the morning, or changed
+                      something behind a code, and a link to either would be a
+                      link to nothing. `langHref` keeps the reader's language. */}
+                  {release.link && (
+                    <p style={{ margin: 0 }}>
+                      <Link className="hl" href={langHref(release.link.href, lang)}>
+                        {lang === "en" ? release.link.en : release.link.zh}
+                      </Link>
+                    </p>
+                  )}
                 </li>
               ))}
             </ol>

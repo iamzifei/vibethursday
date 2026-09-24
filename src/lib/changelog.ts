@@ -42,6 +42,21 @@ export type ReleaseKind = "major" | "minor";
  */
 export type ReleaseScope = "room" | "site";
 
+/**
+ * Where to go and see it, for a change that produced something public.
+ *
+ * ⚠️ Only when the thing is actually reachable by a reader. Check-in, the
+ * feedback form and the projector room all need a code in the URL, and the
+ * weekly poster is drawn on a page only the organiser can open — a link to any
+ * of those would be a link to a locked door, which is worse than no link.
+ */
+export type ReleaseLink = {
+  /** An internal path. `tests/changelog.test.mts` checks every one resolves. */
+  href: string;
+  zh: string;
+  en: string;
+};
+
 export type Release = {
   /** "3.0". Unique, and never reused. */
   version: string;
@@ -52,6 +67,7 @@ export type Release = {
   /** One line, in the site's own voice. What changed, not why it is good. */
   zh: string;
   en: string;
+  link?: ReleaseLink;
 };
 
 export const RELEASES: readonly Release[] = [
@@ -69,6 +85,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "报名时多问一句：这次来，最想带走什么。",
+    link: { href: "/#signup", zh: "去报名表看看 →", en: "See the form →" },
     en: "The sign-up form asks one more thing: what you most want to leave with.",
   },
   {
@@ -77,6 +94,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "下一场的页面在那天到来之前就打得开了。在那之前，它要等到当天才存在。",
+    link: { href: "/sessions", zh: "看场次 →", en: "Sessions →" },
     en: "The page for the session coming up opens before the morning does. Until then it did not exist until the day itself.",
   },
   {
@@ -88,6 +106,7 @@ export const RELEASES: readonly Release[] = [
     // the first morning that actually ran there — the announcement was the day
     // before, and the field above is documented as the date it became true.
     zh: "搬到 Chatswood 的 The Avenue。新场地 10:30 才开门，所以整场往后挪了半小时，开门就开始。",
+    link: { href: "/sessions/2026-09-17", zh: "搬过去之后的第一场 →", en: "The first morning there →" },
     en: "Moved to The Avenue in Chatswood. The new room opens at 10:30, so the whole morning shifted half an hour later and now starts when the doors do.",
   },
   {
@@ -96,6 +115,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "签到：扫桌上的码，点自己的名字。这个站第一次知道谁真的来了，而不只是谁报了名——每一场也因此有了自己的页面：那天是谁、聊了什么、照片。",
+    link: { href: "/sessions", zh: "每一场的页面 →", en: "Every session has a page →" },
     en: "Check-in: scan the code on the table, tap your own name. The first time this site knew who actually came rather than who meant to — and so each session got a page of its own: who was there, what was asked, the photographs.",
   },
   {
@@ -120,6 +140,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "每一场变成一个东西：一张画、一份存档、累计的数字。码头上的问题可以被回答了。",
+    link: { href: "/works", zh: "攒下来的作品 →", en: "What has been built →" },
     en: "Each session became a thing of its own — a painting, an archive entry, a running count. Questions on the Wharf can be answered.",
   },
   {
@@ -128,6 +149,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "码头：把大家报名时写下的那个问题挂出来，谁都能看见，谁都能接。",
+    link: { href: "/wharf", zh: "去码头 →", en: "The Wharf →" },
     en: "The Wharf: the question you wrote when you signed up goes up where everyone can see it, and anyone can take it.",
   },
   {
@@ -145,6 +167,7 @@ export const RELEASES: readonly Release[] = [
     scope: "room",
     // ⚠️ 脱敏：主持的人不点名。
     zh: "桌子按主题分，进门自己挑一张坐，不按名单安排。这一场主理人不在，由另一位常来的人主持——它第一次证明这个局不靠某一个人。",
+    link: { href: "/sessions/2026-08-20", zh: "那一场 →", en: "That session →" },
     en: "Tables are by topic and you pick one on the way in; nobody is assigned. This was also the first session run by somebody other than the organiser, who was away — the first proof that it does not depend on one person.",
   },
   {
@@ -169,6 +192,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "成员墙：一人一张卡。手机立在桌上就是桌牌。",
+    link: { href: "/members", zh: "成员墙 →", en: "The member wall →" },
     en: "The member wall: one card each. Stand your phone up and it is your name badge.",
   },
   {
@@ -177,6 +201,7 @@ export const RELEASES: readonly Release[] = [
     kind: "minor",
     scope: "site",
     zh: "报名改成累积场次——来过的人回来只需要选这次来哪天。表单里多了一句「这周想聊点什么」。",
+    link: { href: "/#signup", zh: "报名表 →", en: "The sign-up form →" },
     en: "Sign-ups accumulate across sessions, so coming back is just picking the day. The form gained one line: what you want to talk about this week.",
   },
   {
@@ -185,6 +210,7 @@ export const RELEASES: readonly Release[] = [
     kind: "major",
     scope: "room",
     zh: "第一场。每周四上午，一群在做东西的人围一张桌子：轮流自我介绍，然后几个人讲讲自己在做什么。",
+    link: { href: "/sessions/2026-08-06", zh: "第一场 →", en: "The first session →" },
     en: "The first one. Thursday morning, one table, people who are building things: everyone introduces themselves in turn, then a few show what they are working on.",
   },
 ] as const;

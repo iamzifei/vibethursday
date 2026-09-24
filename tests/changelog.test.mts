@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
 import { currentVersion, releaseDate, RELEASES } from "../src/lib/changelog.ts";
 import { copy } from "../src/lib/content.ts";
@@ -143,4 +145,58 @@ test("★ nothing in the changelog identifies a person or a sum of money", () =>
   // "James" is the organiser and is named all over the source notes; the page
   // speaks about the meetup, not about him.
   assert.ok(!text.includes("James"), "a release names the organiser");
+});
+
+test("★ every link in the changelog goes somewhere that exists", () => {
+  // A dead link on this page fails silently — it renders, it is the right
+  // colour, and it 404s only for whoever clicks it. Each href is checked
+  // against the routes actually present under src/app.
+  const app = path.join(process.cwd(), "src/app");
+
+  for (const release of RELEASES) {
+    if (!release.link) continue;
+
+    const { href, zh, en } = release.link;
+
+    assert.ok(zh.trim() && en.trim(), `v${release.version} has a link with no label`);
+    assert.ok(href.startsWith("/"), `v${release.version} links off-site: ${href}`);
+
+    const [pathPart, hash] = href.split("#");
+
+    if (hash) {
+      // An anchor on the home page has to be a section that is really there —
+      // the same failure the nav test guards against.
+      const home = readFileSync(path.join(process.cwd(), "src/app/page.tsx"), "utf8");
+      assert.ok(home.includes(`id="${hash}"`), `v${release.version} points at #${hash}, which the home page has no section for`);
+    }
+
+    if (!pathPart || pathPart === "/") continue;
+
+    const segments = pathPart.split("/").filter(Boolean);
+    const direct = path.join(app, ...segments, "page.tsx");
+
+    if (existsSync(direct)) continue;
+
+    // Otherwise the last segment must be filled by a dynamic route, e.g.
+    // /sessions/2026-08-20 → src/app/sessions/[date]/page.tsx
+    const parent = path.join(app, ...segments.slice(0, -1));
+    const dynamic = existsSync(parent)
+      ? readdirSync(parent).find((entry: string) => entry.startsWith("[") && existsSync(path.join(parent, entry, "page.tsx")))
+      : undefined;
+
+    assert.ok(dynamic, `v${release.version} links to ${href}, which is not a route`);
+  }
+});
+
+test("a session a release links to is a Thursday the meetup ran", () => {
+  // /sessions/<date> renders for any well-formed date, so a typo would give a
+  // real page about a morning that never happened.
+  const sessions = new Set<string>(copy.zh.gallery.sessions.map((session) => session.date));
+
+  for (const release of RELEASES) {
+    const date = release.link?.href.match(/^\/sessions\/(\d{4}-\d{2}-\d{2})$/)?.[1];
+    if (!date) continue;
+
+    assert.ok(sessions.has(date), `v${release.version} links to /sessions/${date}, which is not a session the site has written up`);
+  }
 });
