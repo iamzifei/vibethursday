@@ -2,7 +2,6 @@ import type { RosterEntry } from "@/lib/checkin";
 import type { CheckinRow } from "@/lib/db";
 
 type Props = {
-  adminKey: string;
   /** The session the desk is set up for. */
   session: string;
   /** Whether that session is today in Sydney — the only day the code works. */
@@ -23,7 +22,7 @@ type Props = {
  * with the same name are told apart by WeChat ID on this screen, and by a
  * few words about their work on the room's.
  */
-export function CheckinDesk({ adminKey, session, isToday, url, qrSvg, roster, checkins }: Props) {
+export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins }: Props) {
   const pending = roster.filter((entry) => !entry.checkedIn);
 
   return (
@@ -94,7 +93,6 @@ export function CheckinDesk({ adminKey, session, isToday, url, qrSvg, roster, ch
                 <td className="mono">{row.source}</td>
                 <td>
                   <form method="post" action="/api/admin/checkin">
-                    <input type="hidden" name="key" value={adminKey} />
                     <input type="hidden" name="session" value={session} />
                     <input type="hidden" name="signupId" value={row.signup_id} />
                     <input type="hidden" name="action" value="undo" />
@@ -131,7 +129,6 @@ export function CheckinDesk({ adminKey, session, isToday, url, qrSvg, roster, ch
                           answer belongs to the person, and they can still
                           scan the code and give it themselves. */}
                       <form method="post" action="/api/admin/checkin">
-                        <input type="hidden" name="key" value={adminKey} />
                         <input type="hidden" name="session" value={session} />
                         <input type="hidden" name="signupId" value={entry.id} />
                         <input type="hidden" name="action" value="checkin" />

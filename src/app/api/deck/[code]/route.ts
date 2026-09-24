@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { tooMany } from "@/lib/rate-limit";
 import { keyMatches, listenerCount, publish } from "@/lib/deck";
 import { getDeck, setDeckIndex } from "@/lib/db";
 
@@ -16,6 +17,9 @@ type Context = { params: Promise<{ code: string }> };
  * make a failed write show up as a room that turned and then turned back.
  */
 export async function POST(request: Request, { params }: Context) {
+  const limited = tooMany(request, "deck-turn", 1200);
+  if (limited) return limited;
+
   const { code } = await params;
 
   const body = await request.json().catch(() => null);

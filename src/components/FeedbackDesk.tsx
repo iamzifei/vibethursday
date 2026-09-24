@@ -8,7 +8,6 @@ export type FeedbackRow = FeedbackSummary & {
 };
 
 type Props = {
-  adminKey: string;
   /** The session the current code belongs to — the one just gone. */
   session: string;
   /** Whether that session's window is still open. */
@@ -40,7 +39,7 @@ function show(value: number | null): string {
  * second reading of the first situation. Every figure here is printed with
  * what it is out of.
  */
-export function FeedbackDesk({ adminKey, session, isOpen, url, qrSvg, summary, showing, answers }: Props) {
+export function FeedbackDesk({ session, isOpen, url, qrSvg, summary, showing, answers }: Props) {
   const total = summary.reduce((sum, row) => sum + row.count, 0);
   const here = summary.find((row) => row.session === showing);
 
@@ -118,7 +117,7 @@ export function FeedbackDesk({ adminKey, session, isOpen, url, qrSvg, summary, s
                     {row.asked > 0 ? `${row.yes} / ${row.asked}` : "—"}
                   </td>
                   <td>
-                    <a className="mono" href={`/admin?key=${encodeURIComponent(adminKey)}&fb=${row.session}#feedback`}>
+                    <a className="mono" href={`/admin?fb=${row.session}#feedback`}>
                       看这一场 →
                     </a>
                   </td>
@@ -135,7 +134,7 @@ export function FeedbackDesk({ adminKey, session, isOpen, url, qrSvg, summary, s
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
             {here ? `${here.count} 份 · 平均 ${show(here.average)}` : "这一场还没有"}
             {" · "}
-            <a className="mono" href={`/api/admin/export?key=${encodeURIComponent(adminKey)}&what=feedback`}>
+            <a className="mono" href="/api/admin/export?what=feedback">
               CSV
             </a>
           </span>

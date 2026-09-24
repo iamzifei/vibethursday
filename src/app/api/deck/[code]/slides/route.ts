@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { tooMany } from "@/lib/rate-limit";
 import { keyMatches, MAX_SLIDE_BYTES, MAX_SLIDES, publish } from "@/lib/deck";
 import { addDeckSlide, clearDeckSlides, getDeck } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
@@ -18,6 +19,9 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
  * It also lets the presenter watch a progress count instead of a spinner.
  */
 export async function POST(request: Request, { params }: Context) {
+  const limited = tooMany(request, "deck-slides", 120);
+  if (limited) return limited;
+
   const { code } = await params;
 
   const form = await request.formData().catch(() => null);
@@ -68,6 +72,9 @@ export async function POST(request: Request, { params }: Context) {
 /** Throws the deck away so it can be re-uploaded. The room code and any QR
  *  already printed or projected keep working. */
 export async function DELETE(request: Request, { params }: Context) {
+  const limited = tooMany(request, "deck-slides", 120);
+  if (limited) return limited;
+
   const { code } = await params;
 
   const body = await request.json().catch(() => null);

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { tooMany } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { getMemberById, saveMember, SlugTakenError } from "@/lib/db";
 import { currentMemberId, MEMBER_COOKIE } from "@/lib/member-auth";
@@ -8,6 +9,9 @@ export const dynamic = "force-dynamic";
 
 /** Saves the signed-in member's own card. */
 export async function POST(request: Request) {
+  const limited = tooMany(request, "me", 60);
+  if (limited) return limited;
+
   const memberId = await currentMemberId();
 
   if (!memberId) {
@@ -51,7 +55,10 @@ export async function POST(request: Request) {
 }
 
 /** Signs out. Nothing to revoke server-side — the cookie was the whole session. */
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const limited = tooMany(request, "me", 60);
+  if (limited) return limited;
+
   (await cookies()).delete(MEMBER_COOKIE);
   return NextResponse.json({ ok: true });
 }

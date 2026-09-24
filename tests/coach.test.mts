@@ -176,7 +176,10 @@ test("★ the triage script does not write unless told to", () => {
 test("★ the admin triage button is behind the key, and above the per-row guard", () => {
   const route = readFileSync(path.join(process.cwd(), "src/app/api/admin/wharf/route.ts"), "utf8");
 
-  const auth = route.indexOf("isAdmin(key)");
+  // Located by the call, not by the literal `isAdmin(key)`: the route moved to
+  // `isAdminRequest(cookie, key)` on 2026-09-24 when the admin token came out
+  // of the URL. The three orderings asserted below are unchanged.
+  const auth = route.search(/isAdmin(Request)?\(/);
   const triage = route.indexOf('action === "triage"');
   const idGuard = route.indexOf('error: "bad_id"');
 

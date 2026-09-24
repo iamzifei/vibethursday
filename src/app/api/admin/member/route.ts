@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { tooMany } from "@/lib/rate-limit";
+import { cookies } from "next/headers";
+import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { requestOrigin } from "@/lib/request-origin";
 import { setMemberHidden } from "@/lib/db";
 
@@ -17,10 +19,13 @@ export const dynamic = "force-dynamic";
  * JavaScript at all, like the rest of that page.
  */
 export async function POST(request: Request) {
+  const limited = tooMany(request, "admin-action", 300);
+  if (limited) return limited;
+
   const form = await request.formData().catch(() => null);
   const key = form?.get("key");
 
-  if (typeof key !== "string" || !isAdmin(key)) {
+  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null)) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -34,5 +39,5 @@ export async function POST(request: Request) {
   await setMemberHidden(id, hidden);
 
   // 303 so the browser follows with GET; a 307 would repost the form on reload.
-  return NextResponse.redirect(new URL(`/admin?key=${encodeURIComponent(key)}#members`, await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(`/admin#members`, await requestOrigin()), 303);
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { tooMany } from "@/lib/rate-limit";
+import { cookies } from "next/headers";
+import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
 import { checkIn, undoCheckin } from "@/lib/db";
 import { requestOrigin } from "@/lib/request-origin";
@@ -15,10 +17,13 @@ export const dynamic = "force-dynamic";
  * A plain form post with a 303 back, like every other /admin action.
  */
 export async function POST(request: Request) {
+  const limited = tooMany(request, "admin-action", 300);
+  if (limited) return limited;
+
   const form = await request.formData().catch(() => null);
   const key = form?.get("key");
 
-  if (typeof key !== "string" || !isAdmin(key)) {
+  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null)) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.redirect(
-    new URL(`/admin?key=${encodeURIComponent(key)}#checkin`, await requestOrigin()),
+    new URL(`/admin#checkin`, await requestOrigin()),
     303,
   );
 }

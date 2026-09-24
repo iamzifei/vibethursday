@@ -52,3 +52,34 @@ export function checkRateLimit(
 
   return { allowed: true, retryAfterSeconds: 0 };
 }
+
+/**
+ * The caller's address, as the proxy reports it.
+ *
+ * The same two lines were already copied into every route that limits; this is
+ * them once, for the routes that did not limit at all until 2026-09-24.
+ */
+export function clientIp(request: Request): string {
+  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
+  return forwardedFor?.split(",")[0]?.trim() || "unknown";
+}
+
+/**
+ * A ready-made 429 when `request` is over `max` per hour in `bucket`, else null.
+ *
+ * ⚠️ Added for the write endpoints the 2026-09-24 audit found with no limit at
+ * all — the admin routes, the admin session exchange, the projector, and a
+ * member's own card. The one that mattered most was the admin session route:
+ * it is where the admin token is checked, and an unthrottled check is an
+ * unthrottled guess. Call it before authenticating, so a guess costs a slot
+ * whether or not it was right.
+ */
+export function tooMany(request: Request, bucket: string, max: number): Response | null {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`${bucket}:${clientIp(request)}`, max);
+  if (allowed) return null;
+
+  return new Response("Too many requests", {
+    status: 429,
+    headers: { "Retry-After": String(retryAfterSeconds), "Cache-Control": "no-store" },
+  });
+}

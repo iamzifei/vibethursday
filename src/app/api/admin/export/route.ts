@@ -1,4 +1,6 @@
-import { isAdmin } from "@/lib/admin-auth";
+import { cookies } from "next/headers";
+import { tooMany } from "@/lib/rate-limit";
+import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { listFeedback, listSignups } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -62,9 +64,12 @@ function csvCell(value: unknown): string {
 }
 
 export async function GET(request: Request) {
+  const limited = tooMany(request, "admin-export", 60);
+  if (limited) return limited;
+
   const key = new URL(request.url).searchParams.get("key") ?? undefined;
 
-  if (!isAdmin(key)) {
+  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, key)) {
     return new Response("Not authorised", { status: 401 });
   }
 

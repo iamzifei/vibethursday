@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
 import { FeedbackDesk } from "@/components/FeedbackDesk";
 import { PosterExport } from "@/components/PosterExport";
-import { isAdmin } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import {
@@ -41,13 +43,22 @@ type PageProps = {
 export default async function AdminPage({ searchParams }: PageProps) {
   const { key, fb } = await searchParams;
 
-  if (!isAdmin(key)) {
+  // ★ The link still carries the token; the address bar no longer keeps it.
+  // Arriving with ?key= goes straight to the one route allowed to set a
+  // cookie, which signs the session in and comes back here without it.
+  if (key) {
+    const next = fb ? `/admin?fb=${encodeURIComponent(fb)}` : "/admin";
+    redirect(`/api/admin/session?key=${encodeURIComponent(key)}&next=${encodeURIComponent(next)}`);
+  }
+
+  if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
     return (
       <main className="shell section">
         <div className="card stack-3">
           <h1 className="h3">Not authorised</h1>
           <p className="body-sm">
-            Open this page as <code>/admin?key=YOUR_ADMIN_TOKEN</code>.
+            Open <code>/admin?key=YOUR_ADMIN_TOKEN</code> once. It signs this browser in for
+            30 days and takes the token straight back out of the address bar.
           </p>
         </div>
       </main>
@@ -270,7 +281,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
           The code for the table and the list of who has tapped it. The one
           place on the site that knows who was in the room. */}
       <CheckinDesk
-        adminKey={key!}
         session={desk}
         isToday={desk === sydneyToday().toISOString().slice(0, 10)}
         url={deskUrl}
@@ -283,7 +293,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
           The other half of a session: check-in says who was in the room,
           this says whether the morning was worth their while. */}
       <FeedbackDesk
-        adminKey={key!}
         session={feedbackSession}
         isOpen={canGiveFeedback(feedbackSession, sydneyToday().toISOString().slice(0, 10))}
         url={feedbackUrl}
@@ -312,7 +321,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {/* An ordinary form: the route answers with a 303 to the presenter's
             page, so this needs no script. */}
         <form method="post" action="/api/deck" className="stack-3">
-          <input type="hidden" name="key" value={key} />
           <div className="deck-build__join">
             <input
               className="field"
@@ -372,7 +380,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 </div>
 
                 <form method="post" action="/api/admin/deck">
-                  <input type="hidden" name="key" value={key} />
                   <input type="hidden" name="code" value={deck.code} />
                   <button className="btn btn--secondary" type="submit">
                     关掉这个房间
@@ -462,7 +469,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
               a fraction of a cent, takes about a second a row, and every move
               it makes is undone by one click in the table below. */}
           <form method="post" action="/api/admin/wharf" style={{ marginBottom: "var(--space-4)" }}>
-            <input type="hidden" name="key" value={key} />
             <input type="hidden" name="action" value="triage" />
             <button className="btn btn--secondary btn--sm" type="submit">
               Sort the vague ones out
@@ -495,7 +501,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
                             action="/api/admin/wharf"
                             style={{ display: "inline" }}
                           >
-                            <input type="hidden" name="key" value={key} />
                             <input type="hidden" name="action" value="delete-reply" />
                             <input type="hidden" name="id" value={reply.id} />
                             <button className="linkish" type="submit">
@@ -520,7 +525,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
                           action="/api/admin/wharf"
                           style={{ display: "inline" }}
                         >
-                          <input type="hidden" name="key" value={key} />
                           <input type="hidden" name="action" value="lane" />
                           <input type="hidden" name="id" value={question.id} />
                           <input type="hidden" name="lane" value={lane} />
@@ -583,7 +587,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       </section>
 
       <div>
-        <a className="btn btn--secondary" href={`/api/admin/export?key=${encodeURIComponent(key!)}`}>
+        <a className="btn btn--secondary" href="/api/admin/export">
           Download CSV
         </a>
       </div>
@@ -628,7 +632,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td>
                       {/* A form, not fetch: /admin ships no client JS. */}
                       <form action="/api/admin/member" method="post">
-                        <input type="hidden" name="key" value={key!} />
                         <input type="hidden" name="id" value={row.id} />
                         <input type="hidden" name="hidden" value={row.hidden ? "false" : "true"} />
                         <button type="submit" className="link-button">
