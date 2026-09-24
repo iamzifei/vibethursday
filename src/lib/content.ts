@@ -387,7 +387,7 @@ export const copy = {
         //
         // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
         // 区没人会去点开，这是折叠这个做法最常见的失败方式。
-        extras: "再多问几个（都可跳过）：怎么知道这个活动的、平时用什么 AI",
+        extras: "再多说几句（都可跳过）：在做什么、上不上成员墙、想不想带一桌、平时用什么 AI……",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
         // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
@@ -1604,7 +1604,7 @@ export const copy = {
         ],
         // See the Chinese block above for why these three are folded away, and
         // why the spend question asks about money rather than about tokens.
-        extras: "A few more, all skippable: how you heard about this, which AI you use",
+        extras: "A few more, all skippable: what you are building, the member wall, hosting a table, which AI you use…",
         aiModels: "Which AI models do you mostly use?",
         aiModelsHint:
           "Optional, pick as many as apply. It tells me how the room splits between overseas and Chinese models — which decides what gets demoed on the day, and whether shared subscriptions or China-hosted APIs are worth a table.",

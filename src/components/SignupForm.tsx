@@ -481,18 +481,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
             reassurance is about the pair, and repeating it dilutes it. */}
         <p className="privacy-note">{copy.fields.contactPrivacy}</p>
 
-        <div>
-          <label className="label" htmlFor={fieldId("building")}>
-            {copy.fields.building}
-          </label>
-          <textarea
-            className="field"
-            id={fieldId("building")}
-            name="building"
-            rows={3}
-            placeholder={copy.fields.buildingPlaceholder}
-          />
-        </div>
         </>
       )}
 
@@ -534,44 +522,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         <p className="field-hint">{copy.fields.topicHint}</p>
       </div>
 
-      {/* Outside the identity block on purpose, so it shows for returning
-          visitors too — they are exactly the people who signed up before the
-          wall existed and are not on it. The card is built from what the
-          database already holds, so it works even when this compact form does
-          not re-ask for "what are you working on".
 
-          Unticked by default, and it stays unticked-by-default forever: this is
-          the only place anyone is told that "what are you working on" can
-          become public, so a pre-ticked box would be consent nobody gave. */}
-      <div>
-        <label className="consent">
-          <input type="checkbox" name="publishCard" />
-          <span>{copy.fields.publishCard}</span>
-        </label>
-        <p className="field-hint">{copy.fields.publishCardHint}</p>
-      </div>
-
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-        <legend className="label">{copy.fields.demoIntent}</legend>
-        <div className="choice-group">
-          {copy.fields.demoOptions.map((option, index) => (
-            <label className="choice" key={option.value}>
-              <input
-                type="radio"
-                name="demoIntent"
-                value={option.value}
-                defaultChecked={index === copy.fields.demoOptions.length - 1}
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-        {/* Says out loud that a half-finished thing, or just a question, is
-            enough to host a table. Three people ticked "maybe" on 2026-08-13
-            and none of them hosted — the bar they imagined was higher than
-            the real one, and nothing on this form said otherwise. */}
-        <p className="field-hint">{copy.fields.demoIntentHint}</p>
-      </fieldset>
 
       <div className="grid-auto">
         <div>
@@ -596,27 +547,19 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           </p>
         </div>
 
-        {/* Shown to everyone rather than only to whoever picked "none". A
-            Thursday regular who would also come on a Saturday counts towards
-            whether a Saturday is worth running, and asking only the people who
-            cannot make Thursdays would undercount that demand. */}
-        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="label">{copy.fields.availability}</legend>
-          <div className="choice-group">
-            {copy.fields.availabilityOptions.map((option) => (
-              <label className="choice" key={option.value}>
-                <input type="checkbox" name="availability" value={option.value} />
-                <span>{option.label}</span>
-              </label>
-            ))}
-          </div>
-          <p className="field-hint">{copy.fields.availabilityHint}</p>
-        </fieldset>
 
       </div>
 
-      {/* The three questions on this form that serve the organiser rather than
-          the person filling it in, folded away behind one line.
+      {/* Everything on this form that is not needed to hold a seat, folded away
+          behind one line.
+
+          ⚠️ Since 2026-09-24 this holds seven fields, not three. The audit
+          measured ten visible by default on a sign-up for a free coffee
+          morning; James kept five outside — name, contact, which Thursday,
+          what you want to leave with, what you want to talk about — and moved
+          the rest in here. Hosting a table went in on evidence: the fourth
+          session's retro found that none of the people who shared had ticked
+          "yes" to it on this form.
 
           Open, they were roughly a third of the form's height — which read as
           two thirds of the work, because a wall of choices is what someone
@@ -629,6 +572,80 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           still saves them. */}
       <details className="disclosure" ref={extrasRef}>
         <summary>{copy.fields.extras}</summary>
+
+        {/* Only asked of a new visitor, as it was in the identity block this came
+            from: a returning visitor already has one on file, and signups merge
+            by WeChat ID, so asking again could overwrite it. */}
+        {!returning && (
+          <div>
+            <label className="label" htmlFor={fieldId("building")}>
+              {copy.fields.building}
+            </label>
+            <textarea
+              className="field"
+              id={fieldId("building")}
+              name="building"
+              rows={3}
+              placeholder={copy.fields.buildingPlaceholder}
+            />
+          </div>
+        )}
+
+        {/* Outside the identity block on purpose, so it shows for returning
+            visitors too — they are exactly the people who signed up before the
+            wall existed and are not on it. The card is built from what the
+            database already holds, so it works even when this compact form does
+            not re-ask for "what are you working on".
+
+            Unticked by default, and it stays unticked-by-default forever: this is
+            the only place anyone is told that "what are you working on" can
+            become public, so a pre-ticked box would be consent nobody gave. */}
+        <div>
+          <label className="consent">
+            <input type="checkbox" name="publishCard" />
+            <span>{copy.fields.publishCard}</span>
+          </label>
+          <p className="field-hint">{copy.fields.publishCardHint}</p>
+        </div>
+
+        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="label">{copy.fields.demoIntent}</legend>
+          <div className="choice-group">
+            {copy.fields.demoOptions.map((option, index) => (
+              <label className="choice" key={option.value}>
+                <input
+                  type="radio"
+                  name="demoIntent"
+                  value={option.value}
+                  defaultChecked={index === copy.fields.demoOptions.length - 1}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {/* Says out loud that a half-finished thing, or just a question, is
+              enough to host a table. Three people ticked "maybe" on 2026-08-13
+              and none of them hosted — the bar they imagined was higher than
+              the real one, and nothing on this form said otherwise. */}
+          <p className="field-hint">{copy.fields.demoIntentHint}</p>
+        </fieldset>
+
+          {/* Shown to everyone rather than only to whoever picked "none". A
+              Thursday regular who would also come on a Saturday counts towards
+              whether a Saturday is worth running, and asking only the people who
+              cannot make Thursdays would undercount that demand. */}
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">{copy.fields.availability}</legend>
+            <div className="choice-group">
+              {copy.fields.availabilityOptions.map((option) => (
+                <label className="choice" key={option.value}>
+                  <input type="checkbox" name="availability" value={option.value} />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="field-hint">{copy.fields.availabilityHint}</p>
+          </fieldset>
 
         <div className="disclosure__body stack-6">
           <div>
