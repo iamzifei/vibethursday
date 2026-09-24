@@ -226,13 +226,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
      * `desk`, which on a Thursday afternoon has already fallen a week behind
      * the poster, and no longer the Wharf link this used to be.
      *
-     * ⚠️ This publishes that Thursday's check-in code to the whole group ahead
-     * of the day. The code stops working the moment the day is over and the
-     * roster still only offers the names on the list, but anyone in the group
-     * can now tap their own name from home and land on that session's wall.
-     * Check-in is the only record this site has of who was in the room, so
-     * that is a real loosening, accepted knowingly: the group *is* the room's
-     * edge, and a code nobody can find is a code nobody scans.
+     * The code only works on the day it names, which is why the readable
+     * address beside it has to be one that works on the other six.
      */
     // ⚠️ `siteUrl()`, not `requestOrigin()` — the one difference between this
     // QR and the desk's, and it matters because of where each one ends up.

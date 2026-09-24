@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
  * The pages worth crawling.
  *
  * Only what a stranger is meant to find: the home page, the member wall, the
- * Wharf, the session archive, the changelog, what running the meetup costs,
- * and the claim page. `/me`, `/badge`, `/checkin`, `/feedback` and `/admin`
+ * Wharf, the session archive, the works, the Small Business Month page, the
+ * changelog, what running the meetup costs, and the claim page. `/me`, `/badge`, `/checkin`, `/feedback` and `/admin`
  * are all either signed-in views of one person's own data or pages that need a
  * code to mean anything, and are excluded here as well as in robots.txt.
  *

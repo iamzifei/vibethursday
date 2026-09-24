@@ -271,9 +271,8 @@ function draw(
 
   // ── The Wharf ────────────────────────────────────────────────────
   // The QR plate is pinned to the bottom, so this is all the room the list
-  // has. Which questions fit is worked out before anything is painted: the
-  // heading has to say how many are actually on the poster, and an earlier
-  // version announced three and then drew two.
+  // has, and which questions fit is worked out before anything is painted —
+  // the line under the list has to say how many did.
   // 260 rather than 300: a QR this size is still comfortably scannable off a
   // phone screen, and the 40px it gives back is often one more question.
   const plate = 260;

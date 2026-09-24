@@ -46,8 +46,14 @@ export const RELEASES: readonly Release[] = [
     version: "3.3",
     date: "2026-09-24",
     kind: "minor",
-    zh: "每周发群里的海报变成一张悉尼收藏卡：一场一张画、一个编号。散场之后多了一张反馈表，只收一周。",
-    en: "The weekly poster became a collectible card — one Sydney plate and a serial number per session. Feedback opens after each morning and closes a week later.",
+    // ⚠️ Worded for what is true on the date above, not for what was built on
+    // it. The feedback form is live today and this morning is inside its own
+    // window; the poster changed today but this week's had already gone out in
+    // the old shape, so the first card is next week's. "一场一张画" was cut
+    // too — there are seven plates and they come round, the serial is the part
+    // that never repeats.
+    zh: "散场之后多了一张反馈表，只收一周。下一场起，每周的海报换成一套带编号的悉尼卡面，上面的码也从码头链接改成当天的签到码——到场扫一下就签到了。",
+    en: "Feedback opens after each morning and closes a week later. From the next session the weekly poster becomes one of a numbered set of Sydney plates, and the code on it becomes that day's check-in code — scan it when you arrive and you are checked in.",
   },
   {
     version: "3.2",

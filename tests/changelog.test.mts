@@ -93,7 +93,9 @@ test("the page's own copy exists in both languages", () => {
       assert.ok(t[key]?.trim(), `${lang}.changelog.${key} is empty`);
     }
 
-    // Both the home page and the footer interpolate this one.
+    // Only the home page interpolates this one — the footer builds its own
+    // line from `footerLink` and the version. It is still the single thing
+    // standing between the hero and a literal "版本 {v}".
     assert.ok(
       t.versionLabel.includes("{v}"),
       `${lang}.changelog.versionLabel lost its {v} placeholder — the home page would print it literally`,

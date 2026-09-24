@@ -215,7 +215,11 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
           <label className="label" htmlFor="feedback-name">
             {t.nameLabel}
           </label>
-          <input className="field" id="feedback-name" name="name" maxLength={100} autoComplete="name" />
+          {/* ⚠️ `off`, not `name`. The lede promises this is anonymous unless
+              you write your name in this box — and somebody who tapped an
+              autofill chip did not write it. One attribute is the difference
+              between that sentence being true and being nearly true. */}
+          <input className="field" id="feedback-name" name="name" maxLength={100} autoComplete="off" />
           <p className="field-hint">{t.nameHint}</p>
         </div>
 
