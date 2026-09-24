@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { checkinCode, verifyCheckinCode } from "../src/lib/checkin.ts";
+import { copy } from "../src/lib/content.ts";
 import {
   canGiveFeedback,
   sessionForFeedback,
@@ -223,4 +224,20 @@ test("★ the desk collects for the session that happened, not the one coming up
       `${today} points at a session that cannot take feedback`,
     );
   }
+});
+
+test("★ the anonymity promise names every box that ends it", () => {
+  // The lede says the form is anonymous unless you fill in certain boxes. Each
+  // box that identifies somebody has to be one of the ones it names — the
+  // WeChat field was added after the form had already shipped, and a promise
+  // that lists only the name while a second identifying box sits below it is
+  // a promise that has quietly stopped being true.
+  assert.match(copy.zh.feedback.lede, /名字/);
+  assert.match(copy.zh.feedback.lede, /微信/);
+  assert.match(copy.en.feedback.lede, /name/i);
+  assert.match(copy.en.feedback.lede, /WeChat/);
+
+  // And the count of boxes it quotes has to match the form.
+  assert.match(copy.zh.feedback.lede, /六格/);
+  assert.match(copy.en.feedback.lede, /Six boxes/);
 });

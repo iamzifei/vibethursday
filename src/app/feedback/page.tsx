@@ -223,6 +223,16 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
           <p className="field-hint">{t.nameHint}</p>
         </div>
 
+        <div>
+          <label className="label" htmlFor="feedback-wechat">
+            {t.wechatLabel}
+          </label>
+          {/* `off` for the same reason as the name above: this is the second
+              box that ends anonymity, and it has to be typed, not tapped. */}
+          <input className="field" id="feedback-wechat" name="wechat" maxLength={100} autoComplete="off" />
+          <p className="field-hint">{t.wechatHint}</p>
+        </div>
+
         <button className="btn btn--primary btn--block" type="submit">
           {t.submit}
         </button>

@@ -154,6 +154,7 @@ export function FeedbackDesk({ adminKey, session, isOpen, url, qrSvg, summary, s
                   {answer.rating !== null ? ` · ${answer.rating}/5` : ""}
                   {answer.recommend ? ` · 带朋友：${answer.recommend}` : ""}
                   {answer.name ? ` · ${answer.name}` : " · 匿名"}
+                  {answer.wechat ? ` · 微信 ${answer.wechat}` : ""}
                 </p>
                 {answer.best && (
                   <p className="body-sm">

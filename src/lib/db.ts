@@ -416,6 +416,11 @@ export function ensureSchema(): Promise<void> {
       )
     `);
 
+    // Added after the form had already been out for a session: somebody who
+    // left a name but no way to reach them cannot be replied to, which is the
+    // one reason the name box exists at all.
+    await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS wechat text`);
+
     await pool.query(`
       CREATE INDEX IF NOT EXISTS feedback_session_idx ON feedback (session)
     `);
@@ -2014,6 +2019,8 @@ export type FeedbackInput = {
   best: string | null;
   better: string | null;
   name: string | null;
+  /** Optional, and only useful together with a name. */
+  wechat: string | null;
   lang: string;
 };
 
@@ -2030,8 +2037,8 @@ export async function saveFeedback(input: FeedbackInput): Promise<void> {
   await ensureSchema();
 
   await getPool().query(
-    `INSERT INTO feedback (session, rating, recommend, best, better, name, lang)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO feedback (session, rating, recommend, best, better, name, wechat, lang)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8)`,
     [
       input.session,
       input.rating,
@@ -2039,6 +2046,7 @@ export async function saveFeedback(input: FeedbackInput): Promise<void> {
       input.best,
       input.better,
       input.name,
+      input.wechat,
       input.lang,
     ],
   );
@@ -2052,6 +2060,7 @@ export type FeedbackRecord = {
   best: string | null;
   better: string | null;
   name: string | null;
+  wechat: string | null;
   lang: string | null;
   /** Sydney date and time, for the organiser's table. */
   created_at: string;
@@ -2071,7 +2080,7 @@ export async function listFeedback(session?: string): Promise<FeedbackRecord[]> 
   const result = await getPool().query<FeedbackRecord>(
     `SELECT id::text AS id,
             to_char(session, 'YYYY-MM-DD') AS session,
-            rating, recommend, best, better, name, lang,
+            rating, recommend, best, better, name, wechat, lang,
             to_char(created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD HH24:MI') AS created_at
        FROM feedback
       WHERE $1::date IS NULL OR session = $1::date

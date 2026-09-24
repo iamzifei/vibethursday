@@ -90,6 +90,7 @@ let where = await post({
   best: "分桌之后那一段",
   better: "开场再短一点",
   name: "Ada",
+  wechat: "wx_ada",
 });
 assert.match(where, /done=1/, `交上去应该 done，实际 ${where}`);
 
@@ -98,6 +99,7 @@ assert.equal(rows.length, 1);
 assert.equal(rows[0].rating, 5);
 assert.equal(rows[0].recommend, "yes");
 assert.equal(rows[0].name, "Ada");
+assert.equal(rows[0].wechat, "wx_ada", "微信号应该存下来");
 check("填好的表 → 入库");
 
 // 2 ── Anonymous, and with half the questions skipped, is still a valid form.
@@ -110,6 +112,7 @@ const anon = rows.find((row) => row.name === null);
 assert.ok(anon, "匿名那一份应该在");
 assert.equal(anon.recommend, null, "跳过的题必须是 null，不是空串也不是 0");
 assert.equal(anon.best, null);
+assert.equal(anon.wechat, null, "没填的微信号必须是 null");
 check("匿名 + 跳过的题 → 存成 null");
 
 // 3 ── A code for another session is refused.
@@ -130,8 +133,11 @@ assert.match(where, /err=empty/, `空表应该被拒，实际 ${where}`);
 
 where = await post({ session: TODAY, code, lang: "zh", name: "只写了名字" });
 assert.match(where, /err=empty/, "只有名字不算答了题");
+
+where = await post({ session: TODAY, code, lang: "zh", name: "Ben", wechat: "wx_ben" });
+assert.match(where, /err=empty/, "名字 + 微信号也不算答了题");
 assert.equal((await listFeedback(TODAY)).length, 2);
-check("空表 / 只有名字 → 拒");
+check("空表 / 只有名字 / 名字+微信 → 拒");
 
 // 6 ── Out-of-range answers are dropped, not stored.
 where = await post({

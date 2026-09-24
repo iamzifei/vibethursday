@@ -40,6 +40,7 @@ const FEEDBACK_COLUMNS = [
   "best",
   "better",
   "name",
+  "wechat",
   "lang",
   "created_at",
 ] as const;
