@@ -381,6 +381,27 @@ export default async function Page({ searchParams }: PageProps) {
         </section>
 
         {/* ── Signup ───────────────────────────────────────────────── */}
+        {/* Moved up, right after the run of show, on 2026-09-24. The rules are
+            what the morning expects of you — they belong with what happens on
+            the day, read before signing up, not after the photo album. */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.rules.eyebrow}</span>
+              <h2>{c.rules.title}</h2>
+            </div>
+
+            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {c.rules.items.map((item, index) => (
+                <li className="rule" key={item}>
+                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
         <section className="section" id="signup">
           <div className="shell stack-8">
             <div className="stack-4">
@@ -423,14 +444,6 @@ export default async function Page({ searchParams }: PageProps) {
               </p>
             </div>
 
-            {/* The albums stay here — they are the most persuasive thing on
-                this page — but the full record of a session lives on its own
-                page now, and this is the only link to it. */}
-            <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
-              <Link className="btn btn--secondary" href={langHref("/sessions", lang)}>
-                {c.gallery.archiveCta}
-              </Link>
-            </div>
 
             {/* One album per session, newest first, each closed and shown as a
                 stack of prints. Sorting here rather than relying on the order in
@@ -439,8 +452,13 @@ export default async function Page({ searchParams }: PageProps) {
                 with no client JS: the stack is the summary, the grid is what it
                 opens into. */}
             <div className="albums">
+              {/* ⚠️ The newest session only, since 2026-09-24. All of them were
+                  here and on a phone they were 4.9 screens — a quarter of the
+                  home page, between the sign-up form and the house rules. Every
+                  session is still one tap away on /sessions (the link below). */}
               {[...c.gallery.sessions]
                 .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 1)
                 .map((session) => (
                   <details className="album" key={session.date}>
                     <summary className="album__summary">
@@ -524,27 +542,16 @@ export default async function Page({ searchParams }: PageProps) {
                   </details>
                 ))}
             </div>
+
+            <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+              <Link className="btn btn--secondary" href={langHref("/sessions", lang)}>
+                {c.gallery.archiveCta}
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ── House rules ──────────────────────────────────────────── */}
-        <section className="section">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.rules.eyebrow}</span>
-              <h2>{c.rules.title}</h2>
-            </div>
-
-            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {c.rules.items.map((item, index) => (
-                <li className="rule" key={item}>
-                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
 
         {/* ── FAQ ──────────────────────────────────────────────────── */}
         <section className="section">
@@ -555,11 +562,16 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
 
             <div className="stack-6">
+              {/* Each answer folded behind its question since 2026-09-24: open,
+                  the section was 2.1 screens on a phone. The questions are the
+                  scannable part; the answers open with no JavaScript. The FAQ
+                  structured data is built from the copy, not from this markup,
+                  so folding it changes nothing a search engine reads. */}
               {c.faq.items.map((item) => (
-                <div className="stack-2" key={item.q}>
-                  <h3 className="h3" style={{ fontSize: "var(--text-lg)" }}>
+                <details className="disclosure stack-2" key={item.q}>
+                  <summary className="h3" style={{ fontSize: "var(--text-lg)" }}>
                     {item.q}
-                  </h3>
+                  </summary>
                   {/* The link sits inside the sentence rather than trailing it.
                       An answer that says "pick «mornings do not work»" should
                       make those words the thing you click.
@@ -583,7 +595,7 @@ export default async function Page({ searchParams }: PageProps) {
                       ))}
                     {item.aTail}
                   </p>
-                </div>
+                </details>
               ))}
             </div>
           </div>

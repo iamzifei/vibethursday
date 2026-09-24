@@ -146,9 +146,9 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 06 — 现场",
+      eyebrow: "§ 07 — 现场",
       title: "每一场都留了几张。",
-      lede: "为保护参与者，认得出的人脸都遮掉了。点开某一场就能看到那天的全部照片。",
+      lede: "为保护参与者，认得出的人脸都遮掉了。这里是最近一场，点开看那天的全部照片；之前每一场都在下面的完整记录里。",
       archiveCta: "每一场的完整记录",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
       sessions: [
@@ -288,7 +288,7 @@ export const copy = {
     },
 
     rules: {
-      eyebrow: "§ 07 — 几条规矩",
+      eyebrow: "§ 05 — 几条规矩",
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
@@ -300,7 +300,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 05 — 报名",
+      eyebrow: "§ 06 — 报名",
       title: "报个名，我把地址发给你。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -1397,9 +1397,9 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 06 — The room",
+      eyebrow: "§ 07 — The room",
       title: "A few shots from every session.",
-      lede: "Recognisable faces are covered to protect the people who came. Open a session to see everything from that morning.",
+      lede: "Recognisable faces are covered to protect the people who came. This is the latest session — open it for everything from that morning; every earlier one is in the full record below.",
       archiveCta: "The full record of each session",
       sessions: [
         {
@@ -1534,7 +1534,7 @@ export const copy = {
     },
 
     rules: {
-      eyebrow: "§ 07 — House rules",
+      eyebrow: "§ 05 — House rules",
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
@@ -1546,7 +1546,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 05 — Sign up",
+      eyebrow: "§ 06 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
       returning: {
