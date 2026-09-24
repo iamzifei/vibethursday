@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { currentVersion } from "@/lib/changelog";
 import type { Copy, Lang } from "@/lib/content";
 import { langHref, NAV_LINKS } from "@/lib/nav";
 import { FOOTER_SLOGAN, SOURCE_URL } from "@/lib/site";
@@ -49,6 +50,14 @@ export function SiteFooter({ lang, copy, support = false }: Props) {
                 {copy.nav[link.label]}
               </Link>
             ))}
+
+            {/* Down here rather than in the bar at the top. The nav is for the
+                five things somebody comes to this site to do; this is for the
+                reader who got to the bottom and wants to know whether the thing
+                is still moving. The version number is the answer in one word. */}
+            <Link href={langHref("/changelog", lang)}>
+              {copy.changelog.footerLink} <span className="mono">v{currentVersion()}</span>
+            </Link>
           </nav>
         </div>
 

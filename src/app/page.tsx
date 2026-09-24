@@ -4,6 +4,7 @@ import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { currentVersion } from "@/lib/changelog";
 import { getCopy, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
@@ -124,6 +125,19 @@ export default async function Page({ searchParams }: PageProps) {
               <p className="body-lg" style={{ color: "var(--fg1)", fontWeight: 500 }}>
                 {c.hero.subtitle}
               </p>
+
+              {/* ★ A version number under the name, the way a piece of software
+                  wears one. It is the shortest way to say the thing it says:
+                  this is still being worked on, and the changes are written
+                  down. The link is the proof — a number with nothing behind it
+                  would be decoration. */}
+              <Link
+                className="mono hl"
+                href={langHref("/changelog", lang)}
+                style={{ fontSize: "var(--text-sm)", alignSelf: "flex-start" }}
+              >
+                {c.changelog.versionLabel.replace("{v}", currentVersion())} →
+              </Link>
             </div>
 
             <p className="body-lg rise rise-2" style={{ maxWidth: "58ch" }}>
