@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ACCENT, CHIP, FG1, FG2, FG3, INK, MONO, SANS, SPARK, wrap } from "@/components/canvas-kit";
+import { ACCENT, CHIP, FG1, FG2, FG3, MONO, SANS, SPARK, wrap } from "@/components/canvas-kit";
+import { drawCardFallback, drawCardFrame, drawCardImage, tintColor } from "@/components/poster-art";
+import { cardArt, posterCard } from "@/lib/poster-card";
 
 export type PosterQuestion = {
   text: string;
@@ -9,6 +11,13 @@ export type PosterQuestion = {
 };
 
 type Props = {
+  /**
+   * The session's own ISO date, e.g. "2026-09-24".
+   *
+   * `date` below is already formatted for reading; this is the one the card is
+   * derived from — which picture, which tint, which number.
+   */
+  session: string;
   /** "9月3日（周四）", already formatted and already Sydney's date. */
   date: string;
   /** "10:30 开门 · 开门就开始". */
@@ -21,9 +30,16 @@ type Props = {
   questions: PosterQuestion[];
   /** Who answered something in the last week, and what. */
   answers: PosterQuestion[];
-  /** Rendered server-side by `qrcode`, same as the badge's. */
+  /**
+   * The check-in code for this session, rendered server-side by `qrcode`.
+   *
+   * ⚠️ Not a link to the Wharf, which is what this used to be. Scanning it on
+   * the day checks somebody in; scanning it on any other day lands on "this
+   * code is not today's", which is why `url` below still has to be an address
+   * that works all week.
+   */
   qrSvg: string;
-  /** Printed under the QR, so a screenshot still says where to go. */
+  /** Printed beside the QR, so a screenshot still says where to go. */
   url: string;
 };
 
@@ -41,6 +57,12 @@ const PAD = 88;
  * them a mailer — and most people never left an email address anyway. The
  * group is the channel, and a poster is what actually gets read there.
  *
+ * ★ Every week's is a different card: its own Sydney picture, its own tint and
+ * a serial number, all derived from the session's date in `poster-card.ts` and
+ * drawn in `poster-art.ts`. A notice gets read once and scrolled past; the
+ * point of a numbered set is that the eighth one is worth keeping next to the
+ * seventh. Nothing about it is random — the same Thursday draws the same card.
+ *
  * ★ The half worth having is the questions. A poster that only says when and
  * where is a calendar reminder; one that says "these four things are what
  * people want to ask about on Thursday" gives somebody a reason to come who
@@ -53,6 +75,10 @@ const PAD = 88;
  * deployment. See `canvas-kit.ts`.
  */
 export function PosterExport(props: Props) {
+  // Shown next to the button so the organiser knows which card is coming out
+  // before pressing anything. Same call the drawing makes, same answer.
+  const card = posterCard(props.session);
+
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -84,7 +110,21 @@ export function PosterExport(props: Props) {
       qr.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sized)}`;
       await qr.decode();
 
-      draw(ctx, props, qr);
+      // The week's picture, same-origin so it cannot taint the canvas and
+      // `toBlob` keeps working. If it will not load the poster still comes out,
+      // on bare ink — everything that makes it worth sending is text.
+      let art: HTMLImageElement | null = null;
+
+      try {
+        const plate = new Image();
+        plate.src = cardArt(posterCard(props.session).scene);
+        await plate.decode();
+        art = plate;
+      } catch (error) {
+        console.warn("[poster] card art did not load; drawing on bare ink", error);
+      }
+
+      draw(ctx, props, qr, art);
 
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png"),
@@ -133,7 +173,7 @@ export function PosterExport(props: Props) {
             ? "没画出来，看一眼 console"
             : preview
               ? "手机上长按图片保存或转发；电脑上已经下载了"
-              : `${props.questions.length} 个问题${props.answers.length > 0 ? ` · ${props.answers.length} 条这周的回答` : ""}会印在上面`}
+              : `NO.${String(card.no).padStart(2, "0")} ${card.scene.zh} · ${props.questions.length} 个问题${props.answers.length > 0 ? ` · ${props.answers.length} 条这周的回答` : ""}会印在上面`}
         </span>
       </div>
 
@@ -155,12 +195,23 @@ export function PosterExport(props: Props) {
   );
 }
 
-function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement) {
+function draw(
+  ctx: CanvasRenderingContext2D,
+  props: Props,
+  qr: HTMLImageElement,
+  art: HTMLImageElement | null,
+) {
   const { date, time, venue, signups, questions, answers, url } = props;
   const maxWidth = W - PAD * 2;
 
-  ctx.fillStyle = INK;
-  ctx.fillRect(0, 0, W, H);
+  // Which card this is. Everything the backdrop does follows from the session's
+  // date, so this line is the whole reason two weeks look different.
+  const card = posterCard(props.session);
+  const tint = tintColor(card);
+
+  if (art) drawCardImage(ctx, art, W, H);
+  else drawCardFallback(ctx, W, H);
+
   ctx.textBaseline = "top";
 
   let y = PAD + 16;
@@ -168,6 +219,24 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
   ctx.fillStyle = SPARK;
   ctx.font = `500 30px ${MONO}`;
   ctx.fillText("SYDNEY · EVERY THURSDAY", PAD, y);
+
+  // ★ The serial and what the picture is, as one lockup against the eyebrow.
+  // ⚠️ Same size class on purpose. These two lines are the only thing on the
+  // poster that says it is one of a set, and in the first version the scene's
+  // name was set smaller and greyer than everything around it — the review
+  // could not read it at thumbnail size on any of the seven cards, which is
+  // the size the whole conceit has to survive.
+  ctx.textAlign = "right";
+
+  ctx.fillStyle = tint;
+  ctx.font = `600 36px ${MONO}`;
+  ctx.fillText(`NO.${String(card.no).padStart(2, "0")}`, W - PAD, y - 6);
+
+  ctx.fillStyle = FG1;
+  ctx.font = `500 32px ${SANS}`;
+  ctx.fillText(card.scene.zh, W - PAD, y + 40);
+
+  ctx.textAlign = "left";
   y += 74;
 
   ctx.fillStyle = FG1;
@@ -194,10 +263,11 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
     y += 54;
   }
 
-  y += 26;
-  ctx.fillStyle = "#2a3038";
-  ctx.fillRect(PAD, y, maxWidth, 2);
-  y += 44;
+  // ⚠️ There used to be a rule across the page here. It is gone deliberately:
+  // a line under the picture fenced the art into the top third and turned the
+  // card into a masthead with a notice under it. The plate now runs the full
+  // height and fades instead.
+  y += 70;
 
   // ── The Wharf ────────────────────────────────────────────────────
   // The QR plate is pinned to the bottom, so this is all the room the list
@@ -230,9 +300,14 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
 
   const hidden = questions.length - laid.length;
 
+  // ⚠️ The heading counts what is on the WHARF, and the line after the list
+  // says how many of them fit here. It used to count what fit, which made the
+  // two sentences contradict each other on every poster that had to truncate:
+  // "the Wharf has 2 questions this week" directly above "2 more are on the
+  // Wharf". Whichever number the reader trusts, one of them was a lie.
   ctx.fillStyle = CHIP;
   ctx.font = `500 30px ${MONO}`;
-  ctx.fillText(laid.length > 0 ? `码头上这周挂了 ${laid.length} 个问题` : "码头", PAD, y);
+  ctx.fillText(questions.length > 0 ? `码头上这周挂了 ${questions.length} 个问题` : "码头", PAD, y);
   y += headingHeight;
 
   if (questions.length === 0) {
@@ -270,7 +345,7 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
   if (hidden > 0) {
     ctx.fillStyle = FG3;
     ctx.font = `400 30px ${SANS}`;
-    ctx.fillText(`还有 ${hidden} 个在码头上 →`, PAD + 34, y);
+    ctx.fillText(`这里印了 ${laid.length} 个 · 还有 ${hidden} 个在码头上 →`, PAD + 34, y);
     y += 46;
   }
 
@@ -304,22 +379,33 @@ function draw(ctx: CanvasRenderingContext2D, props: Props, qr: HTMLImageElement)
   ctx.drawImage(qr, PAD + 20, plateY + 20, plate - 40, plate - 40);
 
   const textX = PAD + plate + 44;
-  let fy = plateY + 44;
+  let fy = plateY + 32;
 
   ctx.fillStyle = FG1;
   ctx.font = `700 46px ${SANS}`;
   ctx.fillText("Vibe Thursday", textX, fy);
-  fy += 64;
+  fy += 62;
 
-  ctx.fillStyle = FG2;
-  ctx.font = `400 32px ${SANS}`;
-  ctx.fillText("扫码看这周大家想问什么", textX, fy);
-  fy += 52;
-
+  // ⚠️ Says what the code actually does, and says it in the loudest voice in
+  // this block. It is the check-in code and it only works on the day. The
+  // first version set this line small and grey and put the Wharf address under
+  // it in lime monospace — so the brightest text beside the code named the one
+  // place the code does not go, and the review read the whole block as "scan
+  // this for the questions".
   ctx.fillStyle = ACCENT;
-  ctx.font = `400 28px ${MONO}`;
-  for (const line of wrap(ctx, url.replace(/^https?:\/\//, ""), W - textX - PAD, 2)) {
+  ctx.font = `600 34px ${SANS}`;
+  ctx.fillText("当天到场 · 扫码签到", textX, fy);
+  fy += 54;
+
+  // The address, quiet. It is the fallback for the six days when the code is
+  // dead, not the headline.
+  ctx.fillStyle = FG3;
+  ctx.font = `400 26px ${MONO}`;
+  for (const line of wrap(ctx, `这周的问题：${url.replace(/^https?:\/\//, "")}`, W - textX - PAD, 2)) {
     ctx.fillText(line, textX, fy);
-    fy += 38;
+    fy += 34;
   }
+
+  // Last, over everything: the border and the corner ticks are the card's edge.
+  drawCardFrame(ctx, card, W, H);
 }

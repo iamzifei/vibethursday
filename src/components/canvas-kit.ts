@@ -78,3 +78,16 @@ export function wrap(
 
   return lines;
 }
+
+/**
+ * `#rrggbb` plus an alpha, as an `rgba()` string.
+ *
+ * Canvas has no equivalent of CSS's `color-mix` or an 8-digit hex on every
+ * engine, and the poster's backdrop needs the same three accents at a dozen
+ * different strengths. Hand-written rgba literals would each be a chance to
+ * fork the palette.
+ */
+export function alpha(hex: string, a: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}

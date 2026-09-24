@@ -189,6 +189,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
    * one less thing that can be wrong on someone's phone.
    */
   const poster = {
+    session: nextSession,
     date: formatSession(nextSession, "zh"),
     time: "10:30 开门 · 开门就开始",
     // Found by its map link rather than by index. The venue is one of three
@@ -215,8 +216,32 @@ export default async function AdminPage({ searchParams }: PageProps) {
     // answering is to say their name in front of everybody, and the Wednesday
     // announcement is the only channel this site has.
     answers: answers.map((answer) => ({ name: answer.answerer, text: answer.question })),
+    // Printed beside the QR rather than encoded in it: an address somebody can
+    // read off a screenshot, and one that works on the six days when the code
+    // beside it does not.
     url: `${siteUrl()}/wharf`,
-    qrSvg: await QRCode.toString(`${siteUrl()}/wharf`, {
+    /**
+     * ★ The QR is the check-in code for the session the poster is for — not
+     * `desk`, which on a Thursday afternoon has already fallen a week behind
+     * the poster, and no longer the Wharf link this used to be.
+     *
+     * ⚠️ This publishes that Thursday's check-in code to the whole group ahead
+     * of the day. The code stops working the moment the day is over and the
+     * roster still only offers the names on the list, but anyone in the group
+     * can now tap their own name from home and land on that session's wall.
+     * Check-in is the only record this site has of who was in the room, so
+     * that is a real loosening, accepted knowingly: the group *is* the room's
+     * edge, and a code nobody can find is a code nobody scans.
+     */
+    // ⚠️ `siteUrl()`, not `requestOrigin()` — the one difference between this
+    // QR and the desk's, and it matters because of where each one ends up.
+    // The desk code is scanned in the room off the screen that generated it,
+    // so following the request's host is right for it. This one gets pasted
+    // into the group. Generated from a laptop on localhost, `requestOrigin()`
+    // would encode `http://localhost:3000/checkin?…` — dead for everybody who
+    // scans it — while the address printed next to it still reads
+    // vibethursday.com, so nothing on the poster would look wrong.
+    qrSvg: await QRCode.toString(`${siteUrl()}/checkin?s=${nextSession}&k=${checkinCode(nextSession)}`, {
       type: "svg",
       margin: 1,
       errorCorrectionLevel: "M",
