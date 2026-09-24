@@ -111,12 +111,10 @@ export default async function Page({ searchParams }: PageProps) {
           <SydneySkyline />
           {/* Decorative motion layers. Purely visual, so they are hidden from
               assistive technology and carry no content. */}
-          <div className="hero__grid" aria-hidden="true" />
-          <div className="hero__scan" aria-hidden="true" />
 
           <div className="shell stack-8">
             <div className="stack-4 rise rise-1">
-              <span className="eyebrow cursor">{c.hero.eyebrow}</span>
+              <span className="eyebrow">{c.hero.eyebrow}</span>
               {/* data-text feeds the two glitch copies drawn by ::before and
                   ::after; it must stay identical to the visible text. */}
               <h1 className="display-1 glitch" data-text={c.hero.title}>

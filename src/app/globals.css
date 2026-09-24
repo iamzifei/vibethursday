@@ -713,7 +713,7 @@ section[id] { scroll-margin-top: 76px; }
    JavaScript — so the page still ships zero animation code to the client and
    every layer is GPU-composited (transform and opacity only). */
 
-/* A lime bloom behind the headline, breathing. */
+/* A lime bloom behind the headline. */
 .hero::before {
   content: "";
   position: absolute;
@@ -725,96 +725,17 @@ section[id] { scroll-margin-top: 76px; }
   background: radial-gradient(circle, rgba(198, 255, 61, 0.18) 0%, rgba(198, 255, 61, 0) 62%);
   pointer-events: none;
   z-index: 0;
-  animation: bloom 13s ease-in-out infinite;
+  /* Static since 2026-09-24. It used to breathe on a 13s loop — one of five
+     infinite animations running at once on the first screen, which the audit
+     measured and James chose to cut back to one (the skyline's drift). The
+     tint stays: it is part of how the first screen looks, not a motion. */
 }
 
 .hero > * { position: relative; z-index: 2; }
 
-/* Layer 1 — a perspective grid running toward the horizon under the hero.
-   The rotateX plus a short perspective is what turns two flat repeating
-   gradients into a floor receding into the distance. */
-.hero__grid {
-  position: absolute;
-  /* Overhangs both edges so the perspective never reveals the plane's sides.
-     The near edge sits exactly on the hero's bottom: pushing it any lower
-     puts the whole projected plane outside the overflow:hidden box. */
-  left: -60%;
-  right: -60%;
-  bottom: 0;
-  height: 62%;
-  /* 62° with a 420px perspective keeps roughly 250px of projected depth.
-     Steeper angles or a shorter perspective crush it to a few pixels. */
-  transform: perspective(420px) rotateX(62deg);
-  transform-origin: bottom center;
-  background-image:
-    repeating-linear-gradient(to right, rgba(198, 255, 61, 0.32) 0 1px, transparent 1px 84px),
-    repeating-linear-gradient(to bottom, rgba(61, 220, 255, 0.3) 0 1px, transparent 1px 84px);
-  /* Dissolve toward the horizon so the grid does not end on a hard line.
-     After the rotation the element's own "top" is the receding direction. */
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, transparent 86%);
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, transparent 86%);
-  pointer-events: none;
-  z-index: 0;
-  /* Scrolling by exactly one 84px tile makes the loop seamless.
-     ⚠️ 2.6s put roughly 32px a second of motion in the reader's peripheral
-     vision, continuously, for as long as they stayed on the page. Nobody looks
-     at it and everybody's eye tracks it. Slower is the whole fix. */
-  animation: grid-run 7.5s linear infinite;
-}
 
-/* Layer 2 — a beam that sweeps down the hero, like a scanner passing over it. */
-/* ⚠️ Rewritten because the first version was tiring to sit in front of. It was
-   a 2px bar at 0.85 opacity with an 18px glow, crossing the hero every five
-   seconds — twelve hard-edged, high-contrast passes a minute, which is close to
-   a recipe for eye strain. Four things caused that and all four changed:
 
-     the hard edge   — a 2px line has two edges; this is a 150px band whose
-                       gradient reaches zero at both ends, so it has none
-     the contrast    — peak opacity 0.85 -> 0.14
-     the glow        — the box-shadow is gone; that halo was most of the dazzle
-     the metronome   — 5s -> 19s, and it fades in and out over most of the pass
 
-   It is still there and you still see it go by. It just stops being something
-   your eye has to keep dealing with. */
-.hero__scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(198, 255, 61, 0.5) 42%,
-    rgba(61, 220, 255, 0.5) 58%,
-    transparent 100%
-  );
-  opacity: 0;
-  pointer-events: none;
-  z-index: 1;
-  animation: scan 19s var(--ease-standard) infinite;
-}
-
-/* A 14% swell every seven seconds is a lot of breathing for something the size
-   of the hero. Half the amplitude, twice the period: still alive, no longer
-   pumping. */
-@keyframes bloom {
-  0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
-  50%      { opacity: 1;   transform: translateX(-50%) scale(1.06); }
-}
-
-@keyframes grid-run {
-  from { background-position: 0 0, 0 0; }
-  to   { background-position: 0 84px, 0 84px; }
-}
-
-@keyframes scan {
-  /* Held dark for the first third: the pass becomes an occasional thing that
-     happens rather than a beat you start anticipating. */
-  0%, 30%   { top: -18%; opacity: 0; }
-  46%       { opacity: 0.14; }
-  74%       { opacity: 0.14; }
-  100%      { top: 104%; opacity: 0; }
-}
 
 /* Layer 3 — the wordmark glitches: two coloured copies of the same text flash
    in offset horizontal slices, then vanish. `attr(data-text)` is what lets one
@@ -841,7 +762,11 @@ section[id] { scroll-margin-top: 76px; }
      removed — the snap is the point and it stays. */
   animation-duration: 17s;
   animation-timing-function: steps(1);
-  animation-iteration-count: infinite;
+  /* Once, on load, since 2026-09-24. It had already been slowed from every 6s
+     to every 17s for being tiring; the audit found it was still one of five
+     loops running at once on the first screen. A single glitch as the page
+     arrives keeps the character and stops the tic. */
+  animation-iteration-count: 1;
 }
 
 .glitch::before { color: var(--accent); animation-name: glitch-lime; }
@@ -867,18 +792,6 @@ section[id] { scroll-margin-top: 76px; }
   51% { opacity: 0.85; transform: translate(-3px, -1px); clip-path: inset(10% 0 66% 0); }
 }
 
-/* A terminal cursor after the eyebrow. Cheap, and it sets the register. */
-.cursor::after {
-  content: "▊";
-  margin-left: 0.35em;
-  color: var(--accent);
-  animation: blink 1.05s steps(1) infinite;
-}
-
-@keyframes blink {
-  0%, 49%   { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
 
 /* Hero content rises in on load, each block a beat after the one above it.
 
@@ -916,12 +829,9 @@ section[id] { scroll-margin-top: 76px; }
    screen mid-offset — so the copies are removed outright here. */
 @media (prefers-reduced-motion: reduce) {
   .hero::before,
-  .hero__grid,
   .dot--pulse,
-  .cursor::after,
   .skyline { animation: none; }
 
-  .hero__scan { display: none; }
   .glitch::before,
   .glitch::after { display: none; }
   .rise { opacity: 1; animation: none; }
@@ -1639,9 +1549,8 @@ select.field {
   position: absolute;
   left: 50%;
   bottom: 0;
-  /* z-index 0 puts it in the same plane as the perspective grid and below
-     .hero__scan (1) and the content (2), so nothing it draws can sit on top
-     of the headline or the buttons. */
+  /* z-index 0 keeps it below the content (2), so nothing it draws can sit
+     on top of the headline or the buttons. */
   z-index: 0;
   width: min(1400px, 132%);
   height: clamp(150px, 26vh, 300px);
