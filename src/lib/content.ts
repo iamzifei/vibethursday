@@ -244,6 +244,26 @@ export const copy = {
             { src: "/photos/session-07-6", alt: "角落的小桌，四个人围着一台电脑聊", width: 1600, height: 900 },
           ],
         },
+        {
+          // ⚠️ Written from the recording's transcript under its own compliance
+          // notes: nobody named, no client named, no third party's business or
+          // numbers retold — each talk is kept at the level of the mechanism it
+          // was about. The one number is the site's own check-in count.
+          // Kept above `date:` — scripts/session-poster.mjs reads date, title and
+          // note as three consecutive lines, and a comment between them hides the
+          // session from it.
+          date: "2026-09-24",
+          title: "第八场",
+          note: "主题是「AI + 获客」。签到二十个。两个分享接一场长 Q&A，最后一轮自我介绍：一位帮老板做建站和流程落地的，讲高客单的服务为什么只能靠长时间的沟通来接客，以及平台自带的 AI 投放为什么天然和广告主不站在一边；一位学生创业者讲面向个人、政府、企业三种客户，获客的打法差在哪，以及在一家机构里先找到那个愿意替你说话的人。Q&A 从 AI 投放该拿多大权限、小公司怎么从零起步做 GEO，一路聊到批量生成文章的风险、在社区里用 AI 写帖为什么会翻车、给政府做生意为什么要等那么久。最长的一段讨论从「复刻一个双边平台还行不行」开始，落在澳洲的技工身上：他们不缺客户，缺的是交付，活早就排满了。自我介绍里有一位，是当天早上问 ChatGPT「今天悉尼有什么 AI 活动」被推荐过来的。",
+          photos: [
+            { src: "/photos/session-08-1", alt: "玻璃房的全景，头顶是藤，长桌两边坐满了人，前景是一张圆木桌", width: 1600, height: 1200 },
+            { src: "/photos/session-08-2", alt: "靠玻璃墙的长凳上坐了一排人，窗外是街和龙舌兰，前面的桌上放着一个背包", width: 1600, height: 900 },
+            { src: "/photos/session-08-3", alt: "竖着拍的一张：头顶的藤和灯串，一个人站在屋子中间讲，周围的人坐着听", width: 1600, height: 2133 },
+            { src: "/photos/session-08-4", alt: "有人站在吧台那头讲，桌边的人转过去听，其中一位面前开着电脑", width: 1600, height: 900 },
+            { src: "/photos/session-08-5", alt: "问答的时候，对面有人站起来讲，一桌人拿着杯子转过去看，窗外一片绿", width: 1600, height: 900 },
+            { src: "/photos/session-08-6", alt: "从另一个角落看整间屋子：左边长凳上有人低头看手机，高脚凳和圆桌在前面", width: 1600, height: 1200 },
+          ],
+        },
       ],
       photoCount: (n: number) => `${n} 张`,
     },
@@ -1492,6 +1512,19 @@ export const copy = {
             { src: "/photos/session-07-4", alt: "A row of people on the bench against the glass wall, agaves outside", width: 1600, height: 900 },
             { src: "/photos/session-07-5", alt: "One person on her feet talking, the whole table turned towards her", width: 1600, height: 900 },
             { src: "/photos/session-07-6", alt: "A small table in the corner, four people around one laptop", width: 1600, height: 900 },
+          ],
+        },
+        {
+          date: "2026-09-24",
+          title: "Session eight",
+          note: "The theme was AI and getting customers. 20 checked in. Two talks, a long Q&A, then a round of introductions. Someone who builds websites and workflows for business owners, on why a high-value service can only be won through long conversations, and why an ad platform's built-in AI is never quite on the advertiser's side; a student founder on how winning customers differs between individuals, government and companies, and on first finding the one person inside an organisation who will speak for you. The Q&A went from how much control to hand an AI that runs your ads, and how a small company starts on GEO from nothing, to the risks of mass-generating articles, why AI-written posts backfire in online communities, and why selling to government takes so long. The longest discussion began with whether cloning a two-sided marketplace still works, and ended up on Australian tradies: they are not short of customers, they are short of hands — their calendars are already full. One person in the introductions had asked ChatGPT that morning what AI events were on in Sydney, and been sent here.",
+          photos: [
+            { src: "/photos/session-08-1", alt: "The whole glass room under the vines, people along both sides of the long table, a round wooden table in the foreground", width: 1600, height: 1200 },
+            { src: "/photos/session-08-2", alt: "A row of people on the bench along the glass wall, the street and agaves outside, a backpack on the table in front", width: 1600, height: 900 },
+            { src: "/photos/session-08-3", alt: "A tall shot under the vines and string lights: one person standing in the middle of the room talking, everyone around seated and listening", width: 1600, height: 2133 },
+            { src: "/photos/session-08-4", alt: "Someone standing at the bar end talking, the table turned to listen, one of them with a laptop open", width: 1600, height: 900 },
+            { src: "/photos/session-08-5", alt: "During the Q&A, someone on their feet across the table, a table of people with cups turned towards them, greenery outside", width: 1600, height: 900 },
+            { src: "/photos/session-08-6", alt: "The room from another corner: someone on the bench at the left looking at a phone, stools and round tables in front", width: 1600, height: 1200 },
           ],
         },
       ],
