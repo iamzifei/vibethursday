@@ -21,6 +21,57 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        /**
+         * Security headers, on every response.
+         *
+         * ⚠️ Until 2026-09-24 there were none at all — measured with `curl -I`
+         * against the live site: no HSTS, no nosniff, no frame protection, no
+         * referrer policy, no permissions policy, no CSP. The one with a real
+         * consequence was framing: /admin could be embedded in somebody else's
+         * page and its check-in and publish buttons clicked through a decoy.
+         *
+         * The CSP is REPORT-ONLY on purpose. Next injects inline scripts for
+         * its own runtime, and an enforced policy written blind would break the
+         * site in a way no test here would catch. Report-only lets violations
+         * show up in the console first; tighten it once there are none.
+         * `frame-ancestors` is ignored in report-only mode by spec, which is
+         * exactly why X-Frame-Options is set separately and enforced.
+         *
+         * Cloudflare Turnstile (the sign-up bot check) is the only third party
+         * the site loads — measured by recording every request on /, /members
+         * and /wharf.
+         */
+        source: "/:path*",
+        headers: [
+          // A year, and deliberately without includeSubDomains or preload:
+          // both are hard to walk back, and nothing else lives on this domain.
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+              "style-src 'self' 'unsafe-inline'",
+              // data: for the QR codes the poster and badge draw from an inline SVG.
+              "img-src 'self' data: blob: https://challenges.cloudflare.com",
+              "font-src 'self'",
+              "connect-src 'self' https://challenges.cloudflare.com https://*.challenges.cloudflare.com",
+              "frame-src https://challenges.cloudflare.com",
+              // The PDF renderer on the projector page runs a same-origin worker.
+              "worker-src 'self' blob:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join("; "),
+          },
+        ],
+      },
+      {
         source: "/photos/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
