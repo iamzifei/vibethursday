@@ -59,8 +59,12 @@ export default async function ChangelogPage({ searchParams }: PageProps) {
               </p>
             </div>
 
-            {/* What the two kinds mean, said once rather than implied by two
-                differently coloured chips nobody has a key for. */}
+            {/* ★ Said before the list rather than left to be inferred from two
+                chip colours. The scope line is the one that matters most: a
+                reader scanning this should see immediately that the meetup
+                changed on the ground, not only on the web. */}
+            <p className="body-sm" style={{ color: "var(--fg2)" }}>{t.scopeNote}</p>
+
             <dl className="stack-3" style={{ margin: 0 }}>
               <div className="stack-2">
                 <dt className="chip chip--stage" style={{ alignSelf: "flex-start" }}>{t.major}</dt>
@@ -86,6 +90,9 @@ export default async function ChangelogPage({ searchParams }: PageProps) {
                     <span className="h3 mono hl">v{release.version}</span>
                     <span className={release.kind === "major" ? "chip chip--stage" : "chip chip--quiet"}>
                       {release.kind === "major" ? t.major : t.minor}
+                    </span>
+                    <span className="chip chip--quiet">
+                      {release.scope === "room" ? t.room : t.site}
                     </span>
                     <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
                       {releaseDate(release.date, lang)}

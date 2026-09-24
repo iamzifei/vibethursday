@@ -30,12 +30,25 @@ import type { Lang } from "./content.ts";
 
 export type ReleaseKind = "major" | "minor";
 
+/**
+ * Where the change happened.
+ *
+ * ★ Both halves belong here. A changelog that only tracked the website would
+ * be a changelog of the wrong thing: most of what a regular actually notices —
+ * that nobody goes round the circle introducing themselves any more, that you
+ * can walk away from a table without saying goodbye — never touched a line of
+ * code. Those changes are recorded in the run sheets and retros kept outside
+ * this repo, and this is where they become public.
+ */
+export type ReleaseScope = "room" | "site";
+
 export type Release = {
   /** "3.0". Unique, and never reused. */
   version: string;
   /** The Sydney date it became true. */
   date: string;
   kind: ReleaseKind;
+  scope: ReleaseScope;
   /** One line, in the site's own voice. What changed, not why it is good. */
   zh: string;
   en: string;
@@ -46,12 +59,7 @@ export const RELEASES: readonly Release[] = [
     version: "3.3",
     date: "2026-09-24",
     kind: "minor",
-    // ⚠️ Worded for what is true on the date above, not for what was built on
-    // it. The feedback form is live today and this morning is inside its own
-    // window; the poster changed today but this week's had already gone out in
-    // the old shape, so the first card is next week's. "一场一张画" was cut
-    // too — there are seven plates and they come round, the serial is the part
-    // that never repeats.
+    scope: "site",
     zh: "散场之后多了一张反馈表，只收一周。下一场起，每周的海报换成一套带编号的悉尼卡面，上面的码也从码头链接改成当天的签到码——到场扫一下就签到了。",
     en: "Feedback opens after each morning and closes a week later. From the next session the weekly poster becomes one of a numbered set of Sydney plates, and the code on it becomes that day's check-in code — scan it when you arrive and you are checked in.",
   },
@@ -59,6 +67,7 @@ export const RELEASES: readonly Release[] = [
     version: "3.2",
     date: "2026-09-22",
     kind: "minor",
+    scope: "site",
     zh: "报名时多问一句：这次来，最想带走什么。",
     en: "The sign-up form asks one more thing: what you most want to leave with.",
   },
@@ -66,60 +75,83 @@ export const RELEASES: readonly Release[] = [
     version: "3.1",
     date: "2026-09-18",
     kind: "minor",
-    // ⚠️ Narrower than it first read. The session page itself shipped with
-    // check-in on 09-10 (v2.5, same commit); what 09-18 added is that the page
-    // exists *before* the morning does — until then it 404'd until the day.
+    scope: "site",
     zh: "下一场的页面在那天到来之前就打得开了。在那之前，它要等到当天才存在。",
     en: "The page for the session coming up opens before the morning does. Until then it did not exist until the day itself.",
   },
   {
     version: "3.0",
-    // ⚠️ 09-17, not 09-16. The 16th is when the move was announced and the
-    // site was updated; the room only changed for anybody on the morning of
-    // the 17th, which is the first session that actually ran there. The field
-    // above is documented as the date it became true, and for a changelog
-    // about the meetup rather than about the website, that is the morning.
     date: "2026-09-17",
     kind: "major",
-    // The venue and the opening time, stated as the home page already states
-    // them. Nothing about why, nothing about what it costs — those are
-    // settled decisions kept outside this repo, and a changelog restates
-    // public facts rather than reopening them.
-    zh: "搬到 Chatswood 的 The Avenue。新场地 10:30 才开门，所以开门就开始。",
-    en: "Moved to The Avenue in Chatswood. The new room opens at 10:30, so that is when we start.",
+    scope: "room",
+    // The venue and the time, as the home page already states them. 09-17 is
+    // the first morning that actually ran there — the announcement was the day
+    // before, and the field above is documented as the date it became true.
+    zh: "搬到 Chatswood 的 The Avenue。新场地 10:30 才开门，所以整场往后挪了半小时，开门就开始。",
+    en: "Moved to The Avenue in Chatswood. The new room opens at 10:30, so the whole morning shifted half an hour later and now starts when the doors do.",
   },
   {
-    version: "2.5",
+    version: "2.8",
     date: "2026-09-10",
     kind: "minor",
+    scope: "site",
     zh: "签到：扫桌上的码，点自己的名字。这个站第一次知道谁真的来了，而不只是谁报了名——每一场也因此有了自己的页面：那天是谁、聊了什么、照片。",
     en: "Check-in: scan the code on the table, tap your own name. The first time this site knew who actually came rather than who meant to — and so each session got a page of its own: who was there, what was asked, the photographs.",
   },
   {
-    version: "2.4",
+    version: "2.7",
     date: "2026-09-03",
     kind: "minor",
+    scope: "site",
     zh: "房间里没有投影仪，所以每个人的手机就是屏幕——开一个房间，大家扫码跟着看。",
     en: "There is no projector, so everyone's phone is the screen: open a room, and it follows along.",
   },
   {
-    version: "2.3",
+    version: "2.6",
+    date: "2026-09-03",
+    kind: "minor",
+    scope: "room",
+    zh: "开场固定成三句、大约五十秒：第一次来的举个手；一起把群昵称改成「名字 + 在做什么」；随时换桌。散场时在群里发一条接龙。",
+    en: "The opening became three sentences, about fifty seconds: hands up if it is your first time; let's all rename ourselves in the group to name plus what we are building; move tables whenever you like. At the end, one message goes to the group.",
+  },
+  {
+    version: "2.5",
     date: "2026-08-28",
     kind: "minor",
+    scope: "site",
     zh: "每一场变成一个东西：一张画、一份存档、累计的数字。码头上的问题可以被回答了。",
     en: "Each session became a thing of its own — a painting, an archive entry, a running count. Questions on the Wharf can be answered.",
   },
   {
-    version: "2.2",
+    version: "2.4",
     date: "2026-08-27",
     kind: "minor",
+    scope: "site",
     zh: "码头：把大家报名时写下的那个问题挂出来，谁都能看见，谁都能接。",
     en: "The Wharf: the question you wrote when you signed up goes up where everyone can see it, and anyone can take it.",
+  },
+  {
+    version: "2.3",
+    date: "2026-08-27",
+    kind: "minor",
+    scope: "room",
+    zh: "取消「每桌派人回全场汇报」。轮流汇报会把一场酒会变回一场会——删掉它，比给它定规矩便宜。",
+    en: "Dropped the round of table reports. Taking turns to report back turns a party into a meeting — deleting it was cheaper than making rules for it.",
+  },
+  {
+    version: "2.2",
+    date: "2026-08-20",
+    kind: "minor",
+    scope: "room",
+    // ⚠️ 脱敏：主持的人不点名。
+    zh: "桌子按主题分，进门自己挑一张坐，不按名单安排。这一场主理人不在，由另一位常来的人主持——它第一次证明这个局不靠某一个人。",
+    en: "Tables are by topic and you pick one on the way in; nobody is assigned. This was also the first session run by somebody other than the organiser, who was away — the first proof that it does not depend on one person.",
   },
   {
     version: "2.1",
     date: "2026-08-15",
     kind: "minor",
+    scope: "site",
     zh: "繁体中文，以及简 / 繁 / EN 的切换。",
     en: "Traditional Chinese, and a switch between Simplified, Traditional and English.",
   },
@@ -127,13 +159,15 @@ export const RELEASES: readonly Release[] = [
     version: "2.0",
     date: "2026-08-13",
     kind: "major",
-    zh: "改成小桌制：不再是轮流上台讲，而是分成几张小桌，想听哪桌就坐哪桌。",
-    en: "Changed to small tables: no one takes the floor in turn any more — the room splits, and you sit at whichever table you want to hear.",
+    scope: "room",
+    zh: "形式整个换掉。不再绕一圈做自我介绍——三十个人轮一圈要半小时，讲完前面的就忘了；改成只有第一次来的人讲一句。分享一人五分钟、讲完就下、当场不问答，问题留到后面。之后分成几张小桌，讨论在桌上发生。明说一条规矩：走开不用打招呼。",
+    en: "The whole format changed. No more going round the circle — thirty people take half an hour and you have forgotten the first by the last; now only first-timers say a line. Talks are five minutes each, no questions on the spot, and then the room splits into small tables where the actual discussion happens. One rule said out loud: you can walk away without saying goodbye.",
   },
   {
     version: "1.2",
     date: "2026-08-09",
     kind: "minor",
+    scope: "site",
     zh: "成员墙：一人一张卡。手机立在桌上就是桌牌。",
     en: "The member wall: one card each. Stand your phone up and it is your name badge.",
   },
@@ -141,6 +175,7 @@ export const RELEASES: readonly Release[] = [
     version: "1.1",
     date: "2026-08-07",
     kind: "minor",
+    scope: "site",
     zh: "报名改成累积场次——来过的人回来只需要选这次来哪天。表单里多了一句「这周想聊点什么」。",
     en: "Sign-ups accumulate across sessions, so coming back is just picking the day. The form gained one line: what you want to talk about this week.",
   },
@@ -148,8 +183,9 @@ export const RELEASES: readonly Release[] = [
     version: "1.0",
     date: "2026-08-06",
     kind: "major",
-    zh: "第一场。每周四上午，一群在做东西的人围一张桌子。",
-    en: "The first one. Thursday morning, a table, and people who are building things.",
+    scope: "room",
+    zh: "第一场。每周四上午，一群在做东西的人围一张桌子：轮流自我介绍，然后几个人讲讲自己在做什么。",
+    en: "The first one. Thursday morning, one table, people who are building things: everyone introduces themselves in turn, then a few show what they are working on.",
   },
 ] as const;
 

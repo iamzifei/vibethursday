@@ -45,6 +45,7 @@ test("every release says something, in both written languages", () => {
     assert.match(release.version, /^\d+\.\d+$/, `odd version: ${release.version}`);
     assert.match(release.date, /^\d{4}-\d{2}-\d{2}$/, `odd date on v${release.version}`);
     assert.ok(["major", "minor"].includes(release.kind), `odd kind on v${release.version}`);
+    assert.ok(["room", "site"].includes(release.scope), `odd scope on v${release.version}`);
 
     // Traditional is converted from the Chinese at render time, so two written
     // languages is all there is to keep in step.
@@ -89,7 +90,9 @@ test("the page's own copy exists in both languages", () => {
   for (const lang of ["zh", "en"] as const) {
     const t = copy[lang].changelog;
 
-    for (const key of ["eyebrow", "title", "lede", "current", "major", "minor", "footerLink"] as const) {
+    for (const key of [
+      "eyebrow", "title", "lede", "current", "major", "minor", "room", "site", "scopeNote", "footerLink",
+    ] as const) {
       assert.ok(t[key]?.trim(), `${lang}.changelog.${key} is empty`);
     }
 
@@ -101,4 +104,43 @@ test("the page's own copy exists in both languages", () => {
       `${lang}.changelog.versionLabel lost its {v} placeholder — the home page would print it literally`,
     );
   }
+});
+
+test("★ the changelog covers the room, not only the website", () => {
+  // The whole point of the rewrite: a changelog of a meetup that only ever
+  // listed website releases would be a changelog of the wrong thing. Most of
+  // what a regular notices — the circle of introductions going away, being
+  // told you may walk off mid-conversation — never touched a line of code.
+  const room = RELEASES.filter((release) => release.scope === "room");
+  const site = RELEASES.filter((release) => release.scope === "site");
+
+  assert.ok(room.length >= 5, `only ${room.length} entries are about the room itself`);
+  assert.ok(site.length >= 5, `only ${site.length} entries are about the site`);
+
+  // Every major is about the morning, not about the software. A new page is
+  // never a new version of the meetup.
+  for (const release of RELEASES.filter((r) => r.kind === "major")) {
+    assert.equal(release.scope, "room", `v${release.version} is a major but only changed the site`);
+  }
+});
+
+test("★ nothing in the changelog identifies a person or a sum of money", () => {
+  // These entries are drawn from run sheets, retros and recordings kept in an
+  // unpublished directory, where people are named and the venue's economics
+  // are discussed in the open. This page is public and its history is public
+  // with it, so the de-identification has to be checked rather than trusted.
+  const text = RELEASES.map((release) => `${release.zh} ${release.en}`).join(" ");
+
+  for (const pattern of [/\$/, /[0-9]+\s*(元|块|刀|澳币|AUD)/i, /赞助/, /场地费/, /低消/]) {
+    assert.ok(!pattern.test(text), `a release mentions money: ${pattern}`);
+  }
+
+  // The names that appear in the source documents. None may reach the page.
+  for (const name of ["Louis", "Ethan", "Eason", "Harry", "Tony", "Kelly", "Kevin", "Sunny", "Chris", "Andy", "David", "Perry"]) {
+    assert.ok(!text.includes(name), `a release names "${name}"`);
+  }
+
+  // "James" is the organiser and is named all over the source notes; the page
+  // speaks about the meetup, not about him.
+  assert.ok(!text.includes("James"), "a release names the organiser");
 });
