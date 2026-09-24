@@ -17,7 +17,7 @@ import {
   listSignups,
   listWharfQuestions,
 } from "@/lib/db";
-import { canGiveFeedback, feedbackCode, isSessionDate, summarise } from "@/lib/feedback";
+import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -87,11 +87,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
     color: { dark: "#0a0b0d", light: "#ffffff" },
   });
 
-  // Feedback is collected for the session in focus — on a Thursday afternoon
-  // that is the morning just gone, which is exactly when the code is handed
-  // out. Same date the check-in desk uses, one week of validity instead of one
-  // day: see `canGiveFeedback`.
-  const feedbackUrl = `${origin}/feedback?s=${desk}&k=${feedbackCode(desk)}`;
+  // ⚠️ Not `desk`. The check-in desk looks forward from Monday — see
+  // `sessionForFeedback`, which walks back to the last Thursday instead. Using
+  // `desk` here handed out a code for a session that had not happened on three
+  // days out of seven, and hid the one whose window was actually open.
+  const feedbackSession = sessionForFeedback(sydneyToday().toISOString().slice(0, 10));
+  const feedbackUrl = `${origin}/feedback?s=${feedbackSession}&k=${feedbackCode(feedbackSession)}`;
   const feedbackQr = await QRCode.toString(feedbackUrl, {
     type: "svg",
     margin: 1,
@@ -118,7 +119,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const showing =
     isSessionDate(fb) && feedbackSummary.some((row) => row.session === fb)
       ? fb
-      : (feedbackSummary[0]?.session ?? desk);
+      : (feedbackSummary[0]?.session ?? feedbackSession);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
@@ -288,8 +289,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           this says whether the morning was worth their while. */}
       <FeedbackDesk
         adminKey={key!}
-        session={desk}
-        isOpen={canGiveFeedback(desk, sydneyToday().toISOString().slice(0, 10))}
+        session={feedbackSession}
+        isOpen={canGiveFeedback(feedbackSession, sydneyToday().toISOString().slice(0, 10))}
         url={feedbackUrl}
         qrSvg={feedbackQr}
         summary={feedbackSummary}

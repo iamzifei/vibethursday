@@ -127,6 +127,33 @@ export function canGiveFeedback(session: string, today: string): boolean {
   return days >= 0 && days < WINDOW_DAYS;
 }
 
+/** Thursday, in JavaScript's 0=Sunday day-of-week numbering. */
+const THURSDAY = 4;
+
+/**
+ * Which session is collecting feedback right now: the most recent Thursday on
+ * or before `today`.
+ *
+ * ⚠️ Deliberately NOT `focusSession()`, which is what the check-in desk uses.
+ * That one looks *forward* from Monday onwards — within three days of the next
+ * session it returns the session to come, because that is the right answer for
+ * a wall that is about who is coming. It is the wrong answer here, and wrong
+ * in a way that reads as a bug to whoever is standing in front of it: on a
+ * Monday it would hand out a code for a morning that has not happened, the
+ * link would answer "feedback for this one has closed" about a session nobody
+ * has been to yet, and the session that *is* open — the one three days ago,
+ * whose window runs until Wednesday — would appear nowhere on the page.
+ */
+export function sessionForFeedback(today: string): string {
+  if (!isSessionDate(today)) return today;
+
+  const date = new Date(`${today}T00:00:00Z`);
+  const back = (date.getUTCDay() - THURSDAY + 7) % 7;
+
+  date.setUTCDate(date.getUTCDate() - back);
+  return date.toISOString().slice(0, 10);
+}
+
 /** One submitted form, as the summary needs it. */
 export type FeedbackRow = {
   session: string;

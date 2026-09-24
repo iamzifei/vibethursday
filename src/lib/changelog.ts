@@ -60,8 +60,11 @@ export const RELEASES: readonly Release[] = [
     version: "3.1",
     date: "2026-09-18",
     kind: "minor",
-    zh: "每一场有了自己的页面——那一天是谁、聊了什么、照片，都在一个地址上。",
-    en: "Every session has its own page: who was there, what was asked, the photographs, at one address.",
+    // ⚠️ Narrower than it first read. The session page itself shipped with
+    // check-in on 09-10 (v2.5, same commit); what 09-18 added is that the page
+    // exists *before* the morning does — until then it 404'd until the day.
+    zh: "下一场的页面在那天到来之前就打得开了。在那之前，它要等到当天才存在。",
+    en: "The page for the session coming up opens before the morning does. Until then it did not exist until the day itself.",
   },
   {
     version: "3.0",
@@ -78,8 +81,8 @@ export const RELEASES: readonly Release[] = [
     version: "2.5",
     date: "2026-09-10",
     kind: "minor",
-    zh: "签到：扫桌上的码，点自己的名字。这个站第一次知道谁真的来了，而不只是谁报了名。",
-    en: "Check-in: scan the code on the table, tap your own name. The first time this site knew who actually came rather than who meant to.",
+    zh: "签到：扫桌上的码，点自己的名字。这个站第一次知道谁真的来了，而不只是谁报了名——每一场也因此有了自己的页面：那天是谁、聊了什么、照片。",
+    en: "Check-in: scan the code on the table, tap your own name. The first time this site knew who actually came rather than who meant to — and so each session got a page of its own: who was there, what was asked, the photographs.",
   },
   {
     version: "2.4",

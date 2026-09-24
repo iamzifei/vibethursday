@@ -19,7 +19,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/me", "/badge", "/api/"],
+      // `/checkin` and `/feedback` mean nothing without the code in the URL, so
+      // there is nothing here for a crawler to have. Both also set
+      // `robots: { index: false }` — but that only works if the page is
+      // fetched, which is exactly what this prevents.
+      disallow: ["/admin", "/me", "/badge", "/checkin", "/feedback", "/api/"],
     },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

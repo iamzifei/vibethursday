@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { cardArt, cardNumber, posterCard, rng, SCENES, TINTS } from "../src/lib/poster-card.ts";
+import { cardArt, cardNumber, posterCard, SCENES, TINTS } from "../src/lib/poster-card.ts";
 import { FIRST_SESSION_DATE } from "../src/lib/sessions.ts";
 
 /**
@@ -59,7 +59,7 @@ test("consecutive weeks differ in both picture and tint", () => {
   }
 });
 
-test("the set comes round only every 21 weeks, and not with the same seed", () => {
+test("the set comes round only every 21 weeks", () => {
   // 7 scenes against 3 tints: the pairing is what makes the cycle long.
   const cycle = SCENES.length * TINTS.length;
   assert.equal(cycle, 21);
@@ -69,8 +69,6 @@ test("the set comes round only every 21 weeks, and not with the same seed", () =
 
   assert.equal(first.scene.id, later.scene.id);
   assert.equal(first.tint, later.tint);
-  // Same picture and ink, different details: the seed is hashed from the date.
-  assert.notEqual(first.seed, later.seed);
 
   // Nothing in between repeats the pair.
   const seen = new Set<string>();
@@ -112,20 +110,3 @@ test("scene names are distinct in both languages", () => {
   assert.equal(new Set(SCENES.map((s) => s.en)).size, SCENES.length);
 });
 
-test("rng is deterministic and stays inside [0, 1)", () => {
-  const take = (seed: number) => Array.from({ length: 200 }, () => 0).map(rng(seed));
-
-  // `map` with the generator gives 200 successive draws; two runs of the same
-  // seed must agree, or nothing above is reproducible.
-  const a = take(12345);
-  const b = take(12345);
-  assert.deepEqual(a, b);
-
-  for (const value of a) {
-    assert.ok(value >= 0 && value < 1, `out of range: ${value}`);
-  }
-
-  // A different seed must actually take a different walk, not merely start
-  // somewhere else on the same one.
-  assert.notDeepEqual(a, take(12346));
-});

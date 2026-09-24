@@ -13,10 +13,9 @@ import { FIRST_SESSION_DATE } from "./sessions.ts";
  *
  * ★ Everything here is derived from the session's date, and from where the
  * series is counted from. Same Thursday, same card, every time it is drawn —
- * on the organiser's phone, on a laptop, and again next year. That is the whole
- * reason there is no randomness at the point of drawing: a collectible that
- * changes when you redraw it is not a collectible, and "重画一张" is a button
- * somebody presses.
+ * on the organiser's phone, on a laptop, and again next year. A collectible
+ * that changes when you redraw it is not a collectible, and "重画一张" is a
+ * button somebody presses.
  *
  * ⚠️ The second input is `FIRST_SESSION_DATE`, which reads `process.env
  * .FIRST_SESSION_DATE` (`sessions.ts`). Moving it renumbers every card
@@ -73,8 +72,6 @@ export type PosterCard = {
   no: number;
   scene: Scene;
   tint: Tint;
-  /** Feeds `rng`, for the details that differ week to week. */
-  seed: number;
 };
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -103,50 +100,12 @@ export function cardNumber(session: string, firstSession: string = FIRST_SESSION
 }
 
 /**
- * Hashes the date string into a seed.
- *
- * xmur3, chosen because it is four lines and mixes well enough that two
- * consecutive Thursdays — one character apart — do not produce visibly related
- * pictures, which a sum-of-characters hash would.
- */
-export function seedFrom(text: string): number {
-  let h = 2166136261;
-
-  for (let i = 0; i < text.length; i += 1) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-
-  // >>> 0 keeps it an unsigned 32-bit value; mulberry32 below assumes that.
-  return h >>> 0;
-}
-
-/**
- * mulberry32: a small deterministic PRNG returning [0, 1).
- *
- * Deliberately not `Math.random`. Every wobble on the card — where the stars
- * are, which windows are lit, how the water moves — comes from here, so the
- * card for a given Thursday is the same picture every time it is drawn.
- */
-export function rng(seed: number): () => number {
-  let state = seed >>> 0;
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
  * The whole card, from the session's ISO date.
  *
  * Scene and tint step by one every week and their cycles are different lengths
- * (7 and 3), so the exact same card comes back only every 21 weeks — and even
- * then the seed is different, because it is hashed from the date rather than
- * from the number.
+ * (7 and 3), so the exact same picture and ink come back only every 21 weeks —
+ * by which point everything printed over them, from the date to the questions,
+ * is different anyway.
  */
 export function posterCard(session: string, firstSession: string = FIRST_SESSION_DATE): PosterCard {
   const no = cardNumber(session, firstSession);
@@ -155,6 +114,5 @@ export function posterCard(session: string, firstSession: string = FIRST_SESSION
     no,
     scene: SCENES[(no - 1) % SCENES.length],
     tint: TINTS[(no - 1) % TINTS.length],
-    seed: seedFrom(session),
   };
 }

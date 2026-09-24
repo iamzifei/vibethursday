@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { checkinCode, verifyCheckinCode } from "../src/lib/checkin.ts";
 import {
   canGiveFeedback,
+  sessionForFeedback,
   feedbackCode,
   isRecommend,
   parseRating,
@@ -192,4 +193,34 @@ test("the average is rounded for display, not silently truncated", () => {
   ]);
 
   assert.equal(row.average, 4.3);
+});
+
+test("★ the desk collects for the session that happened, not the one coming up", () => {
+  // The bug this pins, found by walking a whole week rather than testing the
+  // Thursday: /admin used `focusSession()` for this, and that helper looks
+  // FORWARD from Monday — it is built for a wall about who is coming. Three
+  // days in seven it therefore handed out a code for a morning that had not
+  // happened, the link answered "feedback for this one has closed" about a
+  // session nobody had been to, and the session whose window was actually open
+  // appeared nowhere on the page.
+  const week: [string, string][] = [
+    ["2026-09-24", "2026-09-24"], // Thursday itself
+    ["2026-09-25", "2026-09-24"], // Friday
+    ["2026-09-27", "2026-09-24"], // Sunday
+    ["2026-09-28", "2026-09-24"], // Monday — the one that was wrong
+    ["2026-09-29", "2026-09-24"], // Tuesday
+    ["2026-09-30", "2026-09-24"], // Wednesday, the window's last day
+    ["2026-10-01", "2026-10-01"], // the next Thursday
+  ];
+
+  for (const [today, expected] of week) {
+    assert.equal(sessionForFeedback(today), expected, `on ${today}`);
+
+    // And the pair has to be coherent: whatever it points at must be a session
+    // whose window is open, every day of the week.
+    assert.ok(
+      canGiveFeedback(sessionForFeedback(today), today),
+      `${today} points at a session that cannot take feedback`,
+    );
+  }
 });
