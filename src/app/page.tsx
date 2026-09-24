@@ -129,16 +129,14 @@ export default async function Page({ searchParams }: PageProps) {
                   this is still being worked on, and the changes are written
                   down. The link is the proof — a number with nothing behind it
                   would be decoration. */}
-              {/* ⚠️ Quiet on purpose. It shipped in lime and, measured on a
-                  phone, was the brightest line on the first screen — louder
-                  than the lede, and on a screen whose job is to get somebody
-                  to sign up. The number still does its work in grey: it is
-                  evidence that the thing is alive, not a call to action. */}
-              <Link
-                className="mono"
-                href={langHref("/changelog", lang)}
-                style={{ fontSize: "var(--text-sm)", alignSelf: "flex-start", color: "var(--fg3)" }}
-              >
+              {/* ⚠️ Lime is taken. It shipped in lime and, measured on a phone,
+                  was the brightest line on the first screen — competing with
+                  the sign-up button on a screen whose job is to get somebody
+                  to sign up. Then it went grey and read as dead. It now wears
+                  the eyebrow's cyan (see .hero-version): noticeable, but a
+                  different hue and a line of small text, where the primary
+                  button is a filled lime block. */}
+              <Link className="mono hero-version" href={langHref("/changelog", lang)}>
                 {c.changelog.versionLabel.replace("{v}", currentVersion())} →
               </Link>
             </div>
@@ -589,7 +587,7 @@ export default async function Page({ searchParams }: PageProps) {
                   structured data is built from the copy, not from this markup,
                   so folding it changes nothing a search engine reads. */}
               {c.faq.items.map((item) => (
-                <details className="disclosure stack-2" key={item.q}>
+                <details className="disclosure" key={item.q}>
                   <summary className="h3" style={{ fontSize: "var(--text-lg)" }}>
                     {item.q}
                   </summary>
@@ -602,7 +600,10 @@ export default async function Page({ searchParams }: PageProps) {
                       rule in globals.css, so styling the anchor that way paints
                       links in body grey and they stop looking like links. The
                       size comes from the paragraph; the anchor only inherits. */}
-                  <p className="body-sm" style={{ maxWidth: "62ch" }}>
+                  {/* Inset to line up with the question above it. Without its
+                      own padding the answer ran flush against the box's left
+                      edge while the question sat 16px in (2026-09-25). */}
+                  <p className="body-sm faq-answer">
                     {item.a}
                     {item.href &&
                       (item.href.startsWith("#") ? (
