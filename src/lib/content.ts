@@ -15,48 +15,11 @@
 // stripper, which does not read tsconfig's path aliases.
 import { deepTranslate } from "./traditional.ts";
 
-/**
- * The three views of this site.
- *
- * Only two of them are written. `zh-Hant` is `zh` put through a character
- * converter at render time — see `@/lib/traditional` for why, and note that it
- * means everything below stays a two-language object.
- */
-export type Lang = "zh" | "zh-Hant" | "en";
-
-export const LANGS: Lang[] = ["zh", "zh-Hant", "en"];
-
-/** The `?lang=` value for each. Simplified is the default and carries none. */
-export const LANG_PARAM: Record<Lang, string | null> = {
-  zh: null,
-  "zh-Hant": "zh-Hant",
-  en: "en",
-};
-
-/** What each calls itself, short enough for the switch in the nav bar. */
-export const LANG_LABEL: Record<Lang, string> = {
-  zh: "简",
-  "zh-Hant": "繁",
-  en: "EN",
-};
-
-/** The full name, for the switch's accessible labels. */
-export const LANG_NAME: Record<Lang, string> = {
-  zh: "简体中文",
-  "zh-Hant": "繁體中文",
-  en: "English",
-};
-
-export function resolveLang(value: string | undefined): Lang {
-  // Case-insensitive: a link pasted into WeChat comes back lowercased often
-  // enough that "zh-hant" has to mean the same thing as "zh-Hant".
-  const normalised = value?.toLowerCase();
-
-  if (normalised === "en") return "en";
-  if (normalised === "zh-hant") return "zh-Hant";
-
-  return "zh";
-}
+// The language primitives live in a leaf module so that client components can
+// read them without dragging this file — and the Traditional converter it
+// imports — into the browser. Re-exported so every existing import still works.
+export { LANGS, LANG_LABEL, LANG_NAME, LANG_PARAM, resolveLang, type Lang } from "./lang.ts";
+import type { Lang } from "./lang.ts";
 
 export const copy = {
   zh: {

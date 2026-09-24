@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LANGS, LANG_LABEL, LANG_NAME, type Lang } from "@/lib/content";
+// `@/lib/lang`, never `@/lib/content`: see the note at the top of lang.ts.
+import { LANGS, LANG_LABEL, LANG_NAME, type Lang } from "@/lib/lang";
 import { langHref } from "@/lib/nav";
 
 type Props = {

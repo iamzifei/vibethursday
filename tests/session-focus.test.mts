@@ -16,7 +16,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { sessionInFocus } from "../src/lib/sessions.ts";
+import { formatSession, sessionInFocus } from "../src/lib/sessions.ts";
+import { toTraditional } from "../src/lib/traditional.ts";
 
 /** The two Thursdays these tests move between. */
 const LAST = "2026-08-27";
@@ -71,4 +72,18 @@ test("before the meetup existed there is no previous session to fall back to", (
   // FIRST_SESSION is 2026-08-06. Looking back from the very first week would
   // otherwise point at 2026-07-30, a Thursday on which nothing happened.
   assert.equal(sessionInFocus("2026-08-06", "2026-08-01"), "2026-08-06");
+});
+
+test("★ the hand-made Traditional date matches the real converter, for a whole year", () => {
+  // `formatSession` swaps 周 → 週 by hand rather than calling the converter, so
+  // that client code importing this file does not drag the converter's
+  // dictionary into the browser. That shortcut is only safe if the result is
+  // exactly what the converter would have produced — checked here, on the
+  // server side where the converter is allowed, for every Thursday in a year.
+  const start = Date.parse("2026-08-06T00:00:00Z");
+
+  for (let week = 0; week < 52; week += 1) {
+    const iso = new Date(start + week * 7 * 86_400_000).toISOString().slice(0, 10);
+    assert.equal(formatSession(iso, "zh-Hant"), toTraditional(formatSession(iso, "zh")), `differs on ${iso}`);
+  }
 });

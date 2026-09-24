@@ -1,7 +1,6 @@
 // Relative, not "@/": these are loaded by the tests through Node's type
 // stripper, which does not read tsconfig's path aliases.
 import type { Lang } from "./content.ts";
-import { toTraditional } from "./traditional.ts";
 
 /**
  * Session date helpers.
@@ -173,7 +172,14 @@ export function formatSession(isoDate: string, lang: Lang): string {
 
     // Built here rather than read from the copy bundle, so it misses the
     // conversion that bundle gets: 周 is 週 in Traditional.
-    return lang === "zh-Hant" ? toTraditional(formatted) : formatted;
+    //
+    // ⚠️ One character swapped by hand, deliberately NOT the converter. This
+    // file is imported by client code (the weekly poster, via poster-card),
+    // and importing the converter here put its whole dictionary into that
+    // bundle. 月, 日 and 四 are identical in both scripts, so 周 is the only
+    // character this string can ever contain that differs — and
+    // `tests/session-focus.test.mts` checks that against the real converter.
+    return lang === "zh-Hant" ? formatted.replace("周", "週") : formatted;
   }
 
   return new Intl.DateTimeFormat("en-AU", {

@@ -1,5 +1,7 @@
 // Relative, not "@/": the tests load this through Node's type stripper.
-import { LANG_PARAM, type Lang } from "./content.ts";
+// From the leaf, not from `content.ts`: this file is imported by client
+// components, and `content.ts` would bring the Traditional dictionary with it.
+import { LANG_PARAM, type Lang } from "./lang.ts";
 
 /**
  * What the site's nav bar points at.
