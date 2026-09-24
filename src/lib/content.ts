@@ -1176,6 +1176,72 @@ export const copy = {
       failed: "没签上，再点一次；还不行就找主办人。",
     },
 
+    /**
+     * 反馈 —— /feedback。散场之后那一页。
+     *
+     * 这个站知道谁报了名、谁真的来了、大家想问什么，唯独不知道那个上午好不好。
+     * 这一页是那半边。
+     *
+     * 五格全部可以跳过，默认匿名——名字那一格是给「想让我回你」的人留的，
+     * 不是给我留的。问题里不问钱也不问场地：那两件事的判断不在这个仓库里。
+     */
+    feedback: {
+      meta: { title: "说两句 · Vibe Thursday" },
+      eyebrow: "§ 说两句",
+      title: "今天这一场，你觉得怎么样？",
+      lede: "五格，都能跳过，一分钟。匿名的——除非你自己在最后写下名字。",
+      closedTitle: "这一场的反馈已经收完了。",
+      closedBody: "每一场只收一周，到下一个周四为止。下次散场的时候会有新的码。",
+      noCodeTitle: "扫散场时的那个码进来。",
+      noCodeBody: "这一页要带上那一场的码才能用。",
+      ratingLabel: "今天值不值得来",
+      ratingLow: "不太值",
+      ratingHigh: "很值",
+      recommendLabel: "会不会带朋友来",
+      recommendYes: "会",
+      recommendMaybe: "看情况",
+      recommendNo: "不会",
+      bestLabel: "今天最有用的是哪一段",
+      bestPlaceholder: "哪一句、哪个人、哪一段聊天——具体一点最有用",
+      betterLabel: "下次可以更好的是",
+      betterPlaceholder: "不用客气。写出来的才会被改。",
+      nameLabel: "怎么称呼（选填）",
+      nameHint: "想让我回你就填一个。不填就是匿名，也一样会被读。",
+      submit: "交上去",
+      doneTitle: "收到了，谢谢。",
+      doneBody: "每一条都会被读。下周四见。",
+      doneSession: "看看这一场都有谁 →",
+      doneHome: "回首页",
+      emptyTitle: "一个字都没有。",
+      empty: "至少选一个、或者写一句，再交上来。",
+      rateLimited: "交得太快了，等一分钟再试。",
+      failed: "没交上去，再试一次；还不行就找主办人。",
+    },
+
+    /**
+     * 更新记录 —— /changelog。
+     *
+     * 这个活动像软件一样有版本号。记的是**活动本身**的变化，不是网站的提交记录：
+     * 换场地、换形式、多了一个新环节 —— 来过的人能感觉到的那些。
+     * 条目本体在 `src/lib/changelog.ts`。
+     */
+    changelog: {
+      meta: {
+        title: "更新记录 · Vibe Thursday",
+        description: "这个活动每一次变化的记录：换了场地、改了形式、多了什么。像软件更新一样，带版本号。",
+      },
+      eyebrow: "§ 更新记录",
+      title: "这个活动也有版本号。",
+      lede: "它一直在改。换过形式、换过场地、加过东西——下面是每一次改动，最新的在最上面。记的是活动本身，不是网站的提交记录。",
+      current: "当前版本",
+      major: "大版本",
+      minor: "小更新",
+      majorNote: "形态变了：新场地、新时间、或者新的进行方式。来过的人得被告知一声。",
+      minorNote: "多了原本没有的东西。",
+      footerLink: "更新记录",
+      versionLabel: "版本 {v} · 更新记录",
+    },
+
     // 桌牌。首场复盘里记了一条：后到的人没写名牌，导致「不知道说话的人是谁」。
     // 手机立在桌上就解决了，不用印、不用笔、不用指定一个人管。
     badge: {
@@ -2179,6 +2245,56 @@ export const copy = {
       doneHome: "Back to the home page",
       rateLimited: "Too many taps — give it a minute.",
       failed: "That didn’t go through. Tap again, or ask the organiser.",
+    },
+
+    feedback: {
+      meta: { title: "Say something · Vibe Thursday" },
+      eyebrow: "§ Feedback",
+      title: "How was this one?",
+      lede: "Five boxes, all skippable, about a minute. Anonymous — unless you put your name in the last one.",
+      closedTitle: "Feedback for this session has closed.",
+      closedBody: "Each session collects for one week, up to the next Thursday. There will be a new code at the end of the next one.",
+      noCodeTitle: "Scan the code from the end of the session.",
+      noCodeBody: "This page needs that session’s code.",
+      ratingLabel: "Was it worth coming?",
+      ratingLow: "Not really",
+      ratingHigh: "Very",
+      recommendLabel: "Would you bring a friend?",
+      recommendYes: "Yes",
+      recommendMaybe: "Depends",
+      recommendNo: "No",
+      bestLabel: "The most useful part of today",
+      bestPlaceholder: "Which sentence, which person, which conversation — specific is most useful",
+      betterLabel: "What would be better next time",
+      betterPlaceholder: "Be blunt. Only what gets written down gets changed.",
+      nameLabel: "Your name (optional)",
+      nameHint: "Leave one if you want a reply. Without it this is anonymous, and still read.",
+      submit: "Send it",
+      doneTitle: "Got it — thank you.",
+      doneBody: "Every one of these gets read. See you Thursday.",
+      doneSession: "See who was there →",
+      doneHome: "Home",
+      emptyTitle: "That was empty.",
+      empty: "Pick one thing or write one line, then send it.",
+      rateLimited: "Too fast — give it a minute.",
+      failed: "That did not go through. Try again, or ask the organiser.",
+    },
+
+    changelog: {
+      meta: {
+        title: "Changelog · Vibe Thursday",
+        description: "Every change to this meetup: the venue, the format, whatever was added. Versioned, like software.",
+      },
+      eyebrow: "§ Changelog",
+      title: "This meetup has version numbers.",
+      lede: "It keeps changing — the format, the room, the things it does. Here is every change, newest first. This tracks the meetup itself, not the website's commits.",
+      current: "Running now",
+      major: "Major",
+      minor: "Minor",
+      majorNote: "The shape of the morning changed: a new room, a new time, or a new way of running it. You would have to tell someone who had been before.",
+      minorNote: "Something exists that did not before.",
+      footerLink: "Changelog",
+      versionLabel: "Version {v} · changelog",
     },
 
     badge: {

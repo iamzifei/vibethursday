@@ -387,6 +387,38 @@ export function ensureSchema(): Promise<void> {
       CREATE UNIQUE INDEX IF NOT EXISTS checkins_session_signup_idx
       ON checkins (session, signup_id)
     `);
+
+    // ── Feedback ─────────────────────────────────────────────────────
+    // What people thought of one morning, handed in afterwards. The other
+    // three session tables say who meant to come, who came, and what they
+    // wanted to ask; this is the only one that says whether it was any good.
+    //
+    // Anonymous by design — `name` is optional and nothing links a row to a
+    // signup. The site already knows who was in the room from `checkins`;
+    // asking again here would buy an attribution nobody wants at the cost of
+    // the honesty the form exists for. Someone who wants to be followed up
+    // writes their name in the last box.
+    //
+    // Both answerable questions are nullable, and null means "skipped" rather
+    // than zero. See `summarise` in `feedback.ts`: a skipped rating counted as
+    // a zero is a wrong average that still looks like an average.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id         bigserial PRIMARY KEY,
+        session    date NOT NULL,
+        rating     smallint,
+        recommend  text,
+        best       text,
+        better     text,
+        name       text,
+        lang       text,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS feedback_session_idx ON feedback (session)
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -1969,4 +2001,83 @@ export async function countCheckins(): Promise<Map<string, number>> {
   );
 
   return new Map(result.rows.map((row) => [row.session, Number(row.n)]));
+}
+
+/* ── Feedback ──────────────────────────────────────────────────────────── */
+
+export type FeedbackInput = {
+  session: string;
+  /** 1-5, already validated by the route. Null when skipped. */
+  rating: number | null;
+  /** 'yes' | 'maybe' | 'no', already whitelisted by the route. Null when skipped. */
+  recommend: string | null;
+  best: string | null;
+  better: string | null;
+  name: string | null;
+  lang: string;
+};
+
+/**
+ * Stores one form.
+ *
+ * No upsert and no unique index, because there is no identity to key on: the
+ * form is anonymous. Two submissions are two rows, and the guard against a
+ * double tap is the rate limit in the route — which is the same trade the
+ * Wharf makes, and the right way round for a form where a lost answer costs
+ * more than a duplicate one.
+ */
+export async function saveFeedback(input: FeedbackInput): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `INSERT INTO feedback (session, rating, recommend, best, better, name, lang)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7)`,
+    [
+      input.session,
+      input.rating,
+      input.recommend,
+      input.best,
+      input.better,
+      input.name,
+      input.lang,
+    ],
+  );
+}
+
+export type FeedbackRecord = {
+  id: string;
+  session: string;
+  rating: number | null;
+  recommend: string | null;
+  best: string | null;
+  better: string | null;
+  name: string | null;
+  lang: string | null;
+  /** Sydney date and time, for the organiser's table. */
+  created_at: string;
+};
+
+/**
+ * Every form, newest first — or just one session's when `session` is given.
+ *
+ * Read in full rather than paged: this is an admin page, the volume is one
+ * room's worth per week, and the summary across sessions is computed from the
+ * same rows (`summarise` in `feedback.ts`) so that the totals on the page and
+ * the sentences under them can never disagree about what was said.
+ */
+export async function listFeedback(session?: string): Promise<FeedbackRecord[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<FeedbackRecord>(
+    `SELECT id::text AS id,
+            to_char(session, 'YYYY-MM-DD') AS session,
+            rating, recommend, best, better, name, lang,
+            to_char(created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD HH24:MI') AS created_at
+       FROM feedback
+      WHERE $1::date IS NULL OR session = $1::date
+      ORDER BY session DESC, created_at DESC, id DESC`,
+    [session ?? null],
+  );
+
+  return result.rows;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
+import { FeedbackDesk } from "@/components/FeedbackDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { isAdmin } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
@@ -9,12 +10,14 @@ import {
   countCheckins,
   listAllMembers,
   listCheckins,
+  listFeedback,
   listRecentAnswers,
   listRecentDecks,
   listRoster,
   listSignups,
   listWharfQuestions,
 } from "@/lib/db";
+import { canGiveFeedback, feedbackCode, isSessionDate, summarise } from "@/lib/feedback";
 import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -31,11 +34,12 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ key?: string }>;
+  /** `fb` picks which session's feedback is read out below the summary. */
+  searchParams: Promise<{ key?: string; fb?: string }>;
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
-  const key = (await searchParams).key;
+  const { key, fb } = await searchParams;
 
   if (!isAdmin(key)) {
     return (
@@ -55,7 +59,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // the afternoon is when the organiser fixes up who was there this morning.
   const desk = focusSession().date;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -65,15 +69,56 @@ export default async function AdminPage({ searchParams }: PageProps) {
       countCheckins(),
       listRoster(desk),
       listCheckins(desk),
+      // Every form, once. The summary table and the answers read out below it
+      // are both derived from this one array, so the totals and the sentences
+      // under them cannot disagree about what was said.
+      listFeedback(),
     ]);
 
-  const deskUrl = `${await requestOrigin()}/checkin?s=${desk}&k=${checkinCode(desk)}`;
+  // Whatever host this page was actually opened on, so a code scanned off a
+  // phone goes back to the same deployment. Read once: the desk's code and the
+  // poster's code both hang off it.
+  const origin = await requestOrigin();
+  const deskUrl = `${origin}/checkin?s=${desk}&k=${checkinCode(desk)}`;
   const deskQr = await QRCode.toString(deskUrl, {
     type: "svg",
     margin: 1,
     errorCorrectionLevel: "M",
     color: { dark: "#0a0b0d", light: "#ffffff" },
   });
+
+  // Feedback is collected for the session in focus — on a Thursday afternoon
+  // that is the morning just gone, which is exactly when the code is handed
+  // out. Same date the check-in desk uses, one week of validity instead of one
+  // day: see `canGiveFeedback`.
+  const feedbackUrl = `${origin}/feedback?s=${desk}&k=${feedbackCode(desk)}`;
+  const feedbackQr = await QRCode.toString(feedbackUrl, {
+    type: "svg",
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#0a0b0d", light: "#ffffff" },
+  });
+
+  const feedbackSummary = summarise(
+    feedback.map((row) => ({
+      session: row.session,
+      rating: row.rating,
+      // Stored as free text by the column type; narrowed back here, and an
+      // unrecognised value counts as "did not answer" rather than as a "no".
+      recommend:
+        row.recommend === "yes" || row.recommend === "maybe" || row.recommend === "no"
+          ? row.recommend
+          : null,
+    })),
+  ).map((row) => ({ ...row, attended: attendance.get(row.session) ?? null }));
+
+  // Which session is read out below. The one picked, else the newest one that
+  // has any feedback, else the session in focus — so this never shows an empty
+  // list while some other session has answers sitting in it.
+  const showing =
+    isSessionDate(fb) && feedbackSummary.some((row) => row.session === fb)
+      ? fb
+      : (feedbackSummary[0]?.session ?? desk);
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
@@ -211,6 +256,20 @@ export default async function AdminPage({ searchParams }: PageProps) {
         qrSvg={deskQr}
         roster={buildRoster(desk, deskRoster, deskCheckins)}
         checkins={deskCheckins}
+      />
+
+      {/* ── Feedback ─────────────────────────────────────────────────
+          The other half of a session: check-in says who was in the room,
+          this says whether the morning was worth their while. */}
+      <FeedbackDesk
+        adminKey={key!}
+        session={desk}
+        isOpen={canGiveFeedback(desk, sydneyToday().toISOString().slice(0, 10))}
+        url={feedbackUrl}
+        qrSvg={feedbackQr}
+        summary={feedbackSummary}
+        showing={showing}
+        answers={feedback.filter((row) => row.session === showing)}
       />
 
       {/* ── Casting a demo to the room ───────────────────────────────
