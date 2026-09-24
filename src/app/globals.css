@@ -79,7 +79,23 @@
   /* ── Text ──────────────────────────────────────────────────────── */
   --fg1: #f2f5f3;
   --fg2: #a4acb4;
-  --fg3: #6b7480;
+  /* ⚠️ Lifted from #6b7480 on 2026-09-24. The old value failed WCAG 1.4.3 (AA)
+
+     on every background it sat on — 4.2:1 on the page, down to 3.1:1 on
+
+     elevated cards — and it is the colour of the smallest type on the site:
+
+     field hints, dates, meta lines. This value is the first point on the line
+
+     from the old --fg3 towards --fg2 that clears 4.6:1 on --bg-elevated, the
+
+     hardest background, so the hue family is unchanged and it still reads as
+
+     clearly dimmer than --fg2 (6.4:1 there). `tests/css-tokens.test.mts`
+
+     holds every text token at ≥ 4.5 on every background. */
+
+  --fg3: #88919b;
   --fg-disabled: #3a4048;
 
   /* ── Borders ───────────────────────────────────────────────────── */
