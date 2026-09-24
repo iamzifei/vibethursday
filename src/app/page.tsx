@@ -466,26 +466,47 @@ export default async function Page({ searchParams }: PageProps) {
                           first photo. Reversed here rather than in CSS because
                           z-index would have to fight the DOM order anyway.
 
-                          400w: these are covers a couple of hundred pixels wide
-                          and every visitor downloads them, which makes them the
-                          only images on the page worth being small. Not lazy for
+                          Small files: every visitor downloads these, which
+                          makes them the images on the page most worth keeping
+                          small — see the cover/back split below. Not lazy for
                           the same reason — they are the section's content, not
                           something below it. */}
                       <div className="album__stack" aria-hidden="true">
                         {session.photos
                           .slice(0, 3)
                           .reverse()
-                          .map((photo) => (
-                            /* <picture>, not srcSet, because this is a format
-                               choice and srcset does not make one: it picks by
-                               width and assumes every candidate is decodable,
-                               so an AVIF listed there reaches browsers that
-                               cannot read it. Only <source type> negotiates. */
-                            <picture key={photo.src}>
-                              <source type="image/avif" srcSet={`${photo.src}-400.avif`} />
-                              <img src={`${photo.src}-400.jpg`} alt="" decoding="async" />
-                            </picture>
-                          ))}
+                          .map((photo, i, stack) => {
+                            /* Only the cover — last in this reversed list —
+                               gets an 800w candidate. It is drawn up to ~22rem
+                               wide, so on a 2x screen the 400 was being
+                               upscaled and looked soft (2026-09-25). The two
+                               behind are darkened to half brightness and mostly
+                               hidden; nobody can see their resolution, so they
+                               stay at 400 and cost nothing extra. */
+                            const cover = i === stack.length - 1;
+                            const set = (ext: string) =>
+                              cover
+                                ? `${photo.src}-400.${ext} 400w, ${photo.src}-800.${ext} 800w`
+                                : `${photo.src}-400.${ext}`;
+                            const sizes = cover ? "(max-width: 48rem) 80vw, 22rem" : undefined;
+                            return (
+                              /* <picture>, not srcSet, because this is a format
+                                 choice and srcset does not make one: it picks by
+                                 width and assumes every candidate is decodable,
+                                 so an AVIF listed there reaches browsers that
+                                 cannot read it. Only <source type> negotiates. */
+                              <picture key={photo.src}>
+                                <source type="image/avif" srcSet={set("avif")} sizes={sizes} />
+                                <img
+                                  src={`${photo.src}-400.jpg`}
+                                  srcSet={cover ? set("jpg") : undefined}
+                                  sizes={sizes}
+                                  alt=""
+                                  decoding="async"
+                                />
+                              </picture>
+                            );
+                          })}
                       </div>
 
                       <div className="album__meta">

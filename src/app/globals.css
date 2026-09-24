@@ -1332,6 +1332,35 @@ select.field {
      was ample in a desktop column let the corners past the viewport edge on
      a phone. Measured overflow at 390px wide before this: 18px. */
   margin: var(--space-2) 10% 0;
+  /* Room underneath for the same overhang. A print rotated by θ grows by
+     (w·sinθ + h·cosθ − h) / 2 below its box; at the 10° hover angle and with
+     the translate that is about a tenth of the stack's width. Without it the
+     back print's corner ran over the caption (2026-09-25, reported from a
+     desktop screenshot). Percentage padding resolves against the width, which
+     is exactly the quantity the overhang scales with. */
+  margin-bottom: 11%;
+}
+
+/* On a wide screen the one album left on the home page used to take the full
+   880px row, which drew a 400px-wide cover at ~700px: visibly soft, and the
+   rotated prints large enough to reach the caption. The cover is capped and
+   the caption moves beside it instead, which is also how a print and its
+   label sit on a table. */
+@media (min-width: 48rem) {
+  .album:not([open]) .album__summary {
+    display: grid;
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  .album:not([open]) .album__stack {
+    margin: var(--space-4) 8% 12%;
+  }
+
+  .album:not([open]) .album__meta {
+    margin-top: 0;
+  }
 }
 
 .album__stack picture {
