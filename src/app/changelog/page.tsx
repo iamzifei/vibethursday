@@ -93,7 +93,10 @@ export default async function ChangelogPage({ searchParams }: PageProps) {
                     <span className={release.kind === "major" ? "chip chip--stage" : "chip chip--quiet"}>
                       {release.kind === "major" ? t.major : t.minor}
                     </span>
-                    <span className="chip chip--quiet">
+                    {/* Bordered, unlike the kind chip beside it. Both were
+                        `chip--quiet` at first — two lines of grey text side by
+                        side, indistinguishable at a glance. */}
+                    <span className="chip">
                       {release.scope === "room" ? t.room : t.site}
                     </span>
                     <span className="body-sm mono" style={{ color: "var(--fg3)" }}>

@@ -672,9 +672,20 @@ textarea:focus-visible,
 /* Takes the width it can get; the language pill keeps its own. */
 .nav__panel-cta { flex: 1; }
 
+/* The compact CTA only exists where the wide row does not. */
+.nav .nav__cta--compact { display: none; }
+
 @media (max-width: 860px) {
   .nav__wide { display: none; }
   .nav__toggle { display: inline-flex; }
+
+  .nav .nav__cta--compact {
+    display: inline-flex;
+    /* Pushes itself and the toggle to the right as one group, rather than
+       sitting in the middle of the bar under space-between. */
+    margin-left: auto;
+    padding-inline: var(--space-3);
+  }
 }
 
 /* Above the breakpoint the panel is not just unused, it must be unreachable:

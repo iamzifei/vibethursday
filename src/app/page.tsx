@@ -131,10 +131,15 @@ export default async function Page({ searchParams }: PageProps) {
                   this is still being worked on, and the changes are written
                   down. The link is the proof — a number with nothing behind it
                   would be decoration. */}
+              {/* ⚠️ Quiet on purpose. It shipped in lime and, measured on a
+                  phone, was the brightest line on the first screen — louder
+                  than the lede, and on a screen whose job is to get somebody
+                  to sign up. The number still does its work in grey: it is
+                  evidence that the thing is alive, not a call to action. */}
               <Link
-                className="mono hl"
+                className="mono"
                 href={langHref("/changelog", lang)}
-                style={{ fontSize: "var(--text-sm)", alignSelf: "flex-start" }}
+                style={{ fontSize: "var(--text-sm)", alignSelf: "flex-start", color: "var(--fg3)" }}
               >
                 {c.changelog.versionLabel.replace("{v}", currentVersion())} →
               </Link>

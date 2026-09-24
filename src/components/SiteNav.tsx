@@ -121,6 +121,18 @@ export function SiteNav({
           </Link>
         </nav>
 
+        {/* ★ The sign-up link, on phones, outside the menu.
+            Until 2026-09-24 the only CTA in the bar lived in `.nav__wide`,
+            which is hidden below 860px — so on a phone, where nearly every
+            visitor arrives from a group chat, the first screen of every page
+            had no way to sign up without opening a menu first. Measured: on
+            an iPhone SE the first sign-up button sat at y=945px on a 568px
+            screen. Same outlined treatment as the wide one, so it does not
+            compete with the page's own lime button. */}
+        <Link className="btn nav__cta nav__cta--compact" href={cta.href} onClick={() => setOpen(false)}>
+          {cta.label}
+        </Link>
+
         <button
           className="nav__toggle"
           type="button"
