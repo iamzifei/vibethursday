@@ -12,6 +12,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+
 import { copy } from "../src/lib/content.ts";
 
 const LANGS = ["zh", "en"] as const;
@@ -86,5 +89,73 @@ test("the signup form explains that the bar for hosting a table is low", () => {
       typeof hint === "string" && hint.trim().length > 0,
       `${lang} is missing the hint that lowers the bar for hosting a table`,
     );
+  }
+});
+
+/**
+ * ★ The share cards carry the same promises, and nothing was checking them.
+ *
+ * The test above scans the copy bundle. The pictures that get pasted into
+ * WeChat, Xiaohongshu and X do not live there — their words are baked into
+ * `art/*.html` and `scripts/build-og.sh`, rendered to PNG once and committed.
+ *
+ * That gap is not hypothetical. 2026-09-24: both Chinese cards were still
+ * advertising 悉尼 CBD and 10:00–13:00 — the venue and the hours from before
+ * the move — and all three still promised 讲 5 分钟, a format retired on
+ * 2026-08-13. They had been wrong for six weeks while every test passed,
+ * because the only thing that ever checked those sentences was somebody
+ * looking at the picture.
+ */
+
+/** Every file whose words end up inside a shared image. */
+function cardSources(): { name: string; text: string }[] {
+  const art = path.join(process.cwd(), "art");
+
+  return [
+    ...readdirSync(art)
+      .filter((file) => file.endsWith(".html"))
+      .map((file) => ({ name: `art/${file}`, text: readFileSync(path.join(art, file), "utf8") })),
+    {
+      name: "scripts/build-og.sh",
+      text: readFileSync(path.join(process.cwd(), "scripts/build-og.sh"), "utf8"),
+    },
+  ];
+}
+
+test("★ no share card still promises the retired format", () => {
+  const RETIRED = [/60 秒/, /讲 5 分钟/, /最多 4 位/, /four people max/i, /hard timer/i, /硬计时/];
+
+  for (const { name, text } of cardSources()) {
+    for (const pattern of RETIRED) {
+      assert.ok(!pattern.test(text), `${name} still describes the retired format: ${pattern}`);
+    }
+  }
+});
+
+test("★ every share card names the venue and the opening time the site names", () => {
+  // Derived from the home page's own fact cards rather than written out here,
+  // so the next move only has to be made in one place — and the day it is
+  // made, any card that was not re-rendered fails this.
+  const facts = copy.zh.hero.facts;
+  const venue = facts.find((fact) => fact.href?.includes("maps.google"))?.value ?? "";
+  const time = facts.find((fact) => fact.label === "时间")?.value ?? "";
+
+  // "The Avenue · Chatswood" → ["The Avenue", "Chatswood"]; the cards set the
+  // two on separate lines, so the whole string never appears verbatim.
+  const parts = venue.split("·").map((part) => part.trim()).filter(Boolean);
+  const hour = time.match(/\d{1,2}:\d{2}/)?.[0] ?? "";
+
+  assert.ok(parts.length > 0 && hour, "could not read the venue and hour out of the home page facts");
+
+  for (const { name, text } of cardSources()) {
+    // A card that names no venue at all is fine — some are pure typography.
+    // A card that names one has to name this one.
+    if (!/地点|Where/i.test(text)) continue;
+
+    for (const part of parts) {
+      assert.ok(text.includes(part), `${name} does not name the venue (missing "${part}")`);
+    }
+
+    assert.ok(text.includes(hour), `${name} does not carry the opening time ${hour}`);
   }
 });

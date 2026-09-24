@@ -40,8 +40,8 @@ magick "$SRC" \
   -font "$FONT_MONO"  -fill "$CYAN" -pointsize 22 -kerning 4  -annotate +72+150 'SYDNEY · EVERY THURSDAY' \
   -font "$FONT_LATIN" -fill "$FG1"  -pointsize 100 -kerning -3 -annotate +72+265 'Vibe Thursday' \
   -font "$FONT_CJK"   -fill "$FG2"  -pointsize 36 -kerning 0  -annotate +74+385 '悉尼 · 每周四 10:30–12:00' \
-  -font "$FONT_CJK"   -fill "$LIME" -pointsize 34             -annotate +74+472 '带上你用 AI 做的东西，讲 5 分钟' \
-  -font "$FONT_CJK"   -fill "$FG2"  -pointsize 26             -annotate +74+522 '没做完的、还在想的，都能讲 · 免费' \
+  -font "$FONT_CJK"   -fill "$LIME" -pointsize 34             -annotate +74+472 '带上你在用 AI 做的东西，随时可以给大家看' \
+  -font "$FONT_CJK"   -fill "$FG2"  -pointsize 26             -annotate +74+522 '没做完的、还在想的，一样算 · 免费' \
   -quality 90 -sampling-factor 4:4:4 -strip \
   "$OUT"
 

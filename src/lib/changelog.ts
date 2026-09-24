@@ -74,7 +74,12 @@ export const RELEASES: readonly Release[] = [
   },
   {
     version: "3.0",
-    date: "2026-09-16",
+    // ⚠️ 09-17, not 09-16. The 16th is when the move was announced and the
+    // site was updated; the room only changed for anybody on the morning of
+    // the 17th, which is the first session that actually ran there. The field
+    // above is documented as the date it became true, and for a changelog
+    // about the meetup rather than about the website, that is the morning.
+    date: "2026-09-17",
     kind: "major",
     // The venue and the opening time, stated as the home page already states
     // them. Nothing about why, nothing about what it costs — those are
