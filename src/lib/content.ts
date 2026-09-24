@@ -594,12 +594,12 @@ export const copy = {
       meta: {
         title: "NSW 小企业月 · 两场免费 AI 早场 · Vibe Thursday",
         description:
-          "10 月 8 日与 15 日，Chatswood，免费。NSW 小企业月官方活动，中英双语，专为做生意的人。现场不推销任何产品或服务。",
+          "10 月 8 日与 15 日，Chatswood，免费。NSW 小企业月官方活动，全程中文，专为做生意的人。现场不推销任何产品或服务。",
       },
       eyebrow: "§ NSW 小企业月 2026",
       title: "两个上午，讲 AI 对做生意的人真正有用的部分",
       lede:
-        "这是 2026 年 NSW 小企业月（NSW Small Business Month）的官方活动之一，由新南威尔士州政府主办的项目。免费、线下、中英双语。",
+        "这是 2026 年 NSW 小企业月（NSW Small Business Month）的官方活动之一，由新南威尔士州政府主办的项目。免费、线下、全程中文。",
       fromGov:
         "如果你是从 NSW 政府的活动页过来的：这里是报名的地方，往下拉就是表单。",
 
@@ -624,7 +624,7 @@ export const copy = {
         "15 分钟的实操分享，不是产品演示。",
         "一到两位在场的人用五分钟讲讲自己生意里试过的事，包括没试成的那部分。",
         "开放提问，然后是自由交流的时间——多数人是冲这一段来的。",
-        "中英双语。用中文提问完全没问题。",
+        "全程中文。悉尼不缺英文的 AI 活动，缺的是这一个。",
       ],
 
       newcomerTitle: "第一次来的话",
@@ -1708,12 +1708,12 @@ export const copy = {
       meta: {
         title: "NSW Small Business Month · Two free AI mornings · Vibe Thursday",
         description:
-          "8 and 15 October, Chatswood, free. An official NSW Small Business Month event, run bilingually, for people who run a business. Nothing is sold.",
+          "8 and 15 October, Chatswood, free. An official NSW Small Business Month event, run in Mandarin, for people who run a business. Nothing is sold.",
       },
       eyebrow: "§ NSW Small Business Month 2026",
       title: "Two mornings on the part of AI that is useful if you run a business",
       lede:
-        "These are official events of NSW Small Business Month 2026, a program run by the NSW Government. Free, in person, and run bilingually in English and Mandarin.",
+        "These are official events of NSW Small Business Month 2026, a program run by the NSW Government. Free, in person, and run in Mandarin.",
       fromGov:
         "If you came from the NSW Government event page: this is where you register. The form is further down.",
 
@@ -1738,7 +1738,7 @@ export const copy = {
         "A 15-minute practical talk. Not a product demo.",
         "One or two people in the room take five minutes on something they tried in their own business, including what did not work.",
         "Open questions, then unstructured time to meet each other — which is what most people come for.",
-        "English and Mandarin. Questions in either are welcome.",
+        "The session is run in Mandarin, not English. Sydney is not short of English-language AI events; it was short of this one.",
       ],
 
       newcomerTitle: "If this is your first one",
