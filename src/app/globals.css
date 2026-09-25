@@ -3804,6 +3804,9 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vq-scrim {
   position: absolute;
   inset: 0;
+  /* Above the title card, which sits at z-index 1 to float over the moving
+     backdrop — without this the card was drawn over the intro panel. */
+  z-index: 10;
   display: grid;
   place-items: end center;
   background: rgba(10, 11, 13, 0.55);
