@@ -4334,6 +4334,16 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   font-size: var(--text-xs);
 }
 
+.vq-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vq-menu .vq-btn {
+  width: 100%;
+}
+
 .vq-guide__goal {
   padding: var(--space-3);
   border-radius: var(--radius-md);

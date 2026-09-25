@@ -194,6 +194,20 @@ export const ICONS = {
     ".kk......kk.",
     "............",
   ],
+  menu: [
+    "............",
+    ".kkkkkkkkkk.",
+    ".kwwwwwwwwk.",
+    ".kkkkkkkkkk.",
+    "............",
+    ".kkkkkkkkkk.",
+    ".kwwwwwwwwk.",
+    ".kkkkkkkkkk.",
+    "............",
+    ".kkkkkkkkkk.",
+    ".kwwwwwwwwk.",
+    ".kkkkkkkkkk.",
+  ],
   // ── Emotes ──
   wave: [
     "...k.k.k....",

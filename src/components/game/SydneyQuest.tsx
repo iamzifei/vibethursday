@@ -80,6 +80,7 @@ type Overlay =
   | { type: "share" }
   | { type: "intro" }
   | { type: "guide" }
+  | { type: "menu" }
   | { type: "help" };
 
 /** What the quest guide is following: the story, or one side quest. */
@@ -841,7 +842,8 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
         }
         return;
       }
-      if (event.key === "Escape") setOverlay(null);
+      // Esc closes whatever is open; with nothing open, it is the menu.
+      if (event.key === "Escape") setOverlay(overlay ? null : { type: "menu" });
     };
     const up = (event: KeyboardEvent) => {
       if (event.key in keyDir) engineRef.current?.release(keyDir[event.key]);
@@ -993,6 +995,7 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
 
       {/* HUD — top */}
       <div className="vq-hud">
+        <IconButton label={copy.menu.button} icon="menu" onClick={() => setOverlay({ type: "menu" })} />
         <button type="button" className="vq-questchip" onClick={() => setOverlay({ type: "quests" })}>
           <span className="vq-questchip__label">
             {trackedSide && <span className="vq-questchip__tag">{copy.guide.side}</span>}
@@ -1483,6 +1486,47 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
       )}
 
       {overlay?.type === "intro" && <IntroPanel copy={copy} onClose={() => setOverlay(null)} />}
+
+      {overlay?.type === "menu" && (
+        <Panel title={copy.menu.title} onClose={() => setOverlay(null)} closeLabel={copy.hud.close}>
+          <div className="vq-menu">
+            <button type="button" className="vq-btn vq-btn--primary" onClick={() => setOverlay(null)}>
+              {copy.menu.resume}
+            </button>
+            <button
+              type="button"
+              className="vq-btn vq-btn--choice"
+              onClick={() => {
+                // Written now, not after the usual debounce: the play view
+                // unmounts on the next render and would take the timer with it.
+                try {
+                  localStorage.setItem(SAVE_KEY, JSON.stringify(saveRef.current));
+                } catch {
+                  // Storage blocked; nothing more to do.
+                }
+                setHasSave(true);
+                setOverlay(null);
+                setPhase("title");
+              }}
+            >
+              {copy.menu.toTitle}
+            </button>
+            <button type="button" className="vq-btn vq-btn--choice" onClick={() => setOverlay({ type: "intro" })}>
+              {copy.intro.button}
+            </button>
+            <button type="button" className="vq-btn vq-btn--choice" onClick={() => setOverlay({ type: "guide" })}>
+              <Icon name="help" size={18} /> {copy.help.title}
+            </button>
+            <button type="button" className="vq-btn vq-btn--choice" onClick={toggleMusic}>
+              <Icon name={musicOn ? "sound" : "mute"} size={18} /> {musicOn ? copy.music.on : copy.music.off}
+            </button>
+            <Link className="vq-btn vq-btn--ghost" href={withLang("/", lang)}>
+              {copy.menu.home}
+            </Link>
+          </div>
+          <p className="vq-fine">{copy.saveNote}</p>
+        </Panel>
+      )}
 
       {overlay?.type === "guide" && (
         <Panel title={copy.help.title} onClose={() => setOverlay(null)} closeLabel={copy.hud.close}>

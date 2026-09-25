@@ -602,6 +602,15 @@ const zh = {
     golden: ["今天是疯狂星期四！", "闪闪发光的是我"],
   },
 
+  menu: {
+    button: "菜单",
+    title: "菜单",
+    resume: "继续游戏",
+    toTitle: "返回标题画面",
+    home: "回到网站首页",
+    saved: "进度已保存。",
+  },
+
   back: "回首页",
 };
 
@@ -1192,6 +1201,15 @@ const en: GameCopy = {
     magpie: ["I remember your face", "Spring. Watch your head."],
     whale: ["(blows spray)", "Just passing through Sydney"],
     golden: ["It's Thursday!", "Yes, I sparkle"],
+  },
+
+  menu: {
+    button: "Menu",
+    title: "Menu",
+    resume: "Resume",
+    toTitle: "Back to the title screen",
+    home: "Back to the website",
+    saved: "Progress saved.",
   },
 
   back: "Home",
