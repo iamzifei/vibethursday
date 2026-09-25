@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import QRCode from "qrcode";
 import { SydneyQuest } from "@/components/game/SydneyQuest";
 import type { Community } from "@/components/game/engine";
 import { resolveLang } from "@/lib/content";
@@ -6,6 +7,7 @@ import { listWallMembers, listWharfQuestions } from "@/lib/db";
 import { GAME_COPY, type GameCopy } from "@/lib/game/copy";
 import { canClaim, statusOf } from "@/lib/questions";
 import { pageAlternates } from "@/lib/seo";
+import { siteUrl } from "@/lib/site";
 import { deepTranslate } from "@/lib/traditional";
 import { listWorks } from "@/lib/works";
 import type { Lang } from "@/lib/lang";
@@ -110,9 +112,14 @@ export default async function PlayPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
   const community = await loadCommunity();
 
+  // The share poster's code points at the home page — where the meetup is
+  // explained and where sign-up is — rather than back into the game.
+  const site = siteUrl();
+  const qr = await QRCode.toDataURL(site, { margin: 1, width: 460, color: { dark: "#0a0b0dff", light: "#ffffffff" } });
+
   return (
     <main id="main" lang={lang === "en" ? "en" : lang === "zh-Hant" ? "zh-Hant" : "zh-CN"}>
-      <SydneyQuest copy={gameCopy(lang)} lang={lang} community={community} />
+      <SydneyQuest copy={gameCopy(lang)} lang={lang} community={community} qr={qr} site={site.replace(/^https?:\/\//, "")} />
     </main>
   );
 }

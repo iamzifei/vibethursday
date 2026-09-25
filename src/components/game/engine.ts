@@ -32,7 +32,8 @@ import {
   type Point,
   type StoryNpcId,
 } from "@/lib/game/world";
-import { PETS, isPhrase, type Dir, type Emote, type Look, type PeerView, EMOTE_GLYPH } from "@/lib/game/protocol";
+import { PETS, isPhrase, type Dir, type Emote, type Look, type PeerView } from "@/lib/game/protocol";
+import { iconCanvas, type IconName } from "./icons";
 import {
   CHAR_H,
   CHAR_W,
@@ -208,7 +209,7 @@ export class Engine {
   private peers = new Map<string, Peer>();
   private collectedShards: Set<string>;
   private visited: Set<string>;
-  private emote: { glyph: string; until: number } | null = null;
+  private emote: { icon: IconName; until: number } | null = null;
   private speech: { text: string; until: number } | null = null;
   private objective: Target | null = null;
   private markers = new Map<StoryNpcId, "!" | "?">();
@@ -321,17 +322,23 @@ export class Engine {
     // Members of the wall, around the mall and the Concourse. Each stands
     // somewhere stable, chosen from their slug, so they are where you left
     // them next visit.
-    const standing = tilesOfKind(chatswood, "p.g", { x0: 40, y0: 22, x1: 100, y1: 64 }).filter((p) =>
-      this.isReachable("chatswood", p.x, p.y),
-    );
-    const taken: Point[] = [];
+    // Every third member waits around the Quay and the Opera House forecourt
+    // instead, so a new player meets a real person in the first minute rather
+    // than after the train ride.
+    const standing: Record<MapId, Point[]> = {
+      chatswood: tilesOfKind(chatswood, "p.g", { x0: 40, y0: 22, x1: 100, y1: 64 }).filter((p) => this.isReachable("chatswood", p.x, p.y)),
+      harbour: tilesOfKind(harbour, "p.g", { x0: 40, y0: 118, x1: 100, y1: 158 }).filter((p) => this.isReachable("harbour", p.x, p.y)),
+    };
+    const taken: Record<MapId, Point[]> = { chatswood: [], harbour: [] };
     this.community.members.forEach((member, index) => {
+      const map: MapId = index % 3 === 1 ? "harbour" : "chatswood";
+      const spots = standing[map];
       const rand = seeded(hashString(member.slug));
-      for (let tries = 0; tries < 40 && standing.length; tries += 1) {
-        const at = standing[Math.floor(rand() * standing.length)];
-        if (taken.some((p) => Math.abs(p.x - at.x) + Math.abs(p.y - at.y) < 3)) continue;
-        taken.push(at);
-        this.entities.chatswood.push({
+      for (let tries = 0; tries < 40 && spots.length; tries += 1) {
+        const at = spots[Math.floor(rand() * spots.length)];
+        if (taken[map].some((p) => Math.abs(p.x - at.x) + Math.abs(p.y - at.y) < 3)) continue;
+        taken[map].push(at);
+        this.entities[map].push({
           kind: "member",
           x: at.x,
           y: at.y,
@@ -559,7 +566,7 @@ export class Engine {
       return;
     }
     this.speech = null;
-    this.emote = { glyph: EMOTE_GLYPH[emote], until: this.time + 4 };
+    this.emote = { icon: emote as IconName, until: this.time + 4 };
   }
 
   /** Puts a line of speech over whatever `what` points at, for a few seconds. */
@@ -652,6 +659,32 @@ export class Engine {
       if (found) return found;
     }
     return null;
+  }
+
+  /**
+   * "Take me there": walk to the tile next to a target on this map. False
+   * when it is on the other map or there is no way to it on foot.
+   */
+  walkTo(target: Target): boolean {
+    if (target.map !== this.map) return false;
+    const path = this.pathToAdjacent({ x: target.x, y: target.y });
+    if (!path) return false;
+    this.pendingInteract = null;
+    this.player.path = path;
+    return true;
+  }
+
+  /**
+   * "I'm stuck": back to where this map starts you — the Quay, or outside
+   * Chatswood station — which is always reachable and always has a way on.
+   */
+  rescue() {
+    this.teleport(this.map);
+  }
+
+  /** The player's current goal target, for the help panel. */
+  getObjective(): Target | null {
+    return this.objective;
   }
 
   /** Other players within `radius` tiles on this map. */
@@ -1276,7 +1309,7 @@ export class Engine {
         const sprite = characterSprite(this.look, this.player.dir, this.player.frame);
         const [sx, sy] = this.toScreen(this.player.x, this.player.y);
         ctx.drawImage(sprite, sx, sy - (CHAR_H - TILE) * u, CHAR_W * u, CHAR_H * u);
-        if (this.emote && this.time < this.emote.until) this.bubble(sx + size / 2, sy - (CHAR_H - TILE + 4) * u, this.emote.glyph);
+        if (this.emote && this.time < this.emote.until) this.bubble(sx + size / 2, sy - (CHAR_H - TILE + 4) * u, this.emote.icon);
         if (this.speech && this.time < this.speech.until) this.textBubble(sx + size / 2, sy - (CHAR_H - TILE + 3) * u, this.speech.text);
       },
     });
@@ -1346,7 +1379,7 @@ export class Engine {
       ctx.drawImage(petSprite, sx - 10 * u, sy + 2 * u, petSprite.width * u * 0.8, petSprite.height * u * 0.8);
     }
     if (peer.emote && isPhrase(peer.emote)) this.textBubble(sx + (TILE * u) / 2, sy - (CHAR_H - TILE + 3) * u, this.labels.phrase(peer.emote));
-    else if (peer.emote) this.bubble(sx + (TILE * u) / 2, sy - (CHAR_H - TILE + 4) * u, EMOTE_GLYPH[peer.emote]);
+    else if (peer.emote) this.bubble(sx + (TILE * u) / 2, sy - (CHAR_H - TILE + 4) * u, peer.emote as IconName);
   }
 
   private fontPx() {
@@ -1520,16 +1553,23 @@ export class Engine {
     ctx.fillText(text, left + w / 2, top + h / 2);
   }
 
-  private bubble(x: number, y: number, glyph: string) {
+  /** A white bubble with one of the game's pixel icons in it. */
+  private bubble(x: number, y: number, icon: IconName) {
     const ctx = this.ctx;
-    const fs = this.fontPx() * 1.5;
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    const w = fs * 1.6;
-    ctx.fillRect(Math.round(x - w / 2), Math.round(y - fs * 1.5), Math.round(w), Math.round(fs * 1.4));
-    ctx.font = `${fs}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(glyph, x, y - fs * 0.8);
+    const size = Math.max(24 * this.dpr, this.unit * 9);
+    const pad = size * 0.2;
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.beginPath();
+    ctx.roundRect(x - size / 2 - pad, y - size - pad * 2, size + pad * 2, size + pad * 2, pad);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - pad, y - 1);
+    ctx.lineTo(x + pad, y - 1);
+    ctx.lineTo(x, y + pad);
+    ctx.closePath();
+    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(iconCanvas(icon), x - size / 2, y - size - pad, size, size);
   }
 
   private aBadge(x: number, y: number) {

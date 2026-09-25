@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import harbourMap from "@/lib/game/maps/harbour.json";
 import chatswoodMap from "@/lib/game/maps/chatswood.json";
-import { fill, type GameCopy } from "@/lib/game/copy";
-import { DEFAULT_LOOK, EMOTES, EMOTE_GLYPH, LOOK_RANGES, PETS, PHRASES, isPhrase, type Dir, type Emote, type Look, type PeerView } from "@/lib/game/protocol";
+import { fill, pickMeme, type GameCopy } from "@/lib/game/copy";
+import { DEFAULT_LOOK, EMOTES, LOOK_RANGES, PETS, PHRASES, isPhrase, type Dir, type Emote, type Look, type PeerView } from "@/lib/game/protocol";
 import {
   HATS,
   IDEAS,
@@ -34,22 +34,34 @@ import {
 import { CRITTERS, LANDMARKS, SHARDS, SPAWN, isSydneyThursday, place, type CritterId, type GameMap, type MapId, type StoryNpcId } from "@/lib/game/world";
 import type { Lang } from "@/lib/lang";
 import { LANG_PARAM } from "@/lib/lang";
-import { characterSprite, critterSprite } from "./art";
+import { characterSprite, critterSprite, ferrySprite } from "./art";
 import { Engine, type Community, type Interaction, type Locate } from "./engine";
 import { Music, type Track } from "./music";
 import { Net, type NetStatus } from "./net";
 import { TrainRide } from "./TrainRide";
+import { Icon } from "./Icon";
+import type { IconName } from "./icons";
+import { drawPostcard, drawPoster, type SceneId } from "./poster";
 
 const MAPS: Record<MapId, GameMap> = {
   harbour: harbourMap as GameMap,
   chatswood: chatswoodMap as GameMap,
 };
 
-type Props = { copy: GameCopy; lang: Lang; community: Community };
+type Props = { copy: GameCopy; lang: Lang; community: Community; qr: string; site: string };
 
 type Choice = { label: string; run: () => void };
 type LinkOut = { label: string; href: string; external?: boolean };
-type Dialog = { speaker: string; pages: string[]; index: number; choices?: Choice[]; links?: LinkOut[]; onDone?: () => void };
+type Dialog = {
+  speaker: string;
+  pages: string[];
+  index: number;
+  choices?: Choice[];
+  links?: LinkOut[];
+  onDone?: () => void;
+  /** A member's photo, when a real person is talking. */
+  avatar?: string | null;
+};
 
 type Overlay =
   | { type: "dialog"; dialog: Dialog }
@@ -65,6 +77,9 @@ type Overlay =
   | { type: "ferry"; to: "milsons" | "quay" }
   | { type: "peer"; peer: PeerView }
   | { type: "postcard"; url: string; caption: string }
+  | { type: "share" }
+  | { type: "intro" }
+  | { type: "guide" }
   | { type: "help" };
 
 /** What the quest guide is following: the story, or one side quest. */
@@ -91,7 +106,7 @@ function spawnSave(): SaveState {
  * keeps the save, runs the story, and draws the HUD and every panel on top of
  * the canvas. The canvas is never asked to render text longer than a name.
  */
-export function SydneyQuest({ copy, lang, community }: Props) {
+export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
   const [phase, setPhase] = useState<"title" | "create" | "play">("title");
   const [save, setSave] = useState<SaveState>(spawnSave);
   const [hasSave, setHasSave] = useState(false);
@@ -103,6 +118,10 @@ export function SydneyQuest({ copy, lang, community }: Props) {
   const [where, setWhere] = useState<string | null>(null);
   const [me, setMe] = useState<{ name: string | null; slug: string | null; guest: [number, number] | null } | null>(null);
   const [tracked, setTracked] = useState<Tracked>("main");
+  const meRef = useRef(me);
+  useEffect(() => {
+    meRef.current = me;
+  }, [me]);
   const [banner, setBanner] = useState<string | null>(null);
   const [musicOn, setMusicOn] = useState(true);
   const musicRef = useRef<Music | null>(null);
@@ -271,6 +290,33 @@ export function SydneyQuest({ copy, lang, community }: Props) {
     musicRef.current?.setEnabled(next);
   };
 
+  /* ── Stuck detection ───────────────────────────────────────────── */
+
+  // Ninety seconds without anything moving forward — no stamp, no new
+  // person met, no quest step — and the help button starts calling, once,
+  // with a nudge. Any progress resets the clock.
+  const [idleHint, setIdleHint] = useState(false);
+  const progressKey = [
+    save.flags.length,
+    save.stamps.length,
+    save.met.length,
+    save.stalls.length,
+    save.read.length,
+    save.critters.length,
+    save.shards.length,
+    save.map,
+  ].join("|");
+  useEffect(() => {
+    if (phase !== "play") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIdleHint(false);
+    const timer = setTimeout(() => {
+      setIdleHint(true);
+      toast(copy.help.idle);
+    }, 90_000);
+    return () => clearTimeout(timer);
+  }, [progressKey, phase, toast, copy]);
+
   /* ── The engine ────────────────────────────────────────────────── */
 
   const openInteraction = useRef<(what: Interaction) => void>(() => {});
@@ -305,7 +351,8 @@ export function SydneyQuest({ copy, lang, community }: Props) {
           });
         },
         onArrive: (id) => daily("landmark", id),
-        onNear: (id) => engine.say(id, copy.barks[id]),
+        // Now and then a line for the time of day instead of their usual one.
+        onNear: (id) => engine.say(id, copy.barks[id] && Math.random() < 0.35 ? pickMeme(copy.memes, new Date()) : copy.barks[id]),
         onMove: (map, x, y, dir) => netRef.current?.update(map, x, y, dir, saveRef.current.look),
         onTooFar: () => toast(copy.toast.tooFar),
       },
@@ -454,13 +501,27 @@ export function SydneyQuest({ copy, lang, community }: Props) {
   );
 
   /** A postcard: the current frame, framed, with where it was taken. */
+  /**
+   * A postcard: the landmark drawn side-on, you in it, framed like a real card
+   * with a stamp and a postmark dated today in Sydney.
+   */
   const takePostcard = useCallback(
-    (caption: string) => {
-      const url = engineRef.current?.capture(caption);
-      if (url) setOverlay({ type: "postcard", url, caption });
+    (scene: SceneId, place: string, looks: Look[], sender: string) => {
+      const date = new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Sydney", day: "2-digit", month: "short", year: "numeric" })
+        .format(new Date())
+        .toUpperCase();
+      const url = drawPostcard(scene, looks, {
+        greetings: copy.photo.greetings,
+        town: scene === "mall" ? "CHATSWOOD" : "SYDNEY",
+        place,
+        from: fill(copy.photo.from, { name: sender }),
+        date,
+        site,
+      });
+      setOverlay({ type: "postcard", url, caption: place });
       daily("photo");
     },
-    [daily],
+    [copy, daily, site],
   );
 
   /* ── The story ─────────────────────────────────────────────────── */
@@ -583,20 +644,74 @@ export function SydneyQuest({ copy, lang, community }: Props) {
           }
           return;
         }
-        case "member":
-          setOverlay({ type: "member", index: what.index });
+        case "member": {
+          const member = community.members[what.index];
+          if (!member) return;
+          const script = copy.member.say;
+          const pages = [
+            [fill(script.hi, { name: member.name }), member.headline].filter(Boolean).join(""),
+            member.lookingFor ? fill(script.looking, { v: member.lookingFor }) : null,
+            member.canHelp ? fill(script.help, { v: member.canHelp }) : null,
+            ...member.products.flatMap((product) => [
+              product.tagline ? fill(script.product, { title: product.title, tagline: product.tagline }) : fill(script.productBare, { title: product.title }),
+              product.stage ? fill(script.stage, { stage: copy.stall.stages[product.stage as keyof GameCopy["stall"]["stages"]] ?? product.stage }) : null,
+            ]),
+            member.products.length === 0 ? script.noWork : null,
+            member.tags.length ? fill(script.tags, { tags: member.tags.map((tag) => `#${tag}`).join(" ") }) : null,
+          ].filter((page): page is string => Boolean(page));
+
+          const hello = () => {
+            update((prev) => addTo(prev, "met", member.slug));
+            daily("member");
+          };
+          hello();
+          const coffeeRun = sides.some((q) => q.id === "coffee" && q.accepted && !q.done) && !s.flags.includes(`coffee:${member.slug}`);
+          const choices: Choice[] = [
+            {
+              label: copy.member.hello,
+              run: () => {
+                setOverlay(null);
+                engineRef.current?.showEmote("wave");
+                engineRef.current?.say(what, script.bye, 3);
+              },
+            },
+            ...member.products
+              .filter((product) => product.url)
+              .slice(0, 2)
+              .map((product) => ({
+                label: fill(script.open, { title: product.title }),
+                run: () => window.open(product.url!, "_blank", "noopener,noreferrer"),
+              })),
+            { label: copy.member.card, run: () => setOverlay({ type: "member", index: what.index }) },
+          ];
+          if (coffeeRun) {
+            choices.unshift({
+              label: copy.social.giveCoffee,
+              run: () => {
+                update((prev) => addTo(prev, "flags", `coffee:${member.slug}`));
+                setOverlay(null);
+                engineRef.current?.say(what, copy.social.coffeeThanks, 4);
+                engineRef.current?.showEmote("coffee");
+              },
+            });
+          }
+          say(member.name, pages, { choices, avatar: member.avatar });
           return;
+        }
         case "stall": {
           const work = community.works[what.index];
           update((prev) => addTo(prev, "stalls", work ? work.key : "placeholder"));
           setOverlay({ type: "stall", index: what.index });
           return;
         }
-        case "critter":
+        case "critter": {
           daily("critter");
-          if (s.critters.includes(what.id)) toast(copy.befriend.already);
-          else setOverlay({ type: "befriend", id: what.id });
+          const lines = copy.critterTalk[what.id];
+          engineRef.current?.say(what, lines[Math.floor(Math.random() * lines.length)], 3);
+          // A friend just talks; a stranger talks, then you can try your luck.
+          if (!s.critters.includes(what.id)) setTimeout(() => setOverlay({ type: "befriend", id: what.id }), 1100);
           return;
+        }
         case "station":
           if (what.map === "harbour") {
             say(npc.guard.name, npc.guard.lines, {
@@ -628,7 +743,8 @@ export function SydneyQuest({ copy, lang, community }: Props) {
           return;
         }
         case "walker": {
-          const line = copy.walkers[Math.floor(Math.random() * copy.walkers.length)];
+          const line =
+            Math.random() < 0.5 ? pickMeme(copy.memes, new Date()) : copy.walkers[Math.floor(Math.random() * copy.walkers.length)];
           engineRef.current?.say(what, line);
           engineRef.current?.showEmote("gday");
           const key = `${s.map}.${what.index}`;
@@ -641,7 +757,12 @@ export function SydneyQuest({ copy, lang, community }: Props) {
         }
         case "photo": {
           update((prev) => addTo(prev, "flags", `photo:${what.id}`));
-          takePostcard(copy.photo.spots[what.id as keyof GameCopy["photo"]["spots"]] ?? copy.photo.spot);
+          takePostcard(
+            what.id as SceneId,
+            copy.photo.spots[what.id as keyof GameCopy["photo"]["spots"]] ?? copy.photo.spot,
+            [s.look],
+            playerName(copy, meRef.current),
+          );
           return;
         }
       }
@@ -703,6 +824,20 @@ export function SydneyQuest({ copy, lang, community }: Props) {
         } else if (!overlay) {
           event.preventDefault();
           engineRef.current?.act();
+        }
+        return;
+      }
+      // Number keys pick a choice on the last page of a conversation.
+      if (/^[1-9]$/.test(event.key) && overlay?.type === "dialog") {
+        const { dialog } = overlay;
+        if (dialog.index !== dialog.pages.length - 1) return;
+        const n = Number(event.key) - 1;
+        if (dialog.choices?.[n]) {
+          event.preventDefault();
+          dialog.choices[n].run();
+        } else if (dialog.links?.[n]) {
+          event.preventDefault();
+          window.location.href = dialog.links[n].href;
         }
         return;
       }
@@ -780,12 +915,16 @@ export function SydneyQuest({ copy, lang, community }: Props) {
               </button>
             )}
           </div>
+          <button type="button" className="vq-btn vq-btn--ghost vq-btn--small" onClick={() => setOverlay({ type: "intro" })}>
+            {copy.intro.button}
+          </button>
           <p className="vq-fine">{copy.saveNote}</p>
           <p className="vq-fine">{copy.osm}</p>
           <Link className="vq-back" href={withLang("/", lang)}>
             ← {copy.back}
           </Link>
         </div>
+        {overlay?.type === "intro" && <IntroPanel copy={copy} onClose={() => setOverlay(null)} />}
       </div>
     );
   }
@@ -866,16 +1005,30 @@ export function SydneyQuest({ copy, lang, community }: Props) {
             {status === "online" ? fill(copy.hud.online, { n: peerCount + 1 }) : copy.hud.offline}
           </span>
           <div className="vq-hud__buttons">
-            <IconButton label={copy.hud.bag} onClick={() => setOverlay({ type: "bag" })}>🎒</IconButton>
-            <IconButton label={copy.hud.wardrobe} onClick={() => setOverlay({ type: "wardrobe" })}>👕</IconButton>
-            <IconButton label={copy.hud.emote} onClick={() => setOverlay(overlay?.type === "emotes" ? null : { type: "emotes" })}>😀</IconButton>
-            <IconButton label={musicOn ? copy.music.on : copy.music.off} onClick={toggleMusic}>
-              {musicOn ? "🔊" : "🔇"}
-            </IconButton>
+            <IconButton label={copy.hud.bag} icon="bag" onClick={() => setOverlay({ type: "bag" })} />
+            <IconButton label={copy.hud.wardrobe} icon="shirt" onClick={() => setOverlay({ type: "wardrobe" })} />
+            <IconButton label={copy.hud.emote} icon="smile" onClick={() => setOverlay(overlay?.type === "emotes" ? null : { type: "emotes" })} />
+          </div>
+          <div className="vq-hud__buttons">
+            <IconButton
+              label={copy.help.button}
+              icon="help"
+              onClick={() => {
+                setIdleHint(false);
+                setOverlay({ type: "guide" });
+              }}
+              highlight={idleHint}
+            />
+            <IconButton label={copy.share.button} icon="share" onClick={() => setOverlay({ type: "share" })} />
+            <IconButton label={musicOn ? copy.music.on : copy.music.off} icon={musicOn ? "sound" : "mute"} onClick={toggleMusic} />
           </div>
         </div>
       </div>
-      {where && <div className="vq-place">📍 {where}</div>}
+      {where && (
+        <div className="vq-place">
+          <Icon name="pin" size={14} /> {where}
+        </div>
+      )}
       {banner && !overlay && (
         <div className="vq-banner" role="status">
           {banner}
@@ -919,7 +1072,7 @@ export function SydneyQuest({ copy, lang, community }: Props) {
                   setOverlay(null);
                 }}
               >
-                <span aria-hidden="true">{EMOTE_GLYPH[emote]}</span>
+                <Icon name={emote as IconName} size={28} />
                 <small>{copy.emotes[emote]}</small>
               </button>
             ))}
@@ -943,7 +1096,9 @@ export function SydneyQuest({ copy, lang, community }: Props) {
         </div>
       )}
 
-      {overlay?.type === "dialog" && <DialogBox dialog={overlay.dialog} onAdvance={advance} onClose={() => setOverlay(null)} />}
+      {overlay?.type === "dialog" && (
+        <DialogBox dialog={overlay.dialog} onAdvance={advance} onClose={() => setOverlay(null)} hint={copy.hud.dialogKeys} />
+      )}
 
       {overlay?.type === "quests" && (
         <Panel title={copy.hud.quest} onClose={() => setOverlay(null)} closeLabel={copy.hud.close}>
@@ -975,7 +1130,7 @@ export function SydneyQuest({ copy, lang, community }: Props) {
                     {quest.done
                       ? quest.id === "shards"
                         ? "✓"
-                        : `🎩 ${copy.wardrobe.hats[HATS[{ coffee: 7, ibis: 8, postcards: 9, gday: 10 }[quest.id]]]}`
+                        : copy.wardrobe.hats[HATS[{ coffee: 7, ibis: 8, postcards: 9, gday: 10 }[quest.id]]]
                       : quest.accepted
                         ? quest.have >= quest.need
                           ? fill(copy.side.returnTo, { who: npcName(copy, quest.giver) })
@@ -994,7 +1149,7 @@ export function SydneyQuest({ copy, lang, community }: Props) {
           <ul className="vq-quests">
             {dailies.map((task) => (
               <li key={task.kind} className={task.have >= task.need ? "is-done" : ""}>
-                <span className="vq-quests__n">{task.have >= task.need ? "★" : `${task.have}/${task.need}`}</span>
+                <span className="vq-quests__n">{task.have >= task.need ? <Icon name="star" size={16} /> : `${task.have}/${task.need}`}</span>
                 <div>
                   <strong>
                     {fill(copy.daily[task.kind], {
@@ -1024,7 +1179,7 @@ export function SydneyQuest({ copy, lang, community }: Props) {
               const info = copy.landmarks[landmark.id as keyof GameCopy["landmarks"]];
               return (
                 <li key={landmark.id} className={`vq-stamp ${got ? "is-got" : ""}`} title={got ? info.fact : undefined}>
-                  <span className="vq-stamp__mark">{got ? "★" : "?"}</span>
+                  <span className="vq-stamp__mark">{got ? <Icon name="star" size={18} /> : "?"}</span>
                   <span>{got ? info.name : copy.bag.unknown}</span>
                 </li>
               );
@@ -1087,7 +1242,13 @@ export function SydneyQuest({ copy, lang, community }: Props) {
                   onClick={() => update((prev) => ({ ...prev, look: { ...prev.look, hat: index } }))}
                   title={open ? undefined : copy.wardrobe.unlock[hat]}
                 >
-                  {open ? copy.wardrobe.hats[hat] : `🔒 ${copy.wardrobe.unlock[hat]}`}
+                  {open ? (
+                    copy.wardrobe.hats[hat]
+                  ) : (
+                    <>
+                      <Icon name="lock" size={14} /> {copy.wardrobe.unlock[hat]}
+                    </>
+                  )}
                 </button>
               );
             })}
@@ -1261,7 +1422,13 @@ export function SydneyQuest({ copy, lang, community }: Props) {
                   setOverlay(null);
                 }}
               >
-                {isPhrase(emote) ? copy.phrases[emote] : `${EMOTE_GLYPH[emote]} ${copy.emotes[emote]}`}
+                {isPhrase(emote) ? (
+                  copy.phrases[emote]
+                ) : (
+                  <>
+                    <Icon name={emote as IconName} size={16} /> {copy.emotes[emote]}
+                  </>
+                )}
               </button>
             ))}
             <button
@@ -1272,10 +1439,16 @@ export function SydneyQuest({ copy, lang, community }: Props) {
                 update((prev) => addTo(prev, "friends", name));
                 setOverlay(null);
                 // Wait a frame so the panel is gone from the picture.
-                requestAnimationFrame(() => takePostcard(`${copy.photo.withPeer} · ${myName ?? copy.hud.you} & ${name}`));
+                const mine = playerName(copy, me);
+                takePostcard(
+                  save.map === "chatswood" ? "mall" : "kirribilli",
+                  fill(copy.photo.withFrom, { a: mine, b: name }),
+                  [save.look, overlay.peer.look],
+                  mine,
+                );
               }}
             >
-              📸 {copy.photo.withPeer}
+              <Icon name="camera" size={16} /> {copy.photo.withPeer}
             </button>
           </div>
         </Panel>
@@ -1290,6 +1463,81 @@ export function SydneyQuest({ copy, lang, community }: Props) {
           <a className="vq-btn vq-btn--primary vq-btn--small" href={overlay.url} download="vibe-thursday-postcard.jpg">
             {copy.photo.save}
           </a>
+        </Panel>
+      )}
+
+      {overlay?.type === "share" && (
+        <SharePanel
+          copy={copy}
+          look={save.look}
+          qr={qr}
+          site={site}
+          stats={fill(copy.share.stats, {
+            name: playerName(copy, me),
+            stamps: save.stamps.length,
+            critters: save.critters.length,
+            chapter: current ? fill(copy.share.chapter, { n: progress.findIndex((q) => q.id === current.id) + 1 }) : copy.share.allDone,
+          })}
+          onClose={() => setOverlay(null)}
+        />
+      )}
+
+      {overlay?.type === "intro" && <IntroPanel copy={copy} onClose={() => setOverlay(null)} />}
+
+      {overlay?.type === "guide" && (
+        <Panel title={copy.help.title} onClose={() => setOverlay(null)} closeLabel={copy.hud.close}>
+          <div className="vq-guide__goal">
+            <p className="vq-fine">{copy.help.goal}</p>
+            <strong>{chipTitle}</strong>
+            <p>{chipHint}</p>
+            {tracked === "main" && current && <p className="vq-guide__tip">{copy.help.tips[current.id]}</p>}
+          </div>
+          <div className="vq-chips">
+            <button
+              type="button"
+              className="vq-btn vq-btn--primary vq-btn--small"
+              onClick={() => {
+                const engine = engineRef.current;
+                const target = engine?.getObjective();
+                setOverlay(null);
+                if (!engine || !target) toast(copy.help.noTarget);
+                else if (engine.walkTo(target)) toast(copy.help.walking);
+                else toast(copy.toast.tooFar);
+              }}
+            >
+              <Icon name="pin" size={16} /> {copy.help.take}
+            </button>
+            <button
+              type="button"
+              className="vq-btn vq-btn--choice vq-btn--small"
+              onClick={() => {
+                engineRef.current?.rescue();
+                setOverlay(null);
+                toast(copy.help.stuckDone);
+              }}
+            >
+              {copy.help.stuck}
+            </button>
+          </div>
+          <h3 className="vq-h3">{copy.help.faq}</h3>
+          <ul className="vq-notes">
+            {copy.help.questions.map((item) => (
+              <li key={item.q}>
+                <details className="vq-note is-read">
+                  <summary>{item.q}</summary>
+                  <p className="vq-fine">{item.a}</p>
+                </details>
+              </li>
+            ))}
+          </ul>
+          <div className="vq-chips">
+            <button type="button" className="vq-btn vq-btn--ghost vq-btn--small" onClick={() => setOverlay({ type: "intro" })}>
+              {copy.intro.button}
+            </button>
+            <button type="button" className="vq-btn vq-btn--ghost vq-btn--small" onClick={() => setOverlay({ type: "help" })}>
+              {copy.controls.title}
+            </button>
+          </div>
         </Panel>
       )}
 
@@ -1320,6 +1568,15 @@ export function SydneyQuest({ copy, lang, community }: Props) {
 /* =============================================================================
    Pieces
 ============================================================================= */
+
+type Me = { name: string | null; slug: string | null; guest: [number, number] | null } | null;
+
+/** What to sign a postcard or poster with: your wall name, your guest name, or "a player". */
+function playerName(copy: GameCopy, me: Me): string {
+  if (me?.name) return me.name;
+  if (me?.guest) return fill(copy.guestName, { animal: copy.guestAnimals[me.guest[0]] ?? "", n: me.guest[1] });
+  return copy.share.player;
+}
 
 function npcName(copy: GameCopy, id: StoryNpcId): string {
   return (copy.npc as Record<string, { name: string }>)[id]?.name ?? id;
@@ -1388,8 +1645,110 @@ function TitleBackdrop({ community, copy }: { community: Community; copy: GameCo
 function MusicButton({ on, copy, onToggle }: { on: boolean; copy: GameCopy; onToggle: () => void }) {
   return (
     <button type="button" className="vq-music" onClick={onToggle} aria-pressed={on}>
-      <span aria-hidden="true">{on ? "🔊" : "🔇"}</span> {on ? copy.music.on : copy.music.off}
+      <Icon name={on ? "sound" : "mute"} size={18} /> {on ? copy.music.on : copy.music.off}
     </button>
+  );
+}
+
+/** What the game is, what you can do in it, and how — before or during play. */
+function IntroPanel({ copy, onClose }: { copy: GameCopy; onClose: () => void }) {
+  const intro = copy.intro;
+  return (
+    <Panel title={intro.title} onClose={onClose} closeLabel={copy.hud.close}>
+      <h3 className="vq-h3">{intro.what}</h3>
+      <p>{intro.whatBody}</p>
+      <h3 className="vq-h3">{intro.features}</h3>
+      <ul className="vq-intro">
+        {intro.list.map((item, i) => (
+          <li key={item}>
+            <Icon name={(["pin", "chat", "star", "bag", "smile", "heart"] as IconName[])[i % 6]} size={18} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <h3 className="vq-h3">{intro.how}</h3>
+      <p>{intro.howBody}</p>
+      <p className="vq-fine">{intro.note}</p>
+      <button type="button" className="vq-btn vq-btn--primary" onClick={onClose}>
+        {copy.controls.ok}
+      </button>
+    </Panel>
+  );
+}
+
+/**
+ * The share poster: drawn on open, then saved or handed to the phone's own
+ * share sheet — which is what puts it in a WeChat chat or a Story in one tap.
+ */
+function SharePanel({
+  copy,
+  look,
+  qr,
+  site,
+  stats,
+  onClose,
+}: {
+  copy: GameCopy;
+  look: Look;
+  qr: string;
+  site: string;
+  stats: string;
+  onClose: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    const text = copy.share;
+    void drawPoster(look, { ...text, stats, site, caption: text.caption }, qr).then((made) => {
+      if (live) setUrl(made);
+    });
+    return () => {
+      live = false;
+    };
+  }, [copy, look, qr, site, stats]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
+
+  const share = async () => {
+    if (!url) return;
+    try {
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], "vibe-thursday.png", { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: copy.share.brand });
+      else await navigator.share({ title: copy.share.brand, url: `https://${site}` });
+    } catch {
+      // Dismissed, or not allowed here: the save button still works.
+    }
+  };
+
+  return (
+    <Panel title={copy.share.title} onClose={onClose} closeLabel={copy.hud.close}>
+      {url ? (
+        // A data URL made on this device; nothing to optimise.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="vq-poster" src={url} alt={copy.share.brand} />
+      ) : (
+        <p className="vq-fine">{copy.share.making}</p>
+      )}
+      <p className="vq-fine">{copy.share.hint}</p>
+      <div className="vq-chips">
+        {url && (
+          <a className="vq-btn vq-btn--primary vq-btn--small" href={url} download="vibe-thursday-sydney.png">
+            {copy.share.save}
+          </a>
+        )}
+        {url && canShare && (
+          <button type="button" className="vq-btn vq-btn--choice vq-btn--small" onClick={share}>
+            <Icon name="share" size={16} /> {copy.share.native}
+          </button>
+        )}
+      </div>
+    </Panel>
   );
 }
 
@@ -1401,10 +1760,10 @@ function TrackButton({ copy, on, onClick }: { copy: GameCopy; on: boolean; onCli
   );
 }
 
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function IconButton({ label, icon, onClick, highlight = false }: { label: string; icon: IconName; onClick: () => void; highlight?: boolean }) {
   return (
-    <button type="button" className="vq-icon" aria-label={label} title={label} onClick={onClick}>
-      <span aria-hidden="true">{children}</span>
+    <button type="button" className={`vq-icon ${highlight ? "is-calling" : ""}`} aria-label={label} title={label} onClick={onClick}>
+      <Icon name={icon} size={24} />
     </button>
   );
 }
@@ -1416,7 +1775,7 @@ function Panel({ title, onClose, closeLabel, children }: { title: string; onClos
         <header className="vq-panel__head">
           <h2>{title}</h2>
           <button type="button" className="vq-icon" aria-label={closeLabel} onClick={onClose}>
-            ✕
+            <Icon name="close" size={20} />
           </button>
         </header>
         <div className="vq-panel__body">{children}</div>
@@ -1425,17 +1784,27 @@ function Panel({ title, onClose, closeLabel, children }: { title: string; onClos
   );
 }
 
-function DialogBox({ dialog, onAdvance, onClose }: { dialog: Dialog; onAdvance: () => void; onClose: () => void }) {
+function DialogBox({ dialog, onAdvance, onClose, hint }: { dialog: Dialog; onAdvance: () => void; onClose: () => void; hint: string }) {
   const last = dialog.index === dialog.pages.length - 1;
   const showChoices = last && dialog.choices?.length;
   const showLinks = last && dialog.links?.length;
   return (
     <div className="vq-dialog" role="dialog" aria-label={dialog.speaker} onClick={() => !showChoices && !showLinks && onAdvance()}>
-      <p className="vq-dialog__speaker">{dialog.speaker}</p>
+      <div className="vq-dialog__head">
+        {dialog.avatar && (
+          // A member's own photo, already resized at upload.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="vq-dialog__avatar" src={dialog.avatar} alt="" width={40} height={40} />
+        )}
+        <p className="vq-dialog__speaker">{dialog.speaker}</p>
+        <span className="vq-dialog__count">
+          {dialog.index + 1}/{dialog.pages.length}
+        </span>
+      </div>
       <p className="vq-dialog__text">{dialog.pages[dialog.index]}</p>
       {showChoices ? (
         <div className="vq-dialog__choices">
-          {dialog.choices!.map((choice) => (
+          {dialog.choices!.map((choice, i) => (
             <button
               type="button"
               key={choice.label}
@@ -1445,6 +1814,7 @@ function DialogBox({ dialog, onAdvance, onClose }: { dialog: Dialog; onAdvance: 
                 choice.run();
               }}
             >
+              <kbd className="vq-kbd">{i + 1}</kbd>
               {choice.label}
             </button>
           ))}
@@ -1453,24 +1823,27 @@ function DialogBox({ dialog, onAdvance, onClose }: { dialog: Dialog; onAdvance: 
         <div className="vq-dialog__choices">
           {dialog.links!.map((link, i) => (
             <Link key={link.href} href={link.href} className={`vq-btn ${i === 0 ? "vq-btn--primary" : "vq-btn--choice"}`}>
+              <kbd className="vq-kbd">{i + 1}</kbd>
               {link.label}
             </Link>
           ))}
           <button
             type="button"
             className="vq-btn vq-btn--ghost"
+            aria-label="close"
             onClick={(event) => {
               event.stopPropagation();
               dialog.onDone?.();
               onClose();
             }}
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
       ) : (
-        <span className="vq-dialog__more" aria-hidden="true">
-          ▼
+        <span className="vq-dialog__more">
+          <span className="vq-dialog__keys">{hint}</span>
+          <span aria-hidden="true">▼</span>
         </span>
       )}
     </div>
@@ -1673,14 +2046,14 @@ function MemberPanel({
       )}
       <div className="vq-chips">
         <button type="button" className="vq-btn vq-btn--primary vq-btn--small" disabled={met} onClick={onHello}>
-          {met ? `✓ ${copy.member.met}` : `👋 ${copy.member.hello}`}
+          {met ? `✓ ${copy.member.met}` : copy.member.hello}
         </button>
         <button type="button" className="vq-btn vq-btn--choice vq-btn--small" onClick={onAsk}>
-          💬 {copy.social.ask}
+          <Icon name="chat" size={16} /> {copy.social.ask}
         </button>
         {canGiveCoffee && (
           <button type="button" className="vq-btn vq-btn--primary vq-btn--small" onClick={onCoffee}>
-            ☕ {copy.social.giveCoffee}
+            <Icon name="coffee" size={16} /> {copy.social.giveCoffee}
           </button>
         )}
         <Link className="vq-btn vq-btn--choice vq-btn--small" href={withLang(`/members/${member.slug}`, lang)} target="_blank">
@@ -1801,6 +2174,18 @@ function Befriend({ copy, id, onSuccess, onClose }: { copy: GameCopy; id: Critte
   );
 }
 
+/** The ferry sprite from the game, big, bobbing — for the crossing screen. */
+function FerryIcon() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const ctx = ref.current?.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(ferrySprite(true), 0, 0, 200, 100);
+  }, []);
+  return <canvas ref={ref} width={200} height={100} className="vq-sprite vq-ferry__boat" aria-hidden="true" />;
+}
+
 function Ferry({ copy, onDone }: { copy: GameCopy; onDone: () => void }) {
   // Held in a ref: the parent re-renders on every toast and step, and a new
   // callback each time would restart the crossing before it ever landed.
@@ -1814,7 +2199,7 @@ function Ferry({ copy, onDone }: { copy: GameCopy; onDone: () => void }) {
   }, []);
   return (
     <div className="vq-ferry" role="status">
-      <span aria-hidden="true">⛴️</span>
+      <FerryIcon />
       <p>{copy.ferry.sailing}</p>
     </div>
   );

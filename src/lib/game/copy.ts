@@ -63,6 +63,7 @@ const zh = {
     here: "现在位置",
     streak: "连续 {n} 天",
     thursday: "今天是周四！金色白鹮出没中",
+    dialogKeys: "空格继续 · 数字键选择 · Esc 关闭",
     done: "主线完成",
   },
 
@@ -86,7 +87,7 @@ const zh = {
     bridge: { title: "走过衣架桥", hint: "沿着海港大桥的人行道一路往北，走到 Milsons Point 车站。" },
     train: { title: "北岸线", hint: "在 Milsons Point 坐 T1 北岸线去 Chatswood。" },
     market: { title: "周四集市", hint: "在 Chatswood Mall 的集市逛 {need} 个摊位（{have}/{need}）。" },
-    people: { title: "找到同频的人", hint: "在 Chatswood 跟 {need} 位成员打个招呼（{have}/{need}）。" },
+    people: { title: "找到同频的人", hint: "跟 {need} 位成员聊聊——港口和 Chatswood 都有，头上有名字（{have}/{need}）。" },
     thursday: { title: "周四上午 10:30", hint: "去 465 Victoria Avenue 的 The Avenue，那栋圆楼。" },
     allDone: "主线全部完成。去收集图鉴、印章和碎片吧——或者，下周四真的来一趟。",
   },
@@ -225,6 +226,19 @@ const zh = {
     guestNote: "游客还没有成员卡。",
     you: "这是你",
     claim: "认领我的成员卡",
+    // Their own card, read back in the first person.
+    say: {
+      hi: "你好，我是 {name}。",
+      looking: "我最近在找：{v}",
+      help: "如果你需要，我能帮上：{v}",
+      product: "我在做「{title}」——{tagline}",
+      productBare: "我在做「{title}」。",
+      stage: "现在的进度：{stage}",
+      tags: "我平时关注：{tags}",
+      noWork: "我还没把作品挂上来。周四来桌子这边，我们当面聊。",
+      open: "看看「{title}」",
+      bye: "周四见！",
+    },
   },
 
   stall: {
@@ -462,6 +476,9 @@ const zh = {
     save: "保存图片",
     shareHint: "长按或点「保存图片」，可以发给朋友。",
     withPeer: "合影",
+    greetings: "Greetings from",
+    from: "{name} 寄自像素悉尼",
+    withFrom: "{a} 和 {b} 的合影",
     spots: {
       forecourt: "歌剧院前庭",
       kirribilli: "Kirribilli · 看歌剧院和大桥",
@@ -486,6 +503,103 @@ const zh = {
   music: {
     on: "音乐：开",
     off: "音乐：关",
+  },
+
+  share: {
+    button: "分享",
+    title: "分享海报",
+    making: "正在画海报…",
+    save: "保存图片",
+    native: "发给朋友",
+    hint: "手机上长按图片也能保存；微信里长按后选「发送给朋友」。",
+    brand: "AI 疯狂星期四",
+    brandSub: "Vibe Thursday · 悉尼每周四上午的 AI 局",
+    when: "每周四 10:30 · Chatswood The Avenue",
+    about: "一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
+    stats: "{name} 在像素悉尼里：{stamps} 个地标印章 · {critters} 个动物朋友 · {chapter}",
+    chapter: "主线第 {n} 章",
+    allDone: "主线已通关",
+    player: "一位玩家",
+    scan: "扫码来玩像素悉尼",
+    scanSub: "报名下周四，也在这里",
+    caption: "悉尼 · 港湾 · 周四",
+  },
+
+  intro: {
+    button: "游戏介绍",
+    title: "游戏介绍",
+    what: "这是什么",
+    whatBody: "一个像素风的悉尼。街道、建筑、港湾和铁路都来自真实地图，你可以从环形码头走到歌剧院，徒步过海港大桥，坐 T1 北岸线去 Chatswood，最后在周四上午 10:30 找到那张桌子——现实里，这张桌子每周四都在。",
+    features: "你可以",
+    list: [
+      "跟着八章主线走完一个周四：渡轮水手、街头艺人、车站职员、集市摊主会一路给你指路",
+      "接五条支线：帮游客追回被白鹮叼走的薯条、拍明信片、找 Vibe 碎片、跟路人说 G'day、给成员送咖啡",
+      "每天三件每日任务，全服同一组，悉尼零点更换",
+      "收集 16 个地标印章、10 种悉尼动物（周四才出现的金色白鹮）、16 块隐藏碎片，解锁帽子和宠物",
+      "在街上遇到成员墙上的真人，逛周四集市的摊位——摆的是社区里大家做的东西",
+      "看到同时在线的玩家：挥手、击掌、合影、用快捷短语打招呼",
+    ],
+    how: "怎么玩",
+    howBody: "手机：左下方向键或直接点地面走路，右下 A 键互动。电脑：方向键 / WASD 走路，空格互动。跟着屏幕边缘的箭头走，就不会迷路。",
+    note: "进度存在这台设备的浏览器里，不用注册。",
+  },
+
+  help: {
+    button: "帮助",
+    title: "帮助",
+    goal: "现在要做的",
+    take: "带我去",
+    walking: "正在带你过去…",
+    otherMap: "目标在另一张地图，先带你去车站。",
+    noTarget: "现在没有要去的地方——随便逛逛吧。",
+    stuck: "我卡住了",
+    stuckDone: "已经把你送回安全的地方。",
+    idle: "不知道去哪？点右上角的「？」，或者跟着屏幕边的绿色箭头。",
+    faq: "常见问题",
+    questions: [
+      { q: "不知道下一步做什么？", a: "看左上角的任务栏，或者跟着屏幕边缘的绿色箭头走。点这里的「带我去」会自动走过去。" },
+      { q: "怎么和人说话？", a: "走到人旁边，头上会出现 A，点右下角的 A 键（电脑按空格）。手机上也可以直接点那个人。" },
+      { q: "头上的「!」和「?」是什么？", a: "「!」是有任务给你，「?」是你完成了、该回去找他交任务。" },
+      { q: "怎么去 Chatswood？", a: "走过海港大桥到北端的 Milsons Point 车站，跟车站职员说话上车。回港口在 Chatswood 车站上车。" },
+      { q: "怎么过海？", a: "走海港大桥，或者在环形码头、Milsons Point 码头找绿色的渡轮牌子坐渡轮。" },
+      { q: "动物怎么交朋友？", a: "走到它旁边按 A，指针落在绿色区域时点一下。越稀有越难。" },
+      { q: "走不过去了？", a: "水、建筑、铁轨过不去。点地面会自动找路；实在卡住就点「我卡住了」。" },
+      { q: "进度会丢吗？", a: "进度存在这台设备的浏览器里。换设备或清除浏览器数据会从头开始。" },
+    ],
+    tips: {
+      arrive: "Mina 在环形码头的码头上，戴着渔夫帽、穿绿衣服，头上有个绿点。",
+      muse: "街头艺人 Leo 在歌剧院南边的前庭台阶附近，从环形码头往东走。",
+      wharf: "告示板在环形码头的码头之间，是一块钉着纸条的木板。点开任意三条就算读过。",
+      bridge: "从 The Rocks 上大桥，沿着桥面一直往北走，桥北端就是 Milsons Point 车站。",
+      train: "在 Milsons Point 车站找车站职员 Priya（或者车站的橙色 T 牌子）说话，选「上车去 Chatswood」。",
+      market: "Chatswood 车站往东就是 Chatswood Mall，条纹遮阳棚就是摊位。",
+      people: "成员头上有名字，在环形码头、歌剧院前庭，以及 Chatswood Mall 和 The Concourse 一带。走近按 A，听他们自我介绍。",
+      thursday: "The Avenue 在车站西边，Victoria Avenue 上那栋圆楼，门口插着青柠色的旗。",
+    },
+  },
+
+  // Sydney time decides which pool a line comes from; see pickMeme().
+  memes: {
+    thursday: ["今天疯狂星期四，V我50（开玩笑的）", "周四了，精神状态：疯狂", "疯狂星期四，但是 AI 版", "周四上午 10:30，懂的都懂"],
+    morning: ["打工人，打工魂，打工都是人上人", "早八人，咖啡续命中", "早上好，今天也是班味很重的一天"],
+    noon: ["干饭人，干饭魂", "中午吃什么，是人生终极问题", "午休时间，暂时不营业"],
+    evening: ["下班了，精神状态良好", "班味散得差不多了", "今天的 KPI：活着"],
+    night: ["熬夜冠军就是我", "这个点还在线，你也是夜猫子？", "再玩一会儿就睡，真的"],
+    weekend: ["周末不营业", "周末了，松弛感拉满", "今天不卷，只 city walk"],
+    any: ["city 不 city 啊", "我是 i 人，但今天可以 e 一下", "主打一个陪伴", "尊嘟假嘟", "这波属于是显眼包了", "悄悄努力，然后惊艳所有人", "有被悉尼的天气美到"],
+  },
+
+  critterTalk: {
+    gull: ["人生的意义是什么？", "去海边整点薯条", "薯条呢？我的薯条呢？", "别看了，我就是码头一霸"],
+    ibis: ["垃圾桶是我家", "别叫我垃圾桶鸡，叫我白鹮", "今天的垃圾桶很香"],
+    cockatoo: ["嘎——！", "我会开垃圾桶盖，你会吗？"],
+    lorikeet: ["吵吗？这叫热闹", "花蜜管够"],
+    kookaburra: ["哈哈哈哈哈哈", "笑死，根本停不下来"],
+    dragon: ["晒太阳是正事", "别打扰我躺平"],
+    turkey: ["这堆落叶是我的", "你家花园？现在是我的了"],
+    magpie: ["我记得你的脸", "春天了，小心头顶"],
+    whale: ["（喷水）", "路过悉尼，打个卡"],
+    golden: ["今天是疯狂星期四！", "闪闪发光的是我"],
   },
 
   back: "回首页",
@@ -543,6 +657,7 @@ const en: GameCopy = {
     here: "You are here",
     streak: "{n}-day streak",
     thursday: "It's Thursday! The golden ibis is out",
+    dialogKeys: "Space to continue · number keys to choose · Esc to close",
     done: "Story complete",
   },
 
@@ -566,7 +681,7 @@ const en: GameCopy = {
     bridge: { title: "Over the Coathanger", hint: "Walk north across the Harbour Bridge to Milsons Point station." },
     train: { title: "The North Shore line", hint: "Take the T1 from Milsons Point to Chatswood." },
     market: { title: "The Thursday market", hint: "Browse {need} stalls at the Chatswood Mall market ({have}/{need})." },
-    people: { title: "Find your people", hint: "Say hello to {need} members around Chatswood ({have}/{need})." },
+    people: { title: "Find your people", hint: "Talk to {need} members — at the harbour and in Chatswood, names over their heads ({have}/{need})." },
     thursday: { title: "Thursday, 10:30am", hint: "Get to The Avenue, 465 Victoria Avenue — the round building." },
     allDone: "Story complete. Fill the critter book, the stamps and the shards — or come to a real Thursday.",
   },
@@ -705,6 +820,18 @@ const en: GameCopy = {
     guestNote: "Guests don't have a member card yet.",
     you: "That's you",
     claim: "Claim my member card",
+    say: {
+      hi: "Hi, I'm {name}.",
+      looking: "Lately I'm looking for: {v}",
+      help: "If you need it, I can help with: {v}",
+      product: "I'm building “{title}” — {tagline}",
+      productBare: "I'm building “{title}”.",
+      stage: "Where it's at: {stage}",
+      tags: "I'm into: {tags}",
+      noWork: "I haven't put my work up yet. Come to the table on Thursday and we'll talk.",
+      open: "Open “{title}”",
+      bye: "See you Thursday!",
+    },
   },
 
   stall: {
@@ -942,6 +1069,9 @@ const en: GameCopy = {
     save: "Save image",
     shareHint: "Long-press or tap “Save image” to send it to someone.",
     withPeer: "Photo together",
+    greetings: "Greetings from",
+    from: "Sent from pixel Sydney by {name}",
+    withFrom: "{a} and {b}",
     spots: {
       forecourt: "Opera House forecourt",
       kirribilli: "Kirribilli · Opera House and bridge",
@@ -968,6 +1098,102 @@ const en: GameCopy = {
     off: "Music: off",
   },
 
+  share: {
+    button: "Share",
+    title: "Share a poster",
+    making: "Drawing your poster…",
+    save: "Save image",
+    native: "Send to a friend",
+    hint: "On a phone you can also long-press the image to save it.",
+    brand: "Vibe Thursday",
+    brandSub: "Sydney's Thursday-morning AI meetup",
+    when: "Thursdays 10:30am · The Avenue, Chatswood",
+    about: "A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
+    stats: "{name} in pixel Sydney: {stamps} landmark stamps · {critters} critter friends · {chapter}",
+    chapter: "chapter {n}",
+    allDone: "story complete",
+    player: "A player",
+    scan: "Scan to play pixel Sydney",
+    scanSub: "and sign up for Thursday",
+    caption: "Sydney · Harbour · Thursday",
+  },
+
+  intro: {
+    button: "About the game",
+    title: "About the game",
+    what: "What this is",
+    whatBody: "A pixel Sydney. The streets, buildings, harbour and railway come from a real map: walk from Circular Quay to the Opera House, cross the Harbour Bridge on foot, ride the T1 North Shore line to Chatswood, and find the table at 10:30 on Thursday — which, in real life, is there every week.",
+    features: "You can",
+    list: [
+      "Follow an eight-chapter story through a Thursday, guided by a deckhand, a busker, station staff and a stallholder",
+      "Take on five side quests: win back a tourist's chips from an ibis, shoot postcards, hunt Vibe shards, say g'day, run coffee to members",
+      "Do three daily tasks — the same three for everyone, new at midnight Sydney time",
+      "Collect 16 landmark stamps, 10 Sydney critters (the golden ibis only comes out on Thursdays) and 16 hidden shards, and unlock hats and pets",
+      "Meet real people from the member wall on the street and browse the Thursday market — the stalls are what the community built",
+      "See who else is playing: wave, high-five, take a photo together, say hi with quick-chat phrases",
+    ],
+    how: "How to play",
+    howBody: "Phone: the pad bottom-left or tap the ground to walk, the A button bottom-right to interact. Keyboard: arrows / WASD to walk, Space to interact. Follow the arrow at the edge of the screen and you won't get lost.",
+    note: "Progress is saved in this device's browser. No sign-up.",
+  },
+
+  help: {
+    button: "Help",
+    title: "Help",
+    goal: "What to do now",
+    take: "Take me there",
+    walking: "Walking you over…",
+    otherMap: "It's on the other map — heading to the station first.",
+    noTarget: "Nowhere you need to be — go and explore.",
+    stuck: "I'm stuck",
+    stuckDone: "Moved you somewhere safe.",
+    idle: "Not sure where to go? Tap “?” at the top right, or follow the green arrow at the edge of the screen.",
+    faq: "Common questions",
+    questions: [
+      { q: "What do I do next?", a: "Check the quest bar top-left, or follow the green arrow at the edge of the screen. “Take me there” walks you over." },
+      { q: "How do I talk to people?", a: "Walk up to them until an A appears over their head, then press the A button (Space on a keyboard). On a phone you can also tap them." },
+      { q: "What are “!” and “?”", a: "“!” means they have a quest for you; “?” means you've done it and should go back to them." },
+      { q: "How do I get to Chatswood?", a: "Walk across the Harbour Bridge to Milsons Point station at the north end and talk to the station staff. Come back from Chatswood station." },
+      { q: "How do I cross the harbour?", a: "Walk the bridge, or take the ferry from the green ferry signs at Circular Quay and Milsons Point." },
+      { q: "How do I befriend critters?", a: "Walk up and press A, then tap while the marker is in the green. Rarer ones are harder." },
+      { q: "Can't get through?", a: "Water, buildings and rail tracks block you. Tap the ground to path-find; if you're truly stuck, press “I'm stuck”." },
+      { q: "Will I lose my progress?", a: "It's saved in this device's browser. A different device or cleared browser data starts fresh." },
+    ],
+    tips: {
+      arrive: "Mina is on the wharves at Circular Quay — bucket hat, green top, a green dot over her head.",
+      muse: "Leo the busker is on the forecourt steps south of the Opera House — head east from the Quay.",
+      wharf: "The noticeboard is between the wharves at Circular Quay: a wooden board with notes pinned on. Open any three.",
+      bridge: "Get onto the bridge from The Rocks and walk north along the deck; Milsons Point station is at the north end.",
+      train: "At Milsons Point, talk to Priya from the station (or the orange T sign) and choose to board for Chatswood.",
+      market: "Chatswood Mall is just east of the station — the striped awnings are the stalls.",
+      people: "Members have their names over their heads — around Circular Quay, the Opera House forecourt, Chatswood Mall and The Concourse. Walk up and press A to hear them introduce themselves.",
+      thursday: "The Avenue is west of the station: the round building on Victoria Avenue with a lime flag outside.",
+    },
+  },
+
+  memes: {
+    thursday: ["It's Thursday. Brain in airplane mode.", "Thursday energy: unhinged", "Thursday at 10:30 — if you know, you know", "Crazy Thursday, AI edition"],
+    morning: ["Coffee first, personality later", "Another day, another stand-up", "Running on flat whites"],
+    noon: ["Lunch is the real meeting", "What's for lunch — the eternal question", "On my lunch break, back in 5"],
+    evening: ["Logged off. Vibes: immaculate", "Knock-off time", "Today's KPI: survived"],
+    night: ["Sleep is for the weak (I am weak)", "Still up? Same.", "One more quest, then bed. Promise."],
+    weekend: ["Out of office", "Weekend mode: on", "No work today, just vibes"],
+    any: ["No worries, mate", "Main character energy", "It's giving Sydney", "Touch grass? Already on it", "Low-key obsessed with this harbour", "Big vibe, small effort", "Quietly grinding, then surprising everyone"],
+  },
+
+  critterTalk: {
+    gull: ["What is the meaning of life?", "Let's go get some chips by the sea", "Chips? Where are my chips?", "Don't look at me like that. I run this wharf."],
+    ibis: ["The bin is my home", "Don't call me bin chicken", "Smells great in this bin today"],
+    cockatoo: ["SCREECH!", "I can open bin lids. Can you?"],
+    lorikeet: ["Loud? This is lively", "Nectar for everyone"],
+    kookaburra: ["Ha ha ha ha ha", "Can't. Stop. Laughing."],
+    dragon: ["Sunbathing is serious work", "Do not disturb"],
+    turkey: ["These leaves are mine", "Your garden? Mine now."],
+    magpie: ["I remember your face", "Spring. Watch your head."],
+    whale: ["(blows spray)", "Just passing through Sydney"],
+    golden: ["It's Thursday!", "Yes, I sparkle"],
+  },
+
   back: "Home",
 };
 
@@ -976,4 +1202,26 @@ export const GAME_COPY = { zh, en };
 /** Fills `{name}` placeholders. Missing values are left as they are. */
 export function fill(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match));
+}
+
+/**
+ * A line for right now, by Sydney's clock: Thursday's pool on Thursdays,
+ * the weekend's on weekends, otherwise the time of day's — mixed with the
+ * pool that fits any time, so nobody hears the same three lines all day.
+ */
+export function pickMeme(memes: GameCopy["memes"], now: Date, rand = Math.random): string {
+  const parts = new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Sydney", weekday: "short", hour: "numeric", hourCycle: "h23" }).formatToParts(now);
+  const day = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 12);
+
+  const pool =
+    day === "Thu" ? memes.thursday
+      : day === "Sat" || day === "Sun" ? memes.weekend
+        : hour < 11 ? memes.morning
+          : hour < 14 ? memes.noon
+            : hour < 22 && hour >= 17 ? memes.evening
+              : hour >= 22 || hour < 5 ? memes.night
+                : memes.any;
+  const merged = rand() < 0.6 ? pool : memes.any;
+  return merged[Math.floor(rand() * merged.length)] ?? "";
 }

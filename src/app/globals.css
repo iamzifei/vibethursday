@@ -3603,7 +3603,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 
 .vq-toasts {
   position: absolute;
-  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 84px);
+  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 150px);
   left: 50%;
   transform: translateX(-50%);
   width: min(420px, calc(100% - var(--space-8)));
@@ -3704,7 +3704,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vq-emotes {
   position: absolute;
   right: var(--space-3);
-  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 96px);
+  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 150px);
   width: min(300px, calc(100% - var(--space-6)));
   max-height: calc(100dvh - 260px);
   overflow-y: auto;
@@ -4160,10 +4160,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   min-height: 1.6em;
 }
 
-.vq-ferry span {
-  font-size: var(--text-5xl);
-  animation: vq-bob 1.2s var(--ease-standard) infinite;
-}
+
 
 /* ── Guidance and social ──────────────────────────────────────── */
 
@@ -4230,9 +4227,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   width: 100%;
   max-height: 58dvh;
   object-fit: contain;
-  background: var(--fg1);
-  border-radius: var(--radius-md);
-  border: 6px solid var(--fg1);
+  border-radius: var(--radius-sm);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
@@ -4246,7 +4241,150 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   background: var(--bg-tertiary);
 }
 
+/* ── Pixel icons, dialogue extras, help, share ─────────────────── */
+
+.vq-pixicon {
+  display: inline-block;
+  vertical-align: -0.2em;
+  image-rendering: pixelated;
+  flex: none;
+}
+
+.vq-icon.is-calling {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+  animation: vq-call 1.2s var(--ease-standard) infinite;
+}
+
+@keyframes vq-call {
+  50% { transform: scale(1.08); }
+}
+
+.vq-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vq-dialog__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.vq-dialog__head .vq-dialog__speaker {
+  margin: 0;
+  flex: 1;
+}
+
+.vq-dialog__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--accent);
+}
+
+.vq-dialog__count {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--fg3);
+}
+
+.vq-dialog__more {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  animation: none;
+}
+
+/* Only the arrow bobs; the key hint beside it stays still and readable. */
+.vq-dialog__more > span[aria-hidden] {
+  animation: vq-bob 1s var(--ease-standard) infinite;
+}
+
+.vq-dialog__keys {
+  font-size: var(--text-2xs);
+  color: var(--fg3);
+}
+
+@media (hover: none) {
+  .vq-dialog__keys,
+  .vq-kbd {
+    display: none;
+  }
+}
+
+.vq-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  margin-inline-end: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-primary);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.vq-guide__goal {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: var(--accent-subtle);
+}
+
+.vq-guide__tip {
+  margin-top: var(--space-2);
+  color: var(--fg1);
+  font-size: var(--text-sm);
+}
+
+.vq-intro {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vq-intro li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  font-size: var(--text-sm);
+  color: var(--fg1);
+}
+
+.vq-poster {
+  width: 100%;
+  max-height: 60dvh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.vq-ferry__boat {
+  width: 200px;
+  height: 100px;
+  animation: vq-bob 1.2s var(--ease-standard) infinite;
+}
+
+.vq-emote .vq-pixicon {
+  width: 28px;
+  height: 28px;
+}
+
+.vq-btn .vq-pixicon {
+  margin-inline-end: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .vq-icon.is-calling,
+  .vq-ferry__boat,
   .vq-banner,
   .vq-toast,
   .vq-dialog,
@@ -4255,8 +4393,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   .vq-ferry {
     animation: none;
   }
-  .vq-dialog__more,
-  .vq-ferry span {
+  .vq-dialog__more {
     animation: none;
   }
 }

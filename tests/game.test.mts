@@ -42,6 +42,9 @@ import {
   type MapId,
 } from "../src/lib/game/world.ts";
 import { DEFAULT_LOOK, PHRASES, clampLook, parseMove } from "../src/lib/game/protocol.ts";
+import { CRITTERS } from "../src/lib/game/world.ts";
+
+const CRITTER_IDS = CRITTERS.map((critter) => critter.id);
 import {
   SIDE_QUESTS,
   TOTALS,
@@ -57,7 +60,8 @@ import {
   unlockedHats,
   currentQuest,
 } from "../src/lib/game/state.ts";
-import { GAME_COPY, fill } from "../src/lib/game/copy.ts";
+import { GAME_COPY, fill, pickMeme } from "../src/lib/game/copy.ts";
+import { ICONS } from "../src/components/game/icons.ts";
 import { join, leave, move, resetRoom, snapshot, MAX_PLAYERS, MIN_MOVE_MS } from "../src/lib/game/room.ts";
 
 const root = process.cwd();
@@ -466,5 +470,39 @@ test("the four music tracks exist and stay small enough for a phone", () => {
     const file = path.join(root, "public/audio/play", `${track}.mp3`);
     const size = readFileSync(file).length;
     assert.ok(size > 200_000 && size < 3_000_000, `${track}.mp3 is ${size} bytes`);
+  }
+});
+
+/* ── Help, memes, critter talk, icons ───────────────────────────── */
+
+test("every chapter has a help tip, and every critter has something to say, in both languages", () => {
+  for (const lang of ["zh", "en"] as const) {
+    const c = GAME_COPY[lang];
+    for (const quest of ["arrive", "muse", "wharf", "bridge", "train", "market", "people", "thursday"] as const) {
+      assert.ok(c.help.tips[quest], `${lang} has no help tip for ${quest}`);
+    }
+    for (const critter of CRITTER_IDS) assert.ok(c.critterTalk[critter]?.length, `${lang}: ${critter} has nothing to say`);
+  }
+  // James asked for these two lines by name.
+  assert.ok(GAME_COPY.zh.critterTalk.gull.includes("人生的意义是什么？"));
+  assert.ok(GAME_COPY.zh.critterTalk.gull.includes("去海边整点薯条"));
+});
+
+test("a meme comes from Thursday's pool on a Sydney Thursday and the weekend's at the weekend", () => {
+  const memes = GAME_COPY.zh.memes;
+  const always = () => 0; // picks the time pool, first line
+  // 2026-09-24 10:00 AEST is a Thursday.
+  assert.equal(pickMeme(memes, new Date("2026-09-24T00:00:00Z"), always), memes.thursday[0]);
+  // 2026-09-26 is a Saturday in Sydney.
+  assert.equal(pickMeme(memes, new Date("2026-09-26T02:00:00Z"), always), memes.weekend[0]);
+  // Monday 23:30 in Sydney is night.
+  assert.equal(pickMeme(memes, new Date("2026-09-28T13:30:00Z"), always), memes.night[0]);
+});
+
+test("every pixel icon is a 12×12 grid in the palette", () => {
+  for (const [name, rows] of Object.entries(ICONS)) {
+    assert.equal(rows.length, 12, `${name} is not 12 rows`);
+    for (const row of rows) assert.equal(row.length, 12, `${name} has a row that is not 12 wide: "${row}"`);
+    assert.ok(/^[.kwlcypbrgosu]+$/.test(rows.join("")), `${name} uses a colour outside the palette`);
   }
 });
