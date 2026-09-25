@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pg"],
 
   /**
+   * Dev server only: let a phone or another laptop on the same Wi-Fi load the
+   * page. /play is a phone game and has to be tried on a phone, and without
+   * this Next 16 blocks the dev scripts for any host but localhost — the page
+   * renders but never hydrates, so every button is dead and the dev client
+   * keeps retrying. Measured 2026-09-25 by opening /play at the LAN address.
+   * Private address ranges only; this setting does nothing in production.
+   */
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.16.*.*", "*.local"],
+
+  /**
    * Long-lived caching for the static files in `public/`.
    *
    * Next ships them with `max-age=0`, so every repeat visit spends a round trip
@@ -73,6 +83,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/photos/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        // The game's music. Same reasoning as the photos: no hash in the
+        // name, so thirty days rather than immutable.
+        source: "/audio/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {

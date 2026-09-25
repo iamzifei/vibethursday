@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * The pages worth crawling.
  *
  * Only what a stranger is meant to find: the home page, the member wall, the
- * Wharf, the session archive, the works, the Small Business Month page, the
+ * Wharf, the session archive, the works, the pixel game, the Small Business Month page, the
  * changelog, what running the meetup costs, and the claim page. `/me`, `/badge`, `/checkin`, `/feedback` and `/admin`
  * are all either signed-in views of one person's own data or pages that need a
  * code to mean anything, and are excluded here as well as in robots.txt.
@@ -61,6 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     everyLanguage("/wharf", { changeFrequency: "weekly", priority: 0.8 }),
     everyLanguage("/sessions", { changeFrequency: "weekly", priority: 0.7 }),
     everyLanguage("/works", { changeFrequency: "weekly", priority: 0.7 }),
+    everyLanguage("/play", { changeFrequency: "monthly", priority: 0.5 }),
     // Linked from this event's own page on nsw.gov.au for October 2026. It is
     // the address the government listing sends people to, so it has to be
     // crawlable in its own right rather than only reachable through the form.

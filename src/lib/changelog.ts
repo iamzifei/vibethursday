@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "3.4",
+    date: "2026-09-25",
+    kind: "minor",
+    scope: "site",
+    zh: "多了一个像素游戏：在真实街道铺成的悉尼里，从环形码头走过海港大桥，坐 T1 去 Chatswood，街上站着成员墙上的人，周四集市的摊位摆着大家做的东西，最后赶上 10:30 的那张桌子。手机能玩，能看见同时在线的人。",
+    link: { href: "/play", zh: "去玩一局 →", en: "Play →" },
+    en: "There is a pixel game now: a Sydney laid out on the real streets, where you walk from Circular Quay across the Harbour Bridge, take the T1 to Chatswood, meet people from the member wall on the street and their work on stalls at the Thursday market, and make the 10:30 table. It works on a phone, and you can see who else is playing.",
+  },
+  {
     version: "3.3",
     date: "2026-09-24",
     kind: "minor",

@@ -38,6 +38,7 @@ export const copy = {
       members: "成员",
       wharf: "码头",
       works: "作品",
+      play: "游戏",
       sessions: "场次",
       about: "这是什么",
       schedule: "流程",
@@ -305,6 +306,15 @@ export const copy = {
       title: "这屋子做出来的东西。",
       lede: "十来个产品，一半已经上线或者有收入，也有还只在自己电脑上跑的。全部来自成员墙上的卡片——卡在某个地方往往比已经上线更有的聊。",
       cta: "看大家做的东西",
+    },
+
+    // The fourth card in § 02: the same people, questions and works, walked
+    // through rather than read — a pixel Sydney built on the real street map.
+    playTeaser: {
+      eyebrow: "像素游戏",
+      title: "在一张像素悉尼里见到他们。",
+      lede: "从环形码头出发，走过海港大桥，坐 T1 去 Chatswood。成员站在街上，作品摆在周四集市的摊位上，码头的告示板挂着大家的问题。街道来自真实地图，多人在线，手机能玩。",
+      cta: "开始玩",
     },
 
     rules: {
@@ -1319,6 +1329,7 @@ export const copy = {
       members: "Members",
       wharf: "The Wharf",
       works: "Works",
+      play: "Play",
       sessions: "Sessions",
       about: "What this is",
       schedule: "Run of show",
@@ -1564,6 +1575,13 @@ export const copy = {
       title: "What this room has built.",
       lede: "A dozen products, half of them shipped or earning, and some that still only run on somebody's laptop. All of it comes off the member wall — being stuck somewhere is usually the more interesting conversation.",
       cta: "See what people have built",
+    },
+
+    playTeaser: {
+      eyebrow: "Pixel game",
+      title: "Meet them in a pixel Sydney.",
+      lede: "Start at Circular Quay, walk across the Harbour Bridge, take the T1 to Chatswood. Members stand on the street, their work sits on stalls at the Thursday market, and the Wharf's questions are pinned to a noticeboard. The streets come from a real map; it is multiplayer, and it works on a phone.",
+      cta: "Play",
     },
 
     rules: {

@@ -321,6 +321,17 @@ export default async function Page({ searchParams }: PageProps) {
                   </Link>
                 </div>
               </div>
+
+              <div className="card stack-3">
+                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.playTeaser.eyebrow}</span>
+                <h3 className="h3">{c.playTeaser.title}</h3>
+                <p className="body-sm">{c.playTeaser.lede}</p>
+                <div>
+                  <Link className="btn btn--secondary" href={langHref("/play", lang)}>
+                    {c.playTeaser.cta}
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>

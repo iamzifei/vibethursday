@@ -24,6 +24,9 @@ export const NAV_LINKS = [
   // That reasoning is why this one belongs in it.
   { href: "/works", label: "works" },
   { href: "/wharf", label: "wharf" },
+  // The same members, works and questions as the three links before it, in a
+  // pixel Sydney you walk through. Next to them because it is made of them.
+  { href: "/play", label: "play" },
   { href: "/sessions", label: "sessions" },
   // "流程" used to sit here and no longer does. It is an anchor a third of the
   // way down the home page, and anyone reading the home page reaches it by
