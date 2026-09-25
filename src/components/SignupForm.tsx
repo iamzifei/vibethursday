@@ -726,6 +726,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         </p>
       )}
 
+      {/* A notice rather than a checkbox: being on camera is something people
+          can change their mind about on the day, so the way out matters more
+          than a signature. */}
+      <p className="field-hint">{copy.cameraNotice}</p>
+
       {/* Never disabled by the bot check — only while a submission is in
           flight. A failed challenge must not be able to block a signup. */}
       <button className="btn btn--primary btn--block" type="submit" disabled={sending}>

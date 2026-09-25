@@ -476,6 +476,10 @@ export const copy = {
       supportNote: "活动免费，这条不变。场地每周会有最低消费或场地费，通常一两百澳元，目前我垫着——",
       supportNoteCta: "这活动的开销",
       supportNoteTail: "。想一起分摊的随意，不分摊照样来。",
+      // 用「告知」而不是勾选框：出镜与否本来就是现场随时能改的事，
+      // 一个必勾的框只会让人觉得被迫签字。退路写在前面，比声明本身更重要。
+      cameraNotice:
+        "现场可能会拍些照片、录一点视频，以后也可能直播，用来记录和分享每一场。不想出镜完全没问题：到场时跟我说一声，镜头会避开你；已经发出去的内容里如果有你、想撤下来，随时告诉我就好。提交报名，就当你已经知道这件事啦。",
       submit: "提交报名",
       submitting: "提交中…",
       successTitle: "收到了。",
@@ -1698,6 +1702,8 @@ export const copy = {
         "It is free and stays free. A venue does charge a minimum spend or a room fee each week, usually a hundred or two, which I cover — ",
       supportNoteCta: "what running it costs",
       supportNoteTail: ". Chipping in is optional and changes nothing either way.",
+      cameraNotice:
+        "We sometimes take photos and short videos on the day, and may livestream in future, to share what each session is like. If you would rather stay off camera, that is completely fine: just let me know when you arrive and we will keep the camera away from you. And if you spot yourself in anything we have posted and want it taken down, tell me any time. Signing up means you are aware of this.",
       submit: "Sign up",
       submitting: "Sending…",
       successTitle: "Got it.",
