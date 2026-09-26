@@ -184,8 +184,11 @@ function organizer() {
 /**
  * The meetup as an organisation: the thing the events belong to.
  *
- * `sameAs` points at the source repository because it is the one other place
- * on the web that is unambiguously this meetup and not a namesake.
+ * `sameAs` names the other places on the web that are unambiguously this
+ * meetup and not a namesake: the source repository, and the recurring listings
+ * on Humanitix and Eventbrite — where people search for events, and which
+ * point back here. Both listings are scheduled in batches; the URLs stay the
+ * same when more Thursdays are added.
  */
 export function organizationJsonLd(c: Copy) {
   const base = siteUrl();
@@ -198,7 +201,11 @@ export function organizationJsonLd(c: Copy) {
     alternateName: c.hero.subtitle,
     url: base,
     logo: `${base}/icon.png`,
-    sameAs: ["https://github.com/iamzifei/vibethursday"],
+    sameAs: [
+      "https://github.com/iamzifei/vibethursday",
+      "https://events.humanitix.com/vibe-thursday-sydney-ai-meetup-chatswood-every-thursday",
+      "https://www.eventbrite.com/e/vibe-thursday-sydney-ai-meetup-chatswood-every-thursday-tickets-2002332666908",
+    ],
   };
 }
 

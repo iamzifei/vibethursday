@@ -14,6 +14,7 @@ import { test } from "node:test";
 import { copy } from "../src/lib/content.ts";
 import {
   eventJsonLd,
+  organizationJsonLd,
   eventSeriesJsonLd,
   faqJsonLd,
   pageAlternates,
@@ -165,4 +166,15 @@ test("an event names its organizer and when sign-up opened, on its own", () => {
     // on that date, like every other timestamp here.
     assert.equal(event.offers.validFrom, "2026-08-06T00:00:00+10:00");
   }
+});
+
+test("the organisation names its listings on the event platforms", () => {
+  // The same meetup, listed where people search for events. `sameAs` tells a
+  // crawler these pages are this organisation, not a namesake.
+  const org = organizationJsonLd(copy.zh);
+  assert.deepEqual(org.sameAs, [
+    "https://github.com/iamzifei/vibethursday",
+    "https://events.humanitix.com/vibe-thursday-sydney-ai-meetup-chatswood-every-thursday",
+    "https://www.eventbrite.com/e/vibe-thursday-sydney-ai-meetup-chatswood-every-thursday-tickets-2002332666908",
+  ]);
 });
