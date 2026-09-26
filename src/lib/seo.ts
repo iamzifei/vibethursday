@@ -150,15 +150,35 @@ function place() {
   };
 }
 
-/** Free, and said in the vocabulary a crawler checks for. */
+/**
+ * Free, and said in the vocabulary a crawler checks for.
+ *
+ * `validFrom` is when sign-up opened: the first session, because the form has
+ * been open ever since. Search Console flags an Event offer without one.
+ */
 function freeOffer(url: string) {
   return {
     "@type": "Offer",
     price: "0",
     priceCurrency: "AUD",
     availability: "https://schema.org/InStock",
+    validFrom: `${FIRST_SESSION_DATE}T00:00:00${sydneyOffset(FIRST_SESSION_DATE)}`,
     url,
   };
+}
+
+/**
+ * Who runs the events, readable on its own.
+ *
+ * The `@id` ties it to the full Organization block on the home page, but a
+ * session page or /sbm carries the Event without that block, so a bare `@id`
+ * leaves the organizer nameless there — Search Console reports it as missing
+ * `name` and `url`. The two fields repeat what `organizationJsonLd` says.
+ */
+function organizer() {
+  const base = siteUrl();
+
+  return { "@type": "Organization", "@id": `${base}/#organization`, name: "Vibe Thursday", url: base };
 }
 
 /**
@@ -224,7 +244,7 @@ export function eventJsonLd(
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: place(),
-    organizer: { "@id": `${base}/#organization` },
+    organizer: organizer(),
     isAccessibleForFree: true,
     offers: freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`),
     inLanguage: inLanguage(lang),
@@ -264,7 +284,7 @@ export function eventSeriesJsonLd(upcoming: readonly string[], lang: Lang, c: Co
     },
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: place(),
-    organizer: { "@id": `${base}/#organization` },
+    organizer: organizer(),
     isAccessibleForFree: true,
     offers: freeOffer(`${base}/${langQuery(lang)}#signup`),
     inLanguage: inLanguage(lang),

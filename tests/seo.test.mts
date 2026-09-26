@@ -145,3 +145,24 @@ test("serialised JSON-LD cannot close its own script tag", () => {
   assert.equal(out.includes("</script>"), false);
   assert.equal(JSON.parse(out).text, "</script><b>");
 });
+
+test("an event names its organizer and when sign-up opened, on its own", () => {
+  // Search Console, 2026-09-26: "Missing field 'name' / 'url' (in 'organizer')"
+  // and "Missing field 'validFrom' (in 'offers')". A bare `{ "@id" }` organizer
+  // only resolves on the home page, where the Organization block also sits; a
+  // session page or /sbm carries the Event alone, so the organizer has to be
+  // readable without it.
+  for (const event of [
+    eventJsonLd("2026-10-01", "en", copy.en, { page: true }),
+    eventSeriesJsonLd(["2026-10-01"], "zh", copy.zh),
+  ]) {
+    assert.equal(event.organizer["@type"], "Organization");
+    assert.equal(event.organizer["@id"], "https://vibethursday.com/#organization");
+    assert.equal(event.organizer.name, "Vibe Thursday");
+    assert.equal(event.organizer.url, "https://vibethursday.com");
+
+    // Sign-up has been open since the first session; the offset is Sydney's
+    // on that date, like every other timestamp here.
+    assert.equal(event.offers.validFrom, "2026-08-06T00:00:00+10:00");
+  }
+});

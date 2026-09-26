@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  *
  * Only what a stranger is meant to find: the home page, the member wall, the
  * Wharf, the session archive, the works, the pixel game, the Small Business Month page, the
- * changelog, what running the meetup costs, and the claim page. `/me`, `/badge`, `/checkin`, `/feedback` and `/admin`
+ * changelog, and what running the meetup costs. `/me`, `/badge`, `/checkin`, `/feedback` and `/admin`
  * are all either signed-in views of one person's own data or pages that need a
  * code to mean anything, and are excluded here as well as in robots.txt.
  *
@@ -21,6 +21,9 @@ export const dynamic = "force-dynamic";
  * answered "show me" on the day. The next two Thursdays are listed too —
  * before the day, that page is the session's introduction, and it is the
  * only address on this site that means "this coming Thursday".
+ *
+ * `/claim` is NOT listed: the page itself says `noindex`, and a sitemap entry
+ * for a noindex page is an error in Search Console, not a hint.
  *
  * Individual member pages are deliberately NOT listed. They are public and
  * linked from the wall, so a crawler that follows links still reaches them —
@@ -70,7 +73,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // is exactly what the page is for.
     everyLanguage("/changelog", { changeFrequency: "monthly", priority: 0.5 }),
     everyLanguage("/support", { changeFrequency: "monthly", priority: 0.5 }),
-    everyLanguage("/claim", { changeFrequency: "yearly", priority: 0.3 }),
     ...[...dates]
       .sort()
       .map((date) => everyLanguage(`/sessions/${date}`, { changeFrequency: "monthly", priority: 0.5 })),
