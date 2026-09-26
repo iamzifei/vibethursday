@@ -23,7 +23,20 @@ export default function robots(): MetadataRoute.Robots {
       // there is nothing here for a crawler to have. Both also set
       // `robots: { index: false }` — but that only works if the page is
       // fetched, which is exactly what this prevents.
-      disallow: ["/admin", "/me", "/badge", "/checkin", "/feedback", "/api/"],
+      //
+      // ⚠️ Rules are prefixes: a bare "/me" also blocked "/members" and every
+      // member page under it, for six weeks. Each page is therefore written as
+      // exactly itself — the bare path (`$` anchors the end), with a query
+      // (`?lang=`), or with a trailing slash — and nothing that merely starts
+      // with the same letters.
+      disallow: [
+        "/admin$", "/admin?", "/admin/",
+        "/me$", "/me?", "/me/",
+        "/badge$", "/badge?", "/badge/",
+        "/checkin$", "/checkin?", "/checkin/",
+        "/feedback$", "/feedback?", "/feedback/",
+        "/api/",
+      ],
     },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };
