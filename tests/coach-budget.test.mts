@@ -115,15 +115,24 @@ test("★ the route charges before it calls out, not after", () => {
   assert.ok(charge < call, "the budget is charged before the upstream call, never after");
 });
 
-test("★ the coach route is gated on the member cookie", () => {
-  // The cookie is cheap to get, but it is what keeps a passing crawler out.
+test("★ the coach route rate-limits every caller before any money is spent", () => {
+  // Until 2026-09-28 this route refused anyone without a member cookie. The
+  // signup form now offers the same button to people who have no card yet, so
+  // the gate became a rate limit: per member when there is a cookie, per
+  // address when there is not (`coach-access.ts`). What must still hold is the
+  // order — who is asking, and whether they are over their allowance, both
+  // decided before the site-wide daily cap is charged.
   const route = body("src/app/api/wharf/coach/route.ts");
 
   assert.match(route, /currentMemberId\(\)/);
-  assert.match(route, /not_signed_in/);
+  assert.match(route, /coachRateKey\(/);
   assert.ok(
     route.indexOf("currentMemberId(") < route.indexOf("spendCoachCall("),
     "identity is checked before any money is spent",
+  );
+  assert.ok(
+    route.indexOf("checkRateLimit(") < route.indexOf("spendCoachCall("),
+    "the per-caller limit is checked before any money is spent",
   );
 });
 

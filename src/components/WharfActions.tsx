@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import type { Round } from "@/lib/coach";
+import { CoachRounds, useCoach } from "@/components/QuestionCoach";
 import type { Copy } from "@/lib/content";
 
 type WharfCopy = Copy["wharf"];
@@ -381,73 +381,8 @@ export function AskBox({
   const [text, setText] = useState("");
   const [session, setSession] = useState("");
 
-  // Three states, not two: no hint yet, a hint, or "this one is fine as it is".
-  // The third has to be distinguishable, otherwise pressing the button on an
-  // already-good question looks like the button is broken.
-  /**
-   * The rounds so far, oldest first.
-   *
-   * ★ This is what makes it feel like sharpening rather than a slot machine.
-   * Before, each press replaced the last answer, so the screen never showed
-   * that anything had moved — and neither did the model, which saw every press
-   * as its first sight of the sentence. Keeping the rounds fixes both halves:
-   * the person sees their own sentence getting sharper, and the rounds go back
-   * with the next request so the follow-up builds on the last one.
-   *
-   * Client-side only. A half-written question is not something this site should
-   * store, so closing the tab forgets it — which is the right amount of memory
-   * for something nobody has decided to publish.
-   */
-  const [rounds, setRounds] = useState<Round[]>([]);
-  const [verdict, setVerdict] = useState<"none" | "social" | "spent" | null>(null);
-  const [thinking, setThinking] = useState(false);
-
-  function clearAdvice() {
-    setRounds([]);
-    setVerdict(null);
-  }
-
-  async function askTheCoach() {
-    setThinking(true);
-    setVerdict(null);
-
-    const body = new FormData();
-    body.set("text", text);
-    body.set("history", JSON.stringify(rounds));
-
-    try {
-      const response = await fetch("/api/wharf/coach", { method: "POST", body });
-
-      if (response.status === 429) {
-        // Either this person's own hourly allowance or the whole site's daily
-        // one. The difference does not change what they should do next.
-        setVerdict("spent");
-      } else {
-        const payload = await response.json();
-
-        // ★ Three outcomes, not two. "Nothing to ask" splits into "this is
-        //   already answerable" and "this is not a question at all", and only
-        //   the first of those is praise.
-        if (typeof payload.hint === "string") {
-          setRounds((previous) => [
-            ...previous,
-            { draft: text, gap: payload.gap ?? "object", ask: payload.hint },
-          ]);
-        } else if (payload.gap === "social") {
-          setVerdict("social");
-        } else {
-          setVerdict("none");
-        }
-      }
-    } catch (failure) {
-      // ★ Nothing happens, and posting is unaffected. This button is help,
-      //   never a gate — see the note at the top of src/lib/coach.ts.
-      console.error("[wharf] the coach did not answer", failure);
-      setVerdict("spent");
-    }
-
-    setThinking(false);
-  }
+  // The follow-up question, shared with the signup form. See QuestionCoach.tsx.
+  const helper = useCoach();
 
   if (atLimit) {
     return <p className="wharf-empty">{copy.oneAtATime}</p>;
@@ -464,49 +399,7 @@ export function AskBox({
         aria-label={copy.askCta}
       />
 
-      {/* The rounds, oldest first. Each one shows what they wrote and what
-          came back, because the point being made is that the sentence is
-          moving — and a single line that keeps getting replaced makes exactly
-          the opposite point. The answer is a question, deliberately: there is
-          nothing here to accept or reject, only something to read and then
-          write one more sentence about. */}
-      {rounds.length > 0 && (
-        <ol className="coach">
-          {rounds.map((round, index) => (
-            <li key={index} className="coach__round">
-              <span className="coach__draft">{round.draft}</span>
-              <span className="coach__ask">{round.ask}</span>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {thinking && (
-        /* Something has to move while it waits. The button going quiet reads
-           as a button that did not work — and this call routinely takes two or
-           three seconds, which is a long time to wonder. */
-        <p className="coach__thinking" role="status" aria-label={copy.working}>
-          <span />
-          <span />
-          <span />
-        </p>
-      )}
-
-      {verdict === "none" && (
-        <p className="qa__hint qa__hint--fine" role="status">
-          {rounds.length > 0 ? copy.coachSharper : copy.coachEnough}
-        </p>
-      )}
-      {verdict === "social" && (
-        <p className="qa__hint qa__hint--fine" role="status">
-          {copy.coachSocial}
-        </p>
-      )}
-      {verdict === "spent" && (
-        <p className="qa__hint qa__hint--fine" role="status">
-          {copy.coachSpent}
-        </p>
-      )}
+      <CoachRounds rounds={helper.rounds} verdict={helper.verdict} thinking={helper.thinking} copy={copy} />
 
       <div className="qa__row">
         <select
@@ -527,10 +420,10 @@ export function AskBox({
           <button
             type="button"
             className="btn btn--secondary btn--sm"
-            disabled={thinking || text.trim().length === 0}
-            onClick={() => void askTheCoach()}
+            disabled={helper.thinking || text.trim().length === 0}
+            onClick={() => void helper.ask(text)}
           >
-            {rounds.length > 0 ? copy.coachAgain : copy.coachCta}
+            {helper.rounds.length > 0 ? copy.coachAgain : copy.coachCta}
           </button>
         )}
 
@@ -545,7 +438,7 @@ export function AskBox({
             if (session) form.set("session", session);
             void run(form, () => {
               setText("");
-              clearAdvice();
+              helper.clear();
             });
           }}
         >

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { CoachRounds, useCoach, type CoachCopy } from "@/components/QuestionCoach";
 import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
 import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
@@ -21,6 +22,8 @@ type Props = {
   sessions: SessionOption[];
   /** Absent when Turnstile is not configured; the widget is then not rendered. */
   turnstileSiteKey: string | null;
+  /** The follow-up-question helper's strings, or null when this deployment has no key for it. */
+  coach?: CoachCopy | null;
 };
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -48,9 +51,9 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  * checkbox group and the draft does not round-trip those, so it is not listed —
  * see the note on `saveDraft`.
  */
-const EXTRA_FIELDS = ["source", "aiSpend"];
+const EXTRA_FIELDS = ["source", "aiSpend", "building", "email"];
 
-export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
+export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
@@ -103,6 +106,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   /* The purpose question, so a missing answer can scroll it back into view —
      on a phone the error message sits at the bottom, far below the question. */
   const purposeRef = useRef<HTMLFieldSetElement>(null);
+
+  /* The topic box, read when the coach button is pressed. Uncontrolled like the
+     rest of the form, so the draft autosave keeps working unchanged. */
+  const topicRef = useRef<HTMLTextAreaElement>(null);
+  const helper = useCoach();
 
   useEffect(() => {
     const draft = readDraft<Record<string, string>>(DRAFT_KEY);
@@ -408,71 +416,71 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           </button>
         </div>
       ) : (
-        <>
-        <div className="grid-auto">
-          <div>
-            <label className="label" htmlFor={fieldId("name")}>
-              {copy.fields.name} <span className="required">*</span>
-            </label>
-            <input
-              className="field"
-              id={fieldId("name")}
-              name="name"
-              type="text"
-              required
-              autoComplete="name"
-              placeholder={copy.fields.namePlaceholder}
-            />
-          </div>
+        <div className="stack-2">
+          {/* Name and WeChat only. Email moved into the fold on 2026-09-28: it
+              was always optional, and a claim matches on name plus WeChat ID. */}
+          <div className="grid-auto">
+            <div>
+              <label className="label" htmlFor={fieldId("name")}>
+                {copy.fields.name} <span className="required">*</span>
+              </label>
+              <input
+                className="field"
+                id={fieldId("name")}
+                name="name"
+                type="text"
+                required
+                autoComplete="name"
+                placeholder={copy.fields.namePlaceholder}
+              />
+            </div>
 
-          <div>
-            <label className="label" htmlFor={fieldId("email")}>
-              {copy.fields.email}
-              {copy.fields.emailRequired && <span className="required"> *</span>}
-            </label>
-            <input
-              className="field"
-              id={fieldId("email")}
-              name="email"
-              type="email"
-              required={copy.fields.emailRequired}
-              autoComplete="email"
-              inputMode="email"
-              placeholder={copy.fields.emailPlaceholder}
-            />
+            <div>
+              <label className="label" htmlFor={fieldId("wechat")}>
+                {copy.fields.wechat}
+                {copy.fields.wechatRequired && <span className="required"> *</span>}
+              </label>
+              <input
+                className="field"
+                id={fieldId("wechat")}
+                name="wechat"
+                type="text"
+                required={copy.fields.wechatRequired}
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder={copy.fields.wechatPlaceholder}
+              />
+            </div>
           </div>
-
-          <div>
-            <label className="label" htmlFor={fieldId("wechat")}>
-              {copy.fields.wechat}
-              {copy.fields.wechatRequired && <span className="required"> *</span>}
-            </label>
-            <input
-              className="field"
-              id={fieldId("wechat")}
-              name="wechat"
-              type="text"
-              required={copy.fields.wechatRequired}
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder={copy.fields.wechatPlaceholder}
-            />
-          </div>
+          <p className="privacy-note">{copy.fields.contactPrivacy}</p>
         </div>
-
-        {/* One note under both contact fields rather than a hint on each — the
-            reassurance is about the pair, and repeating it dilutes it. */}
-        <p className="privacy-note">{copy.fields.contactPrivacy}</p>
-
-        </>
       )}
 
-      {/* Outside the identity block, so returning visitors answer it too:
-          the answer is about this morning, not about them. Full-width cards
-          rather than pills — the labels are sentences, and on a phone a
-          sentence-long pill wraps into something hard to tap. No default:
-          a pre-selected option would count everyone who scrolled past. */}
+      {/* Which Thursday comes straight after who you are: it is the signup
+          itself, and everything below it is about that morning. */}
+      <div>
+        <label className="label" htmlFor={fieldId("session")}>
+          {copy.fields.session}
+        </label>
+        <select className="field" id={fieldId("session")} name="firstSession" defaultValue={sessions[0]?.value}>
+          {sessions.map((session) => (
+            <option key={session.value} value={session.value}>
+              {session.label}
+            </option>
+          ))}
+          {/* "none" is not a date, so the route's whitelist turns it into null
+              and the row is stored with no sessions — already a valid state.
+              Last, and never the default. */}
+          <option value="none">{copy.fields.sessionNone}</option>
+        </select>
+        <p className="field-hint">{copy.fields.sessionNoneHint}</p>
+      </div>
+
+      {/* Answered by returning visitors too: it is about this morning, not about
+          them. Full-width cards rather than pills — the labels are sentences, and
+          on a phone a sentence-long pill wraps into something hard to tap. No
+          default: a pre-selected option would count everyone who scrolled past. */}
       <fieldset ref={purposeRef} style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="label">
           {copy.fields.purpose} <span className="required">*</span>
@@ -488,10 +496,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
         <p className="field-hint">{copy.fields.purposeHint}</p>
       </fieldset>
 
-      {/* Moved above the demo question on purpose. It is the only field that
-          collects what someone actually wants out of the morning, and 3 of the
-          first 49 signups filled it in — being last on the form, right after a
-          hint that opened with "entirely optional", was doing that. */}
+      {/* The one field that says what someone actually wants from the morning,
+          and the one most often too vague to act on ("想了解了解"). The coach
+          below asks one follow-up question; it never rewrites the sentence and
+          never stands between anyone and the submit button. */}
       <div>
         <label className="label" htmlFor={fieldId("topic")}>
           {copy.fields.topic}
@@ -501,126 +509,121 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
           id={fieldId("topic")}
           name="topic"
           rows={2}
+          ref={topicRef}
           placeholder={copy.fields.topicPlaceholder}
         />
         <p className="field-hint">{copy.fields.topicHint}</p>
+
+        {coach && (
+          <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+            <CoachRounds rounds={helper.rounds} verdict={helper.verdict} thinking={helper.thinking} copy={coach} />
+            <div>
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                disabled={helper.thinking}
+                onClick={() => {
+                  const text = topicRef.current?.value.trim() ?? "";
+                  if (!text) {
+                    topicRef.current?.focus();
+                    return;
+                  }
+                  void helper.ask(text);
+                }}
+              >
+                {helper.rounds.length > 0 ? coach.coachAgain : coach.coachCta}
+              </button>
+            </div>
+            {/* The only third party anyone's writing reaches, and only on a press. */}
+            <p className="field-hint">{coach.coachNote}</p>
+          </div>
+        )}
       </div>
 
+      {/* Everything that is not needed to hold a seat, folded behind one line.
+          Native <details>: opens without JavaScript, announces its own state,
+          and fields inside a closed one still submit and still save to the draft.
 
-
-      <div className="grid-auto">
-        <div>
-          <label className="label" htmlFor={fieldId("session")}>
-            {copy.fields.session}
-          </label>
-          <select className="field" id={fieldId("session")} name="firstSession" defaultValue={sessions[0]?.value}>
-            {sessions.map((session) => (
-              <option key={session.value} value={session.value}>
-                {session.label}
-              </option>
-            ))}
-            {/* "none" is not a date, so the route's whitelist turns it into
-                null and the row is stored with no sessions — which is already
-                a valid state, so this needs no schema or API change. Last in
-                the list, and never the default, so nothing changes for someone
-                who is actually coming. */}
-            <option value="none">{copy.fields.sessionNone}</option>
-          </select>
-          <p className="body-sm" style={{ color: "var(--fg3)", marginTop: "var(--space-2)" }}>
-            {copy.fields.sessionNoneHint}
-          </p>
-        </div>
-
-
-      </div>
-
-      {/* Everything on this form that is not needed to hold a seat, folded away
-          behind one line.
-
-          ⚠️ Since 2026-09-24 this holds seven fields, not three. The audit
-          measured ten visible by default on a sign-up for a free coffee
-          morning; James kept five outside — name, contact, which Thursday,
-          what you want to leave with, what you want to talk about — and moved
-          the rest in here. Hosting a table went in on evidence: the fourth
-          session's retro found that none of the people who shared had ticked
-          "yes" to it on this form.
-
-          Open, they were roughly a third of the form's height — which read as
-          two thirds of the work, because a wall of choices is what someone
-          scrolls past when deciding whether to bother at all. Nothing here is
-          required, and nothing here is worth a signup.
-
-          Native <details>: it opens with no JavaScript, is keyboard operable,
-          and announces its own expanded state. Fields inside a closed
-          <details> are still in the form, so they still submit and the draft
-          still saves them. */}
+          ⚠️ Every field lives inside `.disclosure__body`. Until 2026-09-28 four
+          of them sat outside it and ran edge to edge with no inset. */}
       <details className="disclosure" ref={extrasRef}>
         <summary>{copy.fields.extras}</summary>
 
-        {/* Only asked of a new visitor, as it was in the identity block this came
-            from: a returning visitor already has one on file, and signups merge
-            by WeChat ID, so asking again could overwrite it. */}
-        {!returning && (
-          <div>
-            <label className="label" htmlFor={fieldId("building")}>
-              {copy.fields.building}
-            </label>
-            <textarea
-              className="field"
-              id={fieldId("building")}
-              name="building"
-              rows={3}
-              placeholder={copy.fields.buildingPlaceholder}
-            />
-          </div>
-        )}
-
-        {/* Outside the identity block on purpose, so it shows for returning
-            visitors too — they are exactly the people who signed up before the
-            wall existed and are not on it. The card is built from what the
-            database already holds, so it works even when this compact form does
-            not re-ask for "what are you working on".
-
-            Unticked by default, and it stays unticked-by-default forever: this is
-            the only place anyone is told that "what are you working on" can
-            become public, so a pre-ticked box would be consent nobody gave. */}
-        <div>
-          <label className="consent">
-            <input type="checkbox" name="publishCard" />
-            <span>{copy.fields.publishCard}</span>
-          </label>
-          <p className="field-hint">{copy.fields.publishCardHint}</p>
-        </div>
-
-        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="label">{copy.fields.demoIntent}</legend>
-          <div className="choice-group">
-            {copy.fields.demoOptions.map((option, index) => (
-              <label className="choice" key={option.value}>
-                <input
-                  type="radio"
-                  name="demoIntent"
-                  value={option.value}
-                  defaultChecked={index === copy.fields.demoOptions.length - 1}
+        <div className="disclosure__body stack-6">
+          {/* New visitors only, as in the identity block this came from: a
+              returning visitor has these on file, and signups merge by WeChat ID,
+              so asking again could overwrite them. */}
+          {!returning && (
+            <>
+              <div>
+                <label className="label" htmlFor={fieldId("building")}>
+                  {copy.fields.building}
+                </label>
+                <textarea
+                  className="field"
+                  id={fieldId("building")}
+                  name="building"
+                  rows={2}
+                  placeholder={copy.fields.buildingPlaceholder}
                 />
-                <span>{option.label}</span>
-              </label>
-            ))}
-          </div>
-          {/* Says out loud that a half-finished thing, or just a question, is
-              enough to host a table. Three people ticked "maybe" on 2026-08-13
-              and none of them hosted — the bar they imagined was higher than
-              the real one, and nothing on this form said otherwise. */}
-          <p className="field-hint">{copy.fields.demoIntentHint}</p>
-        </fieldset>
+              </div>
 
-          {/* Shown to everyone rather than only to whoever picked "none". A
-              Thursday regular who would also come on a Saturday counts towards
-              whether a Saturday is worth running, and asking only the people who
-              cannot make Thursdays would undercount that demand. */}
+              <div>
+                <label className="label" htmlFor={fieldId("email")}>
+                  {copy.fields.email}
+                  {copy.fields.emailRequired && <span className="required"> *</span>}
+                </label>
+                <input
+                  className="field"
+                  id={fieldId("email")}
+                  name="email"
+                  type="email"
+                  required={copy.fields.emailRequired}
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder={copy.fields.emailPlaceholder}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Shown to returning visitors too — they are exactly the people who
+              signed up before the wall existed. Unticked by default, forever:
+              this is the only place anyone is told their answers can go public. */}
+          <div>
+            <label className="consent">
+              <input type="checkbox" name="publishCard" />
+              <span>{copy.fields.publishCard}</span>
+            </label>
+            <p className="field-hint">{copy.fields.publishCardHint}</p>
+          </div>
+
+          {/* Stored as yes / maybe / listen whatever the wording says —
+              signup-stats.ts and /admin count on those values. */}
+          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend className="label">{copy.fields.demoIntent}</legend>
+            <div className="choice-group choice-group--compact">
+              {copy.fields.demoOptions.map((option, index) => (
+                <label className="choice" key={option.value}>
+                  <input
+                    type="radio"
+                    name="demoIntent"
+                    value={option.value}
+                    defaultChecked={index === copy.fields.demoOptions.length - 1}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="field-hint">{copy.fields.demoIntentHint}</p>
+          </fieldset>
+
+          {/* Asked of everyone, not only whoever picked "none": a Thursday
+              regular who would also come on a Saturday counts towards whether a
+              Saturday is worth running. */}
           <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
             <legend className="label">{copy.fields.availability}</legend>
-            <div className="choice-group">
+            <div className="choice-group choice-group--compact">
               {copy.fields.availabilityOptions.map((option) => (
                 <label className="choice" key={option.value}>
                   <input type="checkbox" name="availability" value={option.value} />
@@ -631,7 +634,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
             <p className="field-hint">{copy.fields.availabilityHint}</p>
           </fieldset>
 
-        <div className="disclosure__body stack-6">
           <div>
             <label className="label" htmlFor={fieldId("source")}>
               {copy.fields.source}
@@ -645,17 +647,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
             />
           </div>
 
+          {/* One checkbox group in two labelled rows: overseas-vs-China is the
+              split being measured, so showing it makes the question quick. */}
           <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
             <legend className="label">{copy.fields.aiModels}</legend>
-
-            {/* One checkbox group split into two labelled rows rather than two
-                separate fields: overseas-vs-China is the split being measured,
-                so showing it is also what makes the question quick to answer.
-                The name is shared, so the server sees one flat list.
-
-                Pills, not the full-width cards used for "host a table": these
-                are nine optional ticks, and giving each the weight of a real
-                decision is what made the section feel like work. */}
             <div className="stack-3">
               {copy.fields.aiModelGroups.map((group) => (
                 <div key={group.label}>
@@ -671,18 +666,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
                 </div>
               ))}
             </div>
-
             <p className="field-hint">{copy.fields.aiModelsHint}</p>
           </fieldset>
 
-          {/* A select rather than five radio cards. The bands are one ordered
-              scale and the labels are long, which is the case a dropdown is
-              actually for — and it collapses five rows into one.
-
-              It also fixes what the radios could not: a radio cannot be
-              un-picked, so someone who tapped a band by accident was stuck
-              with an answer they never meant to give. Here they pick the empty
-              first option and are back to having said nothing. */}
+          {/* A select: one ordered scale with long labels, and it can be
+              un-picked, which a radio cannot. */}
           <div>
             <label className="label" htmlFor={fieldId("aiSpend")}>
               {copy.fields.aiSpend}

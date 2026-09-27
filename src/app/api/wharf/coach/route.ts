@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { coachAvailable, coachDraft, type Round } from "@/lib/coach";
 import { spendCoachCall } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { coachRateKey, coachReply } from "@/lib/coach-access";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,9 @@ export const dynamic = "force-dynamic";
  * there is no row anywhere after this returns. Keeping it apart means the write
  * route's gate stays a gate on writes.
  *
- * Same member cookie as everything else on the board, plus its own rate-limit
- * key so that burning the hourly allowance on drafts cannot stop somebody
- * actually posting.
+ * Open to members and, since 2026-09-28, to visitors without a card (the
+ * signup form uses it too), each with its own rate-limit key so that burning
+ * the hourly allowance on drafts cannot stop somebody actually posting.
  */
 
 const MAX_DRAFT = 300;
@@ -84,10 +85,12 @@ function readHistory(raw: FormDataEntryValue | null | undefined): Round[] {
 export async function POST(request: Request) {
   if (!coachAvailable()) return NextResponse.json({ error: "off" }, { status: 404 });
 
-  const memberId = await currentMemberId();
-  if (!memberId) return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
+  // A member card is no longer required: the signup form offers this too, and
+  // most people filling that in have no card yet. See `coach-access.ts` for why
+  // this does not move the ceiling on what the feature can cost.
+  const { key, max } = coachRateKey(await currentMemberId(), clientIp(request));
 
-  if (!checkRateLimit(`coach:${memberId}`).allowed) {
+  if (!checkRateLimit(key, max).allowed) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
@@ -117,5 +120,6 @@ export async function POST(request: Request) {
   // findings and the box has to tell them apart. Collapsing them shipped a lie:
   // somebody typed three bare topics, the model correctly said "this is not a
   // question", and the box answered "this one is specific enough".
-  return NextResponse.json({ hint: coaching?.ask || null, gap: coaching?.gap ?? null });
+  const reply = coachReply(coaching);
+  return NextResponse.json(reply.body, { status: reply.status });
 }

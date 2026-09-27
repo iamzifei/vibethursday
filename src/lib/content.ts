@@ -294,7 +294,7 @@ export const copy = {
     membersTeaser: {
       eyebrow: "成员墙",
       title: "你去了会遇到谁。",
-      lede: "每个来过的人都有一张自己的名片：在做的产品、公司业务、自媒体账号、社群，或者只写一句「想找什么」。卡上最管用的是「想找什么」和「能帮什么」这两栏——找合伙人、找第一批用户、找踩过同一个坑的人，多半是从这两栏接上的。没有产品也一样有名片，这个局里听的人本来就比讲的人多。",
+      lede: "每个来过的人都有一张名片。最管用的是「想找什么」和「能帮什么」两栏——找合伙人、找第一批用户，多半从这里接上。没有产品也一样有名片。",
       cta: "看成员墙",
       ctaSecondary: "认领我的名片",
     },
@@ -334,10 +334,10 @@ export const copy = {
       title: "就这五条。",
       items: [
         "只来两个人也照办。",
-        "时间雷打不动，每周四上午同一时段。接下来几场固定在 Chatswood 的 The Avenue（地址在首屏），Chatswood 火车站出来就到。万一临时换场地，前一天发在群里。",
+        "时间雷打不动，每周四上午同一时段。接下来几场固定在 Chatswood 的 The Avenue（地址在首屏），Chatswood 火车站出来就到。万一换场地，vibethursday.com/go 和群里都会提前说。",
         "免费，不售票。报名只是为了估人数。",
-        "开一桌永远是可选的。想开就开，不想开就串桌听，只来听的人一样欢迎。",
-        "展示可以，插播不行。你做的东西就是你的宣发，在自己那一桌大方讲；别人那一桌不是你的场子。只来收名单、抓人、拉客的，会被请出去。",
+        "上去分享永远是可选的。想讲就讲，只来听的人一样欢迎——这个局里听的人本来就比讲的人多。",
+        "展示可以，插播不行。你做的东西就是你的宣发，轮到你的时候大方讲；别人讲的时候别转成你的推销。只来收名单、抓人、拉客的，会被请出去。",
       ],
     },
 
@@ -347,6 +347,14 @@ export const copy = {
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
       // before, so a regular only picks a session.
+      // 「帮我问得更具体」在报名表里的几句结论。按钮和说明沿用码头那几句，
+      // 这几句另写：码头说的是「发」，这里是报名，而且没有「想聊的」那一栏。
+      coach: {
+        coachEnough: "这句已经够具体了。",
+        coachSharper: "这样就够了，比刚才那句好接多了。",
+        coachSocial: "这更像是想认识人，也很好。想让人当场接得上，可以改成一个具体的问题。",
+        coachSpent: "这个按钮暂时用不了，不影响报名。",
+      },
       returning: {
         // {name} is substituted in the client component. Must not be a
         // function: this object is passed from a Server Component into a
@@ -363,7 +371,7 @@ export const copy = {
         wechat: "微信号",
         wechatPlaceholder: "微信号，不是昵称",
         wechatRequired: true,
-        wechatHint: "现阶段活动通知走微信群，留了我拉你进群。",
+        wechatHint: "活动通知走微信群，留了我拉你进群。",
         // 必答的单选，用来数「这场来的人里，有几个是带着生意来的」。按场次存，
         // 同一个人下周换了来意，不会覆盖这周的答案。存储值不能改：按它计数。
         purpose: "这次来，你最想带走什么？",
@@ -374,34 +382,30 @@ export const copy = {
           { value: "learn", label: "学习交流，看看大家在做什么" },
           { value: "other", label: "其他，现场再说" },
         ],
-        purposeHint: "选一个最接近的就行。知道谁带着什么来，现场才好帮你找对的人。",
+        purposeHint: "选最接近的一个，现场好帮你找对的人。",
         topic: "这周最想聊什么、或者最想问什么",
         topicPlaceholder: "想找会 iOS 的合伙人 / 想搞懂 R&D 税务抵免怎么申报 / 想看看别人的 AI 工作流",
         // 这里刻意不再以「完全选填」开头。前 49 份报名里只有 3 个人填了这栏，
         // 而它是唯一能提前知道大家想要什么的入口——先说清楚它有什么用，
         // 退路留在最后一句。
-        topicHint:
-          "一句话就够。这是现场最容易帮到你的一句——说得越具体，越可能有人当场接上。它会显示在你成员卡片的「本周想聊」，每周都可以改。想不到就先空着。",
+        topicHint: "越具体，越容易有人当场接上。写完可以点下面的按钮，让 AI 追问你一句。",
         // 08-13 有人反馈：来之前翻过成员墙，对几个人先有了印象，但墙上只有一部分人，
         // 剩下的还得现场花时间聊，聊完才发现不相关。当天实测 56 份报名只有 14 张卡在墙上——
         // 缺的不是意愿，是「认领 + 发布」两道闸。这个勾选把两道闸压成一个明示的同意。
         publishCard: "把上面这些放到成员墙上",
-        publishCardHint:
-          "勾了的话，你的名字、在做什么、这周想聊什么会出现在 vibethursday.com/members，别人来之前就能知道你是谁、要不要找你聊。邮箱和微信号永远不会出现在上面。随时可以改，也可以撤下来。",
-        contactPrivacy: "这两栏只有我（活动组织者）看得到。不公开、不给第三方、不拿去发广告，也不会有人拿它加你推销。",
+        publishCardHint: "名字、在做什么、这周想聊什么会出现在成员墙上。邮箱和微信号永远不公开，随时可以撤下来。",
+        contactPrivacy: "微信号只有我（主办人）看得到：不公开、不给第三方、不拿去发广告。",
         building: "你在做什么？",
-        buildingPlaceholder: "在做的产品、在折腾的东西、或者只是最近在学什么。一两句就够。",
-        // 「开一桌」不是「demo」：小桌制下开桌门槛低到「有一个问题」就够，
-        // 而 demo 这个词会让人以为要有做完的东西可展示。选项的存储值仍是
-        // yes/maybe/listen —— signup-stats.ts 与 /admin 按它统计，不能动。
-        demoIntent: "这次想开一桌吗？",
+        buildingPlaceholder: "在做的产品、在折腾的东西，或者最近在学什么。一两句就够。",
+        // 「想不想上去讲讲」。09-28 起不再分桌，想展示东西的人在「本周主题」那一段讲。
+        // 选项的存储值仍是 yes/maybe/listen —— signup-stats.ts 与 /admin 按它统计，不能动。
+        demoIntent: "这次想上去讲讲吗？",
         demoOptions: [
-          { value: "yes", label: "想开一桌" },
+          { value: "yes", label: "想讲讲" },
           { value: "maybe", label: "也许" },
           { value: "listen", label: "先来听听" },
         ],
-        demoIntentHint:
-          "门槛很低：不用做完，不用准备幻灯片，做了一半卡住的反而最好聊。手上没产品也行，一个问题就能开一桌。",
+        demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，就在「本周主题」那一段。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -412,13 +416,12 @@ export const copy = {
         // corrupts the headcount the table is booked against; the second is
         // the person lost. Listed last so the default stays a real session.
         sessionNone: "上午都来不了（想要下班后或周末的场）",
-        sessionNoneHint:
-          "周四上午上班来不了的话，选这个就行——一样算登记，以后要是开周末或者晚上的场，我按这份名单来找人。",
+        sessionNoneHint: "周四上午来不了也选这个，一样算登记；以后开晚上或周末的场，我按这份名单找人。",
         // Asked of everyone, not just the people who picked "none". Whether a
         // second session is worth running depends on total demand, and a
         // Thursday regular who would also come on a Saturday is part of that.
         availability: "除了周四上午，你还能来什么时间？",
-        availabilityHint: "选填，可多选。这是我决定要不要开第二场、开在什么时间的唯一依据——够多的人选同一个时间，那一场就开。",
+        availabilityHint: "可多选。够多人选同一个时间，那一场就开。",
         availabilityOptions: [
           { value: "weekday_evening", label: "工作日晚上" },
           { value: "weekend_day", label: "周末白天" },
@@ -429,15 +432,14 @@ export const copy = {
         //
         // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
         // 区没人会去点开，这是折叠这个做法最常见的失败方式。
-        extras: "再多说几句（都可跳过）：在做什么、上不上成员墙、想不想带一桌、平时用什么 AI……",
+        extras: "再多说几句（都可跳过）：在做什么、上不上成员墙、想不想上去讲、平时用什么 AI……",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
         // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
         // 之前 topic 那个文本框放末尾只有 49 份里 3 个人填，但那是要动脑写字的；
         // 这两栏是点一下的方块，和 availability 一样，不是同一件事。
         aiModels: "平时主要用哪些 AI？",
-        aiModelsHint:
-          "选填，可多选。我想知道这屋子里海外模型和国内模型各占多少——现场演示用什么、值不值得聊拼车订阅和国内 API，都看这个。",
+        aiModelsHint: "选填，可多选。",
         // 分成海外/国内两排，是因为这份统计最想要的就是这条线。选项的存储值
         // 自带 intl_ / cn_ 前缀，所以两边各有多少人可以直接从值上数出来，
         // 不需要在别处再维护一张「哪个模型算哪边」的对照表。
@@ -466,8 +468,7 @@ export const copy = {
         // 大多数人答不上来，于是这一栏就会空着。问花多少钱是同一件事的一个
         // 便宜代理：订阅和 API 的价钱是大家本来就记得的数。
         aiSpend: "每个月在 AI 上大概花多少？",
-        aiSpendHint:
-          "选填。不用去翻账单，下面哪条最像你就选哪条。问的是用得有多重，不是钱本身。按美元算。",
+        aiSpendHint: "选填，选最像你的一档，按美元算。",
         // 下拉的第一项，也是默认项。空值＝没回答，跟没点开这一折是同一个结果。
         // 用下拉而不是五个单选方块，除了省掉四行高度，还顺手解决了单选点了
         // 取消不掉的问题——想反悔的人选回这一项就行。
@@ -537,7 +538,7 @@ export const copy = {
       items: [
         {
           q: "我什么都还没做出来，能来吗？",
-          a: "能。开一桌是可选的，串桌听的人永远比开桌的人多。而且开桌的门槛也很低——不用做完，不用准备幻灯片，做了一半卡住的反而最好聊；手上没产品也行，一个问题就能开一桌。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
+          a: "能。上去分享是可选的，来听的人永远比讲的人多。想讲的门槛也很低——不用做完，不用准备幻灯片，做了一半卡住的反而最好聊；手上没产品也行，带一个具体的问题来就够。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -572,7 +573,7 @@ export const copy = {
         },
         {
           q: "我能在这里推我自己的产品吗？",
-          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，写在你的成员卡上，或者干脆自己开一桌。唯一的界线是：别人那一桌不是你的场子。这条对所有人一样，包括我。",
+          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，写在你的成员卡上，或者报名时说你想上去讲讲。唯一的界线是：别人讲的时候不是你的场子。这条对所有人一样，包括我。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -1672,7 +1673,7 @@ export const copy = {
     membersTeaser: {
       eyebrow: "Member wall",
       title: "Who you will actually meet.",
-      lede: "Everyone who comes has a card: what they are building, their business, a channel, a community — or just one line about what they are looking for. The two fields that do the work are «looking for» and «can help with» — a cofounder, a first batch of users, someone who has already hit the wall you are hitting, mostly get found through those two. No product needed; there are always more listeners than presenters here.",
+      lede: "Everyone who comes has a card. The fields that do the work are «looking for» and «can help with» — a cofounder or a first batch of users mostly get found there. No product needed.",
       cta: "See the member wall",
       ctaSecondary: "Claim my card",
     },
@@ -1705,10 +1706,10 @@ export const copy = {
       title: "All five of them.",
       items: [
         "It runs even if two people show up.",
-        "The time never moves — Thursday mornings, always. The next few sessions are at The Avenue in Chatswood, right by the station; the address is on the first screen. If a venue ever has to change, it is posted the day before.",
+        "The time never moves — Thursday mornings, always. The next few sessions are at The Avenue in Chatswood, right by the station; the address is on the first screen. If the venue ever changes, vibethursday.com/go and the group say so ahead of time.",
         "Free, no tickets. Signing up is only so we know how many chairs.",
-        "Hosting a table is always optional. Host one if you want to, otherwise move between them and listen. People who only come to listen are equally welcome.",
-        "Show, don't sell. What you built is your marketing — present it properly at your own table, just never over someone else's. People here only to harvest contacts or hunt will be asked to leave.",
+        "Sharing is always optional. Take a turn if you want one; people who only come to listen are just as welcome — there are always more listeners than speakers.",
+        "Show, don't sell. What you built is your marketing — show it properly when it is your turn, just never turn someone else's into your pitch. People here only to harvest contacts or hunt will be asked to leave.",
       ],
     },
 
@@ -1716,6 +1717,12 @@ export const copy = {
       eyebrow: "§ 06 — Sign up",
       title: "Sign up and I will send you the address.",
       lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
+      coach: {
+        coachEnough: "That one is specific enough.",
+        coachSharper: "That will do — much easier to pick up than before.",
+        coachSocial: "That reads more like wanting to meet people, which is fine. To get it picked up on the day, turn it into one specific question.",
+        coachSpent: "This button is not available right now. It does not affect signing up.",
+      },
       returning: {
         hello: "Welcome back, {name}. Pick a session and what you want out of it this time — I have the rest.",
         notYou: "Not you, or need to change your details?",
@@ -1738,32 +1745,28 @@ export const copy = {
           { value: "learn", label: "Learning — seeing what everyone is building" },
           { value: "other", label: "Something else — I'll say on the day" },
         ],
-        purposeHint: "Pick the closest one. Knowing who is coming for what is how we find you the right people on the day.",
+        purposeHint: "Pick the closest one — it is how we find you the right people on the day.",
         topic: "What do you most want to talk about, or ask, this week",
         topicPlaceholder: "An iOS cofounder / how the R&D tax offset actually gets claimed / how other people's AI workflows look",
-        topicHint:
-          "One line is enough. This is the line most likely to get you helped on the day — the more specific it is, the more likely someone picks it up. It shows on your member card as \"This week\", and you can change it every week. Leave it blank if nothing comes to mind.",
+        topicHint: "The more specific, the more likely someone picks it up on the day. When you have written it, the button below can ask you one follow-up question.",
         publishCard: "Put this on the member wall",
-        publishCardHint:
-          "Tick this and your name, what you are working on, and what you want to talk about this week show up at vibethursday.com/members, so people can work out who to find before they arrive. Your email and WeChat ID never appear there. You can edit it or take it down whenever you like.",
-        contactPrivacy: "Both fields are visible only to me, the organiser. Never published, never passed to anyone else, never used for marketing.",
+        publishCardHint: "Your name, what you are working on and this week's topic go on the member wall. Email and WeChat ID are never shown, and you can take it down any time.",
+        contactPrivacy: "Your WeChat ID is visible only to me, the organiser. Never published, never passed on, never used for marketing.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
-        demoIntent: "Want to host a table this time?",
+        demoIntent: "Want to share something this time?",
         demoOptions: [
-          { value: "yes", label: "Yes, I'll host one" },
+          { value: "yes", label: "Yes, I'd like to" },
           { value: "maybe", label: "Maybe" },
           { value: "listen", label: "Just listening" },
         ],
-        demoIntentHint:
-          "The bar is low: it does not have to be finished, there are no slides, and something you are half-way through and stuck on makes for a better table than something that works. You do not even need a product — one question is enough to host a table.",
+        demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionNone: "Mornings do not work for me (evening or weekend, please)",
-        sessionNoneHint:
-          "Thursday mornings are working hours for a lot of people. Pick this and you are still on the list — if an evening or weekend one ever happens, this is who I go to.",
+        sessionNoneHint: "Pick this and you are still on the list — if an evening or weekend one happens, this is who I go to.",
         availability: "What other times could you make?",
-        availabilityHint: "Optional, pick as many as apply. This is the only thing deciding whether a second session happens and when — enough people on one slot and that slot runs.",
+        availabilityHint: "Pick any. Enough people on one slot and that slot runs.",
         availabilityOptions: [
           { value: "weekday_evening", label: "Weekday evenings" },
           { value: "weekend_day", label: "Weekend daytime" },
@@ -1771,10 +1774,9 @@ export const copy = {
         ],
         // See the Chinese block above for why these three are folded away, and
         // why the spend question asks about money rather than about tokens.
-        extras: "A few more, all skippable: what you are building, the member wall, hosting a table, which AI you use…",
+        extras: "A few more, all skippable: what you are building, the member wall, sharing something, which AI you use…",
         aiModels: "Which AI models do you mostly use?",
-        aiModelsHint:
-          "Optional, pick as many as apply. It tells me how the room splits between overseas and Chinese models — which decides what gets demoed on the day, and whether shared subscriptions or China-hosted APIs are worth a table.",
+        aiModelsHint: "Optional — pick any.",
         aiModelGroups: [
           {
             label: "Overseas",
@@ -1797,8 +1799,7 @@ export const copy = {
           },
         ],
         aiSpend: "Roughly what do you spend on AI a month?",
-        aiSpendHint:
-          "Optional. No need to open a billing page — pick whichever line sounds most like you. This is about how heavily you use the stuff, not about the money. In USD.",
+        aiSpendHint: "Optional — pick the line closest to you, in USD.",
         aiSpendSkip: "(Skip)",
         aiSpendOptions: [
           { value: "free", label: "Free tiers only" },
@@ -1848,7 +1849,7 @@ export const copy = {
       items: [
         {
           q: "I have not built anything yet. Can I come?",
-          a: "Yes. Hosting a table is optional, and there are always more people moving between tables than hosting one. The bar for hosting is low too: nothing has to be finished, there are no slides, and something you are stuck half-way through beats something that works. You do not even need a product — one question is enough. The only real bar is genuine interest — this is not a networking room.",
+          a: "Yes. Sharing is optional, and there are always more people listening than speaking. The bar for taking a turn is low too: nothing has to be finished, there are no slides, and something you are stuck half-way through beats something that works. You do not even need a product — one specific question is enough. The only real bar is genuine interest — this is not a networking room.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -1883,7 +1884,7 @@ export const copy = {
         },
         {
           q: "Can I promote my own product here?",
-          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs on your member card, or at a table you host yourself. The only line is that someone else's table is not your stage. That applies to everyone, me included.",
+          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs on your member card, or say you want a turn when you sign up. The only line is that someone else's turn is not your stage. That applies to everyone, me included.",
           href: null,
           linkLabel: null,
           aTail: null,

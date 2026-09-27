@@ -5,6 +5,7 @@ import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { currentVersion } from "@/lib/changelog";
+import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
@@ -286,12 +287,15 @@ export default async function Page({ searchParams }: PageProps) {
               </div>
             ) : null}
 
-            <div className="grid-auto">
-              <div className="card stack-3">
+            {/* Two by two, not auto-fit: four cards in three columns left one on
+                its own row. Each card is a column with its buttons pushed to
+                the bottom, so buttons on the same row line up. */}
+            <div className="grid-2">
+              <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.membersTeaser.eyebrow}</span>
                 <h3 className="h3">{c.membersTeaser.title}</h3>
                 <p className="body-sm">{c.membersTeaser.lede}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+                <div className="teaser__cta">
                   <Link className="btn btn--primary" href={langHref("/members", lang)}>
                     {c.membersTeaser.cta}
                   </Link>
@@ -301,11 +305,11 @@ export default async function Page({ searchParams }: PageProps) {
                 </div>
               </div>
 
-              <div className="card stack-3">
+              <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.wharfTeaser.eyebrow}</span>
                 <h3 className="h3">{c.wharfTeaser.title}</h3>
                 <p className="body-sm">{c.wharfTeaser.lede}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "center" }}>
+                <div className="teaser__cta">
                   <Link className="btn btn--secondary" href={langHref("/wharf", lang)}>
                     {c.wharfTeaser.cta}
                   </Link>
@@ -317,22 +321,22 @@ export default async function Page({ searchParams }: PageProps) {
                 </div>
               </div>
 
-              <div className="card stack-3">
+              <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.worksTeaser.eyebrow}</span>
                 <h3 className="h3">{c.worksTeaser.title}</h3>
                 <p className="body-sm">{c.worksTeaser.lede}</p>
-                <div>
+                <div className="teaser__cta">
                   <Link className="btn btn--secondary" href={langHref("/works", lang)}>
                     {c.worksTeaser.cta}
                   </Link>
                 </div>
               </div>
 
-              <div className="card stack-3">
+              <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.playTeaser.eyebrow}</span>
                 <h3 className="h3">{c.playTeaser.title}</h3>
                 <p className="body-sm">{c.playTeaser.lede}</p>
-                <div>
+                <div className="teaser__cta">
                   <Link className="btn btn--secondary" href={langHref("/play", lang)}>
                     {c.playTeaser.cta}
                   </Link>
@@ -432,6 +436,20 @@ export default async function Page({ searchParams }: PageProps) {
               copy={c.signup}
               sessions={sessions}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
+              // The Wharf's "help me ask this better", on the box where most
+              // vague questions are written. Its button and disclosure are the
+              // Wharf's own words; the verdicts are reworded for a signup.
+              coach={
+                coachAvailable()
+                  ? {
+                      coachCta: c.wharf.coachCta,
+                      coachAgain: c.wharf.coachAgain,
+                      coachNote: c.wharf.coachNote,
+                      working: c.wharf.working,
+                      ...c.signup.coach,
+                    }
+                  : null
+              }
             />
 
             {/* Deliberately outside the form. Someone deciding whether to come

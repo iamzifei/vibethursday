@@ -61,6 +61,16 @@ test("no published copy still promises the retired intros-and-demos format", () 
     /four people max/i,
     /hard timer/i,
     /硬计时/,
+    // Tables were retired on 2026-09-28: the room split unevenly, tables drifted
+    // off their topic, and nothing came back to the whole room. "小桌" is not
+    // here on purpose — photo captions use it for the furniture.
+    /开一桌/,
+    // Not preceded by 打: "打开桌牌" (open the name badge) is not a table.
+    /(?<!打)开桌/,
+    /串桌/,
+    /带一桌/,
+    /host(ing)? a table/i,
+    /between (the )?tables/i,
   ];
 
   for (const lang of LANGS) {

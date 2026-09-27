@@ -302,6 +302,31 @@ textarea:focus-visible,
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
 }
 
+/* A fixed two-column grid for a known, even number of cards. `.grid-auto`
+   left the home page's four entry cards as three plus one orphan. */
+.grid-2 {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* An entry card whose buttons sit at the bottom, so cards of different text
+   length still line their buttons up across a row. */
+.teaser { display: flex; flex-direction: column; }
+
+.teaser__cta {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 /* =============================================================================
    Site footer
    =============================================================================
