@@ -58,9 +58,10 @@ test("every release says something, in both written languages", () => {
 
 test("a major release is reserved for the shape of the morning changing", () => {
   // Not a style rule — it is what the page tells the reader the chip means.
-  // Three so far: the first session, the format, and the room.
+  // Four so far: the first session, the format, the room, and the format
+  // again (2026-09-28: tables retired, the whole room together).
   const majors = RELEASES.filter((release) => release.kind === "major").map((r) => r.version);
-  assert.deepEqual(majors, ["3.0", "2.0", "1.0"]);
+  assert.deepEqual(majors, ["4.0", "3.0", "2.0", "1.0"]);
 });
 
 test("the current version is the top of the list", () => {

@@ -72,6 +72,24 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.1",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "只记一个链接就够了：vibethursday.com/go，按日期自己换内容——场前报名、点单、名片，当天签到和我的单，散场后反馈。喝的可以提前在网站上点，到了跟吧台报名字取。报名表更短，「最想问什么」可以让 AI 追问一句，帮你问得更具体。",
+    link: { href: "/go", zh: "看本周 →", en: "This week →" },
+    en: "One link is enough now: vibethursday.com/go, which changes by itself with the date — signing up, ordering and your card before, check-in and your order on the day, feedback after. Drinks can be ordered ahead on the site and picked up by name. The sign-up form is shorter, and the «what do you most want to ask» box can ask you one follow-up question to make it more specific.",
+  },
+  {
+    version: "4.0",
+    date: "2026-09-28",
+    kind: "major",
+    scope: "room",
+    zh: "形式改了：10:30 开门、10:45 开始，不再分桌，全场一起——开场、新朋友一句话介绍、本周主题、两个提前投票选出的问题聊透，最后写下想认识谁。",
+    link: { href: "/#schedule", zh: "看新的流程 →", en: "See the run of show →" },
+    en: "The format changed: doors at 10:30, start at 10:45, and no more tables — the whole room together: a welcome, one line from each first-timer, the week's topic, two questions voted on beforehand and talked through properly, then a sheet for who you want to meet.",
+  },
+  {
     version: "3.4",
     date: "2026-09-25",
     kind: "minor",
