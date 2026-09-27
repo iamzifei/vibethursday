@@ -51,6 +51,10 @@ export function SiteFooter({ lang, copy, support = false }: Props) {
               </Link>
             ))}
 
+            {/* `/go` is the link pinned in the group; the footer is where
+                somebody who came in another way finds the same page. */}
+            <Link href={langHref("/go", lang)}>{copy.go.footerLink}</Link>
+
             {/* Down here rather than in the bar at the top. The nav is for the
                 five things somebody comes to this site to do; this is for the
                 reader who got to the bottom and wants to know whether the thing

@@ -220,7 +220,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const poster = {
     session: nextSession,
     date: formatSession(nextSession, "zh"),
-    time: "10:30 开门 · 开门就开始",
+    time: "10:30 开门 · 10:45 开始",
     // Found by its map link rather than by index. The venue is one of three
     // fact cards on the home page and the poster must not start announcing
     // the opening time as the address because somebody reordered them.

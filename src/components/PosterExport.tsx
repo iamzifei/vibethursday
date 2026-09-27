@@ -20,7 +20,7 @@ type Props = {
   session: string;
   /** "9月3日（周四）", already formatted and already Sydney's date. */
   date: string;
-  /** "10:30 开门 · 开门就开始". */
+  /** "10:30 开门 · 10:45 开始". */
   time: string;
   /** "The Avenue · Chatswood". */
   venue: string;

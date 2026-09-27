@@ -58,7 +58,7 @@ export const copy = {
       subtitle: "悉尼 · 每周四上午的 AI 局",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
       facts: [
-        { label: "时间", value: "每周四 10:30 开门 · 开门就开始", href: null, linkLabel: null },
+        { label: "时间", value: "每周四 10:30 开门 · 10:45 开始", href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
         // first screen rather than in a message the day before.
         {
@@ -78,6 +78,8 @@ export const copy = {
         },
       ],
       nextPrefix: "下一场 ",
+      // 群公告里只放 /go。首屏也给它一个入口，从网站进来的人找得到同一个地方。
+      goLink: "本周要做的事都在这里：vibethursday.com/go →",
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
       note: "12:00 之后自愿留下吃个午饭。赶着接娃或者要回去干活的，12 点直接走就行。",
@@ -121,27 +123,37 @@ export const copy = {
 
     schedule: {
       eyebrow: "§ 04 — 流程",
-      title: "每周同一个节奏，不变。",
+      title: "每周同一个节奏。",
       slots: [
         {
           time: "10:30–10:45",
-          title: "开门 · 点杯喝的 · 随便聊",
-          note: "不急着开场。进门先把饮料点了——中途服务员进来问单会打断正在说话的人。场地 10:30 才开门，不用来更早；晚到也不会错过什么。",
+          title: "开门 · 取饮品 · 签到",
+          note: "喝的可以提前在 vibethursday.com/go 点好，到了跟吧台报名字、付钱就能取；没点的进门先点——中途有人来问单会打断正在说话的人。扫桌上的码签到。场地 10:30 才开门，不用来更早。",
         },
         {
-          time: "10:45–10:55",
-          title: "只有新朋友做个自我介绍",
-          note: "45 秒，三件事：怎么称呼、在做什么、今天想拿走什么。来过的人不用再讲一遍——三十个人轮一圈要半小时，而且谁也记不住三十个人。",
+          time: "10:45–11:00",
+          title: "开场 · 新朋友一句话介绍",
+          note: "先用两分钟说清楚这是个什么局、今天怎么走。然后第一次来的人各说一句：你是谁、在做什么，十几秒就够。来过的人不用再讲一遍。",
         },
         {
-          time: "10:55–11:50",
-          title: "小桌",
-          note: "分 3–4 桌，每桌一个话题或一个产品。随时串桌，想听哪个去哪个——不用等到聊不下去才走，走开不用打招呼也不用说再见，这个形式本来就该这么用。",
+          time: "11:00–11:20",
+          title: "本周主题",
+          note: "每周一个主题，一段十五分钟左右的分享；有人想给大家看点东西，也在这一段。不是讲座，随时可以打断追问。",
+        },
+        {
+          time: "11:20–11:55",
+          title: "问答：两个问题，聊透",
+          note: "问题提前在群里投票，票最多的两个上。每个问题几个人回应，最后收成一句大家都能带走的做法。没轮到的问题，会后整理好发到群里。",
+        },
+        {
+          time: "11:55–12:00",
+          title: "想认识谁，写下来",
+          note: "一张纸传一圈：你是谁、想认识谁、想聊什么。散场后帮你们约。",
         },
         {
           time: "12:00 之后",
           title: "接着聊 · 午饭",
-          note: "不强制。想接着聊的一起走，赶时间的 12 点就走。上一场散场后又聊了一个多小时，那一段往往是最好的。",
+          note: "不强制。想接着聊的一起走，赶时间的 12 点就走。散场后那一段往往是最好的。",
         },
       ],
     },
@@ -722,7 +734,7 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "Chatswood The Avenue · 每周四 10:30 开门，开门就开始",
+      location: "Chatswood The Avenue · 每周四 10:30 开门，10:45 开始",
       supportLink: "这个活动的开销",
       // The label on the GitHub mark. It is never shown — the mark carries the
       // link — but it is what a screen reader announces, so it is translated
@@ -1031,7 +1043,7 @@ export const copy = {
       upcomingTitle: "{date}，还没到。",
       upcomingLede: "到了那天，这一页会变成「今天来了谁」；现在它是那一场的介绍。时间、地点、流程都在下面，报名在首页底部。",
       upcomingCta: "报名这一场",
-      upcomingDescription: "Vibe Thursday {date}：悉尼 Chatswood，10:30 开门就开始，12:00 结束，免费。这一场还没到，报名入口在这里。",
+      upcomingDescription: "Vibe Thursday {date}：悉尼 Chatswood，10:30 开门，10:45 开始，12:00 结束，免费。这一场还没到，报名入口在这里。",
     },
 
     /**
@@ -1282,6 +1294,7 @@ export const copy = {
      */
     go: {
       meta: { title: "本周 · Vibe Thursday" },
+      footerLink: "本周",
       eyebrow: "§ 本周",
       titleBefore: "这周四见。",
       titleDay: "今天见。",
@@ -1437,7 +1450,7 @@ export const copy = {
       subtitle: "Sydney · every Thursday morning",
       lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
       facts: [
-        { label: "When", value: "Thursdays · doors 10:30am, starts on the dot", href: null, linkLabel: null },
+        { label: "When", value: "Thursdays · doors 10:30am, starts 10:45am", href: null, linkLabel: null },
         {
           label: "Where",
           value: "The Avenue · Chatswood",
@@ -1452,6 +1465,7 @@ export const copy = {
         },
       ],
       nextPrefix: "Next · ",
+      goLink: "Everything for this week is here: vibethursday.com/go →",
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
       note: "We carry on over lunch from noon. On school pickup, or need to get back to work? Leave at twelve.",
@@ -1498,23 +1512,33 @@ export const copy = {
       slots: [
         {
           time: "10:30–10:45am",
-          title: "Doors · order a drink · open chat",
-          note: "No rush to start. Order a drink on your way in — a waiter taking orders mid-session cuts across whoever is talking. The venue does not open before 10:30, so there is nothing to gain by arriving early, and arriving late costs you nothing.",
+          title: "Doors · pick up your drink · check in",
+          note: "Order ahead at vibethursday.com/go and just give your name and pay at the counter; otherwise order on your way in — a waiter taking orders mid-session cuts across whoever is talking. Scan the code on the table to check in. The venue does not open before 10:30.",
         },
         {
-          time: "10:45–10:55am",
-          title: "First-timers introduce themselves",
-          note: "Forty-five seconds, three things: your name, what you are building, what you want to walk away with. Regulars skip it — thirty people take half an hour to go around, and nobody remembers thirty names anyway.",
+          time: "10:45–11:00am",
+          title: "Welcome · one line from first-timers",
+          note: "Two minutes on what this is and how the morning runs. Then everyone here for the first time says one line — who you are and what you are working on. Regulars skip it.",
         },
         {
-          time: "10:55–11:50am",
-          title: "Small tables",
-          note: "Three or four tables, one topic or one product each. Move between them whenever you like — you do not have to wait until a conversation dries up, and leaving needs no hello and no goodbye. That is how this format is meant to work.",
+          time: "11:00–11:20am",
+          title: "This week's topic",
+          note: "One topic a week and about fifteen minutes on it; anyone who wants to show something does it here too. Not a lecture — interrupt and ask.",
+        },
+        {
+          time: "11:20–11:55am",
+          title: "Q&A: two questions, properly",
+          note: "Questions are voted on in the group beforehand and the top two go up. A few people answer each, and it closes on one line everyone can take away. The ones we do not reach get written up and posted in the group afterwards.",
+        },
+        {
+          time: "11:55am–12:00pm",
+          title: "Who do you want to meet",
+          note: "A sheet goes round: who you are, who you want to meet, what about. Introductions get made afterwards.",
         },
         {
           time: "From 12:00pm",
           title: "Keep talking · lunch",
-          note: "Entirely optional. Stay on if you want to keep going, leave at twelve if you do not. Last time the hour after we wrapped was the best part.",
+          note: "Entirely optional. Stay on if you want to keep going, leave at twelve if you do not. The hour after we wrap is often the best part.",
         },
       ],
     },
@@ -2011,7 +2035,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "The Avenue, Chatswood · Thursdays, doors 10:30am",
+      location: "The Avenue, Chatswood · Thursdays, doors 10:30am, starts 10:45am",
       supportLink: "What this costs",
       sourceLink: "This site's source on GitHub",
     },
@@ -2225,7 +2249,7 @@ export const copy = {
       upcomingTitle: "{date}. Not yet.",
       upcomingLede: "On the day this page becomes \"who is here today\"; until then it is that session's introduction. Time, place and run of show are below; sign-up is at the bottom of the home page.",
       upcomingCta: "Sign up for this one",
-      upcomingDescription: "Vibe Thursday {date}: Chatswood, Sydney. Doors 10:30am and straight in, done by 12:00pm, free. This one has not happened yet; here is where to sign up.",
+      upcomingDescription: "Vibe Thursday {date}: Chatswood, Sydney. Doors 10:30am, starts 10:45am, done by 12:00pm, free. This one has not happened yet; here is where to sign up.",
     },
 
     works: {
@@ -2446,6 +2470,7 @@ export const copy = {
 
     go: {
       meta: { title: "This week · Vibe Thursday" },
+      footerLink: "This week",
       eyebrow: "§ This week",
       titleBefore: "See you Thursday.",
       titleDay: "See you today.",

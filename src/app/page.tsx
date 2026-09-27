@@ -215,6 +215,12 @@ export default async function Page({ searchParams }: PageProps) {
                 </Link>
               )}
 
+              {/* The one link the group is given. Signing up, ordering a drink,
+                  the member card and feedback all hang off it, by the day. */}
+              <Link className="body-sm hl" href={langHref("/go", lang)}>
+                {c.hero.goLink}
+              </Link>
+
               <p className="body-sm" style={{ color: "var(--fg3)" }}>
                 {c.hero.note}
               </p>
