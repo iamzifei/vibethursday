@@ -54,7 +54,7 @@ test("the private pages are still blocked, in every language", () => {
   const disallow = robots.match(/disallow:\s*\[([^\]]*)\]/)?.[1] ?? "";
   const rules = [...disallow.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
 
-  for (const page of ["/admin", "/me", "/badge", "/checkin", "/feedback"]) {
+  for (const page of ["/admin", "/me", "/badge", "/checkin", "/feedback", "/order", "/go"]) {
     for (const url of [page, `${page}?lang=en`, `${page}/`]) {
       assert.ok(rules.some((rule) => blocks(rule, url)), `${url} is not blocked`);
     }

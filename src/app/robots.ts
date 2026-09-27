@@ -35,6 +35,10 @@ export default function robots(): MetadataRoute.Robots {
         "/badge$", "/badge?", "/badge/",
         "/checkin$", "/checkin?", "/checkin/",
         "/feedback$", "/feedback?", "/feedback/",
+        // `/order` carries a session code; `/go` changes every day and shows
+        // the visitor their own order and signup, so neither belongs in an index.
+        "/order$", "/order?", "/order/",
+        "/go$", "/go?", "/go/",
         "/api/",
       ],
     },

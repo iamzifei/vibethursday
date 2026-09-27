@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
 import { FeedbackDesk } from "@/components/FeedbackDesk";
+import { OrderDesk } from "@/components/OrderDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
@@ -13,6 +14,7 @@ import {
   listAllMembers,
   listCheckins,
   listFeedback,
+  listOrders,
   listRecentAnswers,
   listRecentDecks,
   listRoster,
@@ -20,6 +22,7 @@ import {
   listWharfQuestions,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
+import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -70,7 +73,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // the afternoon is when the organiser fixes up who was there this morning.
   const desk = focusSession().date;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback] =
+  // Same session as the check-in desk, not `nextThursdays(1)[0]`: that one
+  // rolls to next week at noon on the day, and the afternoon is exactly when a
+  // duplicate or a no-show gets cleaned off this morning's sheet.
+  const orderSession = desk;
+
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -84,6 +92,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // are both derived from this one array, so the totals and the sentences
       // under them cannot disagree about what was said.
       listFeedback(),
+      listOrders(orderSession),
     ]);
 
   // Whatever host this page was actually opened on, so a code scanned off a
@@ -105,6 +114,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const feedbackSession = sessionForFeedback(sydneyToday().toISOString().slice(0, 10));
   const feedbackUrl = `${origin}/feedback?s=${feedbackSession}&k=${feedbackCode(feedbackSession)}`;
   const feedbackQr = await QRCode.toString(feedbackUrl, {
+    type: "svg",
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#0a0b0d", light: "#ffffff" },
+  });
+
+  const orderUrl = `${origin}/order?s=${orderSession}&k=${orderCode(orderSession)}`;
+  const orderQr = await QRCode.toString(orderUrl, {
     type: "svg",
     margin: 1,
     errorCorrectionLevel: "M",
@@ -287,6 +304,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
         qrSvg={deskQr}
         roster={buildRoster(desk, deskRoster, deskCheckins)}
         checkins={deskCheckins}
+      />
+
+      {/* ── Drinks ───────────────────────────────────────────────────
+          The sheet the café asked for: every line has a name, so payment is
+          taken by name and nobody walks off with the wrong cup. */}
+      <OrderDesk
+        session={orderSession}
+        isOpen={canOrder(orderSession, sydneyToday().toISOString().slice(0, 10))}
+        url={orderUrl}
+        qrSvg={orderQr}
+        orders={orders}
+        sheet={barSheet(orders)}
       />
 
       {/* ── Feedback ─────────────────────────────────────────────────

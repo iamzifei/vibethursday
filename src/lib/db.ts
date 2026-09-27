@@ -424,6 +424,34 @@ export function ensureSchema(): Promise<void> {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS feedback_session_idx ON feedback (session)
     `);
+
+    // One drink pre-ordered for one session (`/order`, rules in `order.ts`).
+    //
+    // `item_label` and `price_cents` are a copy of the menu at the moment of
+    // ordering, not a lookup: the menu is replaced wholesale when the venue
+    // changes, and an old order must still say what was ordered and what it
+    // cost. Not tied to `signups`: the person at the counter is whoever typed
+    // the name, and a drink needs no account.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS drink_orders (
+        id          bigserial PRIMARY KEY,
+        session     date NOT NULL,
+        name        text NOT NULL,
+        wechat      text,
+        item_id     text NOT NULL,
+        item_label  text NOT NULL,
+        size        text,
+        price_cents integer NOT NULL,
+        note        text,
+        lang        text,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS drink_orders_session_idx ON drink_orders (session)
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -2099,4 +2127,115 @@ export async function listFeedback(session?: string): Promise<FeedbackRecord[]> 
   );
 
   return result.rows;
+}
+
+export type OrderInput = {
+  /** The row this phone already owns, from its signed cookie. Null for a new order. */
+  id: string | null;
+  session: string;
+  name: string;
+  wechat: string | null;
+  itemId: string;
+  itemLabel: string;
+  size: string | null;
+  priceCents: number;
+  note: string | null;
+  lang: string;
+};
+
+/**
+ * Saves a drink order and returns its id.
+ *
+ * With an id, the same phone is changing its mind: the row is updated in
+ * place, so ordering twice leaves one line on the sheet rather than two. The
+ * update is also bound to the session, so a cookie from last week cannot
+ * rewrite last week's order from this week's page — it falls through to an
+ * insert instead.
+ */
+export async function saveOrder(input: OrderInput): Promise<string> {
+  await ensureSchema();
+
+  const values = [
+    input.session,
+    input.name,
+    input.wechat,
+    input.itemId,
+    input.itemLabel,
+    input.size,
+    input.priceCents,
+    input.note,
+    input.lang,
+  ];
+
+  if (input.id) {
+    const updated = await getPool().query<{ id: string }>(
+      `UPDATE drink_orders
+          SET name = $2, wechat = $3, item_id = $4, item_label = $5, size = $6,
+              price_cents = $7, note = $8, lang = $9, updated_at = now()
+        WHERE id = $10::bigint AND session = $1::date
+        RETURNING id::text AS id`,
+      [...values, input.id],
+    );
+
+    if (updated.rows[0]) return updated.rows[0].id;
+  }
+
+  const inserted = await getPool().query<{ id: string }>(
+    `INSERT INTO drink_orders (session, name, wechat, item_id, item_label, size, price_cents, note, lang)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING id::text AS id`,
+    values,
+  );
+
+  return inserted.rows[0].id;
+}
+
+export type OrderRecord = {
+  id: string;
+  session: string;
+  name: string;
+  wechat: string | null;
+  item_id: string;
+  label: string;
+  size: string | null;
+  cents: number;
+  note: string | null;
+  /** Sydney date and time of the last change, for the organiser's table. */
+  updated_at: string;
+};
+
+const ORDER_COLUMNS = `
+  id::text AS id,
+  to_char(session, 'YYYY-MM-DD') AS session,
+  name, wechat, item_id, item_label AS label, size, price_cents AS cents, note,
+  to_char(updated_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD HH24:MI') AS updated_at`;
+
+/** Every order for one session, oldest first — the order they came in. */
+export async function listOrders(session: string): Promise<OrderRecord[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<OrderRecord>(
+    `SELECT ${ORDER_COLUMNS} FROM drink_orders WHERE session = $1::date ORDER BY created_at, id`,
+    [session],
+  );
+
+  return result.rows;
+}
+
+/** One order, only if it belongs to `session`. */
+export async function getOrder(id: string, session: string): Promise<OrderRecord | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<OrderRecord>(
+    `SELECT ${ORDER_COLUMNS} FROM drink_orders WHERE id = $1::bigint AND session = $2::date`,
+    [id, session],
+  );
+
+  return result.rows[0] ?? null;
+}
+
+/** The organiser removing a line: a duplicate, a test, or somebody who is not coming. */
+export async function deleteOrder(id: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`DELETE FROM drink_orders WHERE id = $1::bigint`, [id]);
 }
