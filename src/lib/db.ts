@@ -861,7 +861,9 @@ export async function getMemberById(id: string): Promise<Member | null> {
 /**
  * Finds the signup behind a claim attempt, and creates the draft card.
  *
- * The match is name plus one contact method, both case-insensitive. This is a
+ * The match is name plus one contact method, both case-insensitive and blind
+ * to whitespace — "Alex 0101" and "Alex0101" are the same person
+ * typing on two different days, not two people. This is a
  * soft check on purpose: there is no email sender in this project, so a
  * one-time link would mean standing up mail infrastructure first, and the
  * worst case here is that someone who already knows both your name and your
@@ -880,8 +882,16 @@ export async function claimMember(name: string, contact: string): Promise<string
   const found = await pool.query<{ id: string; name: string; building: string | null; topic: string | null }>(
     `SELECT id::text AS id, name, building, topic
        FROM signups
-      WHERE lower(name) = lower($1)
-        AND (lower(email) = lower($2) OR lower(wechat) = lower($2))
+      WHERE regexp_replace(lower(name), '[[:space:]　]+', '', 'g')
+              = regexp_replace(lower($1), '[[:space:]　]+', '', 'g')
+        AND (regexp_replace(lower(email), '[[:space:]　]+', '', 'g')
+               = regexp_replace(lower($2), '[[:space:]　]+', '', 'g')
+          OR regexp_replace(lower(wechat), '[[:space:]　]+', '', 'g')
+               = regexp_replace(lower($2), '[[:space:]　]+', '', 'g'))
+      -- Older duplicate rows can match the same person. Prefer the one that
+      -- already has a card, so a claim lands on the card they published rather
+      -- than opening a second, empty one.
+      ORDER BY EXISTS (SELECT 1 FROM members m WHERE m.signup_id = signups.id) DESC, id
       LIMIT 1`,
     [name, contact],
   );

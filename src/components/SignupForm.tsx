@@ -4,6 +4,14 @@ import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore }
 import { Turnstile } from "@/components/Turnstile";
 import type { Copy, Lang } from "@/lib/content";
 import { clearDraft, DRAFT_DEBOUNCE_MS, readDraft, writeDraft } from "@/lib/draft";
+import {
+  notifyProfile,
+  PROFILE_KEY,
+  profileSnapshot,
+  subscribeProfile,
+  type SavedProfile,
+} from "@/lib/saved-profile";
+import { looksLikeWechatId } from "@/lib/wechat-id";
 
 type SessionOption = { value: string; label: string };
 
@@ -17,13 +25,12 @@ type Props = {
 
 type Status = "idle" | "sending" | "done" | "error";
 
-/** What we remember locally so a returning attendee only picks a session. */
-type SavedProfile = { name: string; email: string; wechat: string; building: string };
-
-const PROFILE_KEY = "vt.profile";
+/** What the success card repeats back: the session, and the values on record. */
+type Receipt = { name: string; email: string; wechat: string; session: string | null };
 
 /**
- * Unsent form contents, kept separately from the saved profile above.
+ * Unsent form contents, kept separately from the saved profile
+ * (see `@/lib/saved-profile`).
  *
  * The profile is written only after the server accepts a signup; this is the
  * half-filled state before that, so scrolling away to read the FAQ or opening
@@ -43,88 +50,13 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  */
 const EXTRA_FIELDS = ["source", "aiSpend"];
 
-/**
- * Reads the profile left by this browser's last successful signup.
- *
- * Deliberately localStorage and not an account: this form has no login, no
- * password and no payment behind it, and only a third of signups even leave an
- * email, so email is not a usable identity here. Keeping it on the device
- * means a returning regular taps twice, and nobody can look up anyone else's
- * details by guessing a WeChat ID.
- */
-function parseProfile(raw: string | null): SavedProfile | null {
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<SavedProfile>;
-    if (!parsed.name || (!parsed.wechat && !parsed.email)) return null;
-    return {
-      name: parsed.name,
-      email: parsed.email ?? "",
-      wechat: parsed.wechat ?? "",
-      building: parsed.building ?? "",
-    };
-  } catch {
-    return null;
-  }
-}
-
-/*
- * The saved profile, exposed as an external store.
- *
- * localStorage genuinely is external state, so `useSyncExternalStore` is the
- * tool for it rather than "read it in an effect and call setState" — that
- * version worked but cost an extra render on every mount and tripped the
- * set-state-in-effect rule. React also handles the hydration half correctly
- * here: `getServerSnapshot` is used for the server render and the first client
- * pass, so the markup matches and nothing is thrown away.
- *
- * The parsed value has to be cached, because `getSnapshot` returning a fresh
- * object every call makes React re-render forever.
- */
-let cachedRaw: string | null | undefined;
-let cachedProfile: SavedProfile | null = null;
-
-function profileSnapshot(): SavedProfile | null {
-  let raw: string | null = null;
-
-  try {
-    raw = window.localStorage.getItem(PROFILE_KEY);
-  } catch {
-    // Private mode and locked-down browsers throw on access rather than
-    // returning null; a returning visitor just sees the full form.
-    raw = null;
-  }
-
-  if (raw !== cachedRaw) {
-    cachedRaw = raw;
-    cachedProfile = parseProfile(raw);
-  }
-
-  return cachedProfile;
-}
-
-const profileListeners = new Set<() => void>();
-
-function subscribeProfile(onChange: () => void): () => void {
-  profileListeners.add(onChange);
-  // `storage` only fires in *other* tabs, which is exactly the case an in-page
-  // write cannot cover; same-tab writes call notifyProfile() directly.
-  window.addEventListener("storage", onChange);
-
-  return () => {
-    profileListeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function notifyProfile(): void {
-  for (const listener of profileListeners) listener();
-}
-
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  // The WeChat value the nickname warning was last shown for. Submitting the
+  // same value again goes through: the check is advice, never a gate.
+  const [wechatWarnedFor, setWechatWarnedFor] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -263,6 +195,17 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
       return;
     }
 
+    // Not for a returning visitor: their ID is already on record, and the
+    // compact form gives them no field to correct it in anyway.
+    if (!returning && wechat && !looksLikeWechatId(wechat) && wechatWarnedFor !== wechat) {
+      setWechatWarnedFor(wechat);
+      setStatus("error");
+      setMessage(copy.errorWechatId);
+      const wechatField = form.elements.namedItem("wechat");
+      if (wechatField instanceof HTMLInputElement) wechatField.focus();
+      return;
+    }
+
     // The one required choice. Enforced here and not on the server: see the
     // PURPOSES note in the signup route. Not asked of someone who picked "no
     // morning works": the answer is stored against a session, and they have none.
@@ -354,6 +297,13 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
       // on a shared device.
       clearDraft(DRAFT_KEY);
 
+      const sessionValue = String(data.get("firstSession") ?? "");
+      setReceipt({
+        name,
+        email,
+        wechat,
+        session: sessions.find((option) => option.value === sessionValue)?.label ?? null,
+      });
       setStatus("done");
       form.reset();
     } catch {
@@ -366,7 +316,41 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey }: Props) {
     return (
       <div className="card card--accent stack-4" role="status">
         <h3 className="h3">{copy.successTitle}</h3>
-        <p>{copy.successBody}</p>
+        <p>
+          {receipt?.session ? (
+            <>
+              {copy.successSession}
+              <strong>{receipt.session}</strong>
+            </>
+          ) : (
+            copy.successNoSession
+          )}
+        </p>
+        <p>{receipt?.email ? copy.successBody : copy.successBodyNoEmail}</p>
+
+        {/* Repeated back verbatim, because claiming a card matches these as
+            written and people were retyping them from memory and missing. */}
+        {receipt && (
+          <div className="stack-2">
+            <p className="body-sm">{copy.successRecap}</p>
+            <ul className="body-sm" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {[
+                [copy.successRecapName, receipt.name],
+                [copy.successRecapWechat, receipt.wechat],
+                [copy.successRecapEmail, receipt.email],
+              ]
+                .filter(([, value]) => value)
+                .map(([label, value]) => (
+                  <li key={label}>
+                    {label}
+                    {lang === "en" ? ": " : "："}
+                    <strong>{value}</strong>
+                  </li>
+                ))}
+            </ul>
+            <p className="body-sm" style={{ opacity: 0.85 }}>{copy.successRecapHint}</p>
+          </div>
+        )}
 
         {/* The one moment where claiming a card is not a chore: the signup it
             needs was created seconds ago, and the details are still in mind. */}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import type { Copy } from "@/lib/content";
+import { profileSnapshot, subscribeProfile } from "@/lib/saved-profile";
 
 type Props = {
   copy: Copy["claim"];
@@ -16,6 +17,14 @@ export function ClaimForm({ copy, nextHref }: Props) {
   const [message, setMessage] = useState<string | null>(null);
 
   const uid = useId();
+
+  // The details this device signed up with. Claiming matches name and contact
+  // exactly, and retyping them from memory is where people were failing — a
+  // nickname instead of the ID, or a note that had been typed after it.
+  // Null on the server and during hydration; see saved-profile for why this is
+  // an external store.
+  const profile = useSyncExternalStore(subscribeProfile, profileSnapshot, () => null);
+  const prefillContact = profile ? profile.wechat || profile.email : "";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,10 +79,12 @@ export function ClaimForm({ copy, nextHref }: Props) {
           <input
             className="field"
             id={`${uid}-name`}
+            key={profile ? "prefilled" : "empty"}
             name="name"
             type="text"
             required
             autoComplete="name"
+            defaultValue={profile?.name ?? ""}
             placeholder={copy.namePlaceholder}
           />
         </div>
@@ -85,16 +96,20 @@ export function ClaimForm({ copy, nextHref }: Props) {
           <input
             className="field"
             id={`${uid}-contact`}
+            key={profile ? "prefilled" : "empty"}
             name="contact"
             type="text"
             required
             autoComplete="off"
+            defaultValue={prefillContact}
             autoCapitalize="none"
             spellCheck={false}
             placeholder={copy.contactPlaceholder}
           />
         </div>
       </div>
+
+      {profile && <p className="body-sm">{copy.prefilled}</p>}
 
       <p className="privacy-note">{copy.privacy}</p>
 
