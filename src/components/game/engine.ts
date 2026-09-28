@@ -32,7 +32,7 @@ import {
   type Point,
   type StoryNpcId,
 } from "@/lib/game/world";
-import { PETS, isPhrase, type Dir, type Emote, type Look, type PeerView } from "@/lib/game/protocol";
+import { PETS, isPhrase, type Dir, type Emote, type Look, type PeerView, type RushView } from "@/lib/game/protocol";
 import { iconCanvas, type IconName } from "./icons";
 import {
   CHAR_H,
@@ -111,6 +111,7 @@ export type Locate =
   | { kind: "member"; exclude: string[] }
   | { kind: "stall"; exclude: string[] }
   | { kind: "shard"; exclude: string[] }
+  | { kind: "rush" }
   | { kind: "photo"; exclude: string[] }
   | { kind: "critter"; id: CritterId }
   | { kind: "walker" };
@@ -132,6 +133,8 @@ export type EngineEvents = {
   /** Where the player is, for the network. Throttled by the caller. */
   onMove: (map: MapId, x: number, y: number, dir: Dir) => void;
   onTooFar: () => void;
+  /** You stepped next to the coffee bean everyone is racing for. The server decides who got it. */
+  onRush?: (id: string) => void;
 };
 
 type Actor = {
@@ -207,6 +210,9 @@ export class Engine {
   private pendingInteract: Interaction | null = null;
   private prompt: Interaction | null = null;
   private peers = new Map<string, Peer>();
+  /** The bean on the map right now (from the room), and the last one we asked for. */
+  private rush: RushView | null = null;
+  private rushAsked: string | null = null;
   private collectedShards: Set<string>;
   private visited: Set<string>;
   private emote: { icon: IconName; until: number } | null = null;
@@ -649,6 +655,9 @@ export class Engine {
         case "walker":
           points = list.filter((e) => e.kind === "walker").map(posOf);
           break;
+        case "rush":
+          if (this.rush && this.rush.map === map) points = [{ x: this.rush.x, y: this.rush.y }];
+          break;
         case "shard":
           points = SHARDS.filter((sh) => sh.map === map && !query.exclude.includes(sh.id)).map((sh) =>
             this.placeGeo(map, sh.lat, sh.lon),
@@ -727,6 +736,11 @@ export class Engine {
     ctx.font = `600 ${Math.round(fs * 0.8)}px ui-monospace, "SF Mono", Menlo, monospace`;
     ctx.fillText("Vibe Thursday · /play", out.width - band * 0.4, out.height - band / 2);
     return out.toDataURL("image/jpeg", 0.88);
+  }
+
+  /** The room's current bean, or null. */
+  setRush(rush: RushView | null) {
+    this.rush = rush;
   }
 
   setPeers(peers: PeerView[], selfId: string | null) {
@@ -1010,6 +1024,13 @@ export class Engine {
       } else if (d > 7) this.near.delete(e.storyId);
     }
 
+    // Ask once per bean; the server says whether we were first.
+    const rush = this.rush;
+    if (rush && rush.map === this.map && this.rushAsked !== rush.id && Math.hypot(rush.x - x, rush.y - y) <= 1.5) {
+      this.rushAsked = rush.id;
+      this.events.onRush?.(rush.id);
+    }
+
     for (const shard of SHARDS) {
       if (shard.map !== this.map || this.collectedShards.has(shard.id)) continue;
       const at = this.placeGeo(shard.map, shard.lat, shard.lon);
@@ -1283,6 +1304,11 @@ export class Engine {
       });
     }
 
+    const bean = this.rush;
+    if (bean && bean.map === this.map && inView(bean.x, bean.y)) {
+      list.push({ y: bean.y, draw: () => this.drawBean(bean.x, bean.y) });
+    }
+
     for (const peer of this.peers.values()) {
       if (peer.map !== this.map || !inView(peer.dx, peer.dy)) continue;
       list.push({ y: peer.dy, draw: () => this.drawPeer(peer) });
@@ -1365,6 +1391,30 @@ export class Engine {
     }
   }
 
+  /** The coffee bean: a glowing, bobbing bean, drawn rather than a sprite. */
+  private drawBean(tx: number, ty: number) {
+    const ctx = this.ctx;
+    const u = this.unit;
+    const [sx, sy] = this.toScreen(tx, ty);
+    const cx = sx + (TILE * u) / 2;
+    const cy = sy + (TILE * u) / 2 + Math.sin(this.time * 4) * 1.5 * u;
+    const pulse = 0.55 + Math.sin(this.time * 6) * 0.25;
+    ctx.fillStyle = `rgba(255, 201, 61, ${pulse * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7 * u, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6b3e1f";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 4 * u, 3 * u, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2b170a";
+    ctx.lineWidth = Math.max(1, u * 0.8);
+    ctx.beginPath();
+    ctx.moveTo(cx - 2.5 * u, cy + 1.2 * u);
+    ctx.quadraticCurveTo(cx, cy - 0.6 * u, cx + 2.5 * u, cy - 1.2 * u);
+    ctx.stroke();
+  }
+
   private drawPeer(peer: Peer) {
     const ctx = this.ctx;
     const u = this.unit;
@@ -1412,7 +1462,9 @@ export class Engine {
     }
     for (const peer of this.peers.values()) {
       if (peer.map !== this.map || !inView(peer.dx, peer.dy)) continue;
-      const name = peer.name ?? (peer.guest ? this.labels.guestName(peer.guest[0], peer.guest[1]) : "");
+      const base = peer.name ?? (peer.guest ? this.labels.guestName(peer.guest[0], peer.guest[1]) : "");
+      // Last week's winner wears it all week, where everyone can see it.
+      const name = peer.crown ? `👑 ${base}` : base;
       const [sx, sy] = this.toScreen(peer.dx, peer.dy);
       tag(name, sx + (TILE * u) / 2, sy - (CHAR_H - TILE + 1) * u, Boolean(peer.slug));
     }

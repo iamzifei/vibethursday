@@ -510,6 +510,29 @@ export function ensureSchema(): Promise<void> {
         updated_at timestamptz NOT NULL DEFAULT now()
       )
     `);
+
+    // ── /play's weekly board (game/points.ts) ──────────────────────────
+    // One row per point earned, so the board is a sum and every total can be
+    // explained line by line. The unique key is the idempotency: a retried
+    // request inserts nothing. `week` is the Monday it counts towards; nothing
+    // is ever deleted — last week's rows are how last week's winner is known.
+    // Game-only by decision (James, 2026-09-28): nothing reads this outside /play.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS play_points (
+        id          bigserial PRIMARY KEY,
+        week        date NOT NULL,
+        player      text NOT NULL,
+        name        text,
+        slug        text,
+        guest       int[],
+        reason      text NOT NULL,
+        ref         text NOT NULL,
+        points      int NOT NULL,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (week, player, reason, ref)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS play_points_week_idx ON play_points (week)`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -2847,4 +2870,135 @@ export async function cancelSession(signupId: string, session: string): Promise<
       WHERE id = $1::bigint`,
     [signupId, session],
   );
+}
+
+
+/* =============================================================================
+   /play's weekly board
+============================================================================= */
+
+/** A point to write down: the room's `RoomAward` plus the week it counts for. */
+export type PlayAward = {
+  week: string;
+  player: string;
+  name: string | null;
+  slug: string | null;
+  guest: [number, number] | null;
+  reason: string;
+  ref: string;
+  points: number;
+};
+
+/** Writes awards; a repeat of one already written is skipped. Returns how many were new. */
+export async function awardPoints(awards: readonly PlayAward[]): Promise<number> {
+  if (awards.length === 0) return 0;
+  await ensureSchema();
+  let inserted = 0;
+  for (const award of awards) {
+    const result = await getPool().query(
+      `INSERT INTO play_points (week, player, name, slug, guest, reason, ref, points)
+       VALUES ($1::date, $2, $3, $4, $5::int[], $6, $7, $8)
+       ON CONFLICT (week, player, reason, ref) DO NOTHING`,
+      [award.week, award.player, award.name, award.slug, award.guest, award.reason, award.ref, award.points],
+    );
+    inserted += result.rowCount ?? 0;
+  }
+  return inserted;
+}
+
+/**
+ * A daily task, capped at `max` a day in the same statement that inserts it.
+ *
+ * ⚠️ The count and the insert are one statement but not serialised: two
+ * *different* tasks submitted at the same instant can both see "under the
+ * cap". Harmless while there are exactly `max` tasks a day (state.ts), since
+ * each is unique per day anyway. If that ever changes, take a per-player
+ * advisory lock here first.
+ */
+export async function awardDailyTask(award: PlayAward, day: string, max: number): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `INSERT INTO play_points (week, player, name, slug, guest, reason, ref, points)
+     SELECT $1::date, $2, $3, $4, $5::int[], 'daily', $6, $7
+      WHERE (SELECT count(*) FROM play_points
+              WHERE player = $2 AND reason = 'daily' AND ref LIKE $8 || ':%') < $9
+     ON CONFLICT (week, player, reason, ref) DO NOTHING`,
+    [award.week, award.player, award.name, award.slug, award.guest, award.ref, award.points, day, max],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Days this player has logged in on, newest first — enough for a streak. */
+export async function playLoginDays(player: string): Promise<string[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ ref: string }>(
+    `SELECT ref FROM play_points WHERE player = $1 AND reason = 'login' ORDER BY ref DESC LIMIT 60`,
+    [player],
+  );
+  return result.rows.map((row) => row.ref);
+}
+
+export type BoardRow = {
+  player: string;
+  name: string | null;
+  slug: string | null;
+  guest: [number, number] | null;
+  points: number;
+  /** Points by reason, for "where my points came from". */
+  by: Record<string, number>;
+};
+
+/**
+ * Everyone with points this week, highest first; ties go to whoever got there
+ * first. The newest name for a player is used, so a card renamed mid-week
+ * shows its new name.
+ */
+export async function weeklyBoard(week: string): Promise<BoardRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<BoardRow & { points: string; reached: string }>(
+    `SELECT player,
+            -- A member's name only while their card would show on the wall
+            -- right now: hidden or unpublished mid-week, they drop to "a
+            -- member" at once rather than at Monday's reset (2026-09-28 review).
+            CASE WHEN player LIKE 'm:%' AND NOT EXISTS (
+                   SELECT 1 FROM members mm
+                    WHERE 'm:' || mm.id::text = p.player AND mm.published_at IS NOT NULL AND NOT mm.hidden)
+                 THEN NULL
+                 ELSE (array_agg(name ORDER BY created_at DESC))[1] END AS name,
+            CASE WHEN player LIKE 'm:%' AND NOT EXISTS (
+                   SELECT 1 FROM members mm
+                    WHERE 'm:' || mm.id::text = p.player AND mm.published_at IS NOT NULL AND NOT mm.hidden)
+                 THEN NULL
+                 ELSE (array_agg(slug ORDER BY created_at DESC))[1] END AS slug,
+            -- A subquery, not array_agg(...)[1]: aggregating int[] makes a
+            -- two-dimensional array, and [1] of that is NULL.
+            (SELECT q.guest FROM play_points q
+              WHERE q.week = $1::date AND q.player = p.player
+              ORDER BY q.created_at DESC LIMIT 1) AS guest,
+            sum(points)::text AS points,
+            (SELECT jsonb_object_agg(reason, total) FROM (
+               SELECT reason, sum(points) AS total FROM play_points q
+                WHERE q.week = $1::date AND q.player = p.player GROUP BY reason) AS by_reason) AS by,
+            max(created_at)::text AS reached
+       FROM play_points p
+      WHERE week = $1::date
+      GROUP BY player
+      ORDER BY sum(points) DESC, max(created_at) ASC`,
+    [week],
+  );
+  return result.rows.map((row) => ({ ...row, points: Number(row.points), by: row.by ?? {} }));
+}
+
+/** Whether a member was checked in, on the wall, at a session in this week (Mon–Sun). */
+export async function memberAttendedWeek(memberId: string, week: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ session: string }>(
+    `SELECT to_char(c.session, 'YYYY-MM-DD') AS session
+       FROM members m JOIN checkins c ON c.signup_id = m.signup_id
+      WHERE m.id = $1::bigint AND c.on_wall
+        AND c.session >= $2::date AND c.session < $2::date + 7
+      ORDER BY c.session LIMIT 1`,
+    [memberId, week],
+  );
+  return result.rows[0]?.session ?? null;
 }

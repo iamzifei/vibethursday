@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import harbourMap from "@/lib/game/maps/harbour.json";
 import chatswoodMap from "@/lib/game/maps/chatswood.json";
 import { fill, pickMeme, type GameCopy } from "@/lib/game/copy";
-import { DEFAULT_LOOK, EMOTES, LOOK_RANGES, PETS, PHRASES, isPhrase, type Dir, type Emote, type Look, type PeerView } from "@/lib/game/protocol";
+import { DEFAULT_LOOK, EMOTES, LOOK_RANGES, PETS, PHRASES, isPhrase, type Dir, type Emote, type Look, type PeerView, type RushView } from "@/lib/game/protocol";
+import { POINTS, isDoubleTime } from "@/lib/game/points";
 import {
   HATS,
   IDEAS,
@@ -37,7 +38,7 @@ import { LANG_PARAM } from "@/lib/lang";
 import { characterSprite, critterSprite, ferrySprite } from "./art";
 import { Engine, type Community, type Interaction, type Locate } from "./engine";
 import { Music, type Track } from "./music";
-import { Net, type NetStatus } from "./net";
+import { Net, type Board, type NetStatus } from "./net";
 import { TrainRide } from "./TrainRide";
 import { Icon } from "./Icon";
 import type { IconName } from "./icons";
@@ -81,7 +82,8 @@ type Overlay =
   | { type: "intro" }
   | { type: "guide" }
   | { type: "menu" }
-  | { type: "help" };
+  | { type: "help" }
+  | { type: "ranking" };
 
 /** What the quest guide is following: the story, or one side quest. */
 type Tracked = "main" | SideId;
@@ -107,6 +109,13 @@ function spawnSave(): SaveState {
  * keeps the save, runs the story, and draws the HUD and every panel on top of
  * the canvas. The canvas is never asked to render text longer than a name.
  */
+/** Days until the board resets (Monday 00:00, Sydney). */
+function daysToMonday(): number {
+  const day = new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Sydney", weekday: "short" }).format(new Date());
+  const index = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(day);
+  return index < 0 ? 7 : 7 - index;
+}
+
 export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
   const [phase, setPhase] = useState<"title" | "create" | "play">("title");
   const [save, setSave] = useState<SaveState>(spawnSave);
@@ -129,6 +138,15 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
   const lastWaveAt = useRef(0);
   const highFived = useRef(new Map<string, number>());
   const greetedWalkers = useRef(new Set<string>());
+
+  // The weekly board and the coffee-bean rush (2026-09-28). All of it comes
+  // from the server; nothing here decides who scored.
+  const [rush, setRush] = useState<RushView | null>(null);
+  const [nextRushIn, setNextRushIn] = useState<number | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const lastRank = useRef<number | null>(null);
+  const seenEvents = useRef(new Set<string>());
+  const rushSeen = useRef<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -161,6 +179,10 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
     (kind: DailyKind, landmark?: string) => {
       setSave((prev) => {
         const next = bumpDaily(prev, kind, today, counts, landmark);
+        // A task just finished: tell the server, which pays it on the weekly
+        // board (capped there). Idempotent per task per day, so a double
+        // invocation of this updater costs nothing.
+        if (next.stars > prev.stars) queueMicrotask(() => void netRef.current?.daily(kind));
         return next;
       });
     },
@@ -172,6 +194,16 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
     setToasts((list) => [...list.slice(-2), { id, text }]);
     setTimeout(() => setToasts((list) => list.filter((item) => item.id !== id)), 3200);
   }, []);
+
+  /** Fetches the board, and says so when this player has climbed. */
+  const refreshBoard = useCallback(async () => {
+    const next = await netRef.current?.board();
+    if (!next) return;
+    setBoard(next);
+    const rank = next.me?.rank ?? null;
+    if (rank !== null && lastRank.current !== null && rank < lastRank.current) toast(fill(copy.rank.rankUp, { rank }));
+    lastRank.current = rank;
+  }, [copy, toast]);
 
   const update = useCallback((change: (save: SaveState) => SaveState) => {
     setSave((prev) => change(prev));
@@ -356,6 +388,16 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
         onNear: (id) => engine.say(id, copy.barks[id] && Math.random() < 0.35 ? pickMeme(copy.memes, new Date()) : copy.barks[id]),
         onMove: (map, x, y, dir) => netRef.current?.update(map, x, y, dir, saveRef.current.look),
         onTooFar: () => toast(copy.toast.tooFar),
+        onRush: (id) => {
+          void netRef.current?.claim(id).then((won) => {
+            const points = POINTS.rush * (isDoubleTime(new Date()) ? 2 : 1);
+            toast(won ? fill(copy.rush.won, { n: points }) : copy.rush.lost);
+            if (won) {
+              engineRef.current?.showEmote("party");
+              void refreshBoard();
+            }
+          });
+        },
       },
       {
         guestName: (animal, n) => fill(copy.guestName, { animal: copy.guestAnimals[animal] ?? "", n }),
@@ -380,7 +422,7 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
             if (Date.now() - (highFived.current.get(peer.id) ?? 0) < 15000) continue;
             highFived.current.set(peer.id, Date.now());
             const name = peerName(copy, peer);
-            toast(fill(copy.social.highFive, { name }));
+            // The toast now comes from the server's high-five event, with its points.
             engineRef.current?.showEmote("party");
             setSave((prev) => ({ ...addTo(prev, "friends", name), highFives: prev.highFives + 1 }));
           }
@@ -389,6 +431,41 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
       (next, seat) => {
         setStatus(next);
         if (seat) setMe({ name: seat.name, slug: seat.slug, guest: seat.guest });
+      },
+      (room) => {
+        engine.setRush(room.rush);
+        setRush(room.rush);
+        if (room.rush && rushSeen.current !== room.rush.id) {
+          rushSeen.current = room.rush.id;
+          toast(copy.rush.appeared);
+        }
+        // Server clock, so a phone with the wrong time still counts down right.
+        setNextRushIn(room.rush || !room.nextRushAt ? null : Math.max(0, room.nextRushAt - room.t));
+        const selfId = netRef.current?.seatId ?? null;
+        for (const event of room.events) {
+          // Keyed on the event itself, not a time watermark: two events in the
+          // same millisecond are both real.
+          const eventKey = event.type === "rush" ? `rush:${event.by}:${event.at}` : `hf:${event.a}:${event.b}:${event.at}`;
+          if (seenEvents.current.has(eventKey)) continue;
+          seenEvents.current.add(eventKey);
+          if (seenEvents.current.size > 200) seenEvents.current.clear();
+          if (event.type === "rush" && event.by !== selfId) {
+            const name = event.name ?? (event.guest ? fill(copy.guestName, { animal: copy.guestAnimals[event.guest[0]] ?? "", n: event.guest[1] }) : "");
+            toast(fill(copy.rush.taken, { name }));
+          }
+          if (event.type === "highfive" && (event.a === selfId || event.b === selfId)) {
+            const otherId = event.a === selfId ? event.b : event.a;
+            const other = peersRef.current.find((peer) => peer.id === otherId);
+            const points = POINTS.highFive * (isDoubleTime(new Date()) ? 2 : 1);
+            toast(fill(copy.rank.highFive, { name: other ? peerName(copy, other) : "", n: points }));
+            void refreshBoard();
+          }
+        }
+      },
+      (welcome) => {
+        toast(welcome.streak > 1 ? fill(copy.rank.welcomeStreak, { streak: welcome.streak, n: welcome.points }) : fill(copy.rank.welcome, { n: welcome.points }));
+        if (welcome.attended) setTimeout(() => toast(copy.rank.attended), 900);
+        void refreshBoard();
       },
     );
     netRef.current = net;
@@ -400,7 +477,7 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
       engineRef.current = null;
       netRef.current = null;
     };
-  }, [phase, community, copy, toast, daily]);
+  }, [phase, community, copy, toast, daily, refreshBoard]);
 
   useEffect(() => {
     engineRef.current?.setPaused(overlay !== null && overlay.type !== "emotes");
@@ -493,12 +570,12 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
           setSave((prev) => addTo(prev, "friends", name));
           if (peer.emote !== "wave" || Date.now() - (highFived.current.get(peer.id) ?? 0) < 15000) continue;
           highFived.current.set(peer.id, Date.now());
-          toast(fill(copy.social.highFive, { name }));
+          // The toast now comes from the server's high-five event, with its points.
           setSave((prev) => ({ ...prev, highFives: prev.highFives + 1 }));
         }
       }
     },
-    [copy, daily, toast],
+    [copy, daily],
   );
 
   /** A postcard: the current frame, framed, with where it was taken. */
@@ -1008,6 +1085,14 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
             {status === "online" ? fill(copy.hud.online, { n: peerCount + 1 }) : copy.hud.offline}
           </span>
           <div className="vq-hud__buttons">
+            <IconButton
+              label={copy.rank.button}
+              icon="trophy"
+              onClick={() => {
+                setOverlay({ type: "ranking" });
+                void refreshBoard();
+              }}
+            />
             <IconButton label={copy.hud.bag} icon="bag" onClick={() => setOverlay({ type: "bag" })} />
             <IconButton label={copy.hud.wardrobe} icon="shirt" onClick={() => setOverlay({ type: "wardrobe" })} />
             <IconButton label={copy.hud.emote} icon="smile" onClick={() => setOverlay(overlay?.type === "emotes" ? null : { type: "emotes" })} />
@@ -1030,6 +1115,27 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
       {where && (
         <div className="vq-place">
           <Icon name="pin" size={14} /> {where}
+        </div>
+      )}
+      {/* The bean everyone is racing for, or when the next one is due. */}
+      {!overlay && rush && (
+        <button
+          type="button"
+          className="vq-rush is-live"
+          onClick={() => {
+            const engine = engineRef.current;
+            const target = engine?.locate({ kind: "rush" });
+            if (!engine || !target) return;
+            engine.setObjective(target);
+            if (!engine.walkTo(target)) toast(copy.toast.tooFar);
+          }}
+        >
+          {copy.rush.chip} · {copy.rush.go} →{isDoubleTime(new Date()) ? ` · ${copy.rush.double}` : ""}
+        </button>
+      )}
+      {!overlay && !rush && nextRushIn !== null && status === "online" && (
+        <div className="vq-rush">
+          {nextRushIn < 60_000 ? copy.rush.soon : fill(copy.rush.next, { n: Math.round(nextRushIn / 60_000) })}
         </div>
       )}
       {banner && !overlay && (
@@ -1582,6 +1688,77 @@ export function SydneyQuest({ copy, lang, community, qr, site }: Props) {
               {copy.controls.title}
             </button>
           </div>
+        </Panel>
+      )}
+
+      {overlay?.type === "ranking" && (
+        <Panel title={copy.rank.title} onClose={() => setOverlay(null)} closeLabel={copy.hud.close}>
+          <p className="vq-fine">{copy.rank.lede}</p>
+          {!board ? (
+            <p>{copy.rank.loading}</p>
+          ) : (
+            <>
+              {board.me ? (
+                <p>
+                  <strong>{fill(copy.rank.yourRank, { rank: board.me.rank, points: board.me.points })}</strong>
+                  {" · "}
+                  {board.me.rank === 1 ? copy.rank.first : board.me.gap === 0 ? copy.rank.tied : fill(copy.rank.gap, { n: board.me.gap })}
+                </p>
+              ) : (
+                <p>{copy.rank.none}</p>
+              )}
+              {board.top.length === 0 ? (
+                <p className="vq-fine">{copy.rank.empty}</p>
+              ) : (
+                <ol className="vq-rank">
+                  {board.top.map((row) => (
+                    <li key={`${row.rank}-${row.name ?? row.guest?.join("-")}`} className={row.you ? "is-you" : undefined}>
+                      <span className="vq-rank__n">{row.rank}</span>
+                      <span className="vq-rank__name">
+                        {row.name ?? (row.guest ? fill(copy.guestName, { animal: copy.guestAnimals[row.guest[0]] ?? "", n: row.guest[1] }) : copy.rank.aMember)}
+                      </span>
+                      <span className="vq-rank__pts">{row.points}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <p className="vq-fine">
+                {fill(copy.rank.players, { n: board.players })}
+                {" · "}
+                {fill(copy.rank.resets, { n: daysToMonday() })}
+              </p>
+              {board.me && Object.keys(board.me.by).length > 0 && (
+                <>
+                  <h3 className="vq-h3">{copy.rank.from}</h3>
+                  <ul className="vq-notes">
+                    {Object.entries(board.me.by)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([reason, points]) => (
+                        <li key={reason} className="vq-fine">
+                          {copy.rank.reasons[reason as keyof GameCopy["rank"]["reasons"]] ?? reason} · {points}
+                        </li>
+                      ))}
+                  </ul>
+                </>
+              )}
+              {board.champion && (
+                <p className="vq-fine">
+                  👑{" "}
+                  {fill(copy.rank.champion, {
+                    name:
+                      board.champion.name ??
+                      (board.champion.guest ? fill(copy.guestName, { animal: copy.guestAnimals[board.champion.guest[0]] ?? "", n: board.champion.guest[1] }) : copy.rank.aMember),
+                    points: board.champion.points,
+                  })}
+                </p>
+              )}
+              {!me?.slug && (
+                <Link className="vq-fine" href={withLang("/claim", lang)} target="_blank">
+                  {copy.rank.claimHint} ↗
+                </Link>
+              )}
+            </>
+          )}
         </Panel>
       )}
 

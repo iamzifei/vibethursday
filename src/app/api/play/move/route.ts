@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseMove } from "@/lib/game/protocol";
+import { flushAwards } from "@/lib/game/ledger";
 import { leave, move } from "@/lib/game/room";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
   // 410 tells the client its seat is gone (a restart, or it went stale) and
   // it should join again.
   if (!move(update)) return NextResponse.json({ error: "gone" }, { status: 410 });
+
+  // A wave may just have become a high-five (room.ts); write it down.
+  await flushAwards();
 
   return new Response(null, { status: 204 });
 }

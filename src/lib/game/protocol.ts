@@ -111,7 +111,20 @@ export type PeerView = {
   emote: Emote | null;
   /** Server clock when the emote was sent, so it can fade on every screen. */
   emoteAt: number;
+  /** Last week's winner on the board wears a crown all this week. */
+  crown?: true;
 };
+
+/**
+ * Something everyone online should hear about: a bean taken, a high-five.
+ * Carries seat ids and display names only — never a key or a member id.
+ */
+export type RoomEvent =
+  | { type: "rush"; by: string; name: string | null; guest: [number, number] | null; at: number }
+  | { type: "highfive"; a: string; b: string; at: number };
+
+/** A bean on the map, as every screen sees it. */
+export type RushView = { id: string; map: string; x: number; y: number; until: number };
 
 /** Animals guests are named after. Localised by index in the game's copy. */
 export const GUEST_ANIMALS = 10;

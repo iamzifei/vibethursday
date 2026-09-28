@@ -4635,3 +4635,56 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .my-move { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .my-move .label { margin: 0; }
 .my-move .field { flex: 1 1 10rem; min-width: 0; }
+
+/* ── /play: the coffee-bean rush and the weekly board (2026-09-28) ─── */
+
+/* Sits just above the place label, so it never covers the controls. */
+.vq-rush {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(var(--space-4), env(safe-area-inset-bottom)) + 184px);
+  transform: translateX(-50%);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  background: rgba(10, 11, 13, 0.72);
+  font-size: var(--text-xs);
+  color: var(--fg2);
+  white-space: nowrap;
+  max-width: calc(100% - var(--space-8));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 0;
+  font-family: inherit;
+}
+
+/* A live bean is a button, and should look like the thing to do right now. */
+.vq-rush.is-live {
+  background: #ffc93d;
+  color: #0a0b0d;
+  font-weight: var(--weight-bold);
+  min-height: 36px;
+  cursor: pointer;
+  animation: vq-rush-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vq-rush-pulse {
+  50% { box-shadow: 0 0 0 6px rgba(255, 201, 61, 0.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vq-rush.is-live { animation: none; }
+}
+
+.vq-rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vq-rank li {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.vq-rank li.is-you { background: rgba(198, 255, 61, 0.14); outline: 1px solid rgba(198, 255, 61, 0.5); }
+.vq-rank__n { font-family: var(--font-mono); color: var(--fg3); }
+.vq-rank__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vq-rank__pts { font-family: var(--font-mono); font-weight: var(--weight-bold); }

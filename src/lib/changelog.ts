@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.7",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "像素游戏有了本周榜：抢咖啡豆（隔一两分钟在地图上冒出一颗，先到先得）、和人击掌、每天来、做完当天三件事都能加分，周四真的到场一次加一大笔；周四上午分数翻倍。每周一清零，上周第一名这周头上戴皇冠。分只在游戏里算，不上名片、不能换东西。",
+    link: { href: "/play", zh: "去抢咖啡豆 →", en: "Go grab a bean →" },
+    en: "The pixel game has a weekly board: grab the coffee bean (one appears every minute or two, first one there gets it), high-five people, show up each day and finish the day's three tasks — and being in the room on Thursday counts for a lot; Thursday morning is double points. It resets every Monday, and last week's winner wears a crown all week. Points only count in the game — not on cards, not for anything.",
+  },
+  {
     version: "4.6",
     date: "2026-09-28",
     kind: "minor",
