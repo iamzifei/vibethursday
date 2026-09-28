@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { claimMember } from "@/lib/db";
 import { cookieOptions, issueToken, MEMBER_COOKIE } from "@/lib/member-auth";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { text } from "@/lib/members";
 
 // Reads a cookie and writes to Postgres, so it must never be cached.
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
 
   const body = payload as Record<string, unknown>;
 
-  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
-  const remoteIp = forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+  // The proxy appends the real address last; see `callerIp` in rate-limit.ts.
+  const remoteIp = clientIp(request);
 
   const rate = checkRateLimit(`claim:${remoteIp}`);
 

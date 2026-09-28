@@ -16,7 +16,7 @@ import {
   readOrderToken,
   verifyOrderCode,
 } from "@/lib/order";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { callerIp, checkRateLimit } from "@/lib/rate-limit";
 import { formatSession, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
@@ -142,8 +142,8 @@ export default async function OrderPage({ searchParams }: PageProps) {
   let found: OrderRecord[] | null = null;
   let findLimited = false;
   if (params.find !== undefined) {
-    const forwardedFor = (await headers()).get("cf-connecting-ip") ?? (await headers()).get("x-forwarded-for");
-    const ip = forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+    const requestHeaders = await headers();
+    const ip = callerIp((name) => requestHeaders.get(name));
 
     if (checkRateLimit(`order-find:${ip}`, 30).allowed) {
       found = findByName(await listOrders(session), params.find);

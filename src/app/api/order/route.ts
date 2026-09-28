@@ -12,7 +12,7 @@ import {
   readOrderToken,
   verifyOrderCode,
 } from "@/lib/order";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { sydneyToday } from "@/lib/sessions";
 
@@ -72,8 +72,8 @@ export async function POST(request: Request) {
     return back({ err: "code" });
   }
 
-  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
-  const remoteIp = forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+  // The proxy appends the real address last; see `callerIp` in rate-limit.ts.
+  const remoteIp = clientIp(request);
 
   if (!checkRateLimit(`order:${remoteIp}`, ORDERS_PER_HOUR).allowed) {
     return back({ err: "rate" });

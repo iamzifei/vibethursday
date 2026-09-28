@@ -60,8 +60,33 @@ export function checkRateLimit(
  * them once, for the routes that did not limit at all until 2026-09-24.
  */
 export function clientIp(request: Request): string {
-  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
-  return forwardedFor?.split(",")[0]?.trim() || "unknown";
+  return callerIp((name) => request.headers.get(name));
+}
+
+/**
+ * The caller's address from whatever reads a header — a `Request`, or
+ * `headers()` in a server component.
+ *
+ * ★ The LAST entry of X-Forwarded-For, and nothing else. Measured on
+ * production 2026-09-28 (`/api/admin/ip-headers`): the hosting proxy appends
+ * the address it saw to X-Forwarded-For instead of replacing the header, and
+ * passes every other header through untouched. So the last entry is the only
+ * one the caller did not write. `cf-connecting-ip` and `x-real-ip` are not
+ * read at all — there is no CDN in front of this site, so both are whatever
+ * the caller put there. Until this change every limit keyed on the first
+ * entry, which let a script choose a fresh address for every request.
+ *
+ * ⚠️ This assumes exactly one proxy in front of the app. Put a CDN in front of
+ * it and the last entry becomes the CDN's address; that CDN's own client
+ * header would then be the one to read, and this has to change with it.
+ */
+export function callerIp(header: (name: string) => string | null): string {
+  const entries = (header("x-forwarded-for") ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return entries.at(-1) ?? "unknown";
 }
 
 /**

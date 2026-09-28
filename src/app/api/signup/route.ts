@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { publishCardForSignup, saveSignup } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
@@ -78,8 +78,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const forwardedFor = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for");
-  const remoteIp = forwardedFor?.split(",")[0]?.trim() ?? null;
+  // The proxy appends the real address last; see `callerIp` in rate-limit.ts.
+  const ip = clientIp(request);
+  const remoteIp = ip === "unknown" ? null : ip;
 
   // Rate limit first — it is the defence that still works when the challenge
   // does not, and it costs nothing to evaluate.
