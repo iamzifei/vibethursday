@@ -12,6 +12,7 @@ import {
   subscribeProfile,
   type SavedProfile,
 } from "@/lib/saved-profile";
+import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 
 type SessionOption = { value: string; label: string; full?: boolean };
@@ -359,6 +360,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           )}
         </p>
         <p>{receipt?.email ? copy.successBody : copy.successBodyNoEmail}</p>
+        <p>
+          <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.successMy}</a>
+        </p>
 
         {/* Repeated back verbatim, because claiming a card matches these as
             written and people were retyping them from memory and missing. */}

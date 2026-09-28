@@ -274,3 +274,15 @@ export function monogram(name: string): string {
   const initials = parts.slice(0, 2).map((part) => part[0]);
   return initials.join("").toUpperCase() || "?";
 }
+
+/**
+ * Whether the table badge may show a QR code and offer the shareable image.
+ *
+ * Only for a card the wall itself would show. The code points at
+ * /members/<slug>, which is a 404 for a draft or a hidden card — and on
+ * 2026-09-28 a draft's exported image went round the group and scanned to
+ * exactly that. A code that opens nothing is worse than no code.
+ */
+export function badgeShowsCode(member: { published: boolean; hidden: boolean }): boolean {
+  return member.published && !member.hidden;
+}

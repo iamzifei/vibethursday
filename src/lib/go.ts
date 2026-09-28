@@ -47,6 +47,7 @@ export type GoItem =
   | "signup"
   | "order"
   | "myOrder"
+  | "mySignup"
   | "card"
   | "members"
   | "wharf"
@@ -77,7 +78,9 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
   const drink: GoItem = state.hasOrder ? "myOrder" : "order";
 
   if (phase === "before") {
-    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), drink, "card", "members", "wharf"];
+    // "mySignup" always follows: most people here arrived from the group asking
+    // whether their signup went through, or needing to move it (2026-09-28).
+    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), "mySignup", drink, "card", "members", "wharf"];
   }
 
   if (phase === "day") {

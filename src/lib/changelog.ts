@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.4",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "报了名之后自己能查、能改：打开 vibethursday.com/my，填名字和微信号，就能看到报了哪几场、是不是在候补，也能改到别的周四或者取消，把位子让给候补的人。还没发布的名片不再给出扫不开的二维码；扫到不存在的页面，会告诉你可能的原因和下一步。",
+    link: { href: "/my", zh: "查我的报名 →", en: "Check my signup →" },
+    en: "You can now check and change your own signup: open vibethursday.com/my, enter your name and WeChat ID, and see which Thursdays you are down for and whether you are on a waitlist — then move to another Thursday, or cancel and free your place for someone waiting. Unpublished cards no longer hand out a QR code that opens nothing, and a page that does not exist now says why that might be and where to go instead.",
+  },
+  {
     version: "4.3",
     date: "2026-09-28",
     kind: "minor",

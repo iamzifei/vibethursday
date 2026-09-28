@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { bookedOnAnother, sameSignupName } from "./capacity.ts";
+import { admission, bookedOnAnother, sameSignupName } from "./capacity.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
@@ -2385,6 +2385,192 @@ export async function promoteFromWaitlist(signupId: string, session: string): Pr
   await getPool().query(
     `UPDATE signups
         SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
+            waitlist = array_remove(waitlist, $2::date),
+            updated_at = now()
+      WHERE id = $1::bigint`,
+    [signupId, session],
+  );
+}
+
+/** One person's own signup, as /my shows it back to them. */
+export type MySignup = {
+  id: string;
+  name: string;
+  sessions: string[];
+  /** Waitlisted sessions, each with this person's place in the queue. */
+  waitlist: { session: string; position: number }[];
+};
+
+/**
+ * Finds the signup for a WeChat ID, but only when the name matches as well.
+ *
+ * The same pair — and the same name rule, `sameSignupName` — that decides
+ * whether a signup may rewrite a profile, so /my is no easier to get into than
+ * editing a card. Returns null for both "no such WeChat ID" and "wrong name":
+ * the page says the same thing either way.
+ */
+export async function findMySignup(name: string, wechat: string): Promise<MySignup | null> {
+  await ensureSchema();
+
+  const found = await getPool().query<{ id: string; name: string }>(
+    `SELECT id::text AS id, name FROM signups WHERE lower(wechat) = lower($1) ORDER BY id LIMIT 1`,
+    [wechat],
+  );
+  const row = found.rows[0];
+  if (!row || !sameSignupName(name, row.name)) return null;
+
+  return getMySignup(row.id);
+}
+
+/**
+ * A signup by id, with its place in each waitlist.
+ *
+ * Place is by signup age, oldest first — the order /admin lists the waitlist
+ * in, so "you are third" here is third on the organiser's screen too.
+ */
+export async function getMySignup(id: string): Promise<MySignup | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ id: string; name: string; sessions: string[]; waitlist: { session: string; position: number }[] | null }>(
+    `SELECT s.id::text AS id, s.name,
+            ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(s.sessions) AS d ORDER BY d) AS sessions,
+            (SELECT json_agg(json_build_object(
+                      'session', to_char(w, 'YYYY-MM-DD'),
+                      'position', (SELECT count(*) FROM signups o
+                                    WHERE w = ANY(o.waitlist)
+                                      AND (o.created_at, o.id) <= (s.created_at, s.id)))
+                    ORDER BY w)
+               FROM unnest(s.waitlist) AS w) AS waitlist
+       FROM signups s
+      WHERE s.id = $1::bigint`,
+    [id],
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return { id: row.id, name: row.name, sessions: row.sessions, waitlist: (row.waitlist ?? []).map((w) => ({ session: w.session, position: Number(w.position) })) };
+}
+
+/**
+ * Takes one session off a signup, booked or waitlisted.
+ *
+ * One statement, so there is no read-then-write for two taps to race. Nobody
+ * is moved up from the waitlist automatically: who gets a freed place is the
+ * organiser's call, made on /admin (`promoteFromWaitlist`). The caller checks
+ * the session is not in the past (`canChangeSession`).
+ */
+/**
+ * Puts one signup down for `to` — booked, or on the waitlist when it is full —
+ * and, when `from` is given, takes that session off in the same transaction.
+ *
+ * One transaction because a move is two writes: done as two statements, a
+ * failure between them left someone with their old Thursday cancelled and no
+ * new one, while the page said "that did not go through" (2026-09-28 review).
+ *
+ * The count excludes this signup, and someone already booked stays booked —
+ * the same `admission` rule the signup form uses. Like the form, the count is
+ * not locked against other signups: two people taking the fortieth place in
+ * the same instant can both get it, which a soft cap can afford.
+ */
+export async function moveSessionFor(signupId: string, from: string | null, to: string): Promise<"booked" | "waitlist"> {
+  await ensureSchema();
+
+  const client = await getPool().connect();
+
+  try {
+    await client.query("BEGIN");
+
+    try {
+      if (from) {
+        await client.query(
+          `UPDATE signups
+              SET sessions = array_remove(sessions, $2::date),
+                  waitlist = array_remove(waitlist, $2::date),
+                  updated_at = now()
+            WHERE id = $1::bigint`,
+          [signupId, from],
+        );
+      }
+
+      const counted = await client.query<{ count: string; already: boolean }>(
+        `SELECT count(*) FILTER (WHERE id <> $2::bigint)::text AS count,
+                coalesce(bool_or(id = $2::bigint), false) AS already
+           FROM signups
+          WHERE $1::date = ANY(sessions)`,
+        [to, signupId],
+      );
+      const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false);
+
+      await client.query(
+        result === "booked"
+          ? `UPDATE signups
+                SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
+                    waitlist = array_remove(waitlist, $2::date),
+                    updated_at = now()
+              WHERE id = $1::bigint`
+          : `UPDATE signups
+                SET waitlist = ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$2::date]) ORDER BY 1),
+                    updated_at = now()
+              WHERE id = $1::bigint`,
+        [signupId, to],
+      );
+
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Puts one signup down for one more session — booked, or on the waitlist when
+ * the session is full — and says which.
+ *
+ * The count excludes this signup, and someone already booked stays booked, the
+ * same `admission` rule the signup form uses. Like the form, the count and the
+ * write are two statements: two people taking the fortieth place in the same
+ * instant can both get it, which a soft cap can afford.
+ */
+export async function addSessionFor(signupId: string, session: string): Promise<"booked" | "waitlist"> {
+  await ensureSchema();
+  const pool = getPool();
+
+  const counted = await pool.query<{ count: string; already: boolean }>(
+    `SELECT count(*) FILTER (WHERE id <> $2::bigint)::text AS count,
+            coalesce(bool_or(id = $2::bigint), false) AS already
+       FROM signups
+      WHERE $1::date = ANY(sessions)`,
+    [session, signupId],
+  );
+  const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false);
+
+  await pool.query(
+    result === "booked"
+      ? `UPDATE signups
+            SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
+                waitlist = array_remove(waitlist, $2::date),
+                updated_at = now()
+          WHERE id = $1::bigint`
+      : `UPDATE signups
+            SET waitlist = ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$2::date]) ORDER BY 1),
+                updated_at = now()
+          WHERE id = $1::bigint`,
+    [signupId, session],
+  );
+
+  return result;
+}
+
+export async function cancelSession(signupId: string, session: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE signups
+        SET sessions = array_remove(sessions, $2::date),
             waitlist = array_remove(waitlist, $2::date),
             updated_at = now()
       WHERE id = $1::bigint`,

@@ -93,6 +93,7 @@ export default async function GoPage({ searchParams }: PageProps) {
       body: order ? `${order.name} · ${order.label} · ${formatPrice(order.cents)}` : t.items.myOrder.body,
       href: orderHref,
     },
+    mySignup: { ...t.items.mySignup, href: `/my${langSuffix(lang)}` },
     card: member ? { ...t.items.cardEdit, href: `/me${langSuffix(lang)}` } : { ...t.items.card, href: `/claim${langSuffix(lang)}` },
     members: { ...t.items.members, href: `/members${langSuffix(lang)}` },
     wharf: { ...t.items.wharf, href: `/wharf${langSuffix(lang)}` },

@@ -11,6 +11,7 @@ import { getMemberById } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { nextThursdays } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
+import { badgeShowsCode } from "@/lib/members";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -56,12 +57,15 @@ export default async function BadgePage({ searchParams }: PageProps) {
 
   // Dark modules on a white field, never inverted: plenty of scanners fail on a
   // light-on-dark code. Same reasoning as the WeChat QR plate on the home page.
-  const qr = await QRCode.toString(cardUrl, {
+  // No code at all for a card the wall would not show: it would scan to a 404
+  // (see `badgeShowsCode`). Null here removes the code and the image export.
+  const showCode = badgeShowsCode(member);
+  const qr = showCode ? await QRCode.toString(cardUrl, {
     type: "svg",
     margin: 1,
     errorCorrectionLevel: "M",
     color: { dark: "#0a0b0d", light: "#ffffff" },
-  });
+  }) : null;
 
   return (
     <div className="badge" lang={c.htmlLang}>
@@ -112,19 +116,32 @@ export default async function BadgePage({ searchParams }: PageProps) {
           )}
         </div>
 
-        <div className="badge__code">
-          {/* Generated server-side by the qrcode library from a URL this app
-              built itself, so there is no untrusted markup in here. */}
-          <div className="badge__qr" dangerouslySetInnerHTML={{ __html: qr }} />
-          <span className="badge__scan mono">{b.scanHint}</span>
-        </div>
+        {qr && (
+          <div className="badge__code">
+            {/* Generated server-side by the qrcode library from a URL this app
+                built itself, so there is no untrusted markup in here. */}
+            <div className="badge__qr" dangerouslySetInnerHTML={{ __html: qr }} />
+            <span className="badge__scan mono">{b.scanHint}</span>
+          </div>
+        )}
       </div>
 
-      {!member.published && <p className="badge__warning">{b.draftWarning}</p>}
+      {!showCode && (
+        <div className="badge__warning">
+          {/* Hidden is the organiser's call, not something publishing undoes,
+              so it gets its own line and no "publish" button. */}
+          <p>{member.hidden ? b.hiddenWarning : b.draftWarning}</p>
+          {!member.hidden && (
+            <Link className="btn btn--primary" href={`/me${langSuffix(lang)}`}>
+              {b.publishCta}
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* The same card as a 3:4 image, for the times the exchange happens in a
           chat rather than across a table. */}
-      <BadgeExport
+      {qr && <BadgeExport
         copy={b}
         name={member.display_name}
         headline={member.headline}
@@ -134,7 +151,7 @@ export default async function BadgePage({ searchParams }: PageProps) {
         roles={member.roles.map((role) => c.members.roles[role])}
         cardUrl={cardUrl}
         qrSvg={qr}
-      />
+      />}
     </div>
   );
 }

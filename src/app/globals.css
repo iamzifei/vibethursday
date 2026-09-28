@@ -2124,10 +2124,16 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
 
 
 .badge__warning {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
   font-size: var(--text-sm);
   color: var(--warning);
   margin: 0;
 }
+
+.badge__warning p { margin: 0; }
 
 .badge__export {
   display: flex;
@@ -4606,3 +4612,26 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   border-bottom: 1px solid var(--border-default);
 }
 .fact-row__item dt { margin: 0; }
+
+/* ── /my: one's own signups ──────────────────────────────────────── */
+
+.my-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+
+.my-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.my-row__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+.my-row__actions { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Label, picker and button on one line where there is room, stacked on a phone. */
+.my-move { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.my-move .label { margin: 0; }
+.my-move .field { flex: 1 1 10rem; min-width: 0; }

@@ -206,7 +206,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // numbers look like a script rather than people (capacity.ts).
   const deskWaitlist = signups
     .filter((row) => row.waitlist.includes(desk))
-    .sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    // Same order as the place /my tells people they hold: age, then id.
+    .sort((a, b) => (a.created_at === b.created_at ? Number(a.id) - Number(b.id) : a.created_at < b.created_at ? -1 : 1));
   const dayAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
   const unverifiedLastDay = signups.filter(
     (row) =>
@@ -361,6 +362,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
             {deskWaitlist.length} 人 · 按报名先后
           </span>
         </div>
+        {/* People can cancel on /my now (2026-09-28), which frees a place but
+            moves nobody up — that stays a call made here. This line is the
+            prompt to make it. */}
+        {deskWaitlist.length > 0 && (deskRow?.total ?? 0) < SESSION_CAP && (
+          <p className="alert" role="status">
+            有人取消了：现在空出 {SESSION_CAP - (deskRow?.total ?? 0)} 个位子，候补 {deskWaitlist.length} 人。下面点「给他位子」放人，再在群里告诉他。
+          </p>
+        )}
         {deskWaitlist.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>
             没有人在候补。
