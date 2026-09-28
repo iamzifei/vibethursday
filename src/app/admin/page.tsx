@@ -16,6 +16,7 @@ import {
   listCheckins,
   listFeedback,
   listOrders,
+  getSessionQuestions,
   listRecentAnswers,
   listRecentDecks,
   listRoster,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { barSheet, canOrder, orderCode } from "@/lib/order";
+import { formatQuestionList } from "@/lib/session-questions";
 import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -79,7 +81,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -94,6 +96,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // under them cannot disagree about what was said.
       listFeedback(),
       listOrders(orderSession),
+      getSessionQuestions(desk),
     ]);
 
   // Whatever host this page was actually opened on, so a code scanned off a
@@ -157,7 +160,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // People who signed up without picking a Thursday: they work weekday
   // mornings. Kept as its own number because it is the one that answers
   // "how many are we losing to the timeslot", which the total hides.
-  const noThursday = signups.filter((row) => row.sessions.length === 0).length;
+  // Waitlisted people did pick a Thursday; only a row with neither is "can't do mornings".
+  const noThursday = signups.filter((row) => row.sessions.length === 0 && row.waitlist.length === 0).length;
 
   /** How many picked each other slot. This decides whether a 2nd session runs. */
   const countSlot = (slot: string) =>
@@ -183,6 +187,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // Waitlisted signups per session, from the same rows. Not part of
   // `countPerSession` on purpose: a waitlisted person has no place, and every
   // existing headcount must keep meaning "people with a place".
+  const deskRow = perSession.find((session) => session.date === desk);
   const waitlistBySession = new Map<string, number>();
   for (const signup of signups) {
     for (const date of new Set(signup.waitlist)) {
@@ -290,18 +295,61 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <h1>Signups</h1>
       </div>
 
-      {/* ── The week's poster ────────────────────────────────────────
-          This site cannot notify anyone: no mail, no push, and most people
-          never left an email address. The WeChat group is the channel, and
-          this is the thing that gets pasted into it. */}
-      <section className="stack-4">
+      {/* Four groups in the order a week actually runs. Sticky, and it scrolls
+          sideways on a phone rather than wrapping into two rows. */}
+      <nav className="admin-jump" aria-label="后台分组">
+        <a href="#week">本周</a>
+        <a href="#after">散场后</a>
+        <a href="#community">社群</a>
+        <a href="#data">数据与工具</a>
+      </nav>
+
+      <section className="stack-8 admin-group" id="week">
+        <h2 className="eyebrow">① 本周</h2>
+      {/* ── This week at a glance ──────────────────────────────────────
+          Numbers already read above; nothing new is queried for this. */}
+      <p className="body-sm admin-glance">
+        <strong>{desk}</strong> · 报名 {deskRow?.total ?? 0} / {SESSION_CAP} · 候补{" "}
+        {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length} · 点单 {orders.length} 杯
+      </p>
+
+      {/* ── Drinks ───────────────────────────────────────────────────
+          The sheet the café asked for: every line has a name, so payment is
+          taken by name and nobody walks off with the wrong cup. */}
+      <OrderDesk
+        session={orderSession}
+        isOpen={canOrder(orderSession, sydneyToday().toISOString().slice(0, 10))}
+        url={orderUrl}
+        qrSvg={orderQr}
+        orders={orders}
+        sheet={barSheet(orders)}
+      />
+
+      {/* ── This week's Q&A ──────────────────────────────────────────
+          The shortlist the group voted on, pasted here; /go shows it. */}
+      <section className="stack-4" id="questions">
         <div className="group-head">
-          <h2 className="h3">本周海报</h2>
+          <h2 className="h3">本周问答 · {desk}</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            {poster.date} · 发群公告 / 置顶用
+            场前在 /go 显示候选，当天显示今天聊的
           </span>
         </div>
-        <PosterExport {...poster} />
+        <form method="post" action="/api/admin/questions" className="stack-3">
+          <input type="hidden" name="session" value={desk} />
+          <textarea
+            className="field"
+            name="questions"
+            rows={6}
+            defaultValue={formatQuestionList(deskQuestions)}
+            placeholder={"一行一个问题；票最多的两个在行首加 *"}
+          />
+          <p className="field-hint">一行一个问题，行首加 * 表示当天要聊的。序号会自动去掉，最多 8 个。清空后保存即删除。</p>
+          <div>
+            <button className="btn btn--secondary" type="submit">
+              保存
+            </button>
+          </div>
+        </form>
       </section>
 
       {/* ── Check-in ─────────────────────────────────────────────────
@@ -316,18 +364,24 @@ export default async function AdminPage({ searchParams }: PageProps) {
         checkins={deskCheckins}
       />
 
-      {/* ── Drinks ───────────────────────────────────────────────────
-          The sheet the café asked for: every line has a name, so payment is
-          taken by name and nobody walks off with the wrong cup. */}
-      <OrderDesk
-        session={orderSession}
-        isOpen={canOrder(orderSession, sydneyToday().toISOString().slice(0, 10))}
-        url={orderUrl}
-        qrSvg={orderQr}
-        orders={orders}
-        sheet={barSheet(orders)}
-      />
+      {/* ── The week's poster ────────────────────────────────────────
+          This site cannot notify anyone: no mail, no push, and most people
+          never left an email address. The WeChat group is the channel, and
+          this is the thing that gets pasted into it. */}
+      <section className="stack-4">
+        <div className="group-head">
+          <h2 className="h3">本周海报</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {poster.date} · 发群公告 / 置顶用
+          </span>
+        </div>
+        <PosterExport {...poster} />
+      </section>
 
+      </section>
+
+      <section className="stack-8 admin-group" id="after">
+        <h2 className="eyebrow">② 散场后</h2>
       {/* ── Feedback ─────────────────────────────────────────────────
           The other half of a session: check-in says who was in the room,
           this says whether the morning was worth their while. */}
@@ -341,151 +395,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
         answers={feedback.filter((row) => row.session === showing)}
       />
 
-      {/* ── Casting a demo to the room ───────────────────────────────
-          There is no projector at the venue, so a demo is either three people
-          leaning over one laptop or it does not happen. Opening a room here
-          gives back two links: one to present from, one for the room to scan.
-
-          It sits next to "Want to demo" on purpose — that number is how many
-          people said on the sign-up form that they had something to show, and
-          this is the thing to do about it. */}
-      <section className="stack-4" id="deck">
-        <div className="group-head">
-          <h2 className="h3">投屏</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            没有投影仪 · 开一个房间，大家扫码跟着看
-          </span>
-        </div>
-
-        {/* An ordinary form: the route answers with a 303 to the presenter's
-            page, so this needs no script. */}
-        <form method="post" action="/api/deck" className="stack-3">
-          <div className="deck-build__join">
-            <input
-              className="field"
-              type="text"
-              name="title"
-              placeholder="谁讲什么（可留空）"
-              maxLength={120}
-              style={{ maxWidth: "20rem" }}
-            />
-            <button className="btn btn--primary" type="submit">
-              开一个房间
-            </button>
-          </div>
-        </form>
-
-        {decks.length === 0 ? (
-          <p className="body-sm" style={{ color: "var(--fg3)" }}>
-            还没有开过房间。房间七天后自己消失。
-          </p>
-        ) : (
-          <ul className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {decks.map((deck) => (
-              <li key={deck.code} className="card stack-3">
-                <div className="deck-build__join">
-                  <span className="deck__code-big">{deck.code}</span>
-                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
-                    {deck.title ? `${deck.title} · ` : ""}
-                    {deck.slideCount} 页 · {deck.createdAt.toISOString().slice(0, 10)}
-                  </span>
-                </div>
-
-                {/* ★ Both links, every time.
-                    The presenter one used to be handed over once, in the
-                    redirect, and never shown again — so closing the tab lost
-                    the room. That is a bad property five minutes before
-                    somebody stands up, and it protects nothing: this page can
-                    already mint as many rooms and keys as it likes. */}
-                <div className="stack-2">
-                  <p className="body-sm">
-                    <strong>我来演示</strong> ——{" "}
-                    <a className="mono hl" href={`/present/${deck.code}?k=${deck.presenterKey}`}>
-                      /present/{deck.code}
-                    </a>{" "}
-                    <span style={{ color: "var(--fg3)" }}>
-                      传幻灯片、拿二维码、翻页都在这一页。这条链接就是控制权，可以发给今天讲的人。
-                    </span>
-                  </p>
-                  <p className="body-sm">
-                    <strong>大家跟着看</strong> ——{" "}
-                    <a className="mono" href={`/d/${deck.code}`}>
-                      /d/{deck.code}
-                    </a>{" "}
-                    <span style={{ color: "var(--fg3)" }}>
-                      念房间号 {deck.code}，或者让他们扫演示页上的二维码。
-                    </span>
-                  </p>
-                </div>
-
-                <form method="post" action="/api/admin/deck">
-                  <input type="hidden" name="code" value={deck.code} />
-                  <button className="btn btn--secondary" type="submit">
-                    关掉这个房间
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
-      <dl className="grid-auto" style={{ margin: 0 }}>
-        {stats.map((stat) => (
-          <div className="card stack-2" key={stat.label}>
-            <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
-              {stat.label}
-            </dt>
-            <dd className="h3 hl" style={{ margin: 0 }}>
-              {stat.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <section className="stack-4">
-        <div className="group-head">
-          <h2 className="h3">AI usage</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            Both questions are optional — {signups.length - answeredModels.length} of{" "}
-            {signups.length} left the model question blank, and a blank is not a zero.
-          </span>
-        </div>
-
-        <dl className="grid-auto" style={{ margin: 0 }}>
-          {aiStats.map((stat) => (
-            <div className="card stack-2" key={stat.label}>
-              <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
-                {stat.label}
-              </dt>
-              <dd className="h3 hl" style={{ margin: 0 }}>
-                {stat.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* Turnstile is advisory, so a dropped key no longer breaks the form —
-          it quietly stops verifying, which is exactly the kind of silent
-          degradation you would otherwise never notice. Hence stating it. */}
-      {isTurnstileConfigured() ? (
-        <p className="alert">
-          Bot protection: Turnstile active, <strong>advisory</strong>. A submission with no token
-          is still accepted and marked <code>skipped</code> — the challenge does not complete in
-          every browser, WeChat&rsquo;s in particular. Only a token that is present and invalid is
-          rejected. Rate limit: 6 submissions per IP per hour.
-        </p>
-      ) : (
-        <p className="alert alert--error" role="alert">
-          Bot protection: <strong>Turnstile not configured</strong>. Signups still work, but
-          nothing is verified — only the honeypot and the rate limit are active. Set
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
-        </p>
-      )}
-
-      {/* Headcount per Thursday. Deliberately only headcounts: see the note in
-          signup-stats.ts for why "how many are new" cannot be answered here. */}
+      <details className="disclosure admin-group" id="community">
+        <summary>③ 社群：码头与成员卡片</summary>
+        <div className="disclosure__body stack-8">
       {/* ── The Wharf ────────────────────────────────────────────────
           Two controls, and the first is the one that matters: the lane rule
           is a heuristic and this button is what makes it acceptable for it to
@@ -580,61 +494,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="stack-4" id="sessions">
-        <div className="group-head">
-          <h2 className="h3">Per session</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            Signed up is not turnout — the first session ran at about 70–77% of it. Turned up
-            is from check-ins, and only exists since they started.
-          </span>
-        </div>
-
-        <p className="alert">
-          This is everyone who picked that date, not who is new. Past Thursdays are never
-          selectable, so someone who signs up the day after a session can only pick the next
-          one — which makes them look like a first-timer. Who still needs pulling into the
-          WeChat group is a set difference against{" "}
-          <code>sydney-meetup/data/已处理微信号.txt</code>, and this database does not know
-          who is in the group.
-        </p>
-
-        <div className="table-scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Session</th>
-                <th scope="col">Signed up / cap</th>
-                <th scope="col">Waitlist</th>
-                <th scope="col">Turned up</th>
-                <th scope="col">Want to demo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perSession.map((session) => (
-                <tr key={session.date}>
-                  <td className="mono" style={{ color: session.date === nextSession ? "var(--fg1)" : undefined }}>
-                    {session.date}
-                    {session.date === nextSession ? " ← next" : ""}
-                  </td>
-                  <td className="mono">
-                    {session.total} / {SESSION_CAP}
-                  </td>
-                  <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
-                  <td className="mono">{attendance.get(session.date) ?? "—"}</td>
-                  <td className="mono">{session.wantsToDemo}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div>
-        <a className="btn btn--secondary" href="/api/admin/export">
-          Download CSV
-        </a>
-      </div>
-
       {/* Member cards. Here because the claim check is soft on purpose — the
           undo it was traded against has to actually exist somewhere. */}
       <section className="stack-4" id="members">
@@ -690,6 +549,212 @@ export default async function AdminPage({ searchParams }: PageProps) {
         )}
       </section>
 
+        </div>
+      </details>
+
+      <details className="disclosure admin-group" id="data">
+        <summary>④ 数据与工具：统计、AI 用量、投屏、报名明细</summary>
+        <div className="disclosure__body stack-8">
+      {/* Headcount per Thursday. Deliberately only headcounts: see the note in
+          signup-stats.ts for why "how many are new" cannot be answered here. */}
+      <dl className="grid-auto" style={{ margin: 0 }}>
+        {stats.map((stat) => (
+          <div className="card stack-2" key={stat.label}>
+            <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
+              {stat.label}
+            </dt>
+            <dd className="h3 hl" style={{ margin: 0 }}>
+              {stat.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <section className="stack-4" id="sessions">
+        <div className="group-head">
+          <h2 className="h3">Per session</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            Signed up is not turnout — the first session ran at about 70–77% of it. Turned up
+            is from check-ins, and only exists since they started.
+          </span>
+        </div>
+
+        <p className="alert">
+          This is everyone who picked that date, not who is new. Past Thursdays are never
+          selectable, so someone who signs up the day after a session can only pick the next
+          one — which makes them look like a first-timer. Who still needs pulling into the
+          WeChat group is a set difference against{" "}
+          <code>sydney-meetup/data/已处理微信号.txt</code>, and this database does not know
+          who is in the group.
+        </p>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">Signed up / cap</th>
+                <th scope="col">Waitlist</th>
+                <th scope="col">Turned up</th>
+                <th scope="col">Want to demo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perSession.map((session) => (
+                <tr key={session.date}>
+                  <td className="mono" style={{ color: session.date === nextSession ? "var(--fg1)" : undefined }}>
+                    {session.date}
+                    {session.date === nextSession ? " ← next" : ""}
+                  </td>
+                  <td className="mono">
+                    {session.total} / {SESSION_CAP}
+                  </td>
+                  <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
+                  <td className="mono">{attendance.get(session.date) ?? "—"}</td>
+                  <td className="mono">{session.wantsToDemo}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div>
+        <a className="btn btn--secondary" href="/api/admin/export">
+          Download CSV
+        </a>
+      </div>
+
+      <section className="stack-4">
+        <div className="group-head">
+          <h2 className="h3">AI usage</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            Both questions are optional — {signups.length - answeredModels.length} of{" "}
+            {signups.length} left the model question blank, and a blank is not a zero.
+          </span>
+        </div>
+
+        <dl className="grid-auto" style={{ margin: 0 }}>
+          {aiStats.map((stat) => (
+            <div className="card stack-2" key={stat.label}>
+              <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
+                {stat.label}
+              </dt>
+              <dd className="h3 hl" style={{ margin: 0 }}>
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* Turnstile is advisory, so a dropped key no longer breaks the form —
+          it quietly stops verifying, which is exactly the kind of silent
+          degradation you would otherwise never notice. Hence stating it. */}
+      {isTurnstileConfigured() ? (
+        <p className="alert">
+          Bot protection: Turnstile active, <strong>advisory</strong>. A submission with no token
+          is still accepted and marked <code>skipped</code> — the challenge does not complete in
+          every browser, WeChat&rsquo;s in particular. Only a token that is present and invalid is
+          rejected. Rate limit: 6 submissions per IP per hour.
+        </p>
+      ) : (
+        <p className="alert alert--error" role="alert">
+          Bot protection: <strong>Turnstile not configured</strong>. Signups still work, but
+          nothing is verified — only the honeypot and the rate limit are active. Set
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.
+        </p>
+      )}
+
+      {/* ── Casting a demo to the room ───────────────────────────────
+          There is no projector at the venue, so a demo is either three people
+          leaning over one laptop or it does not happen. Opening a room here
+          gives back two links: one to present from, one for the room to scan.
+
+          It sits next to "Want to demo" on purpose — that number is how many
+          people said on the sign-up form that they had something to show, and
+          this is the thing to do about it. */}
+      <section className="stack-4" id="deck">
+        <div className="group-head">
+          <h2 className="h3">投屏</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            没有投影仪 · 开一个房间，大家扫码跟着看
+          </span>
+        </div>
+
+        {/* An ordinary form: the route answers with a 303 to the presenter's
+            page, so this needs no script. */}
+        <form method="post" action="/api/deck" className="stack-3">
+          <div className="deck-build__join">
+            <input
+              className="field"
+              type="text"
+              name="title"
+              placeholder="谁讲什么（可留空）"
+              maxLength={120}
+              style={{ maxWidth: "20rem" }}
+            />
+            <button className="btn btn--primary" type="submit">
+              开一个房间
+            </button>
+          </div>
+        </form>
+
+        {decks.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>
+            还没有开过房间。房间七天后自己消失。
+          </p>
+        ) : (
+          <ul className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {decks.map((deck) => (
+              <li key={deck.code} className="card stack-3">
+                <div className="deck-build__join">
+                  <span className="deck__code-big">{deck.code}</span>
+                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                    {deck.title ? `${deck.title} · ` : ""}
+                    {deck.slideCount} 页 · {deck.createdAt.toISOString().slice(0, 10)}
+                  </span>
+                </div>
+
+                {/* ★ Both links, every time.
+                    The presenter one used to be handed over once, in the
+                    redirect, and never shown again — so closing the tab lost
+                    the room. That is a bad property five minutes before
+                    somebody stands up, and it protects nothing: this page can
+                    already mint as many rooms and keys as it likes. */}
+                <div className="stack-2">
+                  <p className="body-sm">
+                    <strong>我来演示</strong> ——{" "}
+                    <a className="mono hl" href={`/present/${deck.code}?k=${deck.presenterKey}`}>
+                      /present/{deck.code}
+                    </a>{" "}
+                    <span style={{ color: "var(--fg3)" }}>
+                      传幻灯片、拿二维码、翻页都在这一页。这条链接就是控制权，可以发给今天讲的人。
+                    </span>
+                  </p>
+                  <p className="body-sm">
+                    <strong>大家跟着看</strong> ——{" "}
+                    <a className="mono" href={`/d/${deck.code}`}>
+                      /d/{deck.code}
+                    </a>{" "}
+                    <span style={{ color: "var(--fg3)" }}>
+                      念房间号 {deck.code}，或者让他们扫演示页上的二维码。
+                    </span>
+                  </p>
+                </div>
+
+                <form method="post" action="/api/admin/deck">
+                  <input type="hidden" name="code" value={deck.code} />
+                  <button className="btn btn--secondary" type="submit">
+                    关掉这个房间
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {signups.length === 0 ? (
         <p className="alert">No signups yet.</p>
       ) : (
@@ -742,6 +807,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </table>
         </div>
       )}
+        </div>
+      </details>
+
     </main>
   );
 }

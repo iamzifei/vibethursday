@@ -4435,3 +4435,45 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
     animation: none;
   }
 }
+
+/* ── /admin: the jump bar and the glance line ──────────────────────────
+   Four groups in the order a week runs. Sticky so a long page is always one
+   tap from the top of any group; scrolls sideways on a phone instead of
+   wrapping. Anchor targets clear it with scroll-margin. */
+.admin-jump {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding: var(--space-2) 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-default);
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-jump a {
+  flex: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--fg2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-jump a:hover,
+.admin-jump a:focus-visible { color: var(--fg1); background: var(--bg-secondary); }
+
+.admin-group { scroll-margin-top: 72px; }
+
+.admin-glance {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  color: var(--fg1);
+}

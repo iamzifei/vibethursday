@@ -416,6 +416,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   return (
     <form
       className="stack-6"
+      // POST even though script handles it: tapped before the script loads, a
+      // method-less form becomes a GET and puts name, WeChat ID and email in
+      // the address bar (2026-09-28 review).
+      method="post"
       ref={formRef}
       onSubmit={handleSubmit}
       // Both events: `input` covers typing, `change` covers the radio group and

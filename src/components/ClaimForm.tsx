@@ -70,7 +70,8 @@ export function ClaimForm({ copy, nextHref }: Props) {
   const sending = status === "sending";
 
   return (
-    <form className="stack-6" onSubmit={handleSubmit} noValidate>
+    // POST so a tap before the script loads never puts the name and contact in the URL.
+    <form className="stack-6" method="post" onSubmit={handleSubmit} noValidate>
       <div className="grid-auto">
         <div>
           <label className="label" htmlFor={`${uid}-name`}>

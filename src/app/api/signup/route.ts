@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { publishCardForSignup, saveSignup, sessionHeadcount } from "@/lib/db";
+import { publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
 import { admission } from "@/lib/capacity";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
@@ -63,6 +63,18 @@ function looksLikeEmail(value: string): boolean {
 }
 
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+
+  // JSON only. The form always sends it; a plain HTML form on another site
+  // cannot (it can only send urlencoded, multipart or text/plain), so this
+  // stops a third-party page from submitting signups from its visitors'
+  // browsers — and their addresses — without a preflight (2026-09-28 review).
+  if (!(request.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) {
+    return NextResponse.json({ error: "unsupported_media_type" }, { status: 415 });
+  }
+
   let payload: unknown;
 
   try {
@@ -173,9 +185,10 @@ export async function POST(request: Request) {
   }
 
   let signupId: string;
+  let profileUpdated = true;
 
   try {
-    signupId = await saveSignup({
+    ({ id: signupId, profileUpdated } = await saveSignupWithResult({
       name,
       email,
       wechat,
@@ -191,7 +204,7 @@ export async function POST(request: Request) {
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,
       waitlisted,
-    });
+    }));
   } catch (error) {
     console.error("[signup] failed to save", error);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
@@ -201,7 +214,9 @@ export async function POST(request: Request) {
   // allowed to fail the request: the signup is the thing that must not be lost.
   // A card that did not get published is recoverable by the person at /claim;
   // a signup that 500ed is a headcount the venue booking never hears about.
-  if (publishCard) {
+  // Never on somebody else's row: a name that did not match is not allowed to
+  // put that person's card on the wall (see `saveSignupWithResult`).
+  if (publishCard && profileUpdated) {
     try {
       await publishCardForSignup(signupId);
     } catch (error) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
 import { keyMatches, listenerCount, publish } from "@/lib/deck";
 import { getDeck, setDeckIndex } from "@/lib/db";
 
@@ -17,6 +17,10 @@ type Context = { params: Promise<{ code: string }> };
  * make a failed write show up as a room that turned and then turned back.
  */
 export async function POST(request: Request, { params }: Context) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+
   const limited = tooMany(request, "deck-turn", 1200);
   if (limited) return limited;
 

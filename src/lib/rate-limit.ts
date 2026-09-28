@@ -108,3 +108,20 @@ export function tooMany(request: Request, bucket: string, max: number): Response
     headers: { "Retry-After": String(retryAfterSeconds), "Cache-Control": "no-store" },
   });
 }
+
+/**
+ * Whether a request declares a body larger than `maxBytes`.
+ *
+ * ★ Checked before `formData()` / `json()` are touched. The 2026-09-28 review
+ * measured one 150 MB POST to /api/feedback adding ~440 MB to the process:
+ * every form route parsed the whole body before looking at the code or the
+ * rate limit. A declared length that is not a number is refused too. With no
+ * declared length (a chunked upload) this says no and the platform's own cap
+ * applies.
+ */
+export function bodyTooLarge(request: Request, maxBytes: number): boolean {
+  const declared = request.headers.get("content-length");
+  if (declared === null) return false;
+  const length = Number(declared);
+  return !Number.isFinite(length) || length > maxBytes;
+}

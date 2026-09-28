@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { checkIn, listRoster, saveSignup } from "@/lib/db";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { sydneyToday } from "@/lib/sessions";
 
@@ -36,6 +36,10 @@ function clean(value: FormDataEntryValue | null, maxLength: number): string | nu
  * first so that next week they are on the list like everyone else.
  */
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+
   const form = await request.formData().catch(() => null);
 
   const session = clean(form?.get("session") ?? null, 10) ?? "";

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
 import { keyMatches, MAX_SLIDE_BYTES, MAX_SLIDES, publish } from "@/lib/deck";
 import { addDeckSlide, clearDeckSlides, getDeck } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
@@ -19,6 +19,10 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
  * It also lets the presenter watch a progress count instead of a spinner.
  */
 export async function POST(request: Request, { params }: Context) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, MAX_SLIDE_BYTES + 64 * 1024)) return new Response("Payload too large", { status: 413 });
+
   const limited = tooMany(request, "deck-slides", 120);
   if (limited) return limited;
 

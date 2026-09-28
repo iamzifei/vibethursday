@@ -46,3 +46,25 @@ export function admission(count: number, alreadyIn: boolean): Admission {
 export function bookedOnAnother(targetId: string, rows: readonly { id: string; booked: boolean }[]): boolean {
   return rows.some((row) => row.id !== targetId && row.booked);
 }
+
+/**
+ * Whether a signup's name is the same person as the row it matched by email or
+ * WeChat ID — the condition for letting it rewrite that row's profile.
+ *
+ * ★ Found by the 2026-09-28 review: the signup route needs no login, and it
+ * merged into any row with the same email or WeChat ID, overwriting the name,
+ * "what I'm working on" and the Wharf question. Knowing someone's WeChat ID was
+ * enough to put words on the board under their name. Requiring the name as
+ * well is the same bar `/claim` already uses (name plus one contact method).
+ *
+ * Width, spacing and case are ignored, and one name containing the other
+ * counts, so a regular who adds or drops a surname is still themselves. A
+ * single character never matches anything.
+ */
+export function sameSignupName(submitted: string, onFile: string): boolean {
+  const norm = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+  const a = norm(submitted);
+  const b = norm(onFile);
+  if (a.length < 2 || b.length < 2) return false;
+  return a === b || a.includes(b) || b.includes(a);
+}

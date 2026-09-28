@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { getMemberById, saveMember, SlugTakenError } from "@/lib/db";
 import { currentMemberId, MEMBER_COOKIE } from "@/lib/member-auth";
@@ -9,6 +9,10 @@ export const dynamic = "force-dynamic";
 
 /** Saves the signed-in member's own card. */
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 256 * 1024)) return new Response("Payload too large", { status: 413 });
+
   const limited = tooMany(request, "me", 60);
   if (limited) return limited;
 

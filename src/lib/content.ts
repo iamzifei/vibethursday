@@ -867,6 +867,8 @@ export const copy = {
         empty: "今天好无聊。",
       },
       thisWeek: "本周",
+      // 同一个人同一句话只显示一条；超过三周没人接的、关了没人答的、更早的「想聊的」收在这里（wharf-tidy.ts）。
+      foldedSummary: "更早的 {n} 条：超过三周没人接的、已经关了的",
       // 报名时选了「上午都来不了」的人。他们照样能有名片、照样能写问题，
       // 而且这一页是他们唯一还会被看见的地方。
       noSession: "周四上午来不了的",
@@ -1307,6 +1309,11 @@ export const copy = {
       when: "10:30 开门 · 10:45 开始 · 12:00 结束",
       keep: "存下这一页。每周都是这个链接，内容自己会换。",
       signedUp: "你报了这一场 ✓",
+      // 本周问答（session-questions.ts）：场前显示候选，当天显示今天聊的。
+      questionsCandidates: "本周候选问题",
+      questionsVote: "在群里接龙投票，票最多的两个当天聊透。",
+      questionsToday: "今天聊这几个问题",
+      questionsOthers: "其他候选，会后整理好发到群里：",
       items: {
         signup: { title: "报名这一场", body: "一分钟，不收钱。" },
         order: { title: "提前点杯喝的", body: "到了报名字付钱，不用排队。" },
@@ -2137,6 +2144,7 @@ export const copy = {
         empty: "Nothing doing.",
       },
       thisWeek: "This week",
+      foldedSummary: "{n} earlier: untouched for three weeks, or closed",
       noSession: "Cannot do Thursday mornings",
       comingLabel: "Coming this Thursday",
       emptyWeek: "Nothing up for this one yet. Write a line when you sign up and it lands here.",
@@ -2488,6 +2496,10 @@ export const copy = {
       when: "Doors 10:30 · starts 10:45 · ends 12:00",
       keep: "Keep this page. It is the same link every week; what is on it changes by itself.",
       signedUp: "You are signed up for this one ✓",
+      questionsCandidates: "This week's candidate questions",
+      questionsVote: "Vote in the group; the top two get talked through properly on the day.",
+      questionsToday: "Today we talk about",
+      questionsOthers: "The other candidates, written up in the group afterwards:",
       items: {
         signup: { title: "Sign up for this one", body: "One minute, free." },
         order: { title: "Order a drink ahead", body: "Pay by name when you arrive. No queue." },

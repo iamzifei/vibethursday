@@ -3,7 +3,7 @@ import { coachAvailable, coachDraft, type Round } from "@/lib/coach";
 import { spendCoachCall } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { coachRateKey, coachReply } from "@/lib/coach-access";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +88,10 @@ function readHistory(raw: FormDataEntryValue | null | undefined): Round[] {
 }
 
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+
   if (!coachAvailable()) return NextResponse.json({ error: "off" }, { status: 404 });
 
   // A member card is no longer required: the signup form offers this too, and

@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
-import { deleteOrder } from "@/lib/db";
+import { isSessionDate } from "@/lib/checkin";
+import { saveSessionQuestions } from "@/lib/db";
 import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+import { parseQuestionList } from "@/lib/session-questions";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The organiser removing one line from the drinks sheet: a duplicate, a test,
- * or somebody who said they are not coming after all.
- *
- * A plain form post with a 303 back, like every other /admin action.
+ * The organiser saving this week's Q&A shortlist: one question per line, a
+ * leading "*" for the ones the group voted for. A plain form post with a 303
+ * back, like every other /admin action.
  */
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
@@ -28,13 +29,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
-  const id = form?.get("id");
+  const session = form?.get("session");
+  const raw = form?.get("questions");
 
-  if (typeof id !== "string" || !/^\d+$/.test(id)) {
-    return NextResponse.json({ error: "bad_id" }, { status: 400 });
+  if (typeof session !== "string" || !isSessionDate(session)) {
+    return NextResponse.json({ error: "bad_session" }, { status: 400 });
   }
 
-  await deleteOrder(id);
+  await saveSessionQuestions(session, parseQuestionList(typeof raw === "string" ? raw.slice(0, 5000) : ""));
 
-  return NextResponse.redirect(new URL(`/admin#orders`, await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(`/admin#questions`, await requestOrigin()), 303);
 }

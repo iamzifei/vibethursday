@@ -5,7 +5,8 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
-import { getMemberById, getOrder } from "@/lib/db";
+import { getMemberById, getOrder, getSessionQuestions } from "@/lib/db";
+import { questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
 import { checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
@@ -57,11 +58,13 @@ export default async function GoPage({ searchParams }: PageProps) {
   const store = await cookies();
   const orderId = readOrderToken(store.get(orderCookieName(session))?.value);
 
-  const [order, member] = await Promise.all([
+  const [order, member, questions] = await Promise.all([
     orderId ? getOrder(orderId, session).catch(() => null) : null,
     currentMemberId()
       .then((id) => (id ? getMemberById(id) : null))
       .catch(() => null),
+    // Best-effort like the two above: no shortlist is the same as an empty one.
+    getSessionQuestions(session).catch(() => []),
   ]);
 
   // The check-in link only on the morning itself (James 2026-09-28). Keyed on
@@ -173,6 +176,54 @@ export default async function GoPage({ searchParams }: PageProps) {
                 );
               })}
             </ol>
+
+            {/* This week's Q&A shortlist, when the organiser has entered one. */}
+            {questions.length > 0 && questionsMode(phase, checkinOpen) === "candidates" && (
+              <section className="card stack-3" aria-labelledby="go-questions">
+                <h2 className="h3" id="go-questions" style={{ margin: 0 }}>
+                  {t.questionsCandidates}
+                </h2>
+                <ol className="stack-2" style={{ margin: 0, paddingLeft: "1.25em" }}>
+                  {questions.map((question, index) => (
+                    <li key={index}>{question.text}</li>
+                  ))}
+                </ol>
+                <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
+                  {t.questionsVote}
+                </p>
+              </section>
+            )}
+
+            {questions.length > 0 && questionsMode(phase, checkinOpen) === "today" && (
+              <section className="card stack-3" aria-labelledby="go-questions" style={{ borderColor: "var(--accent)" }}>
+                <h2 className="h3" id="go-questions" style={{ margin: 0 }}>
+                  {t.questionsToday}
+                </h2>
+                <ol className="stack-3" style={{ margin: 0, paddingLeft: "1.25em" }}>
+                  {(questions.some((q) => q.chosen) ? questions.filter((q) => q.chosen) : questions).map(
+                    (question, index) => (
+                      <li key={index} className="body-lg" style={{ fontWeight: 600 }}>
+                        {question.text}
+                      </li>
+                    ),
+                  )}
+                </ol>
+                {questions.some((q) => q.chosen) && questions.some((q) => !q.chosen) && (
+                  <div className="stack-2">
+                    <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
+                      {t.questionsOthers}
+                    </p>
+                    <ul className="body-sm" style={{ margin: 0, paddingLeft: "1.25em", color: "var(--fg3)" }}>
+                      {questions
+                        .filter((q) => !q.chosen)
+                        .map((question, index) => (
+                          <li key={index}>{question.text}</li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
 
             <p className="body-sm" style={{ color: "var(--fg3)" }}>
               {t.keep}

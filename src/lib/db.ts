@@ -1,5 +1,6 @@
 import { Pool } from "pg";
-import { bookedOnAnother } from "./capacity.ts";
+import { bookedOnAnother, sameSignupName } from "./capacity.ts";
+import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
 // Relative, not "@/": scripts/ and tests/ load this through Node's type stripper,
@@ -150,6 +151,11 @@ export function ensureSchema(): Promise<void> {
     // `sessions` so every existing headcount — /admin, signup-stats, the
     // export — keeps counting only people with a place, with no change.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS waitlist date[] NOT NULL DEFAULT '{}'`);
+
+    // An organiser's hide, recorded apart from the member's own "keep it off
+    // the wall" so that saving the card from /me cannot undo it (2026-09-28
+    // review: both wrote the same column).
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS hidden_by_admin boolean NOT NULL DEFAULT false`);
 
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
@@ -458,6 +464,16 @@ export function ensureSchema(): Promise<void> {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS drink_orders_session_idx ON drink_orders (session)
     `);
+
+    // This week's Q&A shortlist (session-questions.ts): pasted in by the
+    // organiser after the vote in the group, shown on /go. One row per session.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session_questions (
+        session    date PRIMARY KEY,
+        questions  jsonb NOT NULL DEFAULT '[]'::jsonb,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -516,14 +532,27 @@ export type SignupInput = {
  * permanently: every retry took the same branch.
  */
 export async function saveSignup(input: SignupInput): Promise<string> {
+  return (await saveSignupWithResult(input)).id;
+}
+
+/**
+ * `saveSignup`, plus whether the profile on file was allowed to change.
+ *
+ * ★ `profileUpdated` is false when the signup matched an existing row by email
+ * or WeChat ID but the name is somebody else's (`sameSignupName`). The route
+ * then must not publish a card either. The session is still recorded — being
+ * put down for a Thursday is the one thing a stranger can do with only a
+ * WeChat ID, and it harms nobody.
+ */
+export async function saveSignupWithResult(input: SignupInput): Promise<{ id: string; profileUpdated: boolean }> {
   await ensureSchema();
 
   const pool = getPool();
 
   // Two rows can match when the same person once signed up through each form
   // and left a different identifier each time. LIMIT 2 is enough to notice.
-  const existing = await pool.query<{ id: string; email: string | null; wechat: string | null; booked: boolean }>(
-    `SELECT id::text AS id, email, wechat,
+  const existing = await pool.query<{ id: string; name: string; email: string | null; wechat: string | null; booked: boolean }>(
+    `SELECT id::text AS id, name, email, wechat,
             ($3::date IS NOT NULL AND $3::date = ANY(sessions)) AS booked
        FROM signups
       WHERE ($1::text IS NOT NULL AND lower(email) = lower($1))
@@ -565,8 +594,10 @@ export async function saveSignup(input: SignupInput): Promise<string> {
       ],
     );
 
-    return inserted.rows[0].id;
+    return { id: inserted.rows[0].id, profileUpdated: true };
   }
+
+  const trusted = sameSignupName(input.name, target.name);
 
   /**
    * True when some *other* matched row already holds this identifier.
@@ -634,16 +665,17 @@ export async function saveSignup(input: SignupInput): Promise<string> {
      WHERE id = $1`,
     [
       target.id,
-      input.name,
-      takenByAnother(input.email, "email") ? null : input.email,
-      takenByAnother(input.wechat, "wechat") ? null : input.wechat,
-      input.building,
+      // Untrusted: keep who they are on file; nothing about them is rewritten.
+      trusted ? input.name : target.name,
+      !trusted || takenByAnother(input.email, "email") ? null : input.email,
+      !trusted || takenByAnother(input.wechat, "wechat") ? null : input.wechat,
+      trusted ? input.building : null,
       input.demoIntent,
       input.firstSession,
       input.source,
       input.lang,
       input.botCheck,
-      input.topic,
+      trusted ? input.topic : null,
       input.availability,
       input.aiModels,
       input.aiSpend,
@@ -653,7 +685,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
     ],
   );
 
-  return target.id;
+  return { id: target.id, profileUpdated: trusted };
 }
 
 /**
@@ -1540,7 +1572,7 @@ export async function setMemberHidden(id: string, hidden: boolean): Promise<void
   await ensureSchema();
 
   await getPool().query(
-    `UPDATE members SET hidden = $2, updated_at = now() WHERE id = $1`,
+    `UPDATE members SET hidden = $2, hidden_by_admin = $2, updated_at = now() WHERE id = $1`,
     [id, hidden],
   );
 }
@@ -1574,7 +1606,8 @@ export async function saveMember(id: string, profile: ProfileInput): Promise<voi
            looking_for  = $7,
            can_help     = $8,
            tags         = $9,
-           hidden       = $10,
+           -- The member's own choice, except that an organiser's hide stands.
+           hidden       = ($10::boolean OR hidden_by_admin),
            -- Publishing is one-way from the editor's point of view: taking a
            -- card down is what the hidden flag is for. Keeping the original
            -- timestamp means "member since" stays true after every later edit.
@@ -2314,4 +2347,28 @@ export async function getOrder(id: string, session: string): Promise<OrderRecord
 export async function deleteOrder(id: string): Promise<void> {
   await ensureSchema();
   await getPool().query(`DELETE FROM drink_orders WHERE id = $1::bigint`, [id]);
+}
+
+/** The Q&A shortlist for one session, in display order. Empty when none has been entered. */
+export async function getSessionQuestions(session: string): Promise<SessionQuestion[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ questions: SessionQuestion[] }>(
+    `SELECT questions FROM session_questions WHERE session = $1::date`,
+    [session],
+  );
+
+  return result.rows[0]?.questions ?? [];
+}
+
+/** Replaces one session's shortlist. An empty list clears it. */
+export async function saveSessionQuestions(session: string, questions: SessionQuestion[]): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `INSERT INTO session_questions (session, questions, updated_at)
+     VALUES ($1::date, $2::jsonb, now())
+     ON CONFLICT (session) DO UPDATE SET questions = EXCLUDED.questions, updated_at = now()`,
+    [session, JSON.stringify(questions)],
+  );
 }

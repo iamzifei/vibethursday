@@ -10,9 +10,10 @@ import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
 import { listWharfQuestions, openQuestionCount, type WharfQuestion } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
-import { byNewest, canClaim, canEdit, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
+import { canClaim, canEdit, statusOf, type Lane, type QuestionStatus } from "@/lib/questions";
+import { tidyBoard } from "@/lib/wharf-tidy";
 import { gullMood } from "@/lib/wharf";
-import { formatSession, nextThursdays } from "@/lib/sessions";
+import { focusSession, formatSession, nextThursdays } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -80,23 +81,25 @@ export default async function WharfPage({ searchParams }: PageProps) {
     label: formatSession(value, lang),
   }));
 
-  const rows = questions.map((question) => ({
-    question,
-    status: statusOf(
-      {
-        closed_at: question.closed_at,
-        created_at: question.created_at,
-        claims: question.replies.filter((reply) => reply.kind === "coming").length,
-        answers: question.replies.filter((reply) => reply.kind === "answer").length,
-      },
-      now,
-    ),
-  }));
+  const rows = questions.map((question) => {
+    const claims = question.replies.filter((reply) => reply.kind === "coming").length;
+    const answers = question.replies.filter((reply) => reply.kind === "answer").length;
+    return {
+      question,
+      claims,
+      answers,
+      status: statusOf({ closed_at: question.closed_at, created_at: question.created_at, claims, answers }, now),
+    };
+  });
 
-  const inLane = (which: Lane) =>
-    byNewest(rows.filter((row) => row.question.lane === which).map((row) => row.question)).map(
-      (question) => rows.find((row) => row.question.id === question.id)!,
-    );
+  // Duplicates grouped, stale ones folded (`wharf-tidy.ts`). "Recent" is the
+  // session in focus and the one before it, for the "想聊的" lane.
+  const focus = focusSession().date;
+  const before = new Date(`${focus}T00:00:00Z`);
+  before.setUTCDate(before.getUTCDate() - 7);
+  const { shown, folded } = tidyBoard(rows, [focus, before.toISOString().slice(0, 10)]);
+
+  const inLane = (which: Lane) => shown.filter((row) => row.question.lane === which);
 
   const asking = inLane("question");
   const vague = inLane("vague");
@@ -268,6 +271,31 @@ export default async function WharfPage({ searchParams }: PageProps) {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Folded, never deleted: questions nobody touched in three weeks,
+                closed ones nobody answered, and older "想聊的" lines. */}
+            {folded.length > 0 && (
+              <details className="disclosure">
+                <summary>{w.foldedSummary.replace("{n}", String(folded.length))}</summary>
+                <div className="disclosure__body">
+                  <div className="wharf-rows">
+                    {folded.map(({ question }) => (
+                      <Link
+                        key={question.id}
+                        href={`/members/${question.slug}${langSuffix(lang)}`}
+                        className="wharf-row"
+                      >
+                        <span className="wharf-row__q">{question.text}</span>
+                        <span className="wharf-row__who">
+                          {question.name}
+                          {question.session ? ` · ${formatSession(question.session, lang)}` : ""}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </details>
             )}
 
             <div className="wharf-how">

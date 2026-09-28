@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { claimMember } from "@/lib/db";
 import { cookieOptions, issueToken, MEMBER_COOKIE } from "@/lib/member-auth";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { text } from "@/lib/members";
 
 // Reads a cookie and writes to Postgres, so it must never be cached.
@@ -17,6 +17,10 @@ export const dynamic = "force-dynamic";
  * for someone mistyping their own WeChat ID and useless for anything else.
  */
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+
   let payload: unknown;
 
   try {

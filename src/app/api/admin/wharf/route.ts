@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { requestOrigin } from "@/lib/request-origin";
@@ -38,6 +38,10 @@ export const maxDuration = 120;
  * and there is no reason for it to grow some.
  */
 export async function POST(request: Request) {
+  // Refused before the body is read (2026-09-28 review: parsing first let one
+  // oversized POST balloon the process). See `bodyTooLarge`.
+  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+
   const limited = tooMany(request, "admin-action", 300);
   if (limited) return limited;
 
