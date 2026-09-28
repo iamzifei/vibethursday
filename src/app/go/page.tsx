@@ -91,6 +91,11 @@ export default async function GoPage({ searchParams }: PageProps) {
   };
 
   const title = phase === "before" ? t.titleBefore : phase === "day" ? t.titleDay : t.titleAfter;
+
+  // Where, read from the home page's venue card, so a venue change is one edit
+  // and this page — which the group is told is where the address lives — can
+  // never disagree with it. Found by its map link, not by position.
+  const venue = c.hero.facts.find((fact) => fact.href?.includes("maps.google"));
   const shownDate = phase === "after" ? nextThursdays(1)[0] : session;
 
   return (
@@ -108,6 +113,19 @@ export default async function GoPage({ searchParams }: PageProps) {
               {phase === "after" && (
                 <p className="body-lg">
                   {formatSession(shownDate, lang)} · {t.when}
+                </p>
+              )}
+              {phase !== "after" && venue && (
+                <p className="body-lg">
+                  {venue.value}
+                  {venue.href && venue.linkLabel && (
+                    <>
+                      {" · "}
+                      <a className="hl" href={venue.href} target="_blank" rel="noopener noreferrer">
+                        {venue.linkLabel}
+                      </a>
+                    </>
+                  )}
                 </p>
               )}
               {phase !== "after" && member?.sessions.includes(session) && (
