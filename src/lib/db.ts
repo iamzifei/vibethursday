@@ -123,12 +123,14 @@ export function ensureSchema(): Promise<void> {
     // the historical headcount kept shrinking.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS sessions date[] NOT NULL DEFAULT '{}'`);
 
-    // Backfill rows created before the column existed.
-    await pool.query(`
-      UPDATE signups
-         SET sessions = ARRAY[first_session]
-       WHERE sessions = '{}' AND first_session IS NOT NULL
-    `);
+    // ⚠️ There used to be a backfill here — "a row with no sessions gets its
+    // first_session" — for rows created before this column existed. It ran on
+    // every process start, long after those rows were gone, and from the day the
+    // waitlist arrived it did real damage: a waitlisted signup has no sessions
+    // and a first_session, so every deploy quietly booked the whole waitlist
+    // (and would re-book anyone who cancelled their only Thursday on /my).
+    // Found 2026-09-28 with seven such rows on one session. Removed; the repair
+    // for what it did is below, after the waitlist column.
 
     // Which other times this person could make. Asked of everyone, not just
     // the people who cannot do Thursdays: whether a second session is worth
@@ -159,6 +161,16 @@ export function ensureSchema(): Promise<void> {
     // `sessions` so every existing headcount — /admin, signup-stats, the
     // export — keeps counting only people with a place, with no change.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS waitlist date[] NOT NULL DEFAULT '{}'`);
+
+    // Repair for the removed backfill above: a session that is both booked and
+    // waitlisted was waitlisted, and the booking was the backfill's. Nothing
+    // else writes both (every path that books a session also removes it from
+    // the waitlist), so this is exact, idempotent, and cheap to leave in.
+    await pool.query(`
+      UPDATE signups
+         SET sessions = ARRAY(SELECT d FROM unnest(sessions) AS d WHERE NOT (d = ANY(waitlist)) ORDER BY d)
+       WHERE sessions && waitlist
+    `);
 
     // An organiser's hide, recorded apart from the member's own "keep it off
     // the wall" so that saving the card from /me cannot undo it (2026-09-28
@@ -2642,15 +2654,15 @@ export async function getMySignup(id: string): Promise<MySignup | null> {
 
   const row = result.rows[0];
   if (!row) return null;
-  // Booked wins: a session that somehow sits in both arrays (older rows, before
-  // the signup form cleared one when setting the other) is shown once, as booked.
+  // Waitlist wins: a session in both arrays was put there by a startup backfill
+  // that booked waitlisted rows (see ensureSchema, removed 2026-09-28). The
+  // schema repair clears it; this keeps a stray one from reading as booked.
+  const waitlisted = new Set((row.waitlist ?? []).map((w) => w.session));
   return {
     id: row.id,
     name: row.name,
-    sessions: row.sessions,
-    waitlist: (row.waitlist ?? [])
-      .filter((w) => !row.sessions.includes(w.session))
-      .map((w) => ({ session: w.session, position: Number(w.position) })),
+    sessions: row.sessions.filter((session) => !waitlisted.has(session)),
+    waitlist: (row.waitlist ?? []).map((w) => ({ session: w.session, position: Number(w.position) })),
   };
 }
 
