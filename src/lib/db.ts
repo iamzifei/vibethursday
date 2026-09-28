@@ -162,6 +162,22 @@ export function ensureSchema(): Promise<void> {
     // export — keeps counting only people with a place, with no change.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS waitlist date[] NOT NULL DEFAULT '{}'`);
 
+    // When each waitlisted session was joined, as {"2026-10-01": timestamp}.
+    // The queue order — /admin's list and "you are #3" on /my — is by this, not
+    // by when the person first ever signed up (2026-09-28: a regular from
+    // August was first in line for a waitlist they joined that evening).
+    // Entries on the waitlist before this existed get their row's updated_at,
+    // filled once and then frozen: for most, joining was their latest change.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS waitlist_since jsonb NOT NULL DEFAULT '{}'`);
+    await pool.query(`
+      UPDATE signups
+         SET waitlist_since = waitlist_since || (
+               SELECT jsonb_object_agg(w::text, to_jsonb(updated_at))
+                 FROM unnest(waitlist) AS w
+                WHERE NOT waitlist_since ? w::text)
+       WHERE EXISTS (SELECT 1 FROM unnest(waitlist) AS w WHERE NOT waitlist_since ? w::text)
+    `);
+
     // Repair for the removed backfill above: a session that is both booked and
     // waitlisted was waitlisted, and the booking was the backfill's. Nothing
     // else writes both (every path that books a session also removes it from
@@ -606,14 +622,15 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes, waitlist)
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes, waitlist, waitlist_since)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
                CASE WHEN $6::date IS NULL OR $15::boolean THEN '{}'::date[] ELSE ARRAY[$6::date] END,
                -- Only recorded against a session: an answer to "why are you
                -- coming" means nothing without the morning it is about.
                CASE WHEN $6::date IS NULL OR $14::text IS NULL THEN '{}'::jsonb
                     ELSE jsonb_build_object($6::text, $14::text) END,
-               CASE WHEN $6::date IS NOT NULL AND $15::boolean THEN ARRAY[$6::date] ELSE '{}'::date[] END)
+               CASE WHEN $6::date IS NOT NULL AND $15::boolean THEN ARRAY[$6::date] ELSE '{}'::date[] END,
+               CASE WHEN $6::date IS NOT NULL AND $15::boolean THEN jsonb_build_object($6::date::text, now()) ELSE '{}'::jsonb END)
        RETURNING id::text AS id`,
       [
         input.name,
@@ -680,6 +697,15 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
                          WHEN $16::boolean AND NOT $17::boolean
                            THEN ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$7::date]) ORDER BY 1)
                          ELSE array_remove(waitlist, $7::date)
+                       END,
+       -- Same three cases. Already waiting keeps its original time, so
+       -- submitting the form again never sends anyone to the back of the queue.
+       waitlist_since = CASE
+                         WHEN $7::date IS NULL THEN waitlist_since
+                         WHEN $16::boolean AND NOT $17::boolean
+                           THEN waitlist_since || jsonb_build_object($7::date::text,
+                                  COALESCE(waitlist_since -> ($7::date::text), to_jsonb(now())))
+                         ELSE waitlist_since - ($7::date::text)
                        END,
        source        = COALESCE($8, source),
        -- Replace rather than union: unlike sessions, this is a current
@@ -843,6 +869,8 @@ export type SignupRow = {
   purposes: string;
   /** Values this person used to go by in the WeChat column (`correctWechat`). */
   wechat_former: string[];
+  /** When each waitlisted session was joined, ISO timestamps keyed by date. */
+  waitlist_since: Record<string, string>;
   created_at: string;
 };
 
@@ -865,7 +893,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, source, lang, bot_check, wechat_former,
+            availability, ai_models, ai_spend, source, lang, bot_check, wechat_former, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -2434,6 +2462,7 @@ export async function promoteFromWaitlist(signupId: string, session: string): Pr
     `UPDATE signups
         SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
             waitlist = array_remove(waitlist, $2::date),
+            waitlist_since = waitlist_since - ($2::date::text),
             updated_at = now()
       WHERE id = $1::bigint`,
     [signupId, session],
@@ -2545,11 +2574,11 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
 
       // Read what to carry over, then delete the row before writing it onto
       // `keep`, so the unique email/WeChat indexes never see both at once.
-      const other = await client.query<{ sessions: string[]; waitlist: string[]; former: string[]; email: string | null; wechat: string | null }>(
+      const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null }>(
         `DELETE FROM signups WHERE id = $1::bigint
           RETURNING ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) d) AS sessions,
                     ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) d) AS waitlist,
-                    wechat_former AS former, email, wechat`,
+                    waitlist_since AS since, wechat_former AS former, email, wechat`,
         [drop],
       );
       const o = other.rows[0];
@@ -2566,9 +2595,18 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
                                    THEN ARRAY[$5::text] ELSE '{}'::text[] END) AS f
                               WHERE f IS NOT NULL AND lower(f) IS DISTINCT FROM lower(wechat)),
             email = COALESCE(email, $6),
+            -- The earlier of the two join times for a session both rows waited
+            -- on. Keys for sessions no longer waited on are dropped at read time.
+            waitlist_since = COALESCE((
+              SELECT jsonb_object_agg(k, to_jsonb(t))
+                FROM (SELECT k, min(v::timestamptz) AS t
+                        FROM (SELECT key AS k, value #>> '{}' AS v FROM jsonb_each(waitlist_since)
+                              UNION ALL
+                              SELECT key, value #>> '{}' FROM jsonb_each($7::jsonb)) AS both_rows
+                       GROUP BY k) AS merged), '{}'::jsonb),
             updated_at = now()
           WHERE id = $1::bigint`,
-        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email],
+        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email, JSON.stringify(o.since ?? {})],
       );
 
       await client.query("COMMIT");
@@ -2631,8 +2669,9 @@ export async function findMySignup(name: string, wechat: string): Promise<MySign
 /**
  * A signup by id, with its place in each waitlist.
  *
- * Place is by signup age, oldest first — the order /admin lists the waitlist
- * in, so "you are third" here is third on the organiser's screen too.
+ * Place is by when they joined that session's waitlist (`waitlist_since`),
+ * earliest first — the order /admin lists it in, so "you are third" here is
+ * third on the organiser's screen too.
  */
 export async function getMySignup(id: string): Promise<MySignup | null> {
   await ensureSchema();
@@ -2644,7 +2683,8 @@ export async function getMySignup(id: string): Promise<MySignup | null> {
                       'session', to_char(w, 'YYYY-MM-DD'),
                       'position', (SELECT count(*) FROM signups o
                                     WHERE w = ANY(o.waitlist)
-                                      AND (o.created_at, o.id) <= (s.created_at, s.id)))
+                                      AND (COALESCE((o.waitlist_since ->> w::text)::timestamptz, o.created_at), o.id)
+                                          <= (COALESCE((s.waitlist_since ->> w::text)::timestamptz, s.created_at), s.id)))
                     ORDER BY w)
                FROM unnest(s.waitlist) AS w) AS waitlist
        FROM signups s
@@ -2711,6 +2751,7 @@ export async function moveSessionFor(signupId: string, from: string | null, to: 
           `UPDATE signups
               SET sessions = array_remove(sessions, $2::date),
                   waitlist = array_remove(waitlist, $2::date),
+                  waitlist_since = waitlist_since - ($2::date::text),
                   updated_at = now()
             WHERE id = $1::bigint`,
           [signupId, from],
@@ -2731,10 +2772,13 @@ export async function moveSessionFor(signupId: string, from: string | null, to: 
           ? `UPDATE signups
                 SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
                     waitlist = array_remove(waitlist, $2::date),
+                    waitlist_since = waitlist_since - ($2::date::text),
                     updated_at = now()
               WHERE id = $1::bigint`
           : `UPDATE signups
                 SET waitlist = ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$2::date]) ORDER BY 1),
+                    waitlist_since = waitlist_since || jsonb_build_object($2::date::text,
+                                       COALESCE(waitlist_since -> ($2::date::text), to_jsonb(now()))),
                     updated_at = now()
               WHERE id = $1::bigint`,
         [signupId, to],
@@ -2797,6 +2841,7 @@ export async function cancelSession(signupId: string, session: string): Promise<
     `UPDATE signups
         SET sessions = array_remove(sessions, $2::date),
             waitlist = array_remove(waitlist, $2::date),
+            waitlist_since = waitlist_since - ($2::date::text),
             updated_at = now()
       WHERE id = $1::bigint`,
     [signupId, session],

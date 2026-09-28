@@ -207,8 +207,13 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // numbers look like a script rather than people (capacity.ts).
   const deskWaitlist = signups
     .filter((row) => row.waitlist.includes(desk))
-    // Same order as the place /my tells people they hold: age, then id.
-    .sort((a, b) => (a.created_at === b.created_at ? Number(a.id) - Number(b.id) : a.created_at < b.created_at ? -1 : 1));
+    // By when they joined this waitlist, then id — the same order as the place
+    // /my tells people they hold. Not by signup age: that put a regular from
+    // months ago ahead of people who had been waiting all day (2026-09-28).
+    .sort((a, b) => {
+      const at = (row: typeof a) => Date.parse(row.waitlist_since[desk] ?? `${row.created_at.replace(" ", "T")}:00Z`);
+      return at(a) - at(b) || Number(a.id) - Number(b.id);
+    });
   const dayAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
   const unverifiedLastDay = signups.filter(
     (row) =>
@@ -376,7 +381,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <div className="group-head">
           <h2 className="h3">候补 · {desk}</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            {deskWaitlist.length} 人 · 按报名先后
+            {deskWaitlist.length} 人 · 按进候补的先后
           </span>
         </div>
         {/* People can cancel on /my now (2026-09-28), which frees a place but
@@ -399,7 +404,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <th scope="col">名字</th>
                   <th scope="col">微信</th>
                   <th scope="col">在做什么</th>
-                  <th scope="col">报名时间</th>
+                  <th scope="col">进候补</th>
                   <th scope="col">操作</th>
                 </tr>
               </thead>
@@ -409,7 +414,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td>{row.name}</td>
                     <td className="mono">{row.wechat ?? "—"}</td>
                     <td style={{ whiteSpace: "normal", minWidth: "200px" }}>{row.building ?? "—"}</td>
-                    <td className="mono">{row.created_at}</td>
+                    <td className="mono">
+                      {row.waitlist_since[desk]
+                        ? new Intl.DateTimeFormat("en-CA", {
+                            timeZone: "Australia/Sydney",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          }).format(new Date(row.waitlist_since[desk]))
+                        : row.created_at}
+                    </td>
                     <td>
                       <form method="post" action="/api/admin/waitlist">
                         <input type="hidden" name="id" value={row.id} />
