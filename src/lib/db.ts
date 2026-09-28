@@ -145,6 +145,11 @@ export function ensureSchema(): Promise<void> {
     // week's answer — the failure described at the top of questions.ts.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS purposes jsonb NOT NULL DEFAULT '{}'::jsonb`);
 
+    // Sessions this person is waitlisted for (`capacity.ts`). Kept apart from
+    // `sessions` so every existing headcount — /admin, signup-stats, the
+    // export — keeps counting only people with a place, with no change.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS waitlist date[] NOT NULL DEFAULT '{}'`);
+
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
     // in, which is what keeps the wall to people who actually turned up: there
@@ -482,6 +487,12 @@ export type SignupInput = {
   lang: string;
   /** Turnstile verdict for this submission: verified / skipped / unavailable. */
   botCheck: string;
+  /**
+   * `firstSession` was full (`capacity.ts`): record it on the waitlist instead
+   * of in `sessions`. Omitted everywhere but the signup route, so a walk-in
+   * checked in at the door is never waitlisted.
+   */
+  waitlisted?: boolean;
 };
 
 /**
@@ -524,13 +535,14 @@ export async function saveSignup(input: SignupInput): Promise<string> {
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes)
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes, waitlist)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-               CASE WHEN $6::date IS NULL THEN '{}'::date[] ELSE ARRAY[$6::date] END,
+               CASE WHEN $6::date IS NULL OR $15::boolean THEN '{}'::date[] ELSE ARRAY[$6::date] END,
                -- Only recorded against a session: an answer to "why are you
                -- coming" means nothing without the morning it is about.
                CASE WHEN $6::date IS NULL OR $14::text IS NULL THEN '{}'::jsonb
-                    ELSE jsonb_build_object($6::text, $14::text) END)
+                    ELSE jsonb_build_object($6::text, $14::text) END,
+               CASE WHEN $6::date IS NOT NULL AND $15::boolean THEN ARRAY[$6::date] ELSE '{}'::date[] END)
        RETURNING id::text AS id`,
       [
         input.name,
@@ -547,6 +559,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
         input.aiModels,
         input.aiSpend,
         input.purpose,
+        input.waitlisted === true,
       ],
     );
 
@@ -582,10 +595,17 @@ export async function saveSignup(input: SignupInput): Promise<string> {
        -- and two. DISTINCT keeps a re-submission for the same week idempotent.
        sessions      = ARRAY(
                          SELECT DISTINCT unnest(
-                           sessions || CASE WHEN $7::date IS NULL THEN '{}'::date[] ELSE ARRAY[$7::date] END
+                           sessions || CASE WHEN $7::date IS NULL OR $16::boolean THEN '{}'::date[] ELSE ARRAY[$7::date] END
                          )
                          ORDER BY 1
                        ),
+       -- Waitlisted: add it here instead. Booked: take it off, in case this
+       -- person was waitlisted earlier and a place has since come free.
+       waitlist      = CASE
+                         WHEN $7::date IS NULL THEN waitlist
+                         WHEN $16::boolean THEN ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$7::date]) ORDER BY 1)
+                         ELSE array_remove(waitlist, $7::date)
+                       END,
        source        = COALESCE($8, source),
        -- Replace rather than union: unlike sessions, this is a current
        -- preference and someone whose Saturdays stopped working must be able
@@ -624,10 +644,54 @@ export async function saveSignup(input: SignupInput): Promise<string> {
       input.aiModels,
       input.aiSpend,
       input.purpose,
+      input.waitlisted === true,
     ],
   );
 
   return target.id;
+}
+
+/**
+ * How many signups a session already has, and whether this person is one of
+ * them — the two inputs `admission` in `capacity.ts` needs.
+ *
+ * The count is exactly the one /admin shows (`sessions` contains the date), and
+ * "this person" is matched the way `saveSignup` merges: same email or same
+ * WeChat ID, ignoring case.
+ */
+export async function sessionHeadcount(
+  session: string,
+  email: string | null,
+  wechat: string | null,
+): Promise<{ count: number; alreadyIn: boolean }> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ count: string; already: boolean }>(
+    `SELECT count(*)::text AS count,
+            coalesce(bool_or(
+              ($2::text IS NOT NULL AND lower(email) = lower($2)) OR
+              ($3::text IS NOT NULL AND lower(wechat) = lower($3))
+            ), false) AS already
+       FROM signups
+      WHERE $1::date = ANY(sessions)`,
+    [session, email, wechat],
+  );
+
+  return { count: Number(result.rows[0]?.count ?? 0), alreadyIn: result.rows[0]?.already ?? false };
+}
+
+/** Signups per session, for marking full sessions on the form. Only dates that have any. */
+export async function signupCountsBySession(): Promise<Map<string, number>> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ session: string; count: string }>(
+    `SELECT to_char(d, 'YYYY-MM-DD') AS session, count(*)::text AS count
+       FROM signups, unnest(sessions) AS d
+      WHERE d >= current_date - 1
+      GROUP BY d`,
+  );
+
+  return new Map(result.rows.map((row) => [row.session, Number(row.count)]));
 }
 
 /**
@@ -687,6 +751,8 @@ export type SignupRow = {
   topic: string | null;
   /** Every session this person has signed up for, oldest first. */
   sessions: string[];
+  /** Sessions they are waitlisted for (full when they signed up), oldest first. */
+  waitlist: string[];
   /** Other times they said they could make. Empty when they did not answer. */
   availability: string[];
   /** Models they use, `intl_*` / `cn_*`. Empty when they did not answer. */
@@ -713,6 +779,11 @@ export async function listSignups(): Promise<SignupRow[]> {
                  FROM unnest(sessions) AS s),
               '{}'
             ) AS sessions,
+            COALESCE(
+              (SELECT array_agg(to_char(w, 'YYYY-MM-DD') ORDER BY w)
+                 FROM unnest(waitlist) AS w),
+              '{}'
+            ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
             availability, ai_models, ai_spend, source, lang, bot_check,
             -- The days they were actually in the room, from the check-in

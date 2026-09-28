@@ -12,6 +12,8 @@ const COLUMNS = [
   "demo_intent",
   "first_session",
   "sessions",
+  // Waitlisted, not booked: the session was full (`capacity.ts`). Never counted in `sessions`.
+  "waitlist",
   // Which of those they were actually there for, from check-ins. Empty for
   // everyone before check-in existed, and for anyone who did not tap.
   "checked_in",

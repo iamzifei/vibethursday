@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { publishCardForSignup, saveSignup } from "@/lib/db";
+import { publishCardForSignup, saveSignup, sessionHeadcount } from "@/lib/db";
 import { nextThursdays } from "@/lib/sessions";
+import { admission } from "@/lib/capacity";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
 
@@ -155,6 +156,22 @@ export async function POST(request: Request) {
   // is not a thing to do on a truthy value.
   const publishCard = body.publishCard === true;
 
+  // A full session takes the signup onto its waitlist rather than refusing it
+  // (`capacity.ts`). Someone already booked keeps their place. Walk-ins at the
+  // door never come through here, so the cap never turns anybody away there.
+  let waitlisted = false;
+
+  if (firstSession) {
+    try {
+      const { count, alreadyIn } = await sessionHeadcount(firstSession, email, wechat);
+      waitlisted = admission(count, alreadyIn) === "waitlist";
+    } catch (error) {
+      // Counting failed: book them. A signup lost to a counting error is worse
+      // than one person over a soft cap.
+      console.error("[signup] could not count the session; booking anyway", error);
+    }
+  }
+
   let signupId: string;
 
   try {
@@ -173,6 +190,7 @@ export async function POST(request: Request) {
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,
+      waitlisted,
     });
   } catch (error) {
     console.error("[signup] failed to save", error);
@@ -196,5 +214,5 @@ export async function POST(request: Request) {
   // it hands out edit access to a card; handing the same access out from an
   // open signup form would make "sign up as someone whose WeChat ID you know"
   // a way to take over their card. Editing still goes through /claim.
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, waitlisted });
 }

@@ -411,6 +411,8 @@ export const copy = {
         // read when choosing, and a date alone lets someone who works
         // weekday mornings pick one without ever noticing the time.
         sessionTimeSuffix: "上午 10:30",
+        // 报满 40 人的场次在下拉里标出来。仍然能选，选了就是登记候补（capacity.ts）。
+        sessionFull: "已满，可登记候补",
         // Without this option someone who works Thursdays has two choices:
         // pick a date they will not attend, or close the page. The first
         // corrupts the headcount the table is booked against; the second is
@@ -498,6 +500,8 @@ export const copy = {
       // Stated outright, because "收到了。" alone left people asking in the
       // group whether the signup had gone through.
       successTitle: "报名成功。",
+      waitlistTitle: "这一场已经满了，你在候补名单上。",
+      waitlistBody: "有人来不了，我会在群里通知你；也可以直接报下一场。",
       successSession: "你报的是：",
       successNoSession: "这次没选场次，已经登记上了，有合适的场会通知你。",
       successBody: "地址和当周提醒会发到你的邮箱。留了微信号的话，我会另外拉你进群。",
@@ -1763,6 +1767,7 @@ export const copy = {
         demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
+        sessionFull: "full, join the waitlist",
         sessionNone: "Mornings do not work for me (evening or weekend, please)",
         sessionNoneHint: "Pick this and you are still on the list — if an evening or weekend one happens, this is who I go to.",
         availability: "What other times could you make?",
@@ -1820,6 +1825,8 @@ export const copy = {
       submit: "Sign up",
       submitting: "Sending…",
       successTitle: "You are signed up.",
+      waitlistTitle: "This one is full, so you are on the waitlist.",
+      waitlistBody: "If a place comes free I will say so in the group — or sign up for the next one.",
       successSession: "Your session: ",
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       successBody: "The address and a reminder will land in your inbox. If you left a WeChat ID I will add you to the group too.",

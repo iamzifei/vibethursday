@@ -4,6 +4,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { signupCountsBySession } from "@/lib/db";
+import { SESSION_CAP } from "@/lib/capacity";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { langHref } from "@/lib/nav";
 import { eventJsonLd, pageAlternates } from "@/lib/seo";
@@ -65,9 +67,15 @@ export default async function SbmPage({ searchParams }: PageProps) {
   // Only the two listed dates. The signup route independently checks the date
   // against the next twelve Thursdays, so a stale option cannot write a date
   // nobody is running.
+  // Full sessions are marked, not hidden: picking one joins its waitlist
+  // (`capacity.ts`). A failed count must not take this page down, so it reads
+  // as "nothing is full".
+  const counts = await signupCountsBySession().catch(() => new Map<string, number>());
   const sessions = SBM_SESSIONS.map((value) => ({
     value,
-    label: `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}`,
+    label:
+      `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}` +
+      ((counts.get(value) ?? 0) >= SESSION_CAP ? ` · ${c.signup.fields.sessionFull}` : ""),
   }));
 
   // One Event per session, titled the way the government listing titles them

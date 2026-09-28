@@ -29,7 +29,7 @@ type Props = {
 type Status = "idle" | "sending" | "done" | "error";
 
 /** What the success card repeats back: the session, and the values on record. */
-type Receipt = { name: string; email: string; wechat: string; session: string | null };
+type Receipt = { name: string; email: string; wechat: string; session: string | null; waitlisted: boolean };
 
 /**
  * Unsent form contents, kept separately from the saved profile
@@ -305,8 +305,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
       // on a shared device.
       clearDraft(DRAFT_KEY);
 
+      const accepted = (await response.json().catch(() => null)) as { waitlisted?: boolean } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       setReceipt({
+        waitlisted: accepted?.waitlisted === true,
         name,
         email,
         wechat,
@@ -323,7 +325,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   if (status === "done") {
     return (
       <div className="card card--accent stack-4" role="status">
-        <h3 className="h3">{copy.successTitle}</h3>
+        <h3 className="h3">{receipt?.waitlisted ? copy.waitlistTitle : copy.successTitle}</h3>
+        {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
         <p>
           {receipt?.session ? (
             <>

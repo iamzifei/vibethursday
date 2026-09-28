@@ -6,10 +6,11 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { currentVersion } from "@/lib/changelog";
 import { coachAvailable } from "@/lib/coach";
+import { SESSION_CAP } from "@/lib/capacity";
 import { getCopy, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
-import { listWharfQuestions } from "@/lib/db";
+import { listWharfQuestions, signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
@@ -46,9 +47,15 @@ export default async function Page({ searchParams }: PageProps) {
   // （周四）上午 10:30 · 8月13日（周四）上午 10:30" would be noise there. In the
   // picker it is the point: a bare date lets someone who works weekday
   // mornings choose one without ever registering that it is a morning.
+  // Full sessions are marked, not hidden: picking one joins its waitlist
+  // (`capacity.ts`). A failed count must not take this page down, so it reads
+  // as "nothing is full".
+  const counts = await signupCountsBySession().catch(() => new Map<string, number>());
   const sessions = nextThursdays(6).map((value) => ({
     value,
-    label: `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}`,
+    label:
+      `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}` +
+      ((counts.get(value) ?? 0) >= SESSION_CAP ? ` · ${c.signup.fields.sessionFull}` : ""),
   }));
 
   const nextSession = sessions[0];

@@ -8,6 +8,7 @@ import { OrderDesk } from "@/components/OrderDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
+import { SESSION_CAP } from "@/lib/capacity";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import {
   countCheckins,
@@ -179,6 +180,15 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   const nextSession = nextThursdays(1)[0];
   const perSession = countPerSession(signups, [nextSession]);
+  // Waitlisted signups per session, from the same rows. Not part of
+  // `countPerSession` on purpose: a waitlisted person has no place, and every
+  // existing headcount must keep meaning "people with a place".
+  const waitlistBySession = new Map<string, number>();
+  for (const signup of signups) {
+    for (const date of new Set(signup.waitlist)) {
+      waitlistBySession.set(date, (waitlistBySession.get(date) ?? 0) + 1);
+    }
+  }
   const nextSessionRow = perSession.find((session) => session.date === nextSession);
 
   const stats = [
@@ -593,7 +603,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <thead>
               <tr>
                 <th scope="col">Session</th>
-                <th scope="col">Signed up</th>
+                <th scope="col">Signed up / cap</th>
+                <th scope="col">Waitlist</th>
                 <th scope="col">Turned up</th>
                 <th scope="col">Want to demo</th>
               </tr>
@@ -605,7 +616,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     {session.date}
                     {session.date === nextSession ? " ← next" : ""}
                   </td>
-                  <td className="mono">{session.total}</td>
+                  <td className="mono">
+                    {session.total} / {SESSION_CAP}
+                  </td>
+                  <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
                   <td className="mono">{attendance.get(session.date) ?? "—"}</td>
                   <td className="mono">{session.wantsToDemo}</td>
                 </tr>
