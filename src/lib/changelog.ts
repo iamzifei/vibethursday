@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.2",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "vibethursday.com/go 上能看到本周的候选问题，活动当天变成「今天聊这几个问题」，上午还能直接点进签到；报满 40 人的场次写明「已满，登记候补」。码头同一个人的同一句话只留一条，过期的收起来。各页在手机上更好点、更好读，繁体页的用字也修齐了。",
+    link: { href: "/go", zh: "看本周 →", en: "This week →" },
+    en: "vibethursday.com/go now shows this week's candidate questions, turns into \"today we talk about\" on the morning, and links straight to check-in that morning; a full session says so and offers the waitlist. The Wharf shows each person's question once and folds the stale ones. Pages are easier to tap and read on a phone, and the Traditional Chinese pages use the right characters.",
+  },
+  {
     version: "4.1",
     date: "2026-09-28",
     kind: "minor",

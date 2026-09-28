@@ -292,7 +292,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     <main className="shell section stack-8">
       <div className="stack-4">
         <span className="eyebrow">Vibe Thursday · admin</span>
-        <h1>Signups</h1>
+        <h1>后台</h1>
       </div>
 
       {/* Four groups in the order a week actually runs. Sticky, and it scrolls

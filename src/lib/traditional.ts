@@ -27,7 +27,17 @@ import * as Locale from "opencc-js/preset/cn2t";
  * chrome around whatever script each person chose for themselves, and that is
  * the intended result.
  */
-const convert = ConverterBuilder(Locale)({ from: "cn", to: "tw" });
+const opencc = ConverterBuilder(Locale)({ from: "cn", to: "tw" });
+
+/**
+ * The converter, plus one correction: a week is 週 in Traditional. OpenCC gets
+ * most of them but left "這周最想聊", "我這周來不了" and "看本周" (2026-09-28
+ * review). Only 周 right after a word that makes it a week is changed, so a
+ * surname or 周到 / 周圍 is left as it is.
+ */
+function convert(value: string): string {
+  return opencc(value).replace(/([這本每上下前兩两這一])周/g, "$1週");
+}
 
 /** One string. ASCII, URLs and the brand name pass through untouched. */
 export function toTraditional(value: string): string {

@@ -12,6 +12,8 @@ type Props = {
   eager: boolean;
   /** Where the title links. Omitted on the session's own page. */
   href?: string;
+  /** This row is the whole page (`/sessions/<date>`): its title becomes the h1. */
+  standalone?: boolean;
 };
 
 /**
@@ -22,15 +24,17 @@ type Props = {
  * must not drift — a row that says one thing in the list and another on its
  * page is the kind of disagreement nobody notices until somebody does.
  */
-export function SessionRow({ row, lang, copy: a, eager, href }: Props) {
+export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Props) {
+  // On the session's own page the title is the page's h1 (axe page-has-heading-one).
+  const Heading = standalone ? "h1" : "h2";
   const title = row.title ?? a.sessionN.replace("{n}", String(row.index));
 
   return (
     <li className="archive__row">
       <div className="archive__head">
-        <h2 className="archive__title">
+        <Heading className="archive__title">
           {href ? <Link href={href}>{title}</Link> : title}
-        </h2>
+        </Heading>
         <span className="archive__date mono">
           {formatSession(row.date, lang)}
         </span>
@@ -79,7 +83,7 @@ export function SessionRow({ row, lang, copy: a, eager, href }: Props) {
 
       {row.photos.length > 0 && (
         <div className="stack-2">
-          <div className="archive__photos">
+          <div className="archive__photos" tabIndex={0} role="region" aria-label={title}>
             {row.photos.slice(0, 3).map((photo) => (
               <Photo key={photo.src} photo={photo} />
             ))}
@@ -95,7 +99,7 @@ export function SessionRow({ row, lang, copy: a, eager, href }: Props) {
               <summary>
                 {a.morePhotos.replace("{n}", String(row.photos.length - 3))}
               </summary>
-              <div className="archive__photos">
+              <div className="archive__photos" tabIndex={0} role="region" aria-label={title}>
                 {row.photos.slice(3).map((photo) => (
                   <Photo key={photo.src} photo={photo} />
                 ))}

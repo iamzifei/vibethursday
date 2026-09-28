@@ -113,7 +113,7 @@ export default async function ChangelogPage({ searchParams }: PageProps) {
                   {release.link && (
                     <p style={{ margin: 0 }}>
                       <Link className="hl" href={langHref(release.link.href, lang)}>
-                        {lang === "en" ? release.link.en : release.link.zh}
+                        {lang === "en" ? release.link.en : lang === "zh-Hant" ? toTraditional(release.link.zh) : release.link.zh}
                       </Link>
                     </p>
                   )}

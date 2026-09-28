@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // No "X-Powered-By: Next.js" on every response (2026-09-28 review).
+  poweredByHeader: false,
   // Deliberately NOT `output: "standalone"`. Zeabur's Node.js builder starts
   // the app with `next start`, which refuses to serve a standalone build — the
   // option would be silently ignored while still emitting a warning on boot.
@@ -82,7 +84,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/photos/:path*",
+        // Every folder of unhashed images, not only photos: the session
+        // posters, the Wharf comic and the card art were served with
+        // max-age=0, so each visit re-checked them (2026-09-28 review).
+        source: "/:dir(photos|sessions|wharf|cards)/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {

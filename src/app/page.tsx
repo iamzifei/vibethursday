@@ -50,12 +50,19 @@ export default async function Page({ searchParams }: PageProps) {
   // Full sessions are marked, not hidden: picking one joins its waitlist
   // (`capacity.ts`). A failed count must not take this page down, so it reads
   // as "nothing is full".
+  // Started together rather than one after the other: two round trips to the
+  // database became one on the home page (2026-09-28 review). The Wharf read is
+  // awaited inside its own try below; the no-op catch only stops an early
+  // rejection from being reported as unhandled before that await is reached.
+  const wharfRead = listWharfQuestions();
+  wharfRead.catch(() => {});
   const counts = await signupCountsBySession().catch(() => new Map<string, number>());
   const sessions = nextThursdays(6).map((value) => ({
     value,
     label:
       `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}` +
       ((counts.get(value) ?? 0) >= SESSION_CAP ? ` · ${c.signup.fields.sessionFull}` : ""),
+    full: (counts.get(value) ?? 0) >= SESSION_CAP,
   }));
 
   const nextSession = sessions[0];
@@ -80,7 +87,7 @@ export default async function Page({ searchParams }: PageProps) {
     // The same rows the Wharf itself shows, not a second derivation of them:
     // two pages disagreeing about what is on the board is exactly the drift
     // that is invisible until somebody notices.
-    const questions = (await listWharfQuestions()).filter(
+    const questions = (await wharfRead).filter(
       (question) => question.lane === "question",
     );
 
@@ -153,6 +160,17 @@ export default async function Page({ searchParams }: PageProps) {
               {c.hero.lede}
             </p>
 
+            {/* The main button before the three fact cards, not after: at 390px
+                the cards pushed it below the first screen (2026-09-28 review). */}
+            <div className="rise rise-3" style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+              <a className="btn btn--primary" href="#signup">
+                {c.hero.cta}
+              </a>
+              <a className="btn btn--secondary" href="#what">
+                {c.hero.ctaSecondary}
+              </a>
+            </div>
+
             <dl className="grid-auto rise rise-3" style={{ margin: 0 }}>
               {c.hero.facts.map((fact) => (
                 <div className="card stack-2" key={fact.label}>
@@ -200,15 +218,6 @@ export default async function Page({ searchParams }: PageProps) {
             </dl>
 
             <div className="stack-3 rise rise-4">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-                <a className="btn btn--primary" href="#signup">
-                  {c.hero.cta}
-                </a>
-                <a className="btn btn--secondary" href="#what">
-                  {c.hero.ctaSecondary}
-                </a>
-              </div>
-
               {nextSession && (
                 // Links to that Thursday's own page, which before the day is
                 // its introduction: the one address on this site that means

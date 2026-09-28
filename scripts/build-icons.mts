@@ -48,8 +48,10 @@ function markSvg(size: number): string {
 
 /** Files to write: the browser tab icon, the iOS home-screen icon, an avatar. */
 const TARGETS = [
-  { file: "src/app/icon.png", size: 512 },
-  { file: "src/app/apple-icon.png", size: 512 },
+  // A tab icon is drawn at 16–32px and an iOS home-screen icon at 180px; the
+  // old 512px files were re-downloaded on every page (2026-09-28 review).
+  { file: "src/app/icon.png", size: 48 },
+  { file: "src/app/apple-icon.png", size: 180 },
   // Ko-fi, WeChat and anywhere else the community needs a square portrait.
   { file: "public/avatar.png", size: 1024 },
 ];

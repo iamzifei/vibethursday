@@ -253,6 +253,14 @@ p, .body { font-size: var(--text-base); line-height: var(--leading-body); color:
 
 .mono { font-family: var(--font-mono); }
 .hl { color: var(--accent); }
+/* Links inside running text are underlined: colour alone was 2.7:1 against
+   the grey around them (axe link-in-text-block, 2026-09-28 review). */
+/* Paragraphs only: a link inside an <li> is often the whole row (the check-in
+   roster, card lists), and underlining those reads as a rendering bug. */
+p a:not(.btn):not(.chip) { text-decoration: underline; text-underline-offset: 3px; }
+/* A five-point scale as five equal columns, so each is a real tap target. */
+.choice-group--scale { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: var(--space-2); }
+.choice-group--scale .choice { justify-content: center; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-hover); }
@@ -287,6 +295,7 @@ textarea:focus-visible,
 .section { padding-block: clamp(var(--space-12), 9vw, var(--space-24)); }
 .section + .section { border-top: 1px solid var(--border-subtle); }
 
+.stack-1 { display: flex; flex-direction: column; gap: var(--space-1); }
 .stack-2 { display: flex; flex-direction: column; gap: var(--space-2); }
 .stack-3 { display: flex; flex-direction: column; gap: var(--space-3); }
 .stack-4 { display: flex; flex-direction: column; gap: var(--space-4); }
@@ -354,7 +363,8 @@ textarea:focus-visible,
   font-size: var(--text-sm);
 }
 
-.footer__map a { color: var(--fg3); text-decoration: none; }
+/* 44px tall: they were 23px, under a thumb's reach (2026-09-28 review). */
+.footer__map a { color: var(--fg3); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
 .footer__map a:hover { color: var(--accent); }
 
 .footer__meta {
@@ -368,6 +378,10 @@ textarea:focus-visible,
    the same kind of thing rather than a decoration that happens to be clickable. */
 .footer__source {
   display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
   color: var(--fg3);
   transition: color var(--dur-fast) var(--ease-standard);
 }
@@ -1808,7 +1822,7 @@ select.field {
 .chip--stage { border-color: var(--accent-muted); background: var(--accent-subtle); color: var(--accent); }
 
 /* Filter chips are links, so they need a real touch target. */
-a.chip--link { min-height: 36px; padding-inline: var(--space-3); color: var(--fg2); }
+a.chip--link { min-height: 44px; padding-inline: var(--space-3); color: var(--fg2); }
 a.chip--link:hover { border-color: var(--border-strong); color: var(--fg1); }
 a.chip--on { border-color: var(--accent); background: var(--accent-subtle); color: var(--accent); }
 
@@ -2266,6 +2280,10 @@ button.chip--on { border-color: var(--accent); background: var(--accent-subtle);
    this site has. */
 .wharf-item__anchor {
   margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
   color: var(--fg-disabled);
   text-decoration: none;
   font-family: var(--font-mono);

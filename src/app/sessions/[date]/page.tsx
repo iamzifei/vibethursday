@@ -132,7 +132,7 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
             </p>
 
             <ol className="archive">
-              <SessionRow row={row} lang={lang} copy={a} eager />
+              <SessionRow row={row} lang={lang} copy={a} eager standalone />
             </ol>
           </div>
         </section>

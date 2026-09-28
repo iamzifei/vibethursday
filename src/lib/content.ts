@@ -46,6 +46,8 @@ export const copy = {
       // Label for the phone menu button and for the two <nav> landmarks, which
       // is all a screen reader gets — the button itself is an icon.
       menu: "菜单",
+      // The footer's own label, so two navs are not both "菜单" to a screen reader.
+      siteMap: "网站地图",
       // The skip link. Hidden until it has focus; the first stop on the page.
       skip: "跳到正文",
       // Names the 简/繁/EN group for a screen reader.
@@ -294,7 +296,7 @@ export const copy = {
     membersTeaser: {
       eyebrow: "成员墙",
       title: "你去了会遇到谁。",
-      lede: "每个来过的人都有一张名片。最管用的是「想找什么」和「能帮什么」两栏——找合伙人、找第一批用户，多半从这里接上。没有产品也一样有名片。",
+      lede: "每个来过的人都可以有一张名片。最管用的是「想找什么」和「能帮什么」两栏——找合伙人、找第一批用户，多半从这里接上。没有产品也一样有名片。",
       cta: "看成员墙",
       ctaSecondary: "认领我的名片",
     },
@@ -343,7 +345,7 @@ export const copy = {
 
     signup: {
       eyebrow: "§ 06 — 报名",
-      title: "报个名，我把地址发给你。",
+      title: "报个名，我好知道订几个位子。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
       // before, so a regular only picks a session.
@@ -412,7 +414,7 @@ export const copy = {
         // weekday mornings pick one without ever noticing the time.
         sessionTimeSuffix: "上午 10:30",
         // 报满 40 人的场次在下拉里标出来。仍然能选，选了就是登记候补（capacity.ts）。
-        sessionFull: "已满，可登记候补",
+        sessionFull: "已满·候补",
         // Without this option someone who works Thursdays has two choices:
         // pick a date they will not attend, or close the page. The first
         // corrupts the headcount the table is booked against; the second is
@@ -504,7 +506,7 @@ export const copy = {
       waitlistBody: "有人来不了，我会在群里通知你；也可以直接报下一场。",
       successSession: "你报的是：",
       successNoSession: "这次没选场次，已经登记上了，有合适的场会通知你。",
-      successBody: "地址和当周提醒会发到你的邮箱。留了微信号的话，我会另外拉你进群。",
+      successBody: "地址在 vibethursday.com/go，当周的提醒在微信群里发。留了微信号的话，我会拉你进群。",
       // The Chinese form makes email optional, and most leave it blank — telling
       // them to watch their inbox sends them looking for something never sent.
       successBodyNoEmail: "我会用你留的微信号拉你进群，地址和当周提醒都在群里发。",
@@ -563,7 +565,7 @@ export const copy = {
         },
         {
           q: "具体在哪？",
-          a: "The Avenue，465 Victoria Avenue, Chatswood NSW 2067——Brown St 和 Railway St 转角那栋圆形的楼，Chatswood 火车站出来就是，从院子那边进。接下来几场都在这儿。报名后我也会把地址再发你一次。",
+          a: "The Avenue，465 Victoria Avenue, Chatswood NSW 2067——Brown St 和 Railway St 转角那栋圆形的楼，Chatswood 火车站出来就是，从院子那边进。接下来几场都在这儿，换了的话 vibethursday.com/go 上会写。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -583,8 +585,8 @@ export const copy = {
           aTail: null,
         },
         {
-          q: "为什么是上午？下午不是更松吗？",
-          a: "下午三点正好撞小学放学，家里有孩子的一律来不了。上午还顺带解决一个实际问题：悉尼 CBD 不少咖啡厅下午三四点就打烊，上午反而好占位子。上午上班来不了的话也别走——报名时把场次选成",
+          q: "为什么是上午？下午不是更闲吗？",
+          a: "下午三点正好撞小学放学，家里有孩子的一律来不了。上午还顺带解决一个实际问题：不少咖啡厅下午三四点就打烊，上午反而好占位子。上午上班来不了的话也别走——报名时把场次选成",
           href: "#signup",
           linkLabel: "「上午都来不了」",
           aTail: "，以后要是开晚上或者周末的场，我就按那份名单来找人。",
@@ -652,14 +654,14 @@ export const copy = {
       formatTitle: "现场是什么样子",
       format: [
         "15 分钟的实操分享，不是产品演示。",
-        "一到两位在场的人用五分钟讲讲自己生意里试过的事，包括没试成的那部分。",
-        "开放提问，然后是自由交流的时间——多数人是冲这一段来的。",
+        "两个提前在群里投票选出来的问题，现场聊透，每个都收成一句能带走的做法。",
+        "散场前写下想认识谁，之后是自由交流的时间——多数人是冲这一段来的。",
         "全程中文。悉尼不缺英文的 AI 活动，缺的是这一个。",
       ],
 
       newcomerTitle: "第一次来的话",
       newcomerBody:
-        "Vibe Thursday 是一个每周四上午的悉尼 AI 聚会，从 2026 年 8 月起每周都在办，已经办了八场，每场二十来个人。10 月这两场是它挂进 NSW 小企业月官方日历的场次——形式和平时完全一样，只是这两场我们特意把话说给做生意的人听。",
+        "Vibe Thursday 是一个每周四上午的悉尼 AI 聚会，从 2026 年 8 月起每周都在办，每场二三十个人。10 月这两场是它挂进 NSW 小企业月官方日历的场次——形式和平时完全一样，只是这两场我们特意把话说给做生意的人听。",
       newcomerNote:
         "不需要懂技术，不需要带电脑，也不需要准备任何东西。",
 
@@ -794,7 +796,7 @@ export const copy = {
       // 「那个做 SEO 的」。角色 chip 筛不出这种——它只有六个大类。
       // 所以搜索框搜的是自由文本那几栏，不是名字。
       searchLabel: "在成员里搜",
-      searchPlaceholder: "想不起名字？搜他在做什么，比如「SEO」「投广告」",
+      searchPlaceholder: "搜名字或在做什么，比如 SEO",
       searchSubmit: "搜",
       searchClear: "清除搜索",
       searchEmpty: "没搜到「{q}」。换个词试试，或者他可能还没认领名片。",
@@ -851,7 +853,7 @@ export const copy = {
       },
       eyebrow: "§ 码头",
       title: "大家想问什么。",
-      lede: "这儿挂的都是有人真的想问、但周四那 90 分钟不一定问得完的东西。看到你答得上来的，当天找他聊十分钟就完了。",
+      lede: "这儿挂的都是有人真的想问、但周四那一个多小时不一定问得完的东西。看到你答得上来的，当天找他聊十分钟就完了。",
       // 原来这儿写的是「因为我们真的在码头上——35 Wheat Road, Darling Harbour」。
       // 删掉了：那句话把一个板块的名字焊死在一个地址上，而场地是会换的。
       // 名字得能自己站住，换成梗本身就够了。
@@ -1182,6 +1184,7 @@ export const copy = {
       count: "已到 {n} 人",
       invalidTitle: "这个码不是今天的。",
       invalidBody: "签到码只在当天有效。扫一下桌上的那个，或者找主办人。",
+      toGo: "看本周 →",
       noCodeTitle: "扫桌上的二维码进来。",
       noCodeBody: "这一页要带上当天的码才能用。",
       done: "已签到",
@@ -1316,6 +1319,7 @@ export const copy = {
       questionsOthers: "其他候选，会后整理好发到群里：",
       items: {
         signup: { title: "报名这一场", body: "一分钟，不收钱。" },
+        signupFull: { title: "这一场已满，登记候补", body: "有空位我会在群里通知；也可以直接报下一场。" },
         order: { title: "提前点杯喝的", body: "到了报名字付钱，不用排队。" },
         myOrder: { title: "我点的单", body: "名字、饮品、价格。到了给吧台看。" },
         card: { title: "填我的名片", body: "让别人知道你在做什么、想找什么。" },
@@ -1454,6 +1458,7 @@ export const copy = {
       schedule: "Run of show",
       support: "Costs",
       menu: "Menu",
+      siteMap: "Site map",
       skip: "Skip to content",
       language: "Language",
     },
@@ -1686,7 +1691,7 @@ export const copy = {
     membersTeaser: {
       eyebrow: "Member wall",
       title: "Who you will actually meet.",
-      lede: "Everyone who comes has a card. The fields that do the work are «looking for» and «can help with» — a cofounder or a first batch of users mostly get found there. No product needed.",
+      lede: "Everyone who comes can have a card. The fields that do the work are «looking for» and «can help with» — a cofounder or a first batch of users mostly get found there. No product needed.",
       cta: "See the member wall",
       ctaSecondary: "Claim my card",
     },
@@ -1728,8 +1733,8 @@ export const copy = {
 
     signup: {
       eyebrow: "§ 06 — Sign up",
-      title: "Sign up and I will send you the address.",
-      lede: "The venue follows the headcount — a big table at a cafe when we are small, a room with a screen once we are not. So signing up genuinely helps me book the right thing.",
+      title: "Sign up so I know how many seats to book.",
+      lede: "The booking at the venue follows the headcount, so signing up genuinely helps me book the right number of seats.",
       coach: {
         coachEnough: "That one is specific enough.",
         coachSharper: "That will do — much easier to pick up than before.",
@@ -1776,7 +1781,7 @@ export const copy = {
         demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
-        sessionFull: "full, join the waitlist",
+        sessionFull: "full · waitlist",
         sessionNone: "Mornings do not work for me (evening or weekend, please)",
         sessionNoneHint: "Pick this and you are still on the list — if an evening or weekend one happens, this is who I go to.",
         availability: "What other times could you make?",
@@ -1838,7 +1843,7 @@ export const copy = {
       waitlistBody: "If a place comes free I will say so in the group — or sign up for the next one.",
       successSession: "Your session: ",
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
-      successBody: "The address and a reminder will land in your inbox. If you left a WeChat ID I will add you to the group too.",
+      successBody: "The address is on vibethursday.com/go, and reminders go out in the WeChat group. If you left a WeChat ID I will add you to it.",
       successBodyNoEmail: "I will add you to the WeChat group with the ID you left; the address and reminders go out there.",
       successRecap: "What you signed up with",
       successRecapName: "Name",
@@ -1907,7 +1912,7 @@ export const copy = {
         },
         {
           q: "Why mornings, not afternoons?",
-          a: "3pm collides with school pickup, which rules out anyone with kids. Mornings also fix a practical problem: plenty of Sydney CBD cafes shut by mid-afternoon. If mornings are working hours for you, do not just close the tab — sign up and pick ",
+          a: "3pm collides with school pickup, which rules out anyone with kids. Mornings also fix a practical problem: plenty of Sydney cafes shut by mid-afternoon. If mornings are working hours for you, do not just close the tab — sign up and pick ",
           href: "#signup",
           linkLabel: "\"mornings do not work for me\"",
           aTail: " instead. If an evening or weekend session ever happens, that list is who I go to.",
@@ -1965,14 +1970,14 @@ export const copy = {
       formatTitle: "What the room is like",
       format: [
         "A 15-minute practical talk. Not a product demo.",
-        "One or two people in the room take five minutes on something they tried in their own business, including what did not work.",
-        "Open questions, then unstructured time to meet each other — which is what most people come for.",
+        "Two questions voted on in the group beforehand, talked through properly, each ending on one thing you can take away.",
+        "A sheet for who you want to meet, then unstructured time to meet each other — which is what most people come for.",
         "The session is run in Mandarin, not English. Sydney is not short of English-language AI events; it was short of this one.",
       ],
 
       newcomerTitle: "If this is your first one",
       newcomerBody:
-        "Vibe Thursday is a Sydney AI meetup that runs every Thursday morning. It has run weekly since August 2026 — eight sessions so far, around twenty people at each. These two October mornings are the ones listed on the NSW Small Business Month calendar: the same format as every other week, pitched deliberately at people who run a business.",
+        "Vibe Thursday is a Sydney AI meetup that runs every Thursday morning. It has run weekly since August 2026, with twenty or thirty people at each. These two October mornings are the ones listed on the NSW Small Business Month calendar: the same format as every other week, pitched deliberately at people who run a business.",
       newcomerNote:
         "No technical background needed, no laptop needed, nothing to prepare.",
 
@@ -2136,7 +2141,7 @@ export const copy = {
       },
       eyebrow: "§ The Wharf",
       title: "What people are asking.",
-      lede: "Things somebody genuinely wants to ask, and that ninety minutes on a Thursday will not always get to. See one you can answer, and Thursday is ten minutes with that person.",
+      lede: "Things somebody genuinely wants to ask, and that one morning on a Thursday will not always get to. See one you can answer, and Thursday is ten minutes with that person.",
       place: "Down the wharf for a serve of chips.",
       say: {
         waiting: "Bored… {n} questions up this week",
@@ -2385,6 +2390,7 @@ export const copy = {
       count: "{n} here so far",
       invalidTitle: "This code is not today’s.",
       invalidBody: "A check-in code only works on the day. Scan the one on the table, or ask the organiser.",
+      toGo: "This week →",
       noCodeTitle: "Scan the code on the table to get here.",
       noCodeBody: "This page needs today’s code.",
       done: "Checked in",
@@ -2502,6 +2508,7 @@ export const copy = {
       questionsOthers: "The other candidates, written up in the group afterwards:",
       items: {
         signup: { title: "Sign up for this one", body: "One minute, free." },
+        signupFull: { title: "This one is full: join the waitlist", body: "If a place comes free I will say so in the group — or sign up for the next one." },
         order: { title: "Order a drink ahead", body: "Pay by name when you arrive. No queue." },
         myOrder: { title: "My order", body: "Name, drink, price. Show it at the counter." },
         card: { title: "Fill in my card", body: "What you are building and what you are looking for." },

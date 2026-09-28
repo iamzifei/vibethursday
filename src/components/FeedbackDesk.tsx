@@ -63,7 +63,7 @@ export function FeedbackDesk({ session, isOpen, url, qrSvg, summary, showing, an
           />
           <div className="stack-2">
             <p className="body-sm">
-              <strong>散场前投屏，或者把链接贴进群。</strong> 五格，都能跳过，匿名的。
+              <strong>散场前投屏，或者把链接贴进群。</strong> 六格，都能跳过，匿名的。
             </p>
             <p className="body-sm">
               <a className="mono hl" href={url}>

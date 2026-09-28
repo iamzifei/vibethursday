@@ -5,7 +5,8 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
-import { getMemberById, getOrder, getSessionQuestions } from "@/lib/db";
+import { getMemberById, getOrder, getSessionQuestions, signupCountsBySession } from "@/lib/db";
+import { SESSION_CAP } from "@/lib/capacity";
 import { questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
 import { checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
@@ -58,14 +59,17 @@ export default async function GoPage({ searchParams }: PageProps) {
   const store = await cookies();
   const orderId = readOrderToken(store.get(orderCookieName(session))?.value);
 
-  const [order, member, questions] = await Promise.all([
+  const [order, member, questions, counts] = await Promise.all([
     orderId ? getOrder(orderId, session).catch(() => null) : null,
     currentMemberId()
       .then((id) => (id ? getMemberById(id) : null))
       .catch(() => null),
     // Best-effort like the two above: no shortlist is the same as an empty one.
     getSessionQuestions(session).catch(() => []),
+    // Whether this session is already full, so signing up says "waitlist".
+    signupCountsBySession().catch(() => new Map<string, number>()),
   ]);
+  const full = (counts.get(session) ?? 0) >= SESSION_CAP;
 
   // The check-in link only on the morning itself (James 2026-09-28). Keyed on
   // the date rather than the phase: at noon the page turns to feedback, and
@@ -82,7 +86,7 @@ export default async function GoPage({ searchParams }: PageProps) {
   const orderHref = withLang(`/order?s=${session}&k=${orderCode(session)}`, lang);
 
   const links: Record<GoItem, { title: string; body: string; href: string | null }> = {
-    signup: { ...t.items.signup, href: `/${langSuffix(lang)}#signup` },
+    signup: { ...(full ? t.items.signupFull : t.items.signup), href: `/${langSuffix(lang)}#signup` },
     order: { ...t.items.order, href: orderHref },
     myOrder: {
       title: t.items.myOrder.title,

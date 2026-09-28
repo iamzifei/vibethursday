@@ -76,6 +76,7 @@ export default async function SbmPage({ searchParams }: PageProps) {
     label:
       `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}` +
       ((counts.get(value) ?? 0) >= SESSION_CAP ? ` · ${c.signup.fields.sessionFull}` : ""),
+    full: (counts.get(value) ?? 0) >= SESSION_CAP,
   }));
 
   // One Event per session, titled the way the government listing titles them

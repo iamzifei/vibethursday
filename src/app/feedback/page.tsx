@@ -158,7 +158,7 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
             comparable between one Thursday and the next. */}
         <fieldset className="stack-3">
           <legend className="label">{t.ratingLabel}</legend>
-          <div className="choice-group choice-group--compact">
+          <div className="choice-group choice-group--scale">
             {RATINGS.map((value) => (
               <label className="choice" key={value}>
                 <input type="radio" name="rating" value={value} />

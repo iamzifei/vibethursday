@@ -140,7 +140,9 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
                 so anywhere on the card opens the member's page. Everything else
                 that is interactive — asset links, tags — is lifted above it in
                 CSS, which keeps them clickable without nesting anchors. */}
-            <Link className="mcard__link" href={`/members/${member.slug}${langSuffix(lang)}`}>
+            {/* No prefetch: a wall of cards prefetched every one of them (23 of 34
+                requests on /members, 2026-09-28 review). */}
+            <Link className="mcard__link" prefetch={false} href={`/members/${member.slug}${langSuffix(lang)}`}>
               {member.display_name}
             </Link>
           </h3>
@@ -204,6 +206,7 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
         <div className="mcard__tags">
           {shownTags.map((tag) => (
             <Link
+              prefetch={false}
               className="tag"
               href={`/members?tag=${encodeURIComponent(tag)}${langSuffix(lang, true)}`}
               key={tag}

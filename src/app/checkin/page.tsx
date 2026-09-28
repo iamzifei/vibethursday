@@ -81,6 +81,11 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         <span className="eyebrow">{t.eyebrow}</span>
         <h1>{t.noCodeTitle}</h1>
         <p className="body-lg">{t.noCodeBody}</p>
+        <div>
+          <Link className="btn btn--secondary" href={`/go${langSuffix(lang)}`}>
+            {t.toGo}
+          </Link>
+        </div>
       </div>,
     );
   }
@@ -96,6 +101,13 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         <span className="eyebrow">{t.eyebrow}</span>
         <h1>{t.invalidTitle}</h1>
         <p className="body-lg">{t.invalidBody}</p>
+        {/* Not a dead end: /go always says what is on this week, and on the
+            morning itself it carries the live check-in link. */}
+        <div>
+          <Link className="btn btn--secondary" href={`/go${langSuffix(lang)}`}>
+            {t.toGo}
+          </Link>
+        </div>
       </div>,
     );
   }

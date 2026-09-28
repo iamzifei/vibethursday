@@ -44,7 +44,7 @@ export function SiteFooter({ lang, copy, support = false }: Props) {
               reason its cards carry no donation marker, and a site map in the
               footer must not be the thing that quietly puts one under every
               card on it. */}
-          <nav className="footer__map" aria-label={copy.nav.menu}>
+          <nav className="footer__map" aria-label={copy.nav.siteMap}>
             {NAV_LINKS.filter((link) => support || link.href !== "/support").map((link) => (
               <Link key={link.href} href={langHref(link.href, lang)}>
                 {copy.nav[link.label]}

@@ -17,6 +17,7 @@ import {
   verifyOrderCode,
 } from "@/lib/order";
 import { callerIp, checkRateLimit } from "@/lib/rate-limit";
+import { toTraditional } from "@/lib/traditional";
 import { formatSession, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
@@ -91,6 +92,9 @@ export default async function OrderPage({ searchParams }: PageProps) {
   const lang = resolveLang(params.lang);
   const c = getCopy(lang);
   const t = c.order;
+  // The menu lives in menu.ts, outside the converted copy bundle, so the
+  // Traditional page converts its Chinese names here.
+  const zhText = (value: string) => (lang === "zh-Hant" ? toTraditional(value) : value);
 
   const session = params.s ?? "";
   const code = params.k ?? "";
@@ -276,7 +280,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
           {VENUE_MENU.categories.map((category) => (
             <div className="stack-2" key={category.id}>
               <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                {lang === "en" ? category.en : category.zh}
+                {lang === "en" ? category.en : zhText(category.zh)}
               </p>
               <div className="choice-group">
                 {VENUE_MENU.items
@@ -292,7 +296,7 @@ export default async function OrderPage({ searchParams }: PageProps) {
                       />
                       <span>
                         {item.name}
-                        {lang !== "en" && ` ${item.zh}`} · {priceRange(item.price)}
+                        {lang !== "en" && ` ${zhText(item.zh)}`} · {priceRange(item.price)}
                         {isSized(item) && " (S/L)"}
                       </span>
                     </label>

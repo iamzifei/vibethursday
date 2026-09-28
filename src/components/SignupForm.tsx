@@ -14,7 +14,7 @@ import {
 } from "@/lib/saved-profile";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 
-type SessionOption = { value: string; label: string };
+type SessionOption = { value: string; label: string; full?: boolean };
 
 type Props = {
   lang: Lang;
@@ -55,6 +55,9 @@ const EXTRA_FIELDS = ["source", "aiSpend", "building", "email"];
 
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Props) {
   const [status, setStatus] = useState<Status>("idle");
+  useEffect(() => {
+    if (status === "done") doneRef.current?.focus();
+  }, [status]);
   const [message, setMessage] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   // The WeChat value the nickname warning was last shown for. Submitting the
@@ -111,6 +114,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
      rest of the form, so the draft autosave keeps working unchanged. */
   const topicRef = useRef<HTMLTextAreaElement>(null);
   const helper = useCoach();
+
+  /* The confirmation replaces the form, so the button that had focus is gone
+     and focus fell back to <body>; screen readers often announced nothing
+     (2026-09-28 review). Focus the confirmation's heading instead. */
+  const doneRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     const draft = readDraft<Record<string, string>>(DRAFT_KEY);
@@ -193,6 +201,15 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
     if (missingRequired) {
       setStatus("error");
       setMessage(copy.errorRequired);
+      // Put the cursor in the first empty required box: the message sits by the
+      // button, and on a phone the fields are a screen or more above it.
+      const firstEmpty = [
+        !name && "name",
+        copy.fields.emailRequired && !email && "email",
+        copy.fields.wechatRequired && !wechat && "wechat",
+      ].find(Boolean);
+      const field = firstEmpty ? form.elements.namedItem(firstEmpty) : null;
+      if (field instanceof HTMLInputElement) field.focus();
       return;
     }
 
@@ -220,7 +237,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
     if (data.get("firstSession") !== "none" && !data.get("purpose")) {
       setStatus("error");
       setMessage(copy.errorPurpose);
-      purposeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      purposeRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+      purposeRef.current?.querySelector("input")?.focus({ preventScroll: true });
       return;
     }
 
@@ -325,7 +344,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   if (status === "done") {
     return (
       <div className="card card--accent stack-4" role="status">
-        <h3 className="h3">{receipt?.waitlisted ? copy.waitlistTitle : copy.successTitle}</h3>
+        <h3 className="h3" ref={doneRef} tabIndex={-1}>
+          {receipt?.waitlisted ? copy.waitlistTitle : copy.successTitle}
+        </h3>
         {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
         <p>
           {receipt?.session ? (
@@ -435,6 +456,15 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         <input id={fieldId("company")} name="company" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
+      {/* The same message at the top, for sighted users whose focus has just
+          jumped up to a field. Hidden from screen readers, which already get
+          the role="alert" by the button. */}
+      {message && (
+        <p className="alert alert--error" aria-hidden="true">
+          {message}
+        </p>
+      )}
+
       {returning ? (
         /* Known visitor: greeting plus the one thing that changes each week. */
         <div className="returning">
@@ -487,7 +517,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
                 and English signups failed with the fold shut. */}
             {copy.fields.emailRequired && emailField}
           </div>
-          <p className="privacy-note">{copy.fields.contactPrivacy}</p>
+          {/* field-hint, not privacy-note: that one pulls itself up under a pair of
+              inputs and overlapped the single WeChat field by 8px (2026-09-28). */}
+          <p className="field-hint">{copy.fields.contactPrivacy}</p>
         </div>
       )}
 
@@ -497,7 +529,14 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         <label className="label" htmlFor={fieldId("session")}>
           {copy.fields.session}
         </label>
-        <select className="field" id={fieldId("session")} name="firstSession" defaultValue={sessions[0]?.value}>
+        <select
+          className="field"
+          id={fieldId("session")}
+          name="firstSession"
+          // The first session with room, not simply the first: a full default
+          // put people on a waitlist they never chose (2026-09-28 review).
+          defaultValue={(sessions.find((session) => !session.full) ?? sessions[0])?.value}
+        >
           {sessions.map((session) => (
             <option key={session.value} value={session.value}>
               {session.label}

@@ -53,26 +53,21 @@ export default async function SupportPage({ searchParams }: PageProps) {
 
               <dl className="stack-3" style={{ margin: 0 }}>
                 {s.costItems.map((item) => (
-                  <div className="card stack-2" key={item.label}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        justifyContent: "space-between",
-                        gap: "var(--space-3)",
-                      }}
-                    >
-                      <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
-                        {item.label}
-                      </dt>
-                      <dd
-                        className="mono"
-                        style={{ margin: 0, color: "var(--fg1)", fontWeight: 600 }}
-                      >
-                        {item.value}
-                      </dd>
-                    </div>
-                    <dd className="body-sm" style={{ margin: 0 }}>
+                  // dt and dd sit directly in the card: a dl allows one wrapper
+                  // level, and the old inner flex div was a second (axe dlitem).
+                  // The label/value row is a grid instead.
+                  <div
+                    className="card"
+                    key={item.label}
+                    style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "baseline", gap: "var(--space-2) var(--space-3)" }}
+                  >
+                    <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
+                      {item.label}
+                    </dt>
+                    <dd className="mono" style={{ margin: 0, color: "var(--fg1)", fontWeight: 600 }}>
+                      {item.value}
+                    </dd>
+                    <dd className="body-sm" style={{ margin: 0, gridColumn: "1 / -1" }}>
                       {item.note}
                     </dd>
                   </div>

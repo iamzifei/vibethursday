@@ -6,7 +6,11 @@ import { assetLabel, cardTopic, langSuffix, topicLabel } from "@/components/Memb
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
-import { getMemberBySlug, listAnswersBy } from "@/lib/db";
+import { cache } from "react";
+import { getMemberBySlug as readMemberBySlug, listAnswersBy } from "@/lib/db";
+
+// One read per request: metadata and the page both ask for the same member.
+const getMemberBySlug = cache(readMemberBySlug);
 import { currentMemberId } from "@/lib/member-auth";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 
