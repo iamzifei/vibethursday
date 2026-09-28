@@ -7,11 +7,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
 import { getMemberById, getOrder } from "@/lib/db";
 import { feedbackCode } from "@/lib/feedback";
-import { goItems, goPhase, type GoItem } from "@/lib/go";
+import { checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
 import { formatPrice } from "@/lib/menu";
 import { orderCode, orderCookieName, readOrderToken } from "@/lib/order";
-import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
+import { checkinCode } from "@/lib/checkin";
+import { focusSession, formatSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -63,10 +64,16 @@ export default async function GoPage({ searchParams }: PageProps) {
       .catch(() => null),
   ]);
 
+  // The check-in link only on the morning itself (James 2026-09-28). Keyed on
+  // the date rather than the phase: at noon the page turns to feedback, and
+  // anyone who forgot to tap still gets the link until it closes.
+  const checkinOpen = checkinLinkOpen(session === today, sydneyHour());
+
   const items = goItems(phase, {
     signedUp: member ? member.sessions.includes(session) : null,
     hasOrder: Boolean(order),
     hasCard: Boolean(member),
+    checkinOpen,
   });
 
   const orderHref = withLang(`/order?s=${session}&k=${orderCode(session)}`, lang);
@@ -82,8 +89,11 @@ export default async function GoPage({ searchParams }: PageProps) {
     card: member ? { ...t.items.cardEdit, href: `/me${langSuffix(lang)}` } : { ...t.items.card, href: `/claim${langSuffix(lang)}` },
     members: { ...t.items.members, href: `/members${langSuffix(lang)}` },
     wharf: { ...t.items.wharf, href: `/wharf${langSuffix(lang)}` },
-    // ★ No link, ever: the code is on the table so that a check-in means "was in the room".
-    checkin: { ...t.items.checkin, href: null },
+    // A link only 10:00–13:00 on the day (`checkinLinkOpen`); otherwise a line
+    // saying the code is on the table.
+    checkin: checkinOpen
+      ? { ...t.items.checkinOpen, href: withLang(`/checkin?s=${session}&k=${checkinCode(session)}`, lang) }
+      : { ...t.items.checkin, href: null },
     badge: { ...t.items.badge, href: `/badge${langSuffix(lang)}` },
     feedback: { ...t.items.feedback, href: withLang(`/feedback?s=${session}&k=${feedbackCode(session)}`, lang) },
     session: { ...t.items.session, href: `/sessions/${session}${langSuffix(lang)}` },

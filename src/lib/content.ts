@@ -1316,6 +1316,8 @@ export const copy = {
         members: { title: "成员墙：来的都是谁", body: "每人一张卡，看「想找什么」和「能帮什么」那两栏。" },
         wharf: { title: "看看大家想问什么", body: "答得上来的，到了找他聊十分钟。" },
         checkin: { title: "到了扫桌上的码签到", body: "码在桌上，只在现场能扫。" },
+        // 活动当天 10:00–13:00 这一项变成链接（go.ts 的 checkinLinkOpen）。
+        checkinOpen: { title: "签到", body: "点进去，选你的名字就签上了。" },
         badge: { title: "把手机变成名牌", body: "立在桌上，别人一眼知道你是谁。" },
         feedback: { title: "说两句", body: "一分钟，匿名，每一条都会被读。" },
         session: { title: "这一场都有谁", body: "到场墙和这一场的记录。" },
@@ -2495,6 +2497,7 @@ export const copy = {
         members: { title: "The member wall", body: "One card each — read «looking for» and «can help with»." },
         wharf: { title: "See what people want to ask", body: "Can answer one? Find them for ten minutes." },
         checkin: { title: "Scan the code on the table", body: "It is on the table, so it only works in the room." },
+        checkinOpen: { title: "Check in", body: "Tap through and pick your name." },
         badge: { title: "Turn your phone into a name badge", body: "Stand it on the table so people know who you are." },
         feedback: { title: "Tell us how it went", body: "One minute, anonymous, and every one is read." },
         session: { title: "Who was there", body: "The attendance wall and notes for that session." },

@@ -39,6 +39,8 @@ export type GoState = {
   hasOrder: boolean;
   /** This browser is signed in to a member card. */
   hasCard: boolean;
+  /** The check-in link is live right now (`checkinLinkOpen`). */
+  checkinOpen: boolean;
 };
 
 export type GoItem =
@@ -57,10 +59,11 @@ export type GoItem =
 /**
  * Which things to show, in order.
  *
- * ★ `checkin` never carries a link, in any phase. The check-in code is on the
- * table in the room, and that is the whole of what makes a check-in mean
- * "was there": a code reachable from a link in the group would let anybody
- * check in from home.
+ * ★ `checkin` links to the check-in page only on the morning itself
+ * (`checkinLinkOpen`); the rest of the time it is a line telling people the
+ * code is on the table. James chose that trade on 2026-09-28: a few hours in
+ * which someone at home could tap it, in exchange for nobody having to find a
+ * code on a crowded table.
  *
  * Not the support page, deliberately: donations are never raised on the day
  * and never sit in navigation (decided 2026-08-11), and this page is both.
@@ -81,5 +84,20 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
     return ["checkin", drink, "badge", "members"];
   }
 
-  return ["feedback", "session", "nextSignup"];
+  // From noon the session looks back, but anyone who forgot to tap should
+  // still find check-in first until the link closes.
+  return [...(state.checkinOpen ? (["checkin"] as GoItem[]) : []), "feedback", "session", "nextSignup"];
+}
+
+/** Hours (Sydney) during which /go links straight to check-in, on the session's own date. */
+export const CHECKIN_LINK_FROM = 10;
+export const CHECKIN_LINK_UNTIL = 13;
+
+/**
+ * Whether /go shows a check-in link right now: only on the session's own date,
+ * 10:00 to 13:00 Sydney time. The check-in route has its own, wider rule (the
+ * whole day) and is unchanged; this only decides whether /go hands out the link.
+ */
+export function checkinLinkOpen(isSessionDay: boolean, sydneyHour: number): boolean {
+  return isSessionDay && sydneyHour >= CHECKIN_LINK_FROM && sydneyHour < CHECKIN_LINK_UNTIL;
 }

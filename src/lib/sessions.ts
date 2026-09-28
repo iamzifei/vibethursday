@@ -50,7 +50,7 @@ const FIRST_SESSION = process.env.FIRST_SESSION_DATE || "2026-08-06";
 export const FIRST_SESSION_DATE = FIRST_SESSION;
 
 /** Sydney hour of day, 0-23. */
-function sydneyHour(): number {
+export function sydneyHour(): number {
   return Number(new Intl.DateTimeFormat("en-GB", {
     timeZone: SYDNEY,
     hour: "2-digit",
