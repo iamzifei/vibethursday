@@ -12,7 +12,7 @@
 
    Structural conventions (4px grid, tight radii, one signature motion curve,
    role tokens instead of raw hex at call sites) follow the same discipline as
-   the Orris Design System, but none of its colors — Vibe Thursday is an
+   a shared in-house design system, but none of its colors — Vibe Thursday is an
    independent community brand.
 
    Fonts: system stack only. No webfont download, so there is no license
@@ -1924,6 +1924,50 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 
 /* Tags are links, so they need to sit above the stretched link too. */
 .mcard__tags .tag { position: relative; z-index: 1; }
+
+/* Phone width: the wall is for scanning on the Thursday to find someone, so
+   each card drops to two lines — name and attendance, then what they are
+   looking for or can help with — with the avatar on the left and every line
+   on one left edge. Headline, assets and tags stay on the member's own page.
+   Desktop keeps the full card. */
+@media (max-width: 639px) {
+  .mwall { gap: var(--space-2); grid-auto-rows: auto; }
+
+  .mwall .mcard:not(.mcard--light) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .mwall .mcard:not(.mcard--light) .mcard__head,
+  .mwall .mcard:not(.mcard--light) .mcard__id { display: contents; }
+
+  .mwall .mcard:not(.mcard--light) .monogram { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .mwall .mcard:not(.mcard--light) .mcard__name {
+    grid-column: 2; grid-row: 1;
+    font-size: var(--text-base);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mwall .mcard:not(.mcard--light) .mcard__meta { grid-column: 3; grid-row: 1; flex-wrap: nowrap; }
+  /* Roles are on the member page; the count is what says "a regular". */
+  .mwall .mcard:not(.mcard--light) .mcard__meta .chip:not(.chip--quiet) { display: none; }
+
+  .mwall .mcard:not(.mcard--light) .wants {
+    grid-column: 2 / -1; grid-row: 2;
+    padding-left: 0; border-left: 0; gap: 0;
+  }
+  /* One line of matchmaking, not three: the first row that exists wins. */
+  .mwall .mcard:not(.mcard--light) .wants__row { flex-wrap: nowrap; gap: var(--space-1); min-width: 0; }
+  .mwall .mcard:not(.mcard--light) .wants__row ~ .wants__row { display: none; }
+  .mwall .mcard:not(.mcard--light) .wants dd { -webkit-line-clamp: 1; line-clamp: 1; min-width: 0; color: var(--fg2); }
+
+  .mwall .mcard:not(.mcard--light) .mcard__headline,
+  .mwall .mcard:not(.mcard--light) .asset-list,
+  .mwall .mcard:not(.mcard--light) .mcard__tags { display: none; }
+}
 
 /* ── Member page and section headers ─────────────────────────────── */
 
@@ -4495,3 +4539,70 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   border-radius: var(--radius-md);
   color: var(--fg1);
 }
+
+/* Two-step confirm for destructive admin actions, with no script: the
+   summary is the first tap, the button inside is the second. */
+.confirm > summary { cursor: pointer; list-style: none; display: inline; }
+.confirm > summary::-webkit-details-marker { display: none; }
+.confirm[open] > summary { color: var(--fg3); }
+.confirm form { display: inline; margin-left: var(--space-2); }
+
+/* ── /order: the menu as short grouped lists ─────────────────────────── */
+.menu-group {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+.menu-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+}
+.menu-group > summary::-webkit-details-marker { display: none; }
+.menu-group__count { color: var(--fg3); font-weight: 400; font-size: var(--text-sm); }
+.menu-size {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+}
+.menu-list { border-top: 1px solid var(--border-default); }
+.menu-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+}
+.menu-row + .menu-row { border-top: 1px solid var(--border-default); }
+.menu-row input { accent-color: var(--accent); width: 20px; height: 20px; margin: 0; }
+.menu-row:has(input:checked) { background: var(--accent-subtle); }
+.menu-row__name { display: flex; flex-direction: column; color: var(--fg1); }
+.menu-row__name small { color: var(--fg3); font-size: var(--text-sm); }
+.menu-row__price { color: var(--fg2); white-space: nowrap; }
+.order-submit {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg-primary) 70%, transparent);
+}
+
+/* ── Home: the three facts as one compact list ──────────────────────── */
+.fact-row { margin: 0; display: grid; gap: 0; border-top: 1px solid var(--border-default); }
+.fact-row__item {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.fact-row__item dt { margin: 0; }

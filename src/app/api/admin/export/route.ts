@@ -1,7 +1,11 @@
 import { cookies } from "next/headers";
 import { tooMany } from "@/lib/rate-limit";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
-import { listFeedback, listSignups } from "@/lib/db";
+import { listCheckins, listFeedback, listOrders, listSignups } from "@/lib/db";
+
+import { CHECKIN_COLUMNS, csvCell, ORDER_COLUMNS } from "@/lib/csv";
+import { isSessionDate } from "@/lib/checkin";
+import { focusSession } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -49,21 +53,6 @@ const FEEDBACK_COLUMNS = [
   "created_at",
 ] as const;
 
-/**
- * Escapes one CSV cell.
- *
- * The leading apostrophe guard matters: a value starting with = + - or @ is
- * interpreted as a formula when the file is opened in Excel or Sheets, which
- * turns an attacker-supplied signup field into code running on your machine.
- */
-function csvCell(value: unknown): string {
-  // `sessions` arrives as a JS array; join it so the cell reads 2026-08-06;
-  // 2026-08-13 rather than the raw Postgres literal.
-  const text =
-    value == null ? "" : Array.isArray(value) ? value.map(String).join(";") : String(value);
-  const guarded = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-  return `"${guarded.replace(/"/g, '""')}"`;
-}
 
 export async function GET(request: Request) {
   const limited = tooMany(request, "admin-export", 60);
@@ -77,8 +66,28 @@ export async function GET(request: Request) {
 
   const what = new URL(request.url).searchParams.get("what");
 
+  // One session's drinks or check-ins (default: the session in focus).
+  const sessionParam = new URL(request.url).searchParams.get("session");
+  const session = sessionParam && isSessionDate(sessionParam) ? sessionParam : focusSession().date;
+
   const { name, lines } =
-    what === "feedback"
+    what === "orders"
+      ? {
+          name: `orders-${session}`,
+          lines: await listOrders(session).then((rows) => [
+            ORDER_COLUMNS.join(","),
+            ...rows.map((row) => ORDER_COLUMNS.map((column) => csvCell(row[column])).join(",")),
+          ]),
+        }
+      : what === "checkins"
+      ? {
+          name: `checkins-${session}`,
+          lines: await listCheckins(session).then((rows) => [
+            CHECKIN_COLUMNS.join(","),
+            ...rows.map((row) => CHECKIN_COLUMNS.map((column) => csvCell(row[column])).join(",")),
+          ]),
+        }
+      : what === "feedback"
       ? {
           name: "feedback",
           lines: await listFeedback().then((rows) => [

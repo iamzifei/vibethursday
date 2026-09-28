@@ -80,6 +80,8 @@ export const copy = {
         },
       ],
       nextPrefix: "下一场 ",
+      capacityLeft: "下一场还剩 {n} 个位子",
+      capacityFull: "下一场已满，报名会进候补",
       // 群公告里只放 /go。首屏也给它一个入口，从网站进来的人找得到同一个地方。
       goLink: "本周要做的事都在这里：vibethursday.com/go →",
       cta: "报名下一场",
@@ -161,7 +163,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 07 — 现场",
+      eyebrow: "§ 06 — 现场",
       title: "每一场都留了几张。",
       lede: "为保护参与者，认得出的人脸都遮掉了。这里是最近一场，点开看那天的全部照片；之前每一场都在下面的完整记录里。",
       archiveCta: "每一场的完整记录",
@@ -344,7 +346,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 06 — 报名",
+      eyebrow: "§ 报名",
       title: "报个名，我好知道订几个位子。",
       lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
@@ -539,7 +541,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 08 — 常见问题",
+      eyebrow: "§ 07 — 常见问题",
       title: "先回答几个大概率会问的。",
       items: [
         {
@@ -602,7 +604,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 09 — 联系",
+      eyebrow: "§ 08 — 联系",
       title: "找不到人？加我微信。",
       lede: "场地临时变动、来之前想先问点什么、或者当天在楼下迷路了——扫码直接找我，比发邮件快。",
       caption: "微信扫码加我",
@@ -679,7 +681,7 @@ export const copy = {
         "填一分钟。这是我们唯一能知道要摆几张椅子的方式。",
 
       acknowledgement:
-        "本活动是 2026 年 NSW 小企业月项目的一部分，与新南威尔士州政府合作举办。主办方：Orris Technology Pty Ltd。",
+        "本活动是 2026 年 NSW 小企业月项目的一部分，与新南威尔士州政府合作举办。",
       back: "看看平时每周四是什么样",
     },
     support: {
@@ -1484,6 +1486,8 @@ export const copy = {
         },
       ],
       nextPrefix: "Next · ",
+      capacityLeft: "{n} places left for the next one",
+      capacityFull: "The next one is full; signing up joins the waitlist",
       goLink: "Everything for this week is here: vibethursday.com/go →",
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
@@ -1563,7 +1567,7 @@ export const copy = {
     },
 
     gallery: {
-      eyebrow: "§ 07 — The room",
+      eyebrow: "§ 06 — The room",
       title: "A few shots from every session.",
       lede: "Recognisable faces are covered to protect the people who came. This is the latest session — open it for everything from that morning; every earlier one is in the full record below.",
       archiveCta: "The full record of each session",
@@ -1732,7 +1736,7 @@ export const copy = {
     },
 
     signup: {
-      eyebrow: "§ 06 — Sign up",
+      eyebrow: "§ Sign up",
       title: "Sign up so I know how many seats to book.",
       lede: "The booking at the venue follows the headcount, so signing up genuinely helps me book the right number of seats.",
       coach: {
@@ -1865,7 +1869,7 @@ export const copy = {
     },
 
     faq: {
-      eyebrow: "§ 08 — Questions",
+      eyebrow: "§ 07 — Questions",
       title: "The ones people ask first.",
       items: [
         {
@@ -1928,7 +1932,7 @@ export const copy = {
     },
 
     contact: {
-      eyebrow: "§ 09 — Contact",
+      eyebrow: "§ 08 — Contact",
       title: "Can't find us? Add me on WeChat.",
       lede: "Venue changes, questions before you come, or you're lost downstairs on the day — scan and message me directly. Faster than email.",
       caption: "Scan with WeChat",
@@ -1995,7 +1999,7 @@ export const copy = {
         "A minute to fill in. It is the only way we know how many chairs to put out.",
 
       acknowledgement:
-        "These sessions are part of the 2026 NSW Small Business Month program, in partnership with the NSW Government. Hosted by Orris Technology Pty Ltd.",
+        "These sessions are part of the 2026 NSW Small Business Month program, in partnership with the NSW Government.",
       back: "See what a normal Thursday looks like",
     },
     support: {

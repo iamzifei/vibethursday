@@ -76,3 +76,17 @@ test("each photo declares real pixel dimensions", () => {
     }
   }
 });
+
+test("★ every gallery photo has the 1200w AVIF the home album asks 3x phones for", () => {
+  // Added 2026-09-28: with only 800w and 1600w, a 3x phone fetched 1600w for a
+  // column ~390px wide — 1.39 MB for one opened album. The srcset now offers
+  // 1200w, so the file must exist for every photo, or that phone gets a 404.
+  const missing: string[] = [];
+  for (const session of copy.zh.gallery.sessions) {
+    for (const photo of session.photos) {
+      const file = `${photo.src}-1200.avif`;
+      if (!existsSync(path.join(publicDir, file))) missing.push(file);
+    }
+  }
+  assert.deepEqual(missing, []);
+});

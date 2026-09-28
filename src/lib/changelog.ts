@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.3",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "手机上更快找到要的东西：首页往下一屏就是报名表，快满时写明还剩几个位子；点单页按类别收起，一屏点完一杯，「就点这个」一直在屏幕底部；成员墙在手机上每人一行半，名字、来过几次、想找什么，周四当场扫一眼就能找到人。相册的照片按屏幕挑合适的尺寸，打开更快。",
+    link: { href: "/members", zh: "看成员墙 →", en: "See the wall →" },
+    en: "Easier to find things on a phone: the sign-up form is one screen down on the home page, and says how many places are left when a session is nearly full; the order page folds the menu by category so one drink takes one screen, with the button always at the bottom; and the member wall shows each person in a line and a half — name, how often they have come, what they are looking for — so you can find someone at a glance on the Thursday. Album photos come in the right size for the screen and open faster.",
+  },
+  {
     version: "4.2",
     date: "2026-09-28",
     kind: "minor",

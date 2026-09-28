@@ -8,7 +8,7 @@ import { OrderDesk } from "@/components/OrderDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { SESSION_CAP } from "@/lib/capacity";
+import { capacityAlert, SESSION_CAP } from "@/lib/capacity";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import {
   countCheckins,
@@ -43,11 +43,11 @@ export const metadata: Metadata = {
 
 type PageProps = {
   /** `fb` picks which session's feedback is read out below the summary. */
-  searchParams: Promise<{ key?: string; fb?: string }>;
+  searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string }>;
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
-  const { key, fb } = await searchParams;
+  const { key, fb, q, all, cq } = await searchParams;
 
   // ★ The link still carries the token; the address bar no longer keeps it.
   // Arriving with ?key= goes straight to the one route allowed to set a
@@ -155,7 +155,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   const wantsToDemo = signups.filter((row) => row.demo_intent === "yes").length;
   const withWechat = signups.filter((row) => row.wechat).length;
-  const unverified = signups.filter((row) => row.bot_check && row.bot_check !== "verified").length;
+  // Split, because merged they carried no signal: "skipped" is no token at all
+  // (the widget never finished), "unavailable" is Cloudflare not answering.
+  const noBotCheck = signups.filter((row) => row.bot_check === "skipped").length;
+  const botCheckDown = signups.filter((row) => row.bot_check === "unavailable").length;
 
   // People who signed up without picking a Thursday: they work weekday
   // mornings. Kept as its own number because it is the one that answers
@@ -188,6 +191,30 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // `countPerSession` on purpose: a waitlisted person has no place, and every
   // existing headcount must keep meaning "people with a place".
   const deskRow = perSession.find((session) => session.date === desk);
+
+  // The detail table: this session by default (booked or waitlisted), all of
+  // history with ?all=1, narrowed by ?q= across name, WeChat, email and "building".
+  const needle = (q ?? "").trim().toLowerCase();
+  const tableRows = signups.filter(
+    (row) =>
+      (all === "1" || row.sessions.includes(desk) || row.waitlist.includes(desk)) &&
+      (!needle ||
+        [row.name, row.wechat, row.email, row.building].some((field) => field?.toLowerCase().includes(needle))),
+  );
+
+  // Who is waiting for this session, oldest signup first, and whether the
+  // numbers look like a script rather than people (capacity.ts).
+  const deskWaitlist = signups
+    .filter((row) => row.waitlist.includes(desk))
+    .sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+  const dayAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
+  const unverifiedLastDay = signups.filter(
+    (row) =>
+      (row.sessions.includes(desk) || row.waitlist.includes(desk)) &&
+      row.bot_check !== "verified" &&
+      Date.parse(`${row.created_at.replace(" ", "T")}:00Z`) > dayAgo,
+  ).length;
+  const alert = capacityAlert({ waitlist: deskWaitlist.length, unverifiedLastDay });
   const waitlistBySession = new Map<string, number>();
   for (const signup of signups) {
     for (const date of new Set(signup.waitlist)) {
@@ -197,18 +224,23 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const nextSessionRow = perSession.find((session) => session.date === nextSession);
 
   const stats = [
-    { label: "Total", value: signups.length },
+    { label: "报名行数（全部历史，含测试）", value: signups.length },
     // The headcount for the Thursday that is actually coming up. Kept first
     // among the per-session numbers because it is the one question this page
     // gets opened to answer.
-    { label: `Next session ${nextSession}`, value: nextSessionRow?.total ?? 0 },
-    { label: "Want to demo", value: wantsToDemo },
-    { label: "With WeChat", value: withWechat },
-    { label: "Can't do Thu", value: noThursday },
-    { label: "Weekday eve", value: countSlot("weekday_evening") },
-    { label: "Weekend day", value: countSlot("weekend_day") },
-    { label: "Weekend eve", value: countSlot("weekend_evening") },
-    { label: "Unverified", value: unverified },
+    {
+      label: `下一场 ${nextSession}（报上 / 上限 · 候补）`,
+      value: `${nextSessionRow?.total ?? 0} / ${SESSION_CAP} · ${waitlistBySession.get(nextSession) ?? 0}`,
+    },
+    // The form preselects "先来听听", so this is who changed it, not a turnout signal.
+    { label: "选了「想讲讲」的（默认是先来听听）", value: wantsToDemo },
+    { label: "留了微信号", value: withWechat },
+    { label: "周四上午来不了", value: noThursday },
+    { label: "工作日晚上能来", value: countSlot("weekday_evening") },
+    { label: "周末白天能来", value: countSlot("weekend_day") },
+    { label: "周末晚上能来", value: countSlot("weekend_evening") },
+    { label: "没跑人机验证", value: noBotCheck },
+    { label: "验证服务不可用", value: botCheckDown },
   ];
 
   // A second row rather than more cards in the first: these answer "how heavy
@@ -313,6 +345,62 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length} · 点单 {orders.length} 杯
       </p>
 
+      {alert && (
+        <p className="alert" role="status" style={{ borderColor: "var(--warning)", color: "var(--warning)" }}>
+          候补 {alert.waitlist} 人 · 24 小时内 {alert.unverifiedLastDay} 条报名没过人机验证。看一下下面的候补名单和报名明细，是不是真人。
+        </p>
+      )}
+
+      {/* ── Waitlist ─────────────────────────────────────────────────
+          Who is waiting, with a way to give each a place. Promoting can take
+          the session over the cap; that is a decision made here, not by the form. */}
+      <section className="stack-4" id="waitlist">
+        <div className="group-head">
+          <h2 className="h3">候补 · {desk}</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {deskWaitlist.length} 人 · 按报名先后
+          </span>
+        </div>
+        {deskWaitlist.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>
+            没有人在候补。
+          </p>
+        ) : (
+          <div className="table-scroll" tabIndex={0} role="region" aria-label="候补名单">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">名字</th>
+                  <th scope="col">微信</th>
+                  <th scope="col">在做什么</th>
+                  <th scope="col">报名时间</th>
+                  <th scope="col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deskWaitlist.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}</td>
+                    <td className="mono">{row.wechat ?? "—"}</td>
+                    <td style={{ whiteSpace: "normal", minWidth: "200px" }}>{row.building ?? "—"}</td>
+                    <td className="mono">{row.created_at}</td>
+                    <td>
+                      <form method="post" action="/api/admin/waitlist">
+                        <input type="hidden" name="id" value={row.id} />
+                        <input type="hidden" name="session" value={desk} />
+                        <button className="linkish" type="submit">
+                          给他位子
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* ── Drinks ───────────────────────────────────────────────────
           The sheet the café asked for: every line has a name, so payment is
           taken by name and nobody walks off with the wrong cup. */}
@@ -362,6 +450,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         qrSvg={deskQr}
         roster={buildRoster(desk, deskRoster, deskCheckins)}
         checkins={deskCheckins}
+        query={cq}
       />
 
       {/* ── The week's poster ────────────────────────────────────────
@@ -533,13 +622,27 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td className="mono">{row.updated_at}</td>
                     <td>
                       {/* A form, not fetch: /admin ships no client JS. */}
-                      <form action="/api/admin/member" method="post">
-                        <input type="hidden" name="id" value={row.id} />
-                        <input type="hidden" name="hidden" value={row.hidden ? "false" : "true"} />
-                        <button type="submit" className="link-button">
-                          {row.hidden ? "hidden — put back" : "visible — hide"}
-                        </button>
-                      </form>
+                      {row.hidden ? (
+                        <form action="/api/admin/member" method="post">
+                          <input type="hidden" name="id" value={row.id} />
+                          <input type="hidden" name="hidden" value="false" />
+                          <button type="submit" className="link-button">
+                            已隐藏 · 放回墙上
+                          </button>
+                        </form>
+                      ) : (
+                        // Hiding takes a card off the public wall: two steps.
+                        <details className="confirm">
+                          <summary className="link-button">公开中 · 隐藏</summary>
+                          <form action="/api/admin/member" method="post">
+                            <input type="hidden" name="id" value={row.id} />
+                            <input type="hidden" name="hidden" value="true" />
+                            <button type="submit" className="link-button">
+                              确认隐藏
+                            </button>
+                          </form>
+                        </details>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -593,10 +696,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <thead>
               <tr>
                 <th scope="col">Session</th>
-                <th scope="col">Signed up / cap</th>
-                <th scope="col">Waitlist</th>
-                <th scope="col">Turned up</th>
-                <th scope="col">Want to demo</th>
+                <th scope="col">报上 / 上限</th>
+                <th scope="col">候补</th>
+                <th scope="col">签到</th>
+                <th scope="col">想讲讲</th>
               </tr>
             </thead>
             <tbody>
@@ -620,9 +723,17 @@ export default async function AdminPage({ searchParams }: PageProps) {
       </section>
 
       <div>
-        <a className="btn btn--secondary" href="/api/admin/export">
-          Download CSV
-        </a>
+        <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+          <a className="btn btn--secondary" href="/api/admin/export">
+            导出全部报名 CSV
+          </a>
+          <a className="btn btn--secondary" href={`/api/admin/export?what=orders&session=${desk}`}>
+            导出点单 CSV · {desk}
+          </a>
+          <a className="btn btn--secondary" href={`/api/admin/export?what=checkins&session=${desk}`}>
+            导出签到 CSV · {desk}
+          </a>
+        </div>
       </div>
 
       <section className="stack-4">
@@ -755,8 +866,29 @@ export default async function AdminPage({ searchParams }: PageProps) {
         )}
       </section>
 
-      {signups.length === 0 ? (
-        <p className="alert">No signups yet.</p>
+      {/* Search and scope: a GET form, so it works with no script and the URL
+          can be kept. */}
+      <form method="get" action="/admin" className="stack-2" style={{ maxWidth: "36rem" }}>
+        <label className="label" htmlFor="admin-q">
+          报名明细 · {all === "1" ? "全部历史" : `只看 ${desk}`}
+        </label>
+        <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+          <input className="field" id="admin-q" name="q" defaultValue={q ?? ""} placeholder="名字、微信、邮箱、在做什么" style={{ flex: "1 1 12rem" }} />
+          {all === "1" && <input type="hidden" name="all" value="1" />}
+          <button className="btn btn--secondary" type="submit">
+            搜
+          </button>
+        </div>
+        <p className="body-sm" style={{ margin: 0 }}>
+          {tableRows.length} 行 ·{" "}
+          <a className="hl" href={all === "1" ? "/admin#data" : "/admin?all=1#data"}>
+            {all === "1" ? `只看 ${desk}` : "看全部历史"}
+          </a>
+        </p>
+      </form>
+
+      {tableRows.length === 0 ? (
+        <p className="alert">没有符合的报名。</p>
       ) : (
         <div className="table-scroll">
           <table className="table">
@@ -777,13 +909,16 @@ export default async function AdminPage({ searchParams }: PageProps) {
               </tr>
             </thead>
             <tbody>
-              {signups.map((row) => (
+              {tableRows.map((row) => (
                 <tr key={row.id}>
                   <td style={{ color: "var(--fg1)" }}>{row.name}</td>
                   <td>{row.email}</td>
                   <td>{row.wechat ?? "—"}</td>
                   <td>{row.demo_intent ?? "—"}</td>
-                  <td className="mono">{row.first_session ?? "—"}</td>
+                  <td className="mono">
+                    {row.first_session ?? "—"}
+                    {row.first_session && row.waitlist.includes(row.first_session) ? "（候补）" : ""}
+                  </td>
                   {/* Stripped of the region prefix: the column is narrow, and
                       the side is already counted in the cards above. */}
                   <td style={{ whiteSpace: "normal", minWidth: "160px" }}>

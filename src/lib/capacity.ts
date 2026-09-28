@@ -68,3 +68,20 @@ export function sameSignupName(submitted: string, onFile: string): boolean {
   if (a.length < 2 || b.length < 2) return false;
   return a === b || a.includes(b) || b.includes(a);
 }
+
+/** Waitlisted people at which the admin page asks you to take a look. */
+export const WAITLIST_ALERT = 5;
+/** Signups for the session in the last day with no bot check, at which the same. */
+export const UNVERIFIED_ALERT = 10;
+
+/**
+ * Whether the admin page should warn that a session may be being filled by a
+ * script (2026-09-28 review: the bot check is advisory, so a handful of
+ * addresses could take all forty places and push real people to the waitlist).
+ *
+ * Only a prompt to look — it blocks nothing. Returns the two numbers to show,
+ * or null when neither is high enough to mention.
+ */
+export function capacityAlert(counts: { waitlist: number; unverifiedLastDay: number }) {
+  return counts.waitlist >= WAITLIST_ALERT || counts.unverifiedLastDay >= UNVERIFIED_ALERT ? counts : null;
+}

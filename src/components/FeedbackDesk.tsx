@@ -102,7 +102,8 @@ export function FeedbackDesk({ session, isOpen, url, qrSvg, summary, showing, an
                     {row.session}
                     {row.session === showing ? " ←" : ""}
                   </td>
-                  <td className="mono">{row.attended ?? "—"}</td>
+                  {/* Null is "no check-in data for that morning", not zero people. */}
+                  <td className="mono">{row.attended ?? "未签到"}</td>
                   {/* Out of the room, not out of nothing: this is the number
                       that says whether the score below it means anything. */}
                   <td className="mono">

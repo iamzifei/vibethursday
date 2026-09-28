@@ -98,6 +98,13 @@ for (const [index, name] of sources.entries()) {
     bytes.push(kb(jpg), kb(avif));
   }
 
+  // 1200w, AVIF only: what a 3x phone fetches for the home album's ~390px
+  // column (added 2026-09-28; it used to take 1600w). JPG stays at 800/1600 —
+  // it is only the fallback for browsers without AVIF.
+  run("magick", [path.join(outputDir, `${stem}-1600.jpg`), "-resize", "1200x", "-strip", "-quality", "92", path.join(outputDir, `${stem}-1200.tmp.jpg`)]);
+  run("avifenc", ["-q", "60", "--speed", "4", path.join(outputDir, `${stem}-1200.tmp.jpg`), path.join(outputDir, `${stem}-1200.avif`)]);
+  run("rm", [path.join(outputDir, `${stem}-1200.tmp.jpg`)]);
+
   // Reported from the largest JPEG, which is what the width/height attributes
   // describe. Every width shares the aspect ratio, so any of them would do.
   const emitted = sizeOf(path.join(outputDir, `${stem}-${WIDTHS.at(-1)}.jpg`));

@@ -2372,3 +2372,22 @@ export async function saveSessionQuestions(session: string, questions: SessionQu
     [session, JSON.stringify(questions)],
   );
 }
+
+/**
+ * The organiser giving a waitlisted person their place: the session moves from
+ * `waitlist` to `sessions` on that row. Idempotent — promoting someone already
+ * booked changes nothing. It is allowed to take the session over the cap: that
+ * is the organiser's call, made with the list in front of them.
+ */
+export async function promoteFromWaitlist(signupId: string, session: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE signups
+        SET sessions = ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1),
+            waitlist = array_remove(waitlist, $2::date),
+            updated_at = now()
+      WHERE id = $1::bigint`,
+    [signupId, session],
+  );
+}

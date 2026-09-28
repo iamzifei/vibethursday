@@ -11,7 +11,6 @@ import {
   canOrder,
   findByName,
   isSessionDate,
-  isSized,
   orderCookieName,
   readOrderToken,
   verifyOrderCode,
@@ -275,50 +274,54 @@ export default async function OrderPage({ searchParams }: PageProps) {
           <p className="field-hint">{t.nameHint}</p>
         </div>
 
-        <fieldset className="stack-4">
+        {/* The menu as a short list per category, each a <details>: coffee open,
+            the rest one tap away. It used to be thirty cards and put the
+            button 2,700px down (2026-09-28 review). No `required` on the radios:
+            a required radio inside a closed <details> cannot be focused, and the
+            browser would silently refuse to submit. The route checks instead. */}
+        <fieldset className="stack-3">
           <legend className="label">{t.drinkLabel}</legend>
-          {VENUE_MENU.categories.map((category) => (
-            <div className="stack-2" key={category.id}>
-              <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                {lang === "en" ? category.en : zhText(category.zh)}
-              </p>
-              <div className="choice-group">
-                {VENUE_MENU.items
-                  .filter((item) => item.category === category.id)
-                  .map((item) => (
-                    <label className="choice" key={item.id}>
-                      <input
-                        type="radio"
-                        name="item"
-                        value={item.id}
-                        required
-                        defaultChecked={item.id === chosenItem}
-                      />
-                      <span>
+          {VENUE_MENU.categories.map((category) => {
+            const items = VENUE_MENU.items.filter((item) => item.category === category.id);
+            const holdsChoice = items.some((item) => item.id === chosenItem);
+            return (
+              <details className="menu-group" key={category.id} open={category.id === "coffee" || holdsChoice}>
+                <summary>
+                  <span>{lang === "en" ? category.en : zhText(category.zh)}</span>
+                  <span className="menu-group__count">{items.length}</span>
+                </summary>
+
+                {category.id === "coffee" && (
+                  <div className="menu-size" role="radiogroup" aria-label={t.sizeLabel}>
+                    <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                      {t.sizeLabel}
+                    </span>
+                    <label className="choice">
+                      <input type="radio" name="size" value="small" defaultChecked={chosenSize === "small"} />
+                      <span>{t.sizeSmall}</span>
+                    </label>
+                    <label className="choice">
+                      <input type="radio" name="size" value="large" defaultChecked={chosenSize === "large"} />
+                      <span>{t.sizeLarge}</span>
+                    </label>
+                  </div>
+                )}
+
+                <div className="menu-list">
+                  {items.map((item) => (
+                    <label className="menu-row" key={item.id}>
+                      <input type="radio" name="item" value={item.id} defaultChecked={item.id === chosenItem} />
+                      <span className="menu-row__name">
                         {item.name}
-                        {lang !== "en" && ` ${zhText(item.zh)}`} · {priceRange(item.price)}
-                        {isSized(item) && " (S/L)"}
+                        {lang !== "en" && <small>{zhText(item.zh)}</small>}
                       </span>
+                      <span className="menu-row__price mono">{priceRange(item.price)}</span>
                     </label>
                   ))}
-              </div>
-            </div>
-          ))}
-        </fieldset>
-
-        <fieldset className="stack-3">
-          <legend className="label">{t.sizeLabel}</legend>
-          <div className="choice-group choice-group--compact">
-            <label className="choice">
-              <input type="radio" name="size" value="small" defaultChecked={chosenSize === "small"} />
-              <span>{t.sizeSmall}</span>
-            </label>
-            <label className="choice">
-              <input type="radio" name="size" value="large" defaultChecked={chosenSize === "large"} />
-              <span>{t.sizeLarge}</span>
-            </label>
-          </div>
-          <p className="field-hint">{t.sizeHint}</p>
+                </div>
+              </details>
+            );
+          })}
         </fieldset>
 
         <div>
@@ -350,9 +353,13 @@ export default async function OrderPage({ searchParams }: PageProps) {
           <p className="field-hint">{t.wechatHint}</p>
         </div>
 
-        <button className="btn btn--primary btn--block" type="submit">
-          {mine ? t.submitChange : t.submit}
-        </button>
+        {/* Pinned to the bottom of the screen, so the order can be sent from
+            wherever the thumb is in the menu. */}
+        <div className="order-submit">
+          <button className="btn btn--primary btn--block" type="submit">
+            {mine ? t.submitChange : t.submit}
+          </button>
+        </div>
       </form>
 
       {findBox}

@@ -106,12 +106,17 @@ export function OrderDesk({ session, isOpen, url, qrSvg, orders, sheet }: Props)
                   <td className="mono">{order.wechat ?? ""}</td>
                   <td className="mono">{order.updated_at.slice(5)}</td>
                   <td>
-                    <form method="post" action="/api/admin/order">
-                      <input type="hidden" name="id" value={order.id} />
-                      <button className="linkish" type="submit">
-                        删除
-                      </button>
-                    </form>
+                    {/* Two steps, no script: open, then confirm. A one-tap delete
+                        on a phone was one mis-tap from losing someone's order. */}
+                    <details className="confirm">
+                      <summary className="linkish">删除</summary>
+                      <form method="post" action="/api/admin/order">
+                        <input type="hidden" name="id" value={order.id} />
+                        <button className="linkish" type="submit" style={{ color: "var(--danger, var(--warning))" }}>
+                          确认删除
+                        </button>
+                      </form>
+                    </details>
                   </td>
                 </tr>
               ))}

@@ -66,6 +66,9 @@ export default async function Page({ searchParams }: PageProps) {
   }));
 
   const nextSession = sessions[0];
+  // Places left on the next session, only when it is worth saying (≤ 10).
+  const nextLeft = nextSession ? SESSION_CAP - (counts.get(nextSession.value) ?? 0) : null;
+  const nextSeats = nextLeft !== null && nextLeft <= 10 ? Math.max(0, nextLeft) : null;
 
   /**
    * The three questions in the Wharf block.
@@ -171,9 +174,11 @@ export default async function Page({ searchParams }: PageProps) {
               </a>
             </div>
 
-            <dl className="grid-auto rise rise-3" style={{ margin: 0 }}>
+            {/* One compact list rather than three cards: the cards pushed the
+                rest of the first screen down (2026-09-28 review). */}
+            <dl className="fact-row rise rise-3">
               {c.hero.facts.map((fact) => (
-                <div className="card stack-2" key={fact.label}>
+                <div className="fact-row__item" key={fact.label}>
                   <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
                     {fact.label}
                   </dt>
@@ -232,6 +237,14 @@ export default async function Page({ searchParams }: PageProps) {
                 </Link>
               )}
 
+              {/* Scarcity only: the count is shown once ten or fewer places are
+                  left, or when it is full. A roomy session needs no number. */}
+              {nextSession && nextSeats !== null && (
+                <p className="body-sm" style={{ margin: 0, color: nextSeats === 0 ? "var(--warning)" : "var(--accent)" }}>
+                  {nextSeats === 0 ? c.hero.capacityFull : c.hero.capacityLeft.replace("{n}", String(nextSeats))}
+                </p>
+              )}
+
               {/* The one link the group is given. Signing up, ordering a drink,
                   the member card and feedback all hang off it, by the day. */}
               <Link className="body-sm hl" href={langHref("/go", lang)}>
@@ -242,6 +255,76 @@ export default async function Page({ searchParams }: PageProps) {
                 {c.hero.note}
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* The form comes straight after the first screen: a phone visitor from
+            the group used to scroll about seven screens to reach it (2026-09-28
+            review). The sections below are unchanged, in the same order. */}
+        {/* ── Signup ───────────────────────────────────────────────── */}
+        {/* Moved up, right after the run of show, on 2026-09-24. The rules are
+            what the morning expects of you — they belong with what happens on
+            the day, read before signing up, not after the photo album. */}
+        <section className="section">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.rules.eyebrow}</span>
+              <h2>{c.rules.title}</h2>
+            </div>
+
+            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {c.rules.items.map((item, index) => (
+                <li className="rule" key={item}>
+                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="section" id="signup">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.signup.eyebrow}</span>
+              <h2>{c.signup.title}</h2>
+              <p className="body-lg" style={{ maxWidth: "62ch" }}>
+                {c.signup.lede}
+              </p>
+            </div>
+
+            <SignupForm
+              lang={lang}
+              copy={c.signup}
+              sessions={sessions}
+              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
+              // The Wharf's "help me ask this better", on the box where most
+              // vague questions are written. Its button and disclosure are the
+              // Wharf's own words; the verdicts are reworded for a signup.
+              coach={
+                coachAvailable()
+                  ? {
+                      coachCta: c.wharf.coachCta,
+                      coachAgain: c.wharf.coachAgain,
+                      coachNote: c.wharf.coachNote,
+                      working: c.wharf.working,
+                      ...c.signup.coach,
+                    }
+                  : null
+              }
+            />
+
+            {/* Deliberately outside the form. Someone deciding whether to come
+                should see what a session costs before committing — but the
+                moment it sits among the fields it reads as a step, and an
+                optional thing that looks like a step is no longer optional. */}
+            <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
+              {c.signup.supportNote}
+              <Link href={langHref("/support", lang)}>
+                {c.signup.supportNoteCta}
+              </Link>
+              {c.signup.supportNoteTail}
+            </p>
           </div>
         </section>
 
@@ -415,73 +498,6 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── Signup ───────────────────────────────────────────────── */}
-        {/* Moved up, right after the run of show, on 2026-09-24. The rules are
-            what the morning expects of you — they belong with what happens on
-            the day, read before signing up, not after the photo album. */}
-        <section className="section">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.rules.eyebrow}</span>
-              <h2>{c.rules.title}</h2>
-            </div>
-
-            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {c.rules.items.map((item, index) => (
-                <li className="rule" key={item}>
-                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="section" id="signup">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.signup.eyebrow}</span>
-              <h2>{c.signup.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.signup.lede}
-              </p>
-            </div>
-
-            <SignupForm
-              lang={lang}
-              copy={c.signup}
-              sessions={sessions}
-              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
-              // The Wharf's "help me ask this better", on the box where most
-              // vague questions are written. Its button and disclosure are the
-              // Wharf's own words; the verdicts are reworded for a signup.
-              coach={
-                coachAvailable()
-                  ? {
-                      coachCta: c.wharf.coachCta,
-                      coachAgain: c.wharf.coachAgain,
-                      coachNote: c.wharf.coachNote,
-                      working: c.wharf.working,
-                      ...c.signup.coach,
-                    }
-                  : null
-              }
-            />
-
-            {/* Deliberately outside the form. Someone deciding whether to come
-                should see what a session costs before committing — but the
-                moment it sits among the fields it reads as a step, and an
-                optional thing that looks like a step is no longer optional. */}
-            <p className="body-sm" style={{ color: "var(--fg3)", maxWidth: "62ch" }}>
-              {c.signup.supportNote}
-              <Link href={langHref("/support", lang)}>
-                {c.signup.supportNoteCta}
-              </Link>
-              {c.signup.supportNoteTail}
-            </p>
-          </div>
-        </section>
-
         {/* ── Gallery ──────────────────────────────────────────────── */}
         <section className="section">
           <div className="shell stack-8">
@@ -592,7 +608,7 @@ export default async function Page({ searchParams }: PageProps) {
                           <picture>
                             <source
                               type="image/avif"
-                              srcSet={`${photo.src}-800.avif 800w, ${photo.src}-1600.avif 1600w`}
+                              srcSet={`${photo.src}-800.avif 800w, ${photo.src}-1200.avif 1200w, ${photo.src}-1600.avif 1600w`}
                               sizes="(max-width: 48rem) 100vw, 440px"
                             />
                             <img

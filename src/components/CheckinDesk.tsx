@@ -11,6 +11,8 @@ type Props = {
   /** The same link as an SVG QR, drawn on the server. */
   qrSvg: string;
   roster: RosterEntry[];
+  /** Narrows the manual check-in list by name (`?cq=` on /admin). */
+  query?: string;
   checkins: CheckinRow[];
 };
 
@@ -22,8 +24,12 @@ type Props = {
  * with the same name are told apart by WeChat ID on this screen, and by a
  * few words about their work on the room's.
  */
-export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins }: Props) {
-  const pending = roster.filter((entry) => !entry.checkedIn);
+export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins, query }: Props) {
+  const needle = (query ?? "").trim().toLowerCase();
+  const waiting = roster.filter((entry) => !entry.checkedIn);
+  const pending = needle
+    ? waiting.filter((entry) => `${entry.name} ${entry.hint ?? ""}`.toLowerCase().includes(needle))
+    : waiting;
 
   return (
     <section className="stack-6" id="checkin">
@@ -107,9 +113,15 @@ export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins }: 
         </table>
       </div>
 
-      {pending.length > 0 && (
-        <details className="fold">
-          <summary>报了名还没签到的 {pending.length} 人 — 手动签到</summary>
+      {waiting.length > 0 && (
+        <details className="fold" open={Boolean(needle)}>
+          <summary>报了名还没签到的 {waiting.length} 人 — 手动签到</summary>
+          <form method="get" action="/admin#checkin" style={{ display: "flex", gap: "var(--space-2)", margin: "var(--space-3) 0" }}>
+            <input className="field" name="cq" defaultValue={query ?? ""} placeholder="搜名字" aria-label="搜名字" />
+            <button className="btn btn--secondary" type="submit">
+              搜
+            </button>
+          </form>
           <div className="table-scroll">
             <table className="table">
               <tbody>
