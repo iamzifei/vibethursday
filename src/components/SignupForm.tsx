@@ -392,6 +392,27 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   // no token, because a spinner that never resolves reads as a broken page.
   const showBotCheck = Boolean(turnstileSiteKey) && !botCheckGaveUp;
 
+  // The email input, rendered in one of two places depending on whether this
+  // language requires it (see the two call sites below).
+  const emailField = (
+    <div>
+      <label className="label" htmlFor={fieldId("email")}>
+        {copy.fields.email}
+        {copy.fields.emailRequired && <span className="required"> *</span>}
+      </label>
+      <input
+        className="field"
+        id={fieldId("email")}
+        name="email"
+        type="email"
+        required={copy.fields.emailRequired}
+        autoComplete="email"
+        inputMode="email"
+        placeholder={copy.fields.emailPlaceholder}
+      />
+    </div>
+  );
+
   return (
     <form
       className="stack-6"
@@ -455,6 +476,12 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
                 placeholder={copy.fields.wechatPlaceholder}
               />
             </div>
+
+            {/* ⚠️ Where email is required (the English form: WeChat is optional
+                there), it must never sit in the fold — a required field nobody
+                can see is a form nobody can send. Measured 2026-09-28: it did,
+                and English signups failed with the fold shut. */}
+            {copy.fields.emailRequired && emailField}
           </div>
           <p className="privacy-note">{copy.fields.contactPrivacy}</p>
         </div>
@@ -571,22 +598,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
                 />
               </div>
 
-              <div>
-                <label className="label" htmlFor={fieldId("email")}>
-                  {copy.fields.email}
-                  {copy.fields.emailRequired && <span className="required"> *</span>}
-                </label>
-                <input
-                  className="field"
-                  id={fieldId("email")}
-                  name="email"
-                  type="email"
-                  required={copy.fields.emailRequired}
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder={copy.fields.emailPlaceholder}
-                />
-              </div>
+              {/* Optional here, so folded; where email is required (English)
+                  it stays with name above instead — see emailField. */}
+              {!copy.fields.emailRequired && emailField}
             </>
           )}
 
