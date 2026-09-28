@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { admission, bookedOnAnother, sameSignupName } from "./capacity.ts";
+import { admission, bookedOnAnother, exactSignupName, sameSignupName } from "./capacity.ts";
 import { nameHint } from "./my-signup.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
@@ -580,7 +580,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
  * put down for a Thursday is the one thing a stranger can do with only a
  * WeChat ID, and it harms nobody.
  */
-export async function saveSignupWithResult(input: SignupInput): Promise<{ id: string; profileUpdated: boolean }> {
+export async function saveSignupWithResult(input: SignupInput): Promise<{ id: string; profileUpdated: boolean; exactName: boolean }> {
   await ensureSchema();
 
   const pool = getPool();
@@ -651,7 +651,7 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
       ],
     );
 
-    return { id: inserted.rows[0].id, profileUpdated: true };
+    return { id: inserted.rows[0].id, profileUpdated: true, exactName: true };
   }
 
   const trusted = sameSignupName(input.name, target.name);
@@ -751,7 +751,7 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
     ],
   );
 
-  return { id: target.id, profileUpdated: trusted };
+  return { id: target.id, profileUpdated: trusted, exactName: exactSignupName(input.name, target.name) };
 }
 
 /**
@@ -2637,7 +2637,7 @@ export type MySignup = {
  * editing a card. Returns null for both "no such WeChat ID" and "wrong name":
  * the page says the same thing either way.
  */
-export async function findMySignup(name: string, wechat: string): Promise<MySignup | { nameHint: string } | null> {
+export async function findMySignup(name: string, wechat: string): Promise<(MySignup & { exactName: boolean }) | { nameHint: string } | null> {
   await ensureSchema();
 
   // The current ID first, then any value they used to go by (wechat_former);
@@ -2663,7 +2663,8 @@ export async function findMySignup(name: string, wechat: string): Promise<MySign
     return holder ? { nameHint: nameHint(holder.name) } : null;
   }
 
-  return getMySignup(row.id);
+  const mine = await getMySignup(row.id);
+  return mine ? { ...mine, exactName: exactSignupName(name, row.name) } : null;
 }
 
 /**

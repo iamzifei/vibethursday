@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { cancelSession, findMySignup, getMySignup, moveSessionFor } from "@/lib/db";
-import { canChangeSession, myToken, verifyMyToken } from "@/lib/my-signup";
+import { canChangeSession, myToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { nextThursdays, sydneyToday } from "@/lib/sessions";
@@ -65,11 +65,26 @@ export async function POST(request: Request) {
       const found = await findMySignup(name, wechat);
       if (!found) return back({ err: "notfound" });
       if ("nameHint" in found) return back({ err: "name", h: found.nameHint, w: wechat });
-      return back({ t: myToken(found.id) });
+      const response = back({ t: myToken(found.id) });
+      // Remember this phone, so next time /my opens straight to their signup —
+      // but only on the whole name. A partial match still gets the two-hour
+      // link above; it just is not worth a 60-day pass.
+      if (found.exactName) {
+        response.cookies.set(REMEMBER_COOKIE, rememberToken(found.id), rememberCookieOptions(origin.startsWith("https://")));
+      }
+      return response;
     } catch (error) {
       console.error("[my] lookup failed", error);
       return back({ err: "failed" });
     }
+  }
+
+  // "Not me": a shared phone, or a signup made on a friend's. Forget it and
+  // go back to the form.
+  if (action === "forget") {
+    const response = back({});
+    response.cookies.set(REMEMBER_COOKIE, "", { ...rememberCookieOptions(origin.startsWith("https://")), maxAge: 0 });
+    return response;
   }
 
   if (action !== "cancel" && action !== "move") return back({});

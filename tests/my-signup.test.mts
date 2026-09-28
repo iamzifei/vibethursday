@@ -70,3 +70,32 @@ test("a name hint shows only the first and last character", async () => {
   assert.equal(nameHint("王明"), "王…");
   assert.equal(nameHint(""), "…");
 });
+
+// ── "This phone remembers you" (2026-09-28) ─────────────────────────
+
+test("a remember token names its signup for 60 days, and not after", async () => {
+  const { rememberToken, readRememberToken, REMEMBER_TTL_MS } = await import("../src/lib/my-signup.ts");
+  const token = rememberToken("42", NOW, KEY);
+  assert.equal(REMEMBER_TTL_MS, 60 * 24 * 60 * 60 * 1000);
+  assert.equal(readRememberToken(token, NOW + REMEMBER_TTL_MS - 1000, KEY), "42");
+  assert.equal(readRememberToken(token, NOW + REMEMBER_TTL_MS + 1000, KEY), null);
+  assert.equal(readRememberToken(token.replace(":42.", ":41."), NOW, KEY), null);
+  assert.equal(readRememberToken(token, NOW, "another-key"), null);
+  assert.equal(readRememberToken(undefined, NOW, KEY), null);
+});
+
+test("the remember token and the two-hour /my token are not interchangeable", async () => {
+  const { rememberToken, readRememberToken } = await import("../src/lib/my-signup.ts");
+  // A two-hour token must not become a 60-day one by being put in the cookie,
+  // and the cookie's value must not work where a two-hour token is expected.
+  assert.equal(readRememberToken(myToken("42", NOW, KEY), NOW, KEY), null);
+  assert.equal(verifyMyToken(rememberToken("42", NOW, KEY), NOW, KEY), null);
+});
+
+test("only the whole name earns the 60-day pass; a part of it still finds you", async () => {
+  const { exactSignupName, sameSignupName } = await import("../src/lib/capacity.ts");
+  assert.equal(sameSignupName("Lee", "Dennis Lee"), true); // enough to look up
+  assert.equal(exactSignupName("Lee", "Dennis Lee"), false); // not enough to be remembered
+  assert.equal(exactSignupName("dennis  LEE", "Dennis Lee"), true);
+  assert.equal(exactSignupName("王", "王"), false);
+});

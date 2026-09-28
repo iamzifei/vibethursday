@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.6",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "这台手机记得你：报过一次名、或者在 /my 查过一次，用同一台手机再打开 vibethursday.com/my 或 /go，直接看到自己报了哪几场、是不是在候补，不用再填名字和微信号。借别人手机报的，点「不是你？」就能清掉。候补按进候补的先后排队。",
+    link: { href: "/my", zh: "查我的报名 →", en: "Check my signup →" },
+    en: "This phone remembers you: sign up once, or look yourself up on /my once, and opening vibethursday.com/my or /go on the same phone shows your Thursdays and any waitlist straight away — no name or WeChat ID to type. Signed up on someone else's phone? Tap «Not you?» to clear it. The waitlist now queues in the order people joined it.",
+  },
+  {
     version: "4.5",
     date: "2026-09-28",
     kind: "minor",

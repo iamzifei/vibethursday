@@ -5,7 +5,8 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
-import { getMemberById, getOrder, getSessionQuestions, signupCountsBySession } from "@/lib/db";
+import { getMemberById, getMySignup, getOrder, getSessionQuestions, signupCountsBySession } from "@/lib/db";
+import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { SESSION_CAP } from "@/lib/capacity";
 import { questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
@@ -59,7 +60,9 @@ export default async function GoPage({ searchParams }: PageProps) {
   const store = await cookies();
   const orderId = readOrderToken(store.get(orderCookieName(session))?.value);
 
-  const [order, member, questions, counts] = await Promise.all([
+  const rememberedId = readRememberToken(store.get(REMEMBER_COOKIE)?.value);
+
+  const [order, member, questions, counts, mine] = await Promise.all([
     orderId ? getOrder(orderId, session).catch(() => null) : null,
     currentMemberId()
       .then((id) => (id ? getMemberById(id) : null))
@@ -68,7 +71,24 @@ export default async function GoPage({ searchParams }: PageProps) {
     getSessionQuestions(session).catch(() => []),
     // Whether this session is already full, so signing up says "waitlist".
     signupCountsBySession().catch(() => new Map<string, number>()),
+    // "This phone remembers you" (the vt_my cookie), best-effort like the rest.
+    rememberedId ? getMySignup(rememberedId).catch(() => null) : null,
   ]);
+
+  // Down for this session, booked or waitlisted — either way, not someone to
+  // ask to sign up again (a second signup is how people ended up down for two
+  // Thursdays, 2026-09-28). From the remembered signup when there is one.
+  const inFocus = mine
+    ? mine.sessions.includes(session) || mine.waitlist.some((entry) => entry.session === session)
+    : null;
+  const upcomingMine = mine
+    ? [
+        ...mine.sessions.map((date) => ({ date, waitlisted: false })),
+        ...mine.waitlist.map((entry) => ({ date: entry.session, waitlisted: true })),
+      ]
+        .filter((entry) => entry.date >= today)
+        .sort((a, b) => (a.date < b.date ? -1 : 1))
+    : [];
   const full = (counts.get(session) ?? 0) >= SESSION_CAP;
 
   // The check-in link only on the morning itself (James 2026-09-28). Keyed on
@@ -77,7 +97,15 @@ export default async function GoPage({ searchParams }: PageProps) {
   const checkinOpen = checkinLinkOpen(session === today, sydneyHour());
 
   const items = goItems(phase, {
-    signedUp: member ? member.sessions.includes(session) : null,
+    // Either source saying "down for it" is enough; only when neither knows is
+    // it null. `??` would let a remembered "no" override a card's "yes" when
+    // the two are different rows of one person (2026-09-28 review).
+    signedUp:
+      inFocus === true || member?.sessions.includes(session)
+        ? true
+        : inFocus === false || member
+          ? false
+          : null,
     hasOrder: Boolean(order),
     hasCard: Boolean(member),
     checkinOpen,
@@ -93,7 +121,17 @@ export default async function GoPage({ searchParams }: PageProps) {
       body: order ? `${order.name} · ${order.label} · ${formatPrice(order.cents)}` : t.items.myOrder.body,
       href: orderHref,
     },
-    mySignup: { ...t.items.mySignup, href: `/my${langSuffix(lang)}` },
+    mySignup: {
+      title: t.items.mySignup.title,
+      // Remembered: their actual Thursdays, e.g. "1 Oct · booked; 8 Oct · waitlist".
+      body:
+        mine && upcomingMine.length > 0
+          ? upcomingMine
+              .map((entry) => `${formatSession(entry.date, lang)} · ${entry.waitlisted ? c.signup.successTagWaitlist : c.signup.successTagBooked}`)
+              .join("；")
+          : t.items.mySignup.body,
+      href: `/my${langSuffix(lang)}`,
+    },
     card: member ? { ...t.items.cardEdit, href: `/me${langSuffix(lang)}` } : { ...t.items.card, href: `/claim${langSuffix(lang)}` },
     members: { ...t.items.members, href: `/members${langSuffix(lang)}` },
     wharf: { ...t.items.wharf, href: `/wharf${langSuffix(lang)}` },

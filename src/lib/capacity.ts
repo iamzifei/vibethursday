@@ -69,6 +69,18 @@ export function sameSignupName(submitted: string, onFile: string): boolean {
   return a === b || a.includes(b) || b.includes(a);
 }
 
+/**
+ * The whole name, not a part of it: width, spacing and case ignored, nothing
+ * else. For the one thing `sameSignupName` is too loose for — handing a phone
+ * a 60-day "remembers you" pass (2026-09-28 review: "Li" is inside a lot of
+ * names, and a WeChat ID plus two letters is not much of a secret).
+ */
+export function exactSignupName(submitted: string, onFile: string): boolean {
+  const norm = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+  const a = norm(submitted);
+  return a.length >= 2 && a === norm(onFile);
+}
+
 /** Waitlisted people at which the admin page asks you to take a look. */
 export const WAITLIST_ALERT = 5;
 /** Signups for the session in the last day with no bot check, at which the same. */

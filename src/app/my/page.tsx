@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
 import { getMySignup, type MySignup } from "@/lib/db";
-import { canChangeSession, verifyMyToken } from "@/lib/my-signup";
+import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
 import { formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
@@ -55,8 +56,13 @@ export default async function MyPage({ searchParams }: PageProps) {
   const c = getCopy(lang);
   const t = c.my;
 
-  const token = params.t ?? "";
-  const signupId = verifyMyToken(token);
+  // A link from a lookup (`t`) wins; otherwise the phone may remember them
+  // (`vt_my`, set on signup or lookup). Either way the change forms need a
+  // two-hour token, so one is minted for the remembered id.
+  const linked = verifyMyToken(params.t ?? "");
+  const remembered = linked ? null : readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
+  const signupId = linked ?? remembered;
+  const token = linked ? (params.t as string) : remembered ? myToken(remembered) : (params.t ?? "");
 
   let mine: MySignup | null = null;
   if (signupId) {
@@ -92,7 +98,10 @@ export default async function MyPage({ searchParams }: PageProps) {
     params.err === "notfound" ? t.notFound
     : params.err === "name" && params.h ? fill(t.nameMismatch, { hint: params.h.slice(0, 8) })
     : params.err === "rate" ? t.rateLimited
-    : params.err === "expired" || (token && !mine) ? t.expired
+    // Only for a link that ran out. A remembered id whose row is gone (merged,
+    // deleted) just shows the form: "expired" would be a confusing thing to
+    // say to someone who never followed a link.
+    : params.err === "expired" || (params.t && !mine) ? t.expired
     : params.err === "failed" ? t.failed
     : null;
 
@@ -278,9 +287,22 @@ export default async function MyPage({ searchParams }: PageProps) {
         </details>
       )}
 
-      <p className="body-sm" style={{ color: "var(--fg3)" }}>
-        {t.validFor} <Link href={`/my${langSuffix(lang)}`}>{t.another}</Link>
-      </p>
+      {remembered ? (
+        // Remembered, not looked up: say so, and let someone on a borrowed or
+        // shared phone clear it.
+        <form method="post" action="/api/my" className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
+          <input type="hidden" name="action" value="forget" />
+          <input type="hidden" name="lang" value={lang} />
+          {t.remembered}{" "}
+          <button className="linkish" type="submit">
+            {t.forget}
+          </button>
+        </form>
+      ) : (
+        <p className="body-sm" style={{ color: "var(--fg3)" }}>
+          {t.validFor} <Link href={`/my${langSuffix(lang)}`}>{t.another}</Link>
+        </p>
+      )}
     </>,
   );
 }

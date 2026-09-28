@@ -59,6 +59,47 @@ export function verifyMyToken(token: string | null | undefined, now: number = Da
   return Number(expires) > now ? id : null;
 }
 
+/** How long a phone remembers whose signup it is (`vt_my` cookie). */
+export const REMEMBER_TTL_MS = 60 * 24 * 60 * 60 * 1000;
+
+const REMEMBER_LABEL = "vt.my.remember.v1";
+
+/** The cookie that holds `rememberToken`. */
+export const REMEMBER_COOKIE = "vt_my";
+
+/**
+ * "This phone remembers you" (2026-09-28): set when someone signs up with a
+ * matching name or looks themselves up on /my, so the next visit to /my or /go
+ * from the same browser shows their Thursdays without typing anything.
+ *
+ * Same shape as `myToken` under a different label, so neither can stand in for
+ * the other — a two-hour link put into the cookie does not become a 60-day one.
+ */
+export function rememberToken(signupId: string, now: number = Date.now(), key: string = secret()): string {
+  const head = `${REMEMBER_LABEL}:${signupId}.${now + REMEMBER_TTL_MS}`;
+  return `${head}~${sign(head, key)}`;
+}
+
+/** The signup id a remember cookie names, or null if forged or expired. */
+export function readRememberToken(token: string | null | undefined, now: number = Date.now(), key: string = secret()): string | null {
+  if (!token || token.length > 200) return null;
+
+  const match = /^vt\.my\.remember\.v1:(\d{1,18})\.(\d{10,16})~([A-Za-z0-9_-]{32})$/.exec(token);
+  if (!match) return null;
+
+  const [, id, expires, signature] = match;
+  const expected = Buffer.from(sign(`${REMEMBER_LABEL}:${id}.${expires}`, key));
+  const given = Buffer.from(signature);
+  if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
+
+  return Number(expires) > now ? id : null;
+}
+
+/** Cookie settings for `REMEMBER_COOKIE`, matching the order cookie's. */
+export function rememberCookieOptions(secure: boolean) {
+  return { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: REMEMBER_TTL_MS / 1000 };
+}
+
 /**
  * Whether a session can still be cancelled or moved away from on `today`
  * (Sydney date). The day itself counts — plans change at breakfast — but past

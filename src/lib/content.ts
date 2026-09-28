@@ -517,7 +517,7 @@ export const copy = {
       // them to watch their inbox sends them looking for something never sent.
       successBodyNoEmail: "我会用你留的微信号拉你进群，地址和当周提醒都在群里发。",
       // 09-28：「我报上了吗」「报错周四怎么改」是那周群里问得最多的两句。
-      successMy: "以后想确认报上没有、改到别的周四或者取消，打开 vibethursday.com/my，填名字和微信号就行。",
+      successMy: "以后想确认报上没有、改到别的周四或者取消，打开 vibethursday.com/my——用这台手机打开会直接看到，换了手机就填名字和微信号。",
       // The exact values on record. Claiming a card matches these as written,
       // and people were reproducing them from memory and missing.
       successRecap: "你登记的是",
@@ -1453,6 +1453,8 @@ export const copy = {
       goHint: "地址、当天流程和签到都在 vibethursday.com/go。",
       another: "查另一个人",
       meLink: "改时间或者取消 →",
+      remembered: "这台手机记得你，下次打开直接看到。",
+      forget: "不是你？点这里",
       validFor: "这个页面 2 小时内有效，过了重新查一下。",
     },
 
@@ -1924,7 +1926,7 @@ export const copy = {
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       successBody: "The address is on vibethursday.com/go, and reminders go out in the WeChat group. If you left a WeChat ID I will add you to it.",
       successBodyNoEmail: "I will add you to the WeChat group with the ID you left; the address and reminders go out there.",
-      successMy: "To check you are booked, move to another Thursday or cancel later, open vibethursday.com/my and enter your name and WeChat ID.",
+      successMy: "To check you are booked, move to another Thursday or cancel later, open vibethursday.com/my — on this phone it opens straight to your signup; on another, enter your name and WeChat ID.",
       successRecap: "What you signed up with",
       successRecapName: "Name",
       successRecapWechat: "WeChat ID",
@@ -2701,6 +2703,8 @@ export const copy = {
       goHint: "Address, run of show and check-in are all at vibethursday.com/go.",
       another: "Look up someone else",
       meLink: "Change the date or cancel →",
+      remembered: "This phone remembers you, so next time it opens straight here.",
+      forget: "Not you? Tap here",
       validFor: "This page lasts two hours; after that, look yourself up again.",
     },
 

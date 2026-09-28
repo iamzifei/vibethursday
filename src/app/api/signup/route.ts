@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getMySignup, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
 import { nextThursdays, sydneyToday } from "@/lib/sessions";
 import { admission } from "@/lib/capacity";
+import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { requestOrigin } from "@/lib/request-origin";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
@@ -186,9 +188,10 @@ export async function POST(request: Request) {
 
   let signupId: string;
   let profileUpdated = true;
+  let exactName = false;
 
   try {
-    ({ id: signupId, profileUpdated } = await saveSignupWithResult({
+    ({ id: signupId, profileUpdated, exactName } = await saveSignupWithResult({
       name,
       email,
       wechat,
@@ -252,5 +255,21 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, waitlisted, upcoming });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming });
+
+  // "This phone remembers you": the next /my or /go from this browser shows
+  // their Thursdays without typing. Behind the same gate as `upcoming` — only
+  // when the name matched — or knowing someone's WeChat ID would be enough to
+  // take home a pass to their signup.
+  // The whole name, not just a part of it (`exactSignupName`): this pass lasts
+  // 60 days, so it takes more than a WeChat ID and two letters.
+  if (profileUpdated && exactName) {
+    try {
+      response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions((await requestOrigin()).startsWith("https://")));
+    } catch (error) {
+      console.error("[signup] could not set the remember cookie", error);
+    }
+  }
+
+  return response;
 }
