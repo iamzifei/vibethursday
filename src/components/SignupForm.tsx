@@ -30,7 +30,15 @@ type Props = {
 type Status = "idle" | "sending" | "done" | "error";
 
 /** What the success card repeats back: the session, and the values on record. */
-type Receipt = { name: string; email: string; wechat: string; session: string | null; waitlisted: boolean };
+type Receipt = {
+  name: string;
+  email: string;
+  wechat: string;
+  session: string | null;
+  waitlisted: boolean;
+  /** Every upcoming Thursday they are now down for, when the server could say. */
+  upcoming: { label: string; waitlisted: boolean }[] | null;
+};
 
 /**
  * Unsent form contents, kept separately from the saved profile
@@ -325,14 +333,21 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
       // on a shared device.
       clearDraft(DRAFT_KEY);
 
-      const accepted = (await response.json().catch(() => null)) as { waitlisted?: boolean } | null;
+      const accepted = (await response.json().catch(() => null)) as {
+        waitlisted?: boolean;
+        upcoming?: { session: string; waitlisted: boolean }[];
+      } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
+      const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
       setReceipt({
         waitlisted: accepted?.waitlisted === true,
         name,
         email,
         wechat,
-        session: sessions.find((option) => option.value === sessionValue)?.label ?? null,
+        session: sessions.find((option) => option.value === sessionValue) ? labelOf(sessionValue) : null,
+        upcoming: Array.isArray(accepted?.upcoming)
+          ? accepted.upcoming.map((entry) => ({ label: labelOf(entry.session), waitlisted: entry.waitlisted === true }))
+          : null,
       });
       setStatus("done");
       form.reset();
@@ -359,6 +374,22 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
             copy.successNoSession
           )}
         </p>
+        {/* Everything they are down for now, not just this week: a second
+            signup that added a Thursday used to be invisible, and read as
+            "it signed me up twice" (2026-09-28). */}
+        {receipt?.upcoming && receipt.upcoming.length > 1 && (
+          <div className="stack-2">
+            <p style={{ margin: 0 }}>{copy.successAll.replace("{n}", String(receipt.upcoming.length))}</p>
+            <ul style={{ margin: 0 }}>
+              {receipt.upcoming.map((entry) => (
+                <li key={entry.label}>
+                  <strong>{entry.label}</strong> · {entry.waitlisted ? copy.successTagWaitlist : copy.successTagBooked}
+                </li>
+              ))}
+            </ul>
+            <p className="field-hint">{copy.successMore}</p>
+          </div>
+        )}
         <p>{receipt?.email ? copy.successBody : copy.successBodyNoEmail}</p>
         <p>
           <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.successMy}</a>
@@ -537,9 +568,13 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           className="field"
           id={fieldId("session")}
           name="firstSession"
-          // The first session with room, not simply the first: a full default
-          // put people on a waitlist they never chose (2026-09-28 review).
-          defaultValue={(sessions.find((session) => !session.full) ?? sessions[0])?.value}
+          // The nearest Thursday, full or not. For one day (2026-09-28) this
+          // skipped to the first session with room, and people who meant this
+          // week were quietly signed up for next week instead — then signed up
+          // again, and ended up down for both. Waitlisted people can still come
+          // (James, 2026-09-28), and a full date says so in its label, so the
+          // date they most likely meant is the right default.
+          defaultValue={sessions[0]?.value}
         >
           {sessions.map((session) => (
             <option key={session.value} value={session.value}>

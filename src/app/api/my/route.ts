@@ -63,7 +63,9 @@ export async function POST(request: Request) {
 
     try {
       const found = await findMySignup(name, wechat);
-      return found ? back({ t: myToken(found.id) }) : back({ err: "notfound" });
+      if (!found) return back({ err: "notfound" });
+      if ("nameHint" in found) return back({ err: "name", h: found.nameHint, w: wechat });
+      return back({ t: myToken(found.id) });
     } catch (error) {
       console.error("[my] lookup failed", error);
       return back({ err: "failed" });

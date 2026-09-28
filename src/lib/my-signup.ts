@@ -68,3 +68,17 @@ export function canChangeSession(session: string, today: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(session) || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return false;
   return session >= today;
 }
+
+/**
+ * The first and last character of a name, for "you signed up as D…g".
+ *
+ * Shown when a WeChat ID matched but the name typed did not. Enough to remind
+ * someone which of their names they used, not enough to learn a stranger's
+ * name from their WeChat ID. One- and two-character names show only the first.
+ */
+export function nameHint(name: string): string {
+  const chars = [...name.trim()];
+  if (chars.length === 0) return "…";
+  if (chars.length <= 2) return `${chars[0]}…`;
+  return `${chars[0]}…${chars[chars.length - 1]}`;
+}

@@ -62,3 +62,11 @@ test("/my copy exists in both languages with the same keys", () => {
   const en = copy.en.my as Record<string, unknown>;
   assert.deepEqual(Object.keys(zh).sort(), Object.keys(en).sort());
 });
+
+test("a name hint shows only the first and last character", async () => {
+  const { nameHint } = await import("../src/lib/my-signup.ts");
+  assert.equal(nameHint("Dennis Lee"), "D…e");
+  assert.equal(nameHint("王小明"), "王…明");
+  assert.equal(nameHint("王明"), "王…");
+  assert.equal(nameHint(""), "…");
+});

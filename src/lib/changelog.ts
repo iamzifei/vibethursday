@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.5",
+    date: "2026-09-28",
+    kind: "minor",
+    scope: "site",
+    zh: "候补说清楚了：座位满了进候补，候补照样能来，只是没有预留座位，不用再报别的周四兜底。报名成功后会列出你现在报的所有场次；「我的名片」页顶上也能看到自己报了哪几场，一键去改。报名表会帮你分清微信号和昵称，写明去哪里找；在 /my 名字对不上时，会提示你报名时用的是哪个名字。",
+    link: { href: "/my", zh: "查我的报名 →", en: "Check my signup →" },
+    en: "The waitlist is explained: once the seats are taken you join the waitlist, and waitlisted people can still come, just without a reserved seat — no need to sign up for another Thursday as a fallback. After signing up you see every Thursday you are down for, and the top of «My card» shows them too, with a link to change them. The form now helps tell a WeChat ID from a nickname and says where to find it, and /my tells you when a WeChat ID is signed up under a different name.",
+  },
+  {
     version: "4.4",
     date: "2026-09-28",
     kind: "minor",

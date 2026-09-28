@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
-import { nextThursdays } from "@/lib/sessions";
+import { getMySignup, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
+import { nextThursdays, sydneyToday } from "@/lib/sessions";
 import { admission } from "@/lib/capacity";
 import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -229,5 +229,28 @@ export async function POST(request: Request) {
   // it hands out edit access to a card; handing the same access out from an
   // open signup form would make "sign up as someone whose WeChat ID you know"
   // a way to take over their card. Editing still goes through /claim.
-  return NextResponse.json({ ok: true, waitlisted });
+  // Everything this person is now down for, so the confirmation can say "you
+  // are down for 1 Oct (waitlist) and 8 Oct" instead of only this week — a
+  // second signup that quietly added a Thursday was invisible (2026-09-28).
+  // Only when the name matched: this form is open, and typing someone else's
+  // WeChat ID must not show you their Thursdays.
+  let upcoming: { session: string; waitlisted: boolean }[] | undefined;
+  if (profileUpdated) {
+    try {
+      const mine = await getMySignup(signupId);
+      const today = sydneyToday().toISOString().slice(0, 10);
+      if (mine) {
+        upcoming = [
+          ...mine.sessions.map((session) => ({ session, waitlisted: false })),
+          ...mine.waitlist.map((entry) => ({ session: entry.session, waitlisted: true })),
+        ]
+          .filter((entry) => entry.session >= today)
+          .sort((a, b) => (a.session < b.session ? -1 : 1));
+      }
+    } catch (error) {
+      console.error("[signup] saved, but could not read back the sessions", error);
+    }
+  }
+
+  return NextResponse.json({ ok: true, waitlisted, upcoming });
 }

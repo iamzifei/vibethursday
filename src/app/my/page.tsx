@@ -18,8 +18,12 @@ type PageProps = {
     done?: string;
     /** The session that change was about. */
     d?: string;
-    /** What went wrong: notfound · rate · expired · failed. */
+    /** What went wrong: notfound · name · rate · expired · failed. */
     err?: string;
+    /** With err=name: the first and last letter of the name on file (`nameHint`). */
+    h?: string;
+    /** With err=name: the WeChat ID they typed, handed back so it need not be typed again. */
+    w?: string;
   }>;
 };
 
@@ -86,6 +90,7 @@ export default async function MyPage({ searchParams }: PageProps) {
 
   const errorText =
     params.err === "notfound" ? t.notFound
+    : params.err === "name" && params.h ? fill(t.nameMismatch, { hint: params.h.slice(0, 8) })
     : params.err === "rate" ? t.rateLimited
     : params.err === "expired" || (token && !mine) ? t.expired
     : params.err === "failed" ? t.failed
@@ -124,6 +129,7 @@ export default async function MyPage({ searchParams }: PageProps) {
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
+              defaultValue={params.err === "name" ? (params.w ?? "").slice(0, 60) : undefined}
               required
             />
             <p className="field-hint">{t.wechatHint}</p>
@@ -243,11 +249,15 @@ export default async function MyPage({ searchParams }: PageProps) {
         )}
       </div>
 
+      {/* Folded: adding another Thursday is the rare case, and left open it
+          read as the next step — one person ended up down for five fallbacks
+          while waiting for the week they wanted (2026-09-28). */}
       {choices.length > 0 && (
-        <form method="post" action="/api/my" className="stack-3">
+        <details className="disclosure">
+          <summary>{t.addTitle}</summary>
+        <form method="post" action="/api/my" className="stack-3 disclosure__body">
           {hidden}
           <input type="hidden" name="action" value="move" />
-          <h2 className="h3">{t.addTitle}</h2>
           <label className="label" htmlFor="my-add">
             {t.addLabel}
           </label>
@@ -261,10 +271,11 @@ export default async function MyPage({ searchParams }: PageProps) {
               </option>
             ))}
           </select>
-          <button className="btn btn--primary" type="submit">
+          <button className="btn btn--secondary" type="submit">
             {t.addSubmit}
           </button>
         </form>
+        </details>
       )}
 
       <p className="body-sm" style={{ color: "var(--fg3)" }}>

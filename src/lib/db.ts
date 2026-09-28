@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { admission, bookedOnAnother, sameSignupName } from "./capacity.ts";
+import { nameHint } from "./my-signup.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
@@ -108,6 +109,13 @@ export function ensureSchema(): Promise<void> {
     // What they would like to talk about this week. Separate from `building`:
     // that is a standing description of their work, this changes week to week.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS topic text`);
+
+    // Values this person used to be known by in the WeChat column: a nickname
+    // typed where the ID should go, or an ID they have since changed (WeChat
+    // allows that once a year). Kept so the old value still finds them — but
+    // only together with their name, because nicknames collide. Written by
+    // `correctWechat`, from /admin. Added 2026-09-28.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS wechat_former text[] NOT NULL DEFAULT '{}'`);
 
     // Every session this person has signed up for, not just the latest.
     // `first_session` alone was overwritten on each re-signup, so a regular
@@ -550,19 +558,39 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
   const pool = getPool();
 
   // Two rows can match when the same person once signed up through each form
-  // and left a different identifier each time. LIMIT 2 is enough to notice.
-  const existing = await pool.query<{ id: string; name: string; email: string | null; wechat: string | null; booked: boolean }>(
+  // and left a different identifier each time; more when former WeChat values
+  // (wechat_former) are counted too. Every exact match is kept, since the
+  // unique-index guard below needs all of them.
+  const matched = await pool.query<{ id: string; name: string; email: string | null; wechat: string | null; booked: boolean; former_only: boolean }>(
     `SELECT id::text AS id, name, email, wechat,
-            ($3::date IS NOT NULL AND $3::date = ANY(sessions)) AS booked
+            ($3::date IS NOT NULL AND $3::date = ANY(sessions)) AS booked,
+            -- Matched on nothing but a value this person used to go by.
+            NOT (($1::text IS NOT NULL AND lower(email) = lower($1))
+                 OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))) AS former_only
        FROM signups
       WHERE ($1::text IS NOT NULL AND lower(email) = lower($1))
          OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))
-      ORDER BY id
-      LIMIT 2`,
+         OR ($2::text IS NOT NULL AND EXISTS (SELECT 1 FROM unnest(wechat_former) AS f WHERE lower(f) = lower($2)))
+      -- Exact matches first, so a row holding this email or WeChat ID right now
+      -- can never be crowded out by rows that only used to go by it — the
+      -- unique-index guard below (takenByAnother) has to see those.
+      ORDER BY former_only, id
+      LIMIT 6`,
     [input.email, input.wechat, input.firstSession],
   );
 
-  const target = existing.rows[0];
+  // A former value is often a nickname, and two people can share one. It only
+  // counts as the same person when the name agrees too; otherwise this is
+  // somebody new, and gets a row of their own.
+  const existing = {
+    rows: matched.rows.filter((row) => !row.former_only || sameSignupName(input.name, row.name)),
+  };
+
+  // The row whose name agrees, when several match — someone signing up with a
+  // nickname that has since been corrected off their row and now belongs to
+  // somebody else must land on their own row, not the other person's
+  // (2026-09-28). Otherwise the first, as before.
+  const target = existing.rows.find((row) => sameSignupName(input.name, row.name)) ?? existing.rows[0];
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
@@ -707,7 +735,8 @@ export async function sessionHeadcount(
     `SELECT count(*)::text AS count,
             coalesce(bool_or(
               ($2::text IS NOT NULL AND lower(email) = lower($2)) OR
-              ($3::text IS NOT NULL AND lower(wechat) = lower($3))
+              ($3::text IS NOT NULL AND lower(wechat) = lower($3)) OR
+              ($3::text IS NOT NULL AND EXISTS (SELECT 1 FROM unnest(wechat_former) AS f WHERE lower(f) = lower($3)))
             ), false) AS already
        FROM signups
       WHERE $1::date = ANY(sessions)`,
@@ -800,6 +829,8 @@ export type SignupRow = {
   checked_in: string[];
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
   purposes: string;
+  /** Values this person used to go by in the WeChat column (`correctWechat`). */
+  wechat_former: string[];
   created_at: string;
 };
 
@@ -822,7 +853,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, source, lang, bot_check,
+            availability, ai_models, ai_spend, source, lang, bot_check, wechat_former,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -1023,7 +1054,12 @@ export async function claimMember(name: string, contact: string): Promise<string
         AND (regexp_replace(lower(email), '[[:space:]　]+', '', 'g')
                = regexp_replace(lower($2), '[[:space:]　]+', '', 'g')
           OR regexp_replace(lower(wechat), '[[:space:]　]+', '', 'g')
-               = regexp_replace(lower($2), '[[:space:]　]+', '', 'g'))
+               = regexp_replace(lower($2), '[[:space:]　]+', '', 'g')
+          -- A value they used to go by (wechat_former). The name above is
+          -- required as well, so a shared nickname cannot open someone else's card.
+          OR EXISTS (SELECT 1 FROM unnest(wechat_former) AS f
+                      WHERE regexp_replace(lower(f), '[[:space:]　]+', '', 'g')
+                            = regexp_replace(lower($2), '[[:space:]　]+', '', 'g')))
       -- Older duplicate rows can match the same person. Prefer the one that
       -- already has a card, so a claim lands on the card they published rather
       -- than opening a second, empty one.
@@ -2392,6 +2428,148 @@ export async function promoteFromWaitlist(signupId: string, session: string): Pr
   );
 }
 
+/**
+ * Puts the right WeChat ID on a signup, keeping the old value as one this
+ * person used to go by (`wechat_former`), so it still finds them.
+ *
+ * For the ID box filled with a nickname — the organiser learns the real ID in
+ * the group and fixes it here, instead of in a private correction list that
+ * every export had to be run through again. One transaction.
+ *
+ * Refuses, and says whose, when another signup already holds the new ID: that
+ * is the same person signed up twice, and merging is a separate decision
+ * (`mergeSignups`).
+ */
+export async function correctWechat(
+  id: string,
+  wechat: string,
+): Promise<{ ok: true } | { ok: false; reason: "taken"; takenBy: string } | { ok: false; reason: "missing" }> {
+  await ensureSchema();
+
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    try {
+      const taken = await client.query<{ name: string }>(
+        `SELECT name FROM signups WHERE lower(wechat) = lower($2) AND id <> $1::bigint LIMIT 1`,
+        [id, wechat],
+      );
+      if (taken.rows[0]) {
+        await client.query("ROLLBACK");
+        return { ok: false, reason: "taken", takenBy: taken.rows[0].name };
+      }
+
+      const updated = await client.query(
+        `UPDATE signups
+            SET wechat_former = CASE
+                  WHEN wechat IS NULL OR lower(wechat) = lower($2) THEN wechat_former
+                  ELSE ARRAY(SELECT DISTINCT unnest(wechat_former || ARRAY[wechat]))
+                END,
+                wechat = $2,
+                updated_at = now()
+          WHERE id = $1::bigint`,
+        [id, wechat],
+      );
+
+      await client.query("COMMIT");
+      return updated.rowCount ? { ok: true } : { ok: false, reason: "missing" };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Folds one signup into another: the same person, signed up twice.
+ *
+ * `keep` gains the other row's sessions, waitlist, former WeChat values (and
+ * its WeChat ID, when different), and email when it has none; check-ins move
+ * across (a session both rows checked into stays one check-in), and so does a
+ * member card when `keep` has none. Then the other row is deleted. One
+ * transaction. Refuses when both rows have a card, since which card survives
+ * is not a thing to guess.
+ *
+ * Only ever called from /admin, on pairs the organiser has confirmed are one
+ * person — nothing here decides that two rows match.
+ */
+export async function mergeSignups(keep: string, drop: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  await ensureSchema();
+  if (keep === drop) return { ok: false, reason: "same" };
+
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    try {
+      const rows = await client.query<{ id: string; email: string | null; wechat: string | null; has_card: boolean }>(
+        `SELECT id::text AS id, email, wechat,
+                EXISTS (SELECT 1 FROM members m WHERE m.signup_id = s.id) AS has_card
+           FROM signups s WHERE id IN ($1::bigint, $2::bigint) FOR UPDATE`,
+        [keep, drop],
+      );
+      const kept = rows.rows.find((row) => row.id === keep);
+      const dropped = rows.rows.find((row) => row.id === drop);
+      if (!kept || !dropped) {
+        await client.query("ROLLBACK");
+        return { ok: false, reason: "missing" };
+      }
+      if (kept.has_card && dropped.has_card) {
+        await client.query("ROLLBACK");
+        return { ok: false, reason: "two-cards" };
+      }
+
+      // Check-ins: move, except where `keep` already checked in to that session.
+      await client.query(
+        `UPDATE checkins SET signup_id = $1::bigint
+          WHERE signup_id = $2::bigint
+            AND session NOT IN (SELECT session FROM checkins WHERE signup_id = $1::bigint)`,
+        [keep, drop],
+      );
+      if (dropped.has_card) {
+        await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
+      }
+
+      // Read what to carry over, then delete the row before writing it onto
+      // `keep`, so the unique email/WeChat indexes never see both at once.
+      const other = await client.query<{ sessions: string[]; waitlist: string[]; former: string[]; email: string | null; wechat: string | null }>(
+        `DELETE FROM signups WHERE id = $1::bigint
+          RETURNING ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) d) AS sessions,
+                    ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) d) AS waitlist,
+                    wechat_former AS former, email, wechat`,
+        [drop],
+      );
+      const o = other.rows[0];
+
+      await client.query(
+        `UPDATE signups SET
+            sessions = ARRAY(SELECT DISTINCT unnest(sessions || $2::date[]) ORDER BY 1),
+            -- Waitlisted on one row but booked on the other is booked.
+            waitlist = ARRAY(SELECT DISTINCT w FROM unnest(waitlist || $3::date[]) AS w
+                              WHERE NOT (w = ANY(sessions || $2::date[])) ORDER BY 1),
+            wechat_former = ARRAY(SELECT DISTINCT f FROM unnest(
+                              wechat_former || $4::text[] ||
+                              CASE WHEN $5::text IS NOT NULL AND lower($5) IS DISTINCT FROM lower(wechat)
+                                   THEN ARRAY[$5::text] ELSE '{}'::text[] END) AS f
+                              WHERE f IS NOT NULL AND lower(f) IS DISTINCT FROM lower(wechat)),
+            email = COALESCE(email, $6),
+            updated_at = now()
+          WHERE id = $1::bigint`,
+        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email],
+      );
+
+      await client.query("COMMIT");
+      return { ok: true };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    client.release();
+  }
+}
+
 /** One person's own signup, as /my shows it back to them. */
 export type MySignup = {
   id: string;
@@ -2409,15 +2587,31 @@ export type MySignup = {
  * editing a card. Returns null for both "no such WeChat ID" and "wrong name":
  * the page says the same thing either way.
  */
-export async function findMySignup(name: string, wechat: string): Promise<MySignup | null> {
+export async function findMySignup(name: string, wechat: string): Promise<MySignup | { nameHint: string } | null> {
   await ensureSchema();
 
-  const found = await getPool().query<{ id: string; name: string }>(
-    `SELECT id::text AS id, name FROM signups WHERE lower(wechat) = lower($1) ORDER BY id LIMIT 1`,
+  // The current ID first, then any value they used to go by (wechat_former);
+  // either way the name has to agree, so a shared nickname finds nobody else.
+  const found = await getPool().query<{ id: string; name: string; current: boolean }>(
+    `SELECT id::text AS id, name, coalesce(lower(wechat) = lower($1), false) AS current FROM signups
+      WHERE lower(wechat) = lower($1)
+         OR EXISTS (SELECT 1 FROM unnest(wechat_former) AS f WHERE lower(f) = lower($1))
+      ORDER BY (lower(wechat) = lower($1)) DESC NULLS LAST, id
+      LIMIT 5`,
     [wechat],
   );
-  const row = found.rows[0];
-  if (!row || !sameSignupName(name, row.name)) return null;
+  const row = found.rows.find((candidate) => sameSignupName(name, candidate.name));
+  // The WeChat ID is on file but under another name — usually a Chinese name
+  // typed now against an English one typed then (2026-09-28). Say so, with
+  // just enough of the name on file to jog a memory (`nameHint`), instead of
+  // a flat "not found" that reads as "you never signed up".
+  // Only for the current ID, which is unique to one person. A former value is
+  // often a nickname several people share, and a hint there would be a hint
+  // about a stranger.
+  if (!row) {
+    const holder = found.rows.find((candidate) => candidate.current);
+    return holder ? { nameHint: nameHint(holder.name) } : null;
+  }
 
   return getMySignup(row.id);
 }
@@ -2448,7 +2642,26 @@ export async function getMySignup(id: string): Promise<MySignup | null> {
 
   const row = result.rows[0];
   if (!row) return null;
-  return { id: row.id, name: row.name, sessions: row.sessions, waitlist: (row.waitlist ?? []).map((w) => ({ session: w.session, position: Number(w.position) })) };
+  // Booked wins: a session that somehow sits in both arrays (older rows, before
+  // the signup form cleared one when setting the other) is shown once, as booked.
+  return {
+    id: row.id,
+    name: row.name,
+    sessions: row.sessions,
+    waitlist: (row.waitlist ?? [])
+      .filter((w) => !row.sessions.includes(w.session))
+      .map((w) => ({ session: w.session, position: Number(w.position) })),
+  };
+}
+
+/** The signup behind a member card, for showing "your Thursdays" on /me. */
+export async function getMySignupForMember(memberId: string): Promise<MySignup | null> {
+  await ensureSchema();
+  const found = await getPool().query<{ signup_id: string }>(
+    `SELECT signup_id::text AS signup_id FROM members WHERE id = $1::bigint`,
+    [memberId],
+  );
+  return found.rows[0] ? getMySignup(found.rows[0].signup_id) : null;
 }
 
 /**

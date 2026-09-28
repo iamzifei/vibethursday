@@ -15,7 +15,10 @@ import { looksLikeWechatId } from "../src/lib/wechat-id.ts";
 const LANGS = ["zh", "en"] as const;
 
 test("real WeChat IDs pass, including phone numbers", () => {
-  for (const id of ["alex2026", "sam_lee_AU", "Kai-Chen", "_0412345678", "0400000000", "  jdoe  "]) {
+  // "  jdoe88  " tests that surrounding space is trimmed. It was "  jdoe  " until
+  // 2026-09-28, when the check started holding IDs to WeChat's 6-character
+  // minimum (a 5-letter nickname had passed); see tests/wechat-id.test.mts.
+  for (const id of ["alex2026", "sam_lee_AU", "Kai-Chen", "_0412345678", "0400000000", "  jdoe88  "]) {
     assert.ok(looksLikeWechatId(id), `${id} should pass`);
   }
 });

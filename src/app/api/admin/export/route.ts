@@ -32,6 +32,11 @@ const COLUMNS = [
   "lang",
   "bot_check",
   "created_at",
+  // Appended last so recipes that read by column name are unaffected.
+  // Values this person used to go by in the WeChat column (`correctWechat`).
+  "wechat_former",
+  // The row id, which /admin's correct and merge actions take.
+  "id",
 ] as const;
 
 /**

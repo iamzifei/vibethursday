@@ -9,6 +9,7 @@ import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
 import { capacityAlert, SESSION_CAP } from "@/lib/capacity";
+import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import {
   countCheckins,
@@ -43,11 +44,11 @@ export const metadata: Metadata = {
 
 type PageProps = {
   /** `fb` picks which session's feedback is read out below the summary. */
-  searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string }>;
+  searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string; msg?: string }>;
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
-  const { key, fb, q, all, cq } = await searchParams;
+  const { key, fb, q, all, cq, msg } = await searchParams;
 
   // ★ The link still carries the token; the address bar no longer keeps it.
   // Arriving with ?key= goes straight to the one route allowed to set a
@@ -216,6 +217,15 @@ export default async function AdminPage({ searchParams }: PageProps) {
       Date.parse(`${row.created_at.replace(" ", "T")}:00Z`) > dayAgo,
   ).length;
   const alert = capacityAlert({ waitlist: deskWaitlist.length, unverifiedLastDay });
+
+  // Rows still coming to something whose WeChat value would not find anyone.
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const suspectWechat = signups.filter(
+    (row) =>
+      row.wechat &&
+      !looksLikeWechatId(row.wechat) &&
+      [...row.sessions, ...row.waitlist].some((session) => session >= todayIso),
+  );
   const waitlistBySession = new Map<string, number>();
   for (const signup of signups) {
     for (const date of new Set(signup.waitlist)) {
@@ -341,6 +351,13 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <h2 className="eyebrow">① 本周</h2>
       {/* ── This week at a glance ──────────────────────────────────────
           Numbers already read above; nothing new is queried for this. */}
+      {/* The result of the last correct / merge action, carried in the redirect. */}
+      {msg && (
+        <p className="alert" role="status">
+          {msg.slice(0, 200)}
+        </p>
+      )}
+
       <p className="body-sm admin-glance">
         <strong>{desk}</strong> · 报名 {deskRow?.total ?? 0} / {SESSION_CAP} · 候补{" "}
         {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length} · 点单 {orders.length} 杯
@@ -667,6 +684,85 @@ export default async function AdminPage({ searchParams }: PageProps) {
       <details className="disclosure admin-group" id="data">
         <summary>④ 数据与工具：统计、AI 用量、投屏、报名明细</summary>
         <div className="disclosure__body stack-8">
+      {/* WeChat IDs that do not look like one — usually a nickname typed into
+          the ID box, which cannot be found in WeChat. The organiser learns the
+          real ID in the group and fixes it here; the old value is kept so it
+          still finds the person (`correctWechat`). Added 2026-09-28. */}
+      <section className="stack-4" id="wechat-fix">
+        <div className="group-head">
+          <h2 className="h3">可能填成了昵称的微信号</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            {suspectWechat.length} 条 · 只列以后还有场次的
+          </span>
+        </div>
+        {suspectWechat.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>
+            没有。
+          </p>
+        ) : (
+          <div className="table-scroll" tabIndex={0} role="region" aria-label="可能填成了昵称的微信号">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">名字</th>
+                  <th scope="col">填的</th>
+                  <th scope="col">场次</th>
+                  <th scope="col">正确的微信号</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suspectWechat.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}</td>
+                    <td className="mono">{row.wechat}</td>
+                    <td className="mono">{[...row.sessions, ...row.waitlist.map((w) => `${w}（候补）`)].join(" ")}</td>
+                    <td>
+                      <form method="post" action="/api/admin/wechat" style={{ display: "flex", gap: "var(--space-2)" }}>
+                        <input type="hidden" name="id" value={row.id} />
+                        <input className="field" name="wechat" maxLength={60} required aria-label={`${row.name} 的正确微信号`} />
+                        <button className="btn btn--secondary" type="submit">
+                          改
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Two rows that are one person. Nothing here guesses which: the ids come
+          from the table below (or the CSV's id column) and the organiser
+          decides. The newer row folds into the older one (`mergeSignups`). */}
+      <section className="stack-4" id="merge">
+        <div className="group-head">
+          <h2 className="h3">合并重复报名</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            同一个人报了两行时用。场次、签到、名片并到「留下」那行，另一行删除，撤不回。
+          </span>
+        </div>
+        <form method="post" action="/api/admin/merge" className="stack-3" style={{ maxWidth: "28rem" }}>
+          <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}>
+            <label className="label" htmlFor="merge-keep" style={{ margin: 0 }}>
+              留下 #
+            </label>
+            <input className="field" id="merge-keep" name="keep" inputMode="numeric" pattern="[0-9]+" required style={{ width: "7rem" }} />
+            <label className="label" htmlFor="merge-drop" style={{ margin: 0 }}>
+              并掉 #
+            </label>
+            <input className="field" id="merge-drop" name="drop" inputMode="numeric" pattern="[0-9]+" required style={{ width: "7rem" }} />
+          </div>
+          <details className="confirm">
+            <summary className="linkish">合并</summary>
+            <button className="btn btn--secondary" type="submit">
+              确认合并
+            </button>
+          </details>
+        </form>
+      </section>
+
       {/* Headcount per Thursday. Deliberately only headcounts: see the note in
           signup-stats.ts for why "how many are new" cannot be answered here. */}
       <dl className="grid-auto" style={{ margin: 0 }}>
@@ -920,9 +1016,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <tbody>
               {tableRows.map((row) => (
                 <tr key={row.id}>
-                  <td style={{ color: "var(--fg1)" }}>{row.name}</td>
+                  <td style={{ color: "var(--fg1)" }}>
+                    {row.name} <span className="mono" style={{ color: "var(--fg3)" }}>#{row.id}</span>
+                  </td>
                   <td>{row.email}</td>
-                  <td>{row.wechat ?? "—"}</td>
+                  <td>
+                    {row.wechat ?? "—"}
+                    {row.wechat_former.length > 0 && (
+                      <span className="body-sm" style={{ display: "block", color: "var(--fg3)" }}>
+                        曾用：{row.wechat_former.join("、")}
+                      </span>
+                    )}
+                  </td>
                   <td>{row.demo_intent ?? "—"}</td>
                   <td className="mono">
                     {row.first_session ?? "—"}
