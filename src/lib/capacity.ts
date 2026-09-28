@@ -33,3 +33,16 @@ export function admission(count: number, alreadyIn: boolean): Admission {
   if (alreadyIn) return "booked";
   return count < SESSION_CAP ? "booked" : "waitlist";
 }
+
+/**
+ * Whether a person already holds this session on a row other than the one a
+ * signup is about to update.
+ *
+ * The same person can exist twice in `signups` (a WeChat-only signup, then a
+ * later one with an email and a differently written ID). `saveSignup` updates
+ * the lower id of the matching rows; if the other one already has the session,
+ * adding it again would make one person take two places towards the cap.
+ */
+export function bookedOnAnother(targetId: string, rows: readonly { id: string; booked: boolean }[]): boolean {
+  return rows.some((row) => row.id !== targetId && row.booked);
+}

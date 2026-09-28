@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { bookedOnAnother } from "./capacity.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
 // Relative, not "@/": scripts/ and tests/ load this through Node's type stripper,
@@ -521,14 +522,15 @@ export async function saveSignup(input: SignupInput): Promise<string> {
 
   // Two rows can match when the same person once signed up through each form
   // and left a different identifier each time. LIMIT 2 is enough to notice.
-  const existing = await pool.query<{ id: string; email: string | null; wechat: string | null }>(
-    `SELECT id::text AS id, email, wechat
+  const existing = await pool.query<{ id: string; email: string | null; wechat: string | null; booked: boolean }>(
+    `SELECT id::text AS id, email, wechat,
+            ($3::date IS NOT NULL AND $3::date = ANY(sessions)) AS booked
        FROM signups
       WHERE ($1::text IS NOT NULL AND lower(email) = lower($1))
          OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))
       ORDER BY id
       LIMIT 2`,
-    [input.email, input.wechat],
+    [input.email, input.wechat, input.firstSession],
   );
 
   const target = existing.rows[0];
@@ -595,15 +597,17 @@ export async function saveSignup(input: SignupInput): Promise<string> {
        -- and two. DISTINCT keeps a re-submission for the same week idempotent.
        sessions      = ARRAY(
                          SELECT DISTINCT unnest(
-                           sessions || CASE WHEN $7::date IS NULL OR $16::boolean THEN '{}'::date[] ELSE ARRAY[$7::date] END
+                           sessions || CASE WHEN $7::date IS NULL OR $16::boolean OR $17::boolean THEN '{}'::date[] ELSE ARRAY[$7::date] END
                          )
                          ORDER BY 1
                        ),
-       -- Waitlisted: add it here instead. Booked: take it off, in case this
-       -- person was waitlisted earlier and a place has since come free.
+       -- Waitlisted: add it here instead. Booked — here, or already on this
+       -- person's other row ($17, bookedOnAnother in capacity.ts) — take it off,
+       -- so a stale waitlist entry never outlives the place it was waiting for.
        waitlist      = CASE
                          WHEN $7::date IS NULL THEN waitlist
-                         WHEN $16::boolean THEN ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$7::date]) ORDER BY 1)
+                         WHEN $16::boolean AND NOT $17::boolean
+                           THEN ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$7::date]) ORDER BY 1)
                          ELSE array_remove(waitlist, $7::date)
                        END,
        source        = COALESCE($8, source),
@@ -645,6 +649,7 @@ export async function saveSignup(input: SignupInput): Promise<string> {
       input.aiSpend,
       input.purpose,
       input.waitlisted === true,
+      bookedOnAnother(target.id, existing.rows),
     ],
   );
 

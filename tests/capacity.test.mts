@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { admission, SESSION_CAP } from "../src/lib/capacity.ts";
+import { admission, bookedOnAnother, SESSION_CAP } from "../src/lib/capacity.ts";
 
 /**
  * The per-session signup cap (`src/lib/capacity.ts`).
@@ -28,4 +28,16 @@ test("★ someone already booked who submits again is never moved to the waitlis
   // A regular re-submitting to update their question must not lose their place.
   assert.equal(admission(40, true), "booked");
   assert.equal(admission(55, true), "booked");
+});
+
+test("★ one person with two rows is never booked into the same session twice", () => {
+  // The database can hold the same person twice (signed up with a WeChat ID
+  // only, came back with an email and a slightly different ID). A signup that
+  // matches both updates the lower id. If the OTHER row already has the
+  // session, adding it to this one would count one person as two places.
+  assert.equal(bookedOnAnother("1", [{ id: "1", booked: false }, { id: "2", booked: true }]), true);
+  // The row being updated is the one already booked: nothing to guard.
+  assert.equal(bookedOnAnother("1", [{ id: "1", booked: true }, { id: "2", booked: false }]), false);
+  assert.equal(bookedOnAnother("1", [{ id: "1", booked: false }]), false);
+  assert.equal(bookedOnAnother("1", []), false);
 });
