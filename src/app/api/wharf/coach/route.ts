@@ -33,18 +33,23 @@ const MAX_ROUNDS = 4;
  * fresh member cookie with two requests (see `spendCoachCall` in db.ts). The
  * number of members is not a fixed quantity an attacker has to respect.
  *
- * 300 is chosen against what this meetup is: about twenty people a week, most
- * of whom will press the button once or twice. Twenty people pressing it five
- * times each is 100. So 300 is generous for real use and cheap when it is not —
- * at roughly 300 input plus 60 output tokens a call, a fully spent day costs a
- * few cents, and a fully spent month costs about a dollar.
+ * 100 since 2026-09-28 (it was 300). The button is on the signup form now as
+ * well as the Wharf, and a week brings forty or fifty people; two presses each
+ * still fits inside a day's allowance. Spending the whole allowance is the
+ * realistic abuse case, and what it costs is mostly that everyone else sees
+ * "not available right now" for the rest of the day.
+ *
+ * ⚠️ The per-call size was underestimated here before. The system prompt
+ * carries worked examples and is about 2,300 characters, so a call is roughly
+ * 1,500–2,000 input tokens plus at most 120 output (`max_tokens` in coach.ts),
+ * not 300 + 60. Keep that in mind before raising this number.
  *
  * ⚠️ This is the software half of the answer, and software can have bugs. The
  * half that does not depend on this file being right is the balance on the
  * DeepSeek account: keep it small and do not turn on auto top-up. That is the
  * ceiling that holds even if everything here is wrong.
  */
-const CALLS_PER_DAY = Number(process.env.COACH_DAILY_LIMIT ?? 300);
+const CALLS_PER_DAY = Number(process.env.COACH_DAILY_LIMIT ?? 100);
 
 /**
  * Reads the rounds the page sent back, dropping anything malformed.
