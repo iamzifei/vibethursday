@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { requestOrigin } from "@/lib/request-origin";
 import { coachAvailable, coachDraft } from "@/lib/coach";
-import { deleteReply, listTriageCandidates, setQuestionLane } from "@/lib/db";
+import { deleteReply, listTriageCandidates, mergeQuestions, setQuestionLane, unmergeQuestion } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +29,10 @@ export const maxDuration = 120;
  * so a script on somebody's laptop cannot touch the rows it is about. It stays
  * bounded, it skips anything anyone has acted on, and every row it moves is
  * undone by one click in the table above it.
+ *
+ * **Merging questions** files several people's versions of one question under
+ * the one kept, so /wharf shows it once with all their names. By hand only —
+ * see `mergeQuestions` — and undone per row with "unmerge".
  *
  * **Deleting a reply** exists for one specific thing: somebody posts a
  * screenshot with more in it than they meant. There is a warning beside the
@@ -81,6 +85,18 @@ export async function POST(request: Request) {
     );
   }
 
+  // Merging: "these are the same question". Also carries no single id — it
+  // takes the one to keep and a list — so it sits above the per-row guard too.
+  if (action === "merge") {
+    const keep = form.get("keep");
+    const ids = String(form.get("ids") ?? "").match(/\d+/g) ?? [];
+    if (typeof keep !== "string" || !/^\d+$/.test(keep.trim()) || ids.length === 0 || ids.length > 100) {
+      return NextResponse.json({ error: "bad_merge" }, { status: 400 });
+    }
+    await mergeQuestions(keep.trim(), ids);
+    return NextResponse.redirect(new URL(`/admin#wharf`, await requestOrigin()), { status: 303 });
+  }
+
   // ⚠️ Below the triage branch on purpose: triage acts on the whole board and
   // carries no id, so this per-row guard would reject it.
   const id = form.get("id");
@@ -95,6 +111,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "bad_lane" }, { status: 400 });
     }
     await setQuestionLane(id, lane);
+  } else if (action === "unmerge") {
+    await unmergeQuestion(id);
   } else if (action === "delete-reply") {
     await deleteReply(id);
   } else {

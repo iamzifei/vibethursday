@@ -559,9 +559,26 @@ export default async function AdminPage({ searchParams }: PageProps) {
             </button>
           </form>
 
+          {/* Same question, different words or different people: keep one,
+              list the rest. /wharf then shows the kept wording once with every
+              asker's name. A row somebody claimed or answered is skipped. */}
+          <form method="post" action="/api/admin/wharf" className="stack-2" style={{ marginBottom: "var(--space-4)" }}>
+            <input type="hidden" name="action" value="merge" />
+            <label className="body-sm">
+              Keep #{" "}
+              <input name="keep" inputMode="numeric" size={6} required />
+              {" "}and merge into it #{" "}
+              <input name="ids" placeholder="12 15 31" size={24} required />
+            </label>
+            <button className="btn btn--secondary btn--sm" type="submit">
+              Merge
+            </button>
+          </form>
+
           <table className="table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Lane</th>
                 <th>Question</th>
                 <th>Who</th>
@@ -572,8 +589,21 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <tbody>
               {questions.map((question) => (
                 <tr key={question.id}>
+                  <td className="mono">{question.id}</td>
                   <td>{question.lane}</td>
-                  <td style={{ whiteSpace: "normal", maxWidth: "36ch" }}>{question.text}</td>
+                  <td style={{ whiteSpace: "normal", maxWidth: "36ch" }}>
+                    {question.text}
+                    {question.merged_into && (
+                      <form method="post" action="/api/admin/wharf" style={{ display: "inline" }}>
+                        <input type="hidden" name="action" value="unmerge" />
+                        <input type="hidden" name="id" value={question.id} />
+                        {" "}
+                        <button className="linkish" type="submit">
+                          → #{question.merged_into} (unmerge)
+                        </button>
+                      </form>
+                    )}
+                  </td>
                   <td>{question.name}</td>
                   <td>
                     {question.replies.length === 0

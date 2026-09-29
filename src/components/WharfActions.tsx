@@ -365,6 +365,41 @@ export function EditForm({
  * work a rate limit would do badly: it makes a question cost its author
  * something, and it does not punish somebody who closes what they asked.
  */
+/**
+ * "Not the same question — post mine on its own." Takes the signed-in member's
+ * own rows back out from under `questionId`. Shown right after a merge and,
+ * durably, on the question card for anybody named under someone else's question.
+ */
+export function UnmergeButton({
+  questionId,
+  copy,
+  after,
+}: {
+  questionId: string;
+  copy: WharfCopy;
+  after?: () => void;
+}) {
+  const { busy, error, run } = useAction();
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn--secondary btn--sm"
+        disabled={busy}
+        onClick={() => {
+          const form = new FormData();
+          form.set("action", "unmerge");
+          form.set("question", questionId);
+          void run(form, after);
+        }}
+      >
+        {copy.similarUnmerge}
+      </button>
+      {error && <span className="qa__error">{copy.failed}</span>}
+    </>
+  );
+}
+
 export function AskBox({
   sessions,
   atLimit,
@@ -377,12 +412,69 @@ export function AskBox({
   coach: boolean;
   copy: WharfCopy;
 }) {
-  const { busy, error, run } = useAction();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [session, setSession] = useState("");
 
+  // What the server said about an earlier, similar question (`wharf-similar.ts`).
+  // `answered`: nothing was posted, the answer is shown first. `merged`: posted
+  // and filed under the earlier one, with a way back out.
+  const [answered, setAnswered] = useState<{ id: string; text: string } | null>(null);
+  const [merged, setMerged] = useState<{ id: string; text: string } | null>(null);
+
   // The follow-up question, shared with the signup form. See QuestionCoach.tsx.
   const helper = useCoach();
+
+  async function submit(force: boolean) {
+    const form = new FormData();
+    form.set("action", "ask");
+    form.set("text", text);
+    if (session) form.set("session", session);
+    if (force) form.set("force", "1");
+
+    setBusy(true);
+    setError(null);
+    const response = await fetch("/api/wharf", { method: "POST", body: form }).catch(() => null);
+    const payload = response ? await response.json().catch(() => ({})) : {};
+    setBusy(false);
+
+    if (!response?.ok) {
+      setError(typeof payload.error === "string" ? payload.error : "server_error");
+      return;
+    }
+    if (payload.answered) {
+      setAnswered(payload.answered);
+      return;
+    }
+
+    setAnswered(null);
+    setMerged(payload.merged ?? null);
+    setText("");
+    helper.clear();
+    router.refresh();
+  }
+
+  // Shown even at the limit: taking a question out of a merge is what makes it
+  // count as open again, so the notice has to survive the refresh that follows.
+  if (merged) {
+    return (
+      <div className="qa qa--form">
+        <p className="qa__note">
+          {copy.similarMerged}{" "}
+          <a href={`#q-${merged.id}`}>「{merged.text}」</a>
+        </p>
+        <div className="qa__row">
+          <UnmergeButton questionId={merged.id} copy={copy} after={() => setMerged(null)} />
+          <button type="button" className="btn btn--secondary btn--sm" onClick={() => setMerged(null)}>
+            {copy.similarOk}
+          </button>
+        </div>
+        {error && <span className="qa__error">{copy.failed}</span>}
+      </div>
+    );
+  }
 
   if (atLimit) {
     return <p className="wharf-empty">{copy.oneAtATime}</p>;
@@ -431,20 +523,30 @@ export function AskBox({
           type="button"
           className="btn btn--primary btn--sm"
           disabled={busy || text.trim().length === 0}
-          onClick={() => {
-            const form = new FormData();
-            form.set("action", "ask");
-            form.set("text", text);
-            if (session) form.set("session", session);
-            void run(form, () => {
-              setText("");
-              helper.clear();
-            });
-          }}
+          onClick={() => void submit(false)}
         >
           {busy ? copy.working : copy.askCta}
         </button>
       </div>
+
+      {/* Somebody asked this before and got an answer. Read it first; if it
+          does not help, the same question goes up on its own. */}
+      {answered && (
+        <div className="stack-2">
+          <p className="qa__note">
+            {copy.similarAnswered}{" "}
+            <a href={`#q-${answered.id}`}>「{answered.text}」</a>
+          </p>
+          <div className="qa__row">
+            <a className="btn btn--secondary btn--sm" href={`#q-${answered.id}`}>
+              {copy.similarSee}
+            </a>
+            <button type="button" className="btn btn--primary btn--sm" disabled={busy} onClick={() => void submit(true)}>
+              {copy.similarAskAnyway}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ⚠️ The draft leaves this server when — and only when — the button
           above is pressed. Nothing else on this site sends anything anywhere,
@@ -452,7 +554,9 @@ export function AskBox({
       {coach && <p className="qa__note">{copy.coachNote}</p>}
 
       {error && (
-        <span className="qa__error">{error === "one_at_a_time" ? copy.oneAtATime : copy.failed}</span>
+        <span className="qa__error">
+          {error === "one_at_a_time" ? copy.oneAtATime : error === "duplicate" ? copy.editDuplicate : copy.failed}
+        </span>
       )}
     </div>
   );

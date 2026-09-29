@@ -351,6 +351,16 @@ export function ensureSchema(): Promise<void> {
     // below matches against this to know it has already seen that topic.
     await pool.query(`ALTER TABLE wharf_questions ADD COLUMN IF NOT EXISTS original_text text`);
 
+    // ★ "Somebody else asked this too." Set by hand from /admin, never by a
+    // rule: whether two sentences are the same question is a judgement, and a
+    // wrong automatic merge would put a person's name under words they did not
+    // write. Nothing is deleted — the row stays, /wharf shows it as one more
+    // name under the kept question, and clearing the column undoes it.
+    // Always points at a row that is not itself merged (see mergeQuestions).
+    await pool.query(
+      `ALTER TABLE wharf_questions ADD COLUMN IF NOT EXISTS merged_into bigint REFERENCES wharf_questions(id) ON DELETE SET NULL`,
+    );
+
     // ★ One row per day, holding a count and nothing else.
     //
     // This is the only thing standing between a stranger and this site's
@@ -1188,6 +1198,8 @@ export type WharfQuestion = {
   coach_ask: string | null;
   /** What it said before the author edited it. Null means never edited. */
   original_text: string | null;
+  /** The question this one was merged into on /wharf, or null. See `mergeQuestions`. */
+  merged_into: string | null;
   source: string;
   closed_at: string | null;
   outcome: string | null;
@@ -1281,6 +1293,7 @@ export async function listWharfQuestions(): Promise<WharfQuestion[]> {
             q.lane,
             q.coach_ask,
             q.original_text,
+            q.merged_into::text   AS merged_into,
             q.source,
             q.closed_at::text     AS closed_at,
             q.outcome,
@@ -1456,15 +1469,56 @@ export async function closeQuestion(
 }
 
 /** Somebody with a card asks something directly, outside the form. */
-export async function askQuestion(memberId: string, text: string, session: string | null, lane: string): Promise<void> {
+/** Returns the new row's id, or null when the same sentence was already there. */
+export async function askQuestion(memberId: string, text: string, session: string | null, lane: string): Promise<string | null> {
   await ensureSchema();
 
-  await getPool().query(
+  const result = await getPool().query<{ id: string }>(
     `INSERT INTO wharf_questions (member_id, session, text, lane, source)
      VALUES ($1, $2, $3, $4, 'site')
-     ON CONFLICT DO NOTHING`,
+     ON CONFLICT DO NOTHING
+     RETURNING id::text AS id`,
     [memberId, session, text, lane],
   );
+  return result.rows[0]?.id ?? null;
+}
+
+/**
+ * What a new question is compared against (`wharf-similar.ts`): every question
+ * on the board that stands for itself — not merged into another, from a card
+ * that is showing — and is still open, or was closed with an answer.
+ * "想聊的" lines are left out: they are not questions and cannot be answered.
+ */
+export async function listSimilarCandidates(): Promise<{ id: string; text: string; answers: number }[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ id: string; text: string; answers: number }>(
+    `SELECT q.id::text AS id,
+            q.text,
+            (SELECT count(*) FROM wharf_replies r WHERE r.question_id = q.id AND r.kind = 'answer')::int AS answers
+       FROM wharf_questions q
+       JOIN members m ON m.id = q.member_id
+      WHERE q.merged_into IS NULL
+        AND q.lane IN ('question', 'vague')
+        AND m.published_at IS NOT NULL AND NOT m.hidden
+        AND (q.closed_at IS NULL
+             OR EXISTS (SELECT 1 FROM wharf_replies r WHERE r.question_id = q.id AND r.kind = 'answer'))`,
+  );
+  return result.rows;
+}
+
+/**
+ * The asker takes their own rows back out from under `targetId` — all of them,
+ * since one person can have the same question there from several weeks.
+ * Only rows belonging to `memberId` are touched. Returns false if there were none.
+ */
+export async function unmergeOwnQuestion(targetId: string, memberId: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `UPDATE wharf_questions SET merged_into = NULL WHERE merged_into = $1 AND member_id = $2`,
+    [targetId, memberId],
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 /** How many of this person's questions are still open. The one-at-a-time gate. */
@@ -1474,11 +1528,63 @@ export async function openQuestionCount(memberId: string): Promise<number> {
   const result = await getPool().query<{ n: string }>(
     `SELECT count(*)::text AS n
        FROM wharf_questions
-      WHERE member_id = $1 AND closed_at IS NULL AND source = 'site'`,
+      WHERE member_id = $1 AND closed_at IS NULL AND source = 'site' AND merged_into IS NULL`,
     [memberId],
   );
 
   return Number(result.rows[0].n);
+}
+
+/**
+ * Files questions under one kept question, so /wharf shows it once with every
+ * asker's name under it. Returns how many rows were merged.
+ *
+ * - `keep` is resolved to its own root first, so chains never form.
+ * - Rows already merged into any of `ids` follow them to `keep`.
+ * - A row somebody has claimed or answered is skipped: its replies are shown
+ *   on its own entry, and merging it away would hide them.
+ */
+export async function mergeQuestions(keep: string, ids: readonly string[]): Promise<number> {
+  await ensureSchema();
+  const pool = getPool();
+
+  const root = await pool.query<{ id: string }>(
+    `SELECT coalesce(merged_into, id)::text AS id FROM wharf_questions WHERE id = $1`,
+    [keep],
+  );
+  if (root.rows.length === 0) return 0;
+  const target = root.rows[0].id;
+  const others = ids.filter((id) => id !== target);
+  if (others.length === 0) return 0;
+
+  const merged = await pool.query<{ id: string }>(
+    `UPDATE wharf_questions q
+        SET merged_into = $1
+      WHERE q.id = ANY($2::bigint[])
+        AND q.id <> $1
+        AND NOT EXISTS (SELECT 1 FROM wharf_replies r WHERE r.question_id = q.id)
+      RETURNING q.id::text AS id`,
+    [target, others],
+  );
+  const moved = merged.rows.map((row) => row.id);
+
+  // Only rows that actually moved take their own merges with them. A skipped
+  // row (it has replies) keeps its askers: re-pointing them anyway would put
+  // their names under a question they never asked (2026-09-29 review).
+  if (moved.length > 0) {
+    await pool.query(
+      `UPDATE wharf_questions SET merged_into = $1 WHERE merged_into = ANY($2::bigint[]) AND id <> $1`,
+      [target, moved],
+    );
+  }
+
+  return moved.length;
+}
+
+/** Undoes one merge: the row is its own entry on /wharf again. */
+export async function unmergeQuestion(id: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`UPDATE wharf_questions SET merged_into = NULL WHERE id = $1`, [id]);
 }
 
 /** Moves one question between lanes. The admin override the heuristic needs. */

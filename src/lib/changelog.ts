@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.8",
+    date: "2026-09-29",
+    kind: "minor",
+    scope: "site",
+    zh: "码头去重：不同的人问了同一个问题，现在只挂一条，下面写上所有问过的人；同一个人换着说法问了好几遍的，也合成一条。哪句话留下来，是其中一位提问的人自己写的原话。在码头问新问题时，如果之前有人问过差不多的：已经有人答了，先带你去看回答，看完没解决还可以接着问；还没人答，你的名字就加到那条下面，觉得不是一回事，点一下就能单独挂出来。",
+    link: { href: "/wharf", zh: "去码头看看 →", en: "See the Wharf →" },
+    en: "The Wharf is de-duplicated: when several people asked the same question it now appears once, with everyone who asked it named underneath; one person asking the same thing in different words is folded into one too. The wording kept is always one of the askers' own. When you ask something new on the Wharf and a similar question is already there: if it has an answer, you are shown the answer first and can still ask if it did not help; if it has not, your name goes under that question — and one tap posts yours on its own if it is not the same thing.",
+  },
+  {
     version: "4.7",
     date: "2026-09-28",
     kind: "minor",

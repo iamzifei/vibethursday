@@ -23,6 +23,10 @@ export type TidyRow = {
   question: {
     id: string;
     member_id: string;
+    name: string;
+    slug: string;
+    /** Set by hand from /admin: this row is "the same question" as that one. */
+    merged_into: string | null;
     text: string;
     lane: Lane;
     session: string | null;
@@ -36,6 +40,8 @@ export type TidyRow = {
 export type TidyEntry<R extends TidyRow = TidyRow> = R & {
   /** How many rows this entry stands for — the same person asking it N weeks running. */
   times: number;
+  /** Everybody who asked it, one name per person: the kept row's author first. */
+  askers: { member_id: string; name: string; slug: string }[];
 };
 
 /** A sentence as it is compared for sameness: width, spacing and case ignored. */
@@ -51,8 +57,10 @@ function newestFirst<T extends { question: { created_at: string } }>(rows: reado
 /**
  * Groups duplicates and splits the board into what is shown and what is folded.
  *
- * - One entry per (author, sentence). The copy kept is the one with the most
- *   engagement (answers, then claims); among equals, the newest.
+ * - Rows merged by hand (`merged_into`) are one entry: the kept row's wording,
+ *   every asker's name.
+ * - Otherwise one entry per (author, sentence). The copy kept is the one with
+ *   the most engagement (answers, then claims); among equals, the newest.
  * - Folded: questions that have sunk, closed ones nobody answered, and "想聊的"
  *   lines from sessions older than `recentSessions`.
  */
@@ -60,24 +68,56 @@ export function tidyBoard<R extends TidyRow>(
   rows: readonly R[],
   recentSessions: readonly string[],
 ): { shown: TidyEntry<R>[]; folded: TidyEntry<R>[] } {
+  // A merge made by hand wins over the automatic (author, sentence) grouping.
+  // Each merged row also claims its own sentence, so when the sign-up sync
+  // imports that sentence again next week the new row joins the merge instead
+  // of reappearing on its own — which would quietly undo the organiser's work.
+  const sentenceOf = (row: R) => `${row.question.member_id} ${sameness(row.question.text)}`;
+  const present = new Set(rows.map((row) => row.question.id));
+  const rootOfSentence = new Map<string, string>();
+  for (const row of rows) {
+    const root = row.question.merged_into;
+    if (root && present.has(root)) rootOfSentence.set(sentenceOf(row), root);
+  }
+  const roots = new Set(rootOfSentence.values());
+  for (const row of rows) {
+    if (roots.has(row.question.id)) rootOfSentence.set(sentenceOf(row), row.question.id);
+  }
+
   const groups = new Map<string, R[]>();
 
   for (const row of rows) {
-    const key = `${row.question.member_id} ${sameness(row.question.text)}`;
+    // A merge pointing at a row not on the board (its author unpublished the
+    // card) is ignored rather than left dangling.
+    const direct = row.question.merged_into && present.has(row.question.merged_into) ? row.question.merged_into : null;
+    const root = direct ?? rootOfSentence.get(sentenceOf(row));
+    const key = root ? `q:${root}` : `s:${sentenceOf(row)}`;
     const group = groups.get(key) ?? [];
     group.push(row);
     groups.set(key, group);
   }
 
-  const entries: TidyEntry<R>[] = [...groups.values()].map((group) => {
-    const kept = newestFirst(group).sort(
-      (a, b) => b.answers - a.answers || b.claims - a.claims,
-    )[0];
+  const entries: TidyEntry<R>[] = [...groups.entries()].map(([key, group]) => {
+    const rootId = key.startsWith("q:") ? key.slice(2) : null;
+    const kept =
+      group.find((row) => row.question.id === rootId) ??
+      newestFirst(group).sort((a, b) => b.answers - a.answers || b.claims - a.claims)[0];
     // A duplicate that has not sunk keeps the entry live, even when the copy
     // kept for its answer is older.
     const live = group.find((row) => row.status === "open" || row.status === "claimed");
     const status = kept.status === "sunk" && live ? live.status : kept.status;
-    return { ...kept, status, times: group.length };
+
+    // One name per person, kept author first, the rest in the order they asked.
+    const askers: { member_id: string; name: string; slug: string }[] = [];
+    const seen = new Set<string>();
+    const byAge = [...group].sort((a, b) => (a.question.created_at < b.question.created_at ? -1 : 1));
+    for (const row of [kept, ...byAge]) {
+      if (seen.has(row.question.member_id)) continue;
+      seen.add(row.question.member_id);
+      askers.push({ member_id: row.question.member_id, name: row.question.name, slug: row.question.slug });
+    }
+
+    return { ...kept, status, times: group.length, askers };
   });
 
   const recent = new Set(recentSessions);

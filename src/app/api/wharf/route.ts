@@ -5,18 +5,23 @@ import {
   editQuestion,
   claimQuestion,
   closeQuestion,
+  listSimilarCandidates,
+  mergeQuestions,
   openQuestionCount,
+  unmergeOwnQuestion,
 } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
 import { currentMemberId } from "@/lib/member-auth";
 import { classifyLane } from "@/lib/questions";
 import { bodyTooLarge, checkRateLimit } from "@/lib/rate-limit";
 import { nextThursdays } from "@/lib/sessions";
+import { findSimilar } from "@/lib/wharf-similar";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Everything anybody writes to the Wharf: claiming, answering, closing, asking.
+ * Everything anybody writes to the Wharf: claiming, answering, closing, asking,
+ * and taking one's own question back out of a merge.
  *
  * One route with an `action` rather than four, because all four share the same
  * three lines of gate and differ only in the last five. The gate is the design:
@@ -162,13 +167,47 @@ export async function POST(request: Request) {
 
       const session = text(form.get("session"), 10);
 
-      await askQuestion(
+      // ★ Has somebody already asked this? (`wharf-similar.ts`, no model.)
+      //   - Already answered: nothing is posted; the asker is pointed at the
+      //     answer. If it does not help, they send again with `force` and the
+      //     question goes up on its own.
+      //   - Not answered yet: it is posted and filed under the earlier one, so
+      //     the board shows one question with both names. The asker is told,
+      //     and can take it back out with one tap ("unmerge").
+      const force = form.get("force") === "1";
+      const match = force ? null : findSimilar(body, await listSimilarCandidates());
+
+      if (match && match.answers > 0) {
+        return NextResponse.json({ answered: { id: match.id, text: match.text } });
+      }
+
+      const id = await askQuestion(
         memberId,
         body,
         session && nextThursdays(8).includes(session) ? session : null,
         classifyLane(body),
       );
 
+      // The same person, same Thursday, same sentence is already a row (often
+      // one merged or closed earlier, which is why the gate above let it
+      // through). Say so rather than report a post that did not happen.
+      if (!id) return NextResponse.json({ error: "duplicate" }, { status: 409 });
+
+      // ⚠️ A merged question does not count towards the one-open-question
+      // gate: its author is not on the hook for a question somebody else
+      // wrote. The per-member rate limit above still bounds it.
+      if (match && (await mergeQuestions(match.id, [id])) > 0) {
+        return NextResponse.json({ ok: true, merged: { id: match.id, text: match.text } });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "unmerge") {
+      if (!questionId) return NextResponse.json({ error: "missing_question" }, { status: 400 });
+      if (!(await unmergeOwnQuestion(questionId, memberId))) {
+        return NextResponse.json({ error: "not_yours" }, { status: 403 });
+      }
       return NextResponse.json({ ok: true });
     }
 

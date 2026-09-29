@@ -4,7 +4,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DarlingHarbour } from "@/components/DarlingHarbour";
-import { AnswerForm, AskBox, CloseForm, ComingButton, EditForm } from "@/components/WharfActions";
+import { AnswerForm, AskBox, CloseForm, ComingButton, EditForm, UnmergeButton } from "@/components/WharfActions";
 import { coachAvailable } from "@/lib/coach";
 import { getCopy, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
@@ -184,16 +184,20 @@ export default async function WharfPage({ searchParams }: PageProps) {
               {asking.length === 0 ? (
                 <p className="wharf-empty">{w.emptyWeek}</p>
               ) : (
-                asking.map(({ question, status }) => (
+                asking.map(({ question, status, askers }) => (
                   <QuestionCard
                     key={question.id}
                     question={question}
+                    askers={askers}
                     status={status}
                     lang={lang}
                     copy={w}
                     sessions={upcoming}
                     signedIn={Boolean(memberId)}
                     mine={question.member_id === memberId}
+                    // Named under somebody else's question by a merge: keep the
+                    // way back out on the card, not just in the notice after asking.
+                    alsoAsked={Boolean(memberId) && question.member_id !== memberId && askers.some((a) => a.member_id === memberId)}
                   />
                 ))
               )}
@@ -219,7 +223,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
                 </p>
 
                 <div className="wharf-rows">
-                  {vague.map(({ question, status }) => (
+                  {vague.map(({ question, status, askers }) => (
                     <div key={question.id} className="wharf-row-wrap">
                       <Link
                         href={`/members/${question.slug}${langSuffix(lang)}`}
@@ -229,7 +233,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
                         {question.coach_ask && (
                           <span className="wharf-row__gap">{question.coach_ask}</span>
                         )}
-                        <span className="wharf-row__who">{question.name}</span>
+                        <span className="wharf-row__who">{names(askers)}</span>
                       </Link>
 
                       {/* ★ The door out of this lane, and the reason the lane is
@@ -259,14 +263,14 @@ export default async function WharfPage({ searchParams }: PageProps) {
                 </p>
 
                 <div className="wharf-rows">
-                  {chatting.map(({ question }) => (
+                  {chatting.map(({ question, askers }) => (
                     <Link
                       key={question.id}
                       href={`/members/${question.slug}${langSuffix(lang)}`}
                       className="wharf-row"
                     >
                       <span className="wharf-row__q">{question.text}</span>
-                      <span className="wharf-row__who">{question.name}</span>
+                      <span className="wharf-row__who">{names(askers)}</span>
                     </Link>
                   ))}
                 </div>
@@ -280,7 +284,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
                 <summary>{w.foldedSummary.replace("{n}", String(folded.length))}</summary>
                 <div className="disclosure__body">
                   <div className="wharf-rows">
-                    {folded.map(({ question }) => (
+                    {folded.map(({ question, askers }) => (
                       <Link
                         key={question.id}
                         href={`/members/${question.slug}${langSuffix(lang)}`}
@@ -288,7 +292,7 @@ export default async function WharfPage({ searchParams }: PageProps) {
                       >
                         <span className="wharf-row__q">{question.text}</span>
                         <span className="wharf-row__who">
-                          {question.name}
+                          {names(askers)}
                           {question.session ? ` · ${formatSession(question.session, lang)}` : ""}
                         </span>
                       </Link>
@@ -358,22 +362,31 @@ export default async function WharfPage({ searchParams }: PageProps) {
   );
 }
 
+/** The byline of a row: everybody who asked it. */
+function names(askers: { name: string }[]): string {
+  return askers.map((asker) => asker.name).join("、");
+}
+
 function QuestionCard({
   question,
+  askers,
   status,
   lang,
   copy,
   sessions,
   signedIn,
   mine,
+  alsoAsked,
 }: {
   question: WharfQuestion;
+  askers: { member_id: string; name: string; slug: string }[];
   status: QuestionStatus;
   lang: Lang;
   copy: Copy["wharf"];
   sessions: { value: string; label: string }[];
   signedIn: boolean;
   mine: boolean;
+  alsoAsked: boolean;
 }) {
   const coming = question.replies.filter((reply) => reply.kind === "coming");
   const answers = question.replies.filter((reply) => reply.kind === "answer");
@@ -401,11 +414,24 @@ function QuestionCard({
           that sentence stops being true. */}
       {question.original_text && <span className="wharf-item__edited">{copy.edited}</span>}
 
+      {/* Everybody who asked it — more than one when the organiser merged the
+          same question from different people (`merged_into`). */}
       <span className="wharf-item__who">
-        <Link className="wharf-item__name" href={`/members/${question.slug}${langSuffix(lang)}`}>
-          {question.name}
-        </Link>
+        {askers.map((asker, i) => (
+          <span key={asker.member_id}>
+            {i > 0 && "、"}
+            <Link className="wharf-item__name" href={`/members/${asker.slug}${langSuffix(lang)}`}>
+              {asker.name}
+            </Link>
+          </span>
+        ))}
       </span>
+
+      {alsoAsked && (
+        <div className="qa__row">
+          <UnmergeButton questionId={question.id} copy={copy} />
+        </div>
+      )}
 
       {coming.length > 0 && (
         <p className="body-sm" style={{ color: "var(--accent)", margin: 0 }}>
