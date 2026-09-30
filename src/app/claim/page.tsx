@@ -8,7 +8,8 @@ import { getCopy, resolveLang } from "@/lib/content";
 import { currentMemberId } from "@/lib/member-auth";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string }>;
+  /** `in=1`: sent here by /badge right after checking in, with no card yet. */
+  searchParams: Promise<{ lang?: string; in?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function ClaimPage({ searchParams }: PageProps) {
-  const lang = resolveLang((await searchParams).lang);
+  const params = await searchParams;
+  const lang = resolveLang(params.lang);
   const c = getCopy(lang);
 
   // Already claimed on this device: there is nothing to do here.
@@ -36,6 +38,11 @@ export default async function ClaimPage({ searchParams }: PageProps) {
         <section className="section">
           <div className="shell stack-8" style={{ maxWidth: "640px" }}>
             <div className="stack-4">
+              {params.in === "1" && (
+                <p className="body-lg" style={{ color: "var(--accent)", margin: 0 }}>
+                  {c.claim.checkedIn}
+                </p>
+              )}
               <span className="eyebrow">{c.claim.eyebrow}</span>
               <h1>{c.claim.title}</h1>
               <p className="body-lg">{c.claim.lede}</p>

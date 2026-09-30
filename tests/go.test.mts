@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { checkinLinkOpen, goItems, goPhase, type GoState } from "../src/lib/go.ts";
+import { AFTER_CHECKIN_PATH } from "../src/lib/checkin.ts";
 
 /**
  * `/go` (`src/lib/go.ts`): the one link, and what it shows when.
@@ -31,9 +32,17 @@ test("signing up drops out only when we know, and ordering turns into 'my order'
   assert.deepEqual(goItems("before", { ...ANON, hasOrder: true }), ["signup", "mySignup", "myOrder", "card", "members", "wharf"]);
 });
 
-test("on the day: check-in, the drink, the badge, who is here", () => {
+test("on the day before ten: a check-in reminder, the drink, my badge, who is here", () => {
   assert.deepEqual(goItems("day", ANON), ["checkin", "order", "badge", "members"]);
   assert.deepEqual(goItems("day", { ...ANON, hasOrder: true }), ["checkin", "myOrder", "badge", "members"]);
+});
+
+test("★ from ten on the day nobody can order any more; only an existing order is shown", () => {
+  // James 2026-09-30: by then the sheet has gone to the bar, so an order placed
+  // on the site would reach nobody. Order at the counter instead.
+  const open = { ...ANON, checkinOpen: true };
+  assert.deepEqual(goItems("day", open), ["checkin", "badge", "members"]);
+  assert.deepEqual(goItems("day", { ...open, hasOrder: true }), ["checkin", "myOrder", "badge", "members"]);
 });
 
 test("after: feedback first", () => {
@@ -79,4 +88,10 @@ test("from noon /go turns to feedback, but check-in stays first until one", () =
   // who forgot to tap should still find check-in at the top for that last hour.
   assert.deepEqual(goItems("after", { ...ANON, checkinOpen: true }), ["checkin", "feedback", "session", "nextSignup"]);
   assert.deepEqual(goItems("after", { ...ANON, checkinOpen: false }), ["feedback", "session", "nextSignup"]);
+});
+
+test("★ checking in lands on my badge, which sends anyone without a card to fill one in", () => {
+  // James 2026-09-30: after check-in, straight to the badge; no card yet means
+  // /badge itself redirects to /claim, so this one path covers both.
+  assert.equal(AFTER_CHECKIN_PATH, "/badge?in=1");
 });

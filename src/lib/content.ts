@@ -132,7 +132,7 @@ export const copy = {
         {
           time: "10:30–10:45",
           title: "开门 · 取饮品 · 签到",
-          note: "喝的可以提前在 vibethursday.com/go 点好，到了跟吧台报名字、付钱就能取；没点的进门先点——中途有人来问单会打断正在说话的人。扫桌上的码签到。场地 10:30 才开门，不用来更早。",
+          note: "喝的可以提前在 vibethursday.com/go 点好，到了跟吧台报名字、付钱就能取；没点的进门先点——中途有人来问单会打断正在说话的人。到了打开 vibethursday.com/go 签到。场地 10:30 才开门，不用来更早。",
         },
         {
           time: "10:45–11:00",
@@ -1128,6 +1128,7 @@ export const copy = {
       errorGeneric: "出错了，稍等一下再试。",
       noSignupLead: "还没报过名？",
       noSignupCta: "先报名，下周四见",
+      checkedIn: "✓ 签到好了。填一下资料，就能上成员墙，也有自己的名牌二维码。",
     },
 
     editor: {
@@ -1211,9 +1212,9 @@ export const copy = {
       lede: "报了名的人都在这儿。名字一样的，后面带了一句在做什么。",
       count: "已到 {n} 人",
       invalidTitle: "这个码不是今天的。",
-      invalidBody: "签到码只在当天有效。扫一下桌上的那个，或者找主办人。",
+      invalidBody: "签到码只在当天有效。打开 vibethursday.com/go 找签到，或者找主办人。",
       toGo: "看本周 →",
-      noCodeTitle: "扫桌上的二维码进来。",
+      noCodeTitle: "从 vibethursday.com/go 进来签到。",
       noCodeBody: "这一页要带上当天的码才能用。",
       done: "已签到",
       walkInCta: "我没报名，现场填一下 →",
@@ -1355,10 +1356,13 @@ export const copy = {
         cardEdit: { title: "改我的名片", body: "来之前更新一下在做什么、想找什么。" },
         members: { title: "成员墙：来的都是谁", body: "每人一张卡，看「想找什么」和「能帮什么」那两栏。" },
         wharf: { title: "看看大家想问什么", body: "答得上来的，到了找他聊十分钟。" },
-        checkin: { title: "到了扫桌上的码签到", body: "码在桌上，只在现场能扫。" },
+        // 当天 10 点前：没有桌上的码（James 09-30 定：不放打印的码），只提醒 10 点起这里会出现签到链接。
+        checkin: { title: "记得签到", body: "今天 10 点起，这里会出现签到链接，到了点一下就签上。" },
         // 活动当天 10:00–13:00 这一项变成链接（go.ts 的 checkinLinkOpen）。
         checkinOpen: { title: "签到", body: "点进去，选你的名字就签上了。" },
-        badge: { title: "把手机变成名牌", body: "立在桌上，别人一眼知道你是谁。" },
+        // 当天的「我的名牌」：有名片的直接看名牌二维码；没有的先填资料（/badge 会自己转去 /claim）。
+        badge: { title: "我的名牌", body: "有你的二维码，别人一扫就能看到你在做什么、想找什么。" },
+        badgeNew: { title: "填资料，拿到我的名牌", body: "填好就上成员墙，也有自己的名牌二维码，方便大家互相认识。" },
         feedback: { title: "说两句", body: "一分钟，匿名，每一条都会被读。" },
         session: { title: "这一场都有谁", body: "到场墙和这一场的记录。" },
         nextSignup: { title: "报名下一场", body: "每周四上午，同一个地方。" },
@@ -1412,6 +1416,7 @@ export const copy = {
       exportLongPress: "长按下面这张图，保存或直接转发。",
       exportAlt: "你的名片图，长按可保存",
       exportFailed: "生成失败了，换个浏览器再试一次。",
+      checkedIn: "✓ 签到好了。",
     },
 
     // 全站 404。09-28 之前是 Next 默认的白底英文页，扫到没发布的名片就落在那里。
@@ -1615,7 +1620,7 @@ export const copy = {
         {
           time: "10:30–10:45am",
           title: "Doors · pick up your drink · check in",
-          note: "Order ahead at vibethursday.com/go and just give your name and pay at the counter; otherwise order on your way in — a waiter taking orders mid-session cuts across whoever is talking. Scan the code on the table to check in. The venue does not open before 10:30.",
+          note: "Order ahead at vibethursday.com/go and just give your name and pay at the counter; otherwise order on your way in — a waiter taking orders mid-session cuts across whoever is talking. Check in at vibethursday.com/go when you arrive. The venue does not open before 10:30.",
         },
         {
           time: "10:45–11:00am",
@@ -2421,6 +2426,7 @@ export const copy = {
       errorGeneric: "That did not work. Give it a moment and try again.",
       noSignupLead: "Not signed up yet?",
       noSignupCta: "Sign up first, see you Thursday",
+      checkedIn: "✓ You are checked in. Fill in your card to get on the member wall and get your own badge QR code.",
     },
 
     editor: {
@@ -2497,9 +2503,9 @@ export const copy = {
       lede: "Everyone who signed up is here. Where two people share a name, a few words on what they are building tells them apart.",
       count: "{n} here so far",
       invalidTitle: "This code is not today’s.",
-      invalidBody: "A check-in code only works on the day. Scan the one on the table, or ask the organiser.",
+      invalidBody: "A check-in code only works on the day. Find check-in on vibethursday.com/go, or ask the organiser.",
       toGo: "This week →",
-      noCodeTitle: "Scan the code on the table to get here.",
+      noCodeTitle: "Check in from vibethursday.com/go.",
       noCodeBody: "This page needs today’s code.",
       done: "Checked in",
       walkInCta: "I didn’t sign up — add me →",
@@ -2624,9 +2630,10 @@ export const copy = {
         cardEdit: { title: "Update my card", body: "Say what you are working on this week before you come." },
         members: { title: "The member wall", body: "One card each — read «looking for» and «can help with»." },
         wharf: { title: "See what people want to ask", body: "Can answer one? Find them for ten minutes." },
-        checkin: { title: "Scan the code on the table", body: "It is on the table, so it only works in the room." },
+        checkin: { title: "Remember to check in", body: "From 10am today a check-in link appears right here. One tap when you arrive." },
         checkinOpen: { title: "Check in", body: "Tap through and pick your name." },
-        badge: { title: "Turn your phone into a name badge", body: "Stand it on the table so people know who you are." },
+        badge: { title: "My badge", body: "Your QR code: one scan and people see what you are working on and looking for." },
+        badgeNew: { title: "Fill in your card, get your badge", body: "It puts you on the member wall and gives you your own badge QR code, so people can find you." },
         feedback: { title: "Tell us how it went", body: "One minute, anonymous, and every one is read." },
         session: { title: "Who was there", body: "The attendance wall and notes for that session." },
         nextSignup: { title: "Sign up for the next one", body: "Every Thursday morning, same place." },
@@ -2671,6 +2678,7 @@ export const copy = {
       exportLongPress: "Long-press the image below to save or forward it.",
       exportAlt: "Your card as an image — long-press to save",
       exportFailed: "That did not work. Try another browser.",
+      checkedIn: "✓ You are checked in.",
     },
 
     notFound: {

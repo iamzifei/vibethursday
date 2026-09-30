@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
+import { AFTER_CHECKIN_PATH, canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { checkIn, listRoster, saveSignup } from "@/lib/db";
 import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -57,6 +57,15 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url, 303);
   };
 
+  // Done: straight to the person's own badge (or, with no card yet, to the
+  // page that makes one — see AFTER_CHECKIN_PATH).
+  const toBadge = () => {
+    const url = new URL(AFTER_CHECKIN_PATH, origin);
+    const param = LANG_PARAM[lang];
+    if (param) url.searchParams.set("lang", param);
+    return NextResponse.redirect(url, 303);
+  };
+
   // The code is the door. Checked before anything is read from the body, and
   // checked against today rather than against the session it names: a code
   // for next Thursday is only valid next Thursday.
@@ -91,7 +100,7 @@ export async function POST(request: Request) {
       if (!onRoster) return back({ err: "failed" });
 
       await checkIn({ session, signupId, onWall, source: "qr" });
-      return back({ done: signupId });
+      return toBadge();
     }
 
     if (!name) {
@@ -120,7 +129,7 @@ export async function POST(request: Request) {
     });
 
     await checkIn({ session, signupId: walkInId, onWall, source: "walk-in" });
-    return back({ done: walkInId });
+    return toBadge();
   } catch (error) {
     console.error("[checkin] failed", error);
     return back({ err: "failed" });

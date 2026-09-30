@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.9",
+    date: "2026-09-30",
+    kind: "minor",
+    scope: "site",
+    zh: "周四当天的 /go 更顺手了：10 点前提醒你记得签到，10 点起那一项变成签到链接；签上之后直接打开你的名牌，还没填过名片的，直接带你去填。10 点以后 /go 上不再有点单入口——单子那时已经交给吧台了，到了直接跟吧台点；之前点过的照样能看。当天还会列出本周的候选问题。",
+    link: { href: "/go", zh: "打开 /go →", en: "Open /go →" },
+    en: "/go on the day is smoother: before 10am it reminds you to check in, and from 10am that line becomes the check-in link. Checking in opens your badge straight away — or, if you have no card yet, takes you to fill one in. From 10am /go no longer offers ordering, because the list has already gone to the bar; order at the counter instead, and an order you already placed is still there to see. The week's candidate questions are listed on the day too.",
+  },
+  {
     version: "4.8",
     date: "2026-09-29",
     kind: "minor",

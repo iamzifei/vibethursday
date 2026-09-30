@@ -14,7 +14,8 @@ import { requestOrigin } from "@/lib/request-origin";
 import { badgeShowsCode } from "@/lib/members";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string }>;
+  /** `in=1`: arrived straight from checking in (AFTER_CHECKIN_PATH). */
+  searchParams: Promise<{ lang?: string; in?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -37,15 +38,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  * lands on a page that already says what this person is looking for.
  */
 export default async function BadgePage({ searchParams }: PageProps) {
-  const lang = resolveLang((await searchParams).lang);
+  const params = await searchParams;
+  const lang = resolveLang(params.lang);
   const c = getCopy(lang);
   const b = c.badge;
+  const justCheckedIn = params.in === "1";
+
+  // No card on this phone yet: go and make one, carrying the "checked in" note.
+  const claimHref = `/claim${justCheckedIn ? "?in=1" : ""}${langSuffix(lang, justCheckedIn)}`;
 
   const memberId = await currentMemberId();
-  if (!memberId) redirect(`/claim${langSuffix(lang)}`);
+  if (!memberId) redirect(claimHref);
 
   const member = await getMemberById(memberId);
-  if (!member) redirect(`/claim${langSuffix(lang)}`);
+  if (!member) redirect(claimHref);
 
   const cardUrl = `${await requestOrigin()}/members/${member.slug}`;
   // The strict reading, on purpose, and unlike the member wall: this is a
@@ -74,6 +80,12 @@ export default async function BadgePage({ searchParams }: PageProps) {
       <Link className="badge__exit body-sm" href={`/me${langSuffix(lang)}`}>
         {b.exit}
       </Link>
+
+      {justCheckedIn && (
+        <p className="body-sm" style={{ color: "var(--accent)", textAlign: "center", margin: 0 }}>
+          {b.checkedIn}
+        </p>
+      )}
 
       <div className="badge__main">
         <div className="badge__who">

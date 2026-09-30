@@ -20,6 +20,14 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const CHECKIN_SOURCES = ["qr", "walk-in", "admin"] as const;
 export type CheckinSource = (typeof CHECKIN_SOURCES)[number];
 
+/**
+ * Where a successful check-in lands: the person's own badge (James 2026-09-30).
+ * `/badge` redirects anyone without a card on this phone to `/claim`, so this
+ * one path also walks a first-timer into filling in their card. `in=1` makes
+ * both pages say "you're checked in" at the top.
+ */
+export const AFTER_CHECKIN_PATH = "/badge?in=1";
+
 /** How many characters of the digest go into the QR. Ten is plenty for a
  *  code that is only valid for one calendar day and only worth a headcount. */
 const CODE_LENGTH = 10;

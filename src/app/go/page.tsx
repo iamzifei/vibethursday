@@ -140,7 +140,8 @@ export default async function GoPage({ searchParams }: PageProps) {
     checkin: checkinOpen
       ? { ...t.items.checkinOpen, href: withLang(`/checkin?s=${session}&k=${checkinCode(session)}`, lang) }
       : { ...t.items.checkin, href: null },
-    badge: { ...t.items.badge, href: `/badge${langSuffix(lang)}` },
+    // One link either way: /badge sends anyone without a card to /claim.
+    badge: { ...(member ? t.items.badge : t.items.badgeNew), href: `/badge${langSuffix(lang)}` },
     feedback: { ...t.items.feedback, href: withLang(`/feedback?s=${session}&k=${feedbackCode(session)}`, lang) },
     session: { ...t.items.session, href: `/sessions/${session}${langSuffix(lang)}` },
     nextSignup: { ...t.items.nextSignup, href: `/${langSuffix(lang)}#signup` },
@@ -240,7 +241,8 @@ export default async function GoPage({ searchParams }: PageProps) {
             {questions.length > 0 && questionsMode(phase, checkinOpen) === "today" && (
               <section className="card stack-3" aria-labelledby="go-questions" style={{ borderColor: "var(--accent)" }}>
                 <h2 className="h3" id="go-questions" style={{ margin: 0 }}>
-                  {t.questionsToday}
+                  {/* No vote marked yet: still the candidates, not "today we talk about". */}
+                  {questions.some((q) => q.chosen) ? t.questionsToday : t.questionsCandidates}
                 </h2>
                 <ol className="stack-3" style={{ margin: 0, paddingLeft: "1.25em" }}>
                   {(questions.some((q) => q.chosen) ? questions.filter((q) => q.chosen) : questions).map(

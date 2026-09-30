@@ -84,6 +84,12 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
   }
 
   if (phase === "day") {
+    // From ten (when the check-in link opens) the drinks sheet has already gone
+    // to the bar, so a new order would reach nobody: only an existing order is
+    // shown, and everyone else orders at the counter (James 2026-09-30).
+    if (state.checkinOpen) {
+      return ["checkin", ...(state.hasOrder ? (["myOrder"] as GoItem[]) : []), "badge", "members"];
+    }
     return ["checkin", drink, "badge", "members"];
   }
 
