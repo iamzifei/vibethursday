@@ -27,6 +27,7 @@ import {
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { formatQuestionList } from "@/lib/session-questions";
+import { walkInMatches } from "@/lib/walk-in-match";
 import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -103,6 +104,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // Whatever host this page was actually opened on, so a code scanned off a
   // phone goes back to the same deployment. Read once: the desk's code and the
   // poster's code both hang off it.
+  // Door walk-ins that look like an earlier signup (James 2026-10-01).
+  const walkIns = walkInMatches(signups, new Date());
+
   const origin = await requestOrigin();
   const deskUrl = `${origin}/checkin?s=${desk}&k=${checkinCode(desk)}`;
   const deskQr = await QRCode.toString(deskUrl, {
@@ -789,6 +793,37 @@ export default async function AdminPage({ searchParams }: PageProps) {
             同一个人报了两行时用。场次、签到、名片并到「留下」那行，另一行删除，撤不回。
           </span>
         </div>
+        {/* Walk-ins (typed their name at the door) that look like an earlier
+            signup. A suggestion only: same name can be two people. */}
+        {walkIns.length > 0 && (
+          <div className="card stack-3">
+            <p className="body-sm" style={{ margin: 0 }}>
+              <strong>现场写名字签到的，可能已经报过名：</strong>确认是同一个人再合并，留下的是原来那行。
+            </p>
+            <ul className="stack-2" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {walkIns.flatMap((match) =>
+                match.candidates.map((candidate) => (
+                  <li key={`${match.walkIn.id}-${candidate.id}`}>
+                    <form method="post" action="/api/admin/merge" style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}>
+                      <input type="hidden" name="keep" value={candidate.id} />
+                      <input type="hidden" name="drop" value={match.walkIn.id} />
+                      <span className="body-sm">
+                        现场 #{match.walkIn.id} {match.walkIn.name} → 原报名 #{candidate.id} {candidate.name}
+                      </span>
+                      <details className="confirm">
+                        <summary className="linkish">合并</summary>
+                        <button className="btn btn--secondary" type="submit">
+                          确认合并
+                        </button>
+                      </details>
+                    </form>
+                  </li>
+                )),
+              )}
+            </ul>
+          </div>
+        )}
+
         <form method="post" action="/api/admin/merge" className="stack-3" style={{ maxWidth: "28rem" }}>
           <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}>
             <label className="label" htmlFor="merge-keep" style={{ margin: 0 }}>

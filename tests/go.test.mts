@@ -41,15 +41,16 @@ test("★ from ten on the day nobody can order any more; only an existing order 
   // James 2026-09-30: by then the sheet has gone to the bar, so an order placed
   // on the site would reach nobody. Order at the counter instead.
   const open = { ...ANON, checkinOpen: true };
-  assert.deepEqual(goItems("day", open), ["checkin", "badge", "members"]);
-  assert.deepEqual(goItems("day", { ...open, hasOrder: true }), ["checkin", "myOrder", "badge", "members"]);
+  assert.deepEqual(goItems("day", open), ["checkin", "badge", "members", "feedback"]);
+  assert.deepEqual(goItems("day", { ...open, hasOrder: true }), ["checkin", "myOrder", "badge", "members", "feedback"]);
 });
 
 test("after: feedback first", () => {
-  assert.deepEqual(goItems("after", ANON), ["feedback", "session", "nextSignup"]);
+  assert.deepEqual(goItems("after", ANON), ["feedback", "chat", "session", "nextSignup"]);
   // Nothing personal changes what matters after a session.
   assert.deepEqual(goItems("after", { signedUp: true, hasOrder: true, hasCard: true, checkinOpen: false }), [
     "feedback",
+    "chat",
     "session",
     "nextSignup",
   ]);
@@ -86,12 +87,28 @@ test("★ the check-in link is on /go only on the morning itself", () => {
 test("from noon /go turns to feedback, but check-in stays first until one", () => {
   // At 12:00 the session in focus turns to look back (phase "after"). Someone
   // who forgot to tap should still find check-in at the top for that last hour.
-  assert.deepEqual(goItems("after", { ...ANON, checkinOpen: true }), ["checkin", "feedback", "session", "nextSignup"]);
-  assert.deepEqual(goItems("after", { ...ANON, checkinOpen: false }), ["feedback", "session", "nextSignup"]);
+  assert.deepEqual(goItems("after", { ...ANON, checkinOpen: true }), ["checkin", "feedback", "chat", "session", "nextSignup"]);
+  assert.deepEqual(goItems("after", { ...ANON, checkinOpen: false }), ["feedback", "chat", "session", "nextSignup"]);
 });
 
 test("★ checking in lands on my badge, which sends anyone without a card to fill one in", () => {
   // James 2026-09-30: after check-in, straight to the badge; no card yet means
   // /badge itself redirects to /claim, so this one path covers both.
   assert.equal(AFTER_CHECKIN_PATH, "/badge?in=1");
+});
+
+test("★ feedback is on /go from ten on the day, not only after noon", () => {
+  // James 2026-10-01: on 1 October nobody had left feedback by the evening —
+  // by noon most phones were already back in pockets.
+  assert.ok(goItems("day", { ...ANON, checkinOpen: true }).includes("feedback"));
+  // Before ten there is nothing to say yet.
+  assert.ok(!goItems("day", ANON).includes("feedback"));
+});
+
+test("★ booking a chat with James is offered only after a session", () => {
+  for (const phase of ["before", "day"] as const) {
+    for (const checkinOpen of [true, false]) {
+      assert.ok(!goItems(phase, { ...ANON, checkinOpen }).includes("chat"));
+    }
+  }
 });

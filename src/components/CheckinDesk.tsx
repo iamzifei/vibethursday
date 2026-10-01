@@ -55,6 +55,12 @@ export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins, qu
               <strong>投屏或放桌上让大家扫。</strong> 打开是今天的名单，点自己名字就签到了；没报名的填三格。
             </p>
             <p className="body-sm">
+              {/* Full screen, without the rest of /admin — for a tablet at the door. */}
+              <a className="hl" href="/admin/door">
+                门口用的全屏签到码 →
+              </a>
+            </p>
+            <p className="body-sm">
               <a className="mono hl" href={url}>
                 {url}
               </a>

@@ -363,6 +363,18 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         <h3 className="h3" ref={doneRef} tabIndex={-1}>
           {receipt?.waitlisted ? copy.waitlistTitle : copy.successTitle}
         </h3>
+        {/* The pass: name, Thursday, booked or waitlisted, big enough to read in
+            a screenshot. On 1 October many people could not tell whether they
+            had signed up at all (James 2026-10-01); a screenshot settles it. */}
+        {receipt?.session && (
+          <div className="card stack-2" style={{ borderColor: "var(--accent)" }}>
+            <strong className="h3" style={{ margin: 0 }}>{receipt.name}</strong>
+            <span className="body-lg">
+              {receipt.session} · {receipt.waitlisted ? copy.successTagWaitlist : copy.successTagBooked}
+            </span>
+            <span className="body-sm" style={{ color: "var(--fg3)" }}>{copy.successPassHint}</span>
+          </div>
+        )}
         {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
         <p>
           {receipt?.session ? (
@@ -571,9 +583,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           // The nearest Thursday, full or not. For one day (2026-09-28) this
           // skipped to the first session with room, and people who meant this
           // week were quietly signed up for next week instead — then signed up
-          // again, and ended up down for both. Waitlisted people can still come
-          // (James, 2026-09-28), and a full date says so in its label, so the
-          // date they most likely meant is the right default.
+          // again, and ended up down for both. A full date says so in its label
+          // ("waitlist only" since 2026-10-01, when waitlisted people stopped
+          // being told to come anyway), so the date they most likely meant is
+          // still the right default — they can see it is full and pick another.
           defaultValue={sessions[0]?.value}
         >
           {sessions.map((session) => (

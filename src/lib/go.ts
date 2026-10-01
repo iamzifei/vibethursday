@@ -54,6 +54,7 @@ export type GoItem =
   | "checkin"
   | "badge"
   | "feedback"
+  | "chat"
   | "session"
   | "nextSignup";
 
@@ -88,15 +89,22 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
     // to the bar, so a new order would reach nobody: only an existing order is
     // shown, and everyone else orders at the counter (James 2026-09-30).
     if (state.checkinOpen) {
-      return ["checkin", ...(state.hasOrder ? (["myOrder"] as GoItem[]) : []), "badge", "members"];
+      // Feedback from ten too: by noon most phones are back in pockets, and on
+      // 1 October nobody had left any by the evening (James 2026-10-01).
+      return ["checkin", ...(state.hasOrder ? (["myOrder"] as GoItem[]) : []), "badge", "members", "feedback"];
     }
     return ["checkin", drink, "badge", "members"];
   }
 
   // From noon the session looks back, but anyone who forgot to tap should
   // still find check-in first until the link closes.
-  return [...(state.checkinOpen ? (["checkin"] as GoItem[]) : []), "feedback", "session", "nextSignup"];
+  // "chat": book a one-to-one with James (cal.com), for what there was no time
+  // for in the room. After the session only — never on the day (2026-10-01).
+  return [...(state.checkinOpen ? (["checkin"] as GoItem[]) : []), "feedback", "chat", "session", "nextSignup"];
 }
+
+/** Where "chat" goes: James's booking page for a one-to-one after a session. */
+export const CHAT_URL = "https://cal.com/jamesgong/vibe-thursday-chat";
 
 /** Hours (Sydney) during which /go links straight to check-in, on the session's own date. */
 export const CHECKIN_LINK_FROM = 10;

@@ -10,7 +10,7 @@ import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { SESSION_CAP } from "@/lib/capacity";
 import { questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
-import { checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
+import { CHAT_URL, checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
 import { formatPrice } from "@/lib/menu";
 import { orderCode, orderCookieName, readOrderToken } from "@/lib/order";
@@ -143,6 +143,7 @@ export default async function GoPage({ searchParams }: PageProps) {
     // One link either way: /badge sends anyone without a card to /claim.
     badge: { ...(member ? t.items.badge : t.items.badgeNew), href: `/badge${langSuffix(lang)}` },
     feedback: { ...t.items.feedback, href: withLang(`/feedback?s=${session}&k=${feedbackCode(session)}`, lang) },
+    chat: { ...t.items.chat, href: CHAT_URL },
     session: { ...t.items.session, href: `/sessions/${session}${langSuffix(lang)}` },
     nextSignup: { ...t.items.nextSignup, href: `/${langSuffix(lang)}#signup` },
   };
@@ -209,7 +210,18 @@ export default async function GoPage({ searchParams }: PageProps) {
 
                 return (
                   <li key={key}>
-                    {item.href ? (
+                    {item.href?.startsWith("http") ? (
+                      // Off-site (the booking page): a new tab, so /go stays open behind it.
+                      <a
+                        className="card stack-2"
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "block", textDecoration: "none" }}
+                      >
+                        {inner}
+                      </a>
+                    ) : item.href ? (
                       <Link className="card stack-2" href={item.href} style={{ display: "block", textDecoration: "none" }}>
                         {inner}
                       </Link>

@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "4.10",
+    date: "2026-10-02",
+    kind: "minor",
+    scope: "room",
+    zh: "候补重新是候补：每场 40 个座位，满了以后报名进候补，收到通知再来；没报上的请改到下一场。签到页最上面能搜自己的名字，找不到就直接写名字签到。报名成功页多了一张可以截图的凭证。周四 10 点起 /go 上就能「说两句」，散场后还能约主办人单独聊。",
+    link: { href: "/go", zh: "打开 /go →", en: "Open /go →" },
+    en: "The waitlist is a waitlist again: each session holds 40, signups after that go on the waitlist and come once they hear from me; if you are not booked, please move to the next Thursday. The check-in page now opens with a search for your name, and if it is not there you can check in by typing it. The signup confirmation has a pass you can screenshot. On Thursday, feedback is on /go from 10am, and after the session you can book a one-to-one with the organiser.",
+  },
+  {
     version: "4.9",
     date: "2026-09-30",
     kind: "minor",

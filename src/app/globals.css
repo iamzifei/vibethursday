@@ -3392,6 +3392,9 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 /* The check-in code on /admin. Big enough to scan from across a table. */
 .checkin-qr { flex: none; width: 200px; height: 200px; background: #fff; padding: 6px; border-radius: var(--radius-md); }
 .checkin-qr svg { display: block; width: 100%; height: 100%; }
+/* /admin/door: the same code, as big as the tablet allows. */
+.door-qr { width: min(80vw, 60vh); background: #fff; padding: var(--space-4); border-radius: var(--radius-xl); }
+.door-qr svg { display: block; width: 100%; height: auto; }
 
 /* =============================================================================
    /play — the pixel game

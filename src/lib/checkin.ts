@@ -122,6 +122,25 @@ export type RosterEntry = {
 /** Roughly one line on a phone. */
 const HINT_LENGTH = 24;
 
+/** Lower-case with every kind of space removed, so "Chris Xu" matches "chrisxu". */
+function squash(value: string): string {
+  return value.toLowerCase().replace(/[\s\u3000]+/g, "");
+}
+
+/**
+ * The roster narrowed to a search, for the box at the top of /checkin
+ * (James 2026-10-01: with 45 names people scrolled past their own or gave
+ * up). Matches anywhere in the name or the hint; an empty search is everyone.
+ */
+export function filterRoster<T extends Pick<RosterEntry, "name" | "hint">>(
+  roster: readonly T[],
+  query: string | null | undefined,
+): T[] {
+  const needle = squash(query ?? "");
+  if (!needle) return [...roster];
+  return roster.filter((entry) => squash(`${entry.name}${entry.hint ?? ""}`).includes(needle));
+}
+
 /** Collapses whitespace and cuts to a hint's length. Null when there is nothing to show. */
 export function shortHint(text: string | null | undefined): string | null {
   const collapsed = (text ?? "").split(/\s+/).join(" ").trim();

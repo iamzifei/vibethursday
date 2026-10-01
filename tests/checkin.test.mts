@@ -155,3 +155,22 @@ test("the wall names only those who agreed, and uses a live card when there is o
     { kind: "light", signup_id: "Dana", name: "Dana", building: "no card at all" },
   ]);
 });
+
+test("★ the roster search finds a name however it was typed", async () => {
+  // James 2026-10-01: with 45 names on the list, people scrolled past their
+  // own or gave up. Case, spaces and full-width spaces must not matter.
+  const { filterRoster } = await import("../src/lib/checkin.ts");
+  const roster = [
+    { id: "1", name: "Chris Xu", hint: null, checkedIn: false, onWall: false },
+    { id: "2", name: "小河姐姐", hint: null, checkedIn: false, onWall: false },
+    { id: "3", name: "Chris", hint: "AI 养老", checkedIn: true, onWall: true },
+  ];
+  assert.deepEqual(filterRoster(roster, "chrisxu").map((r) => r.id), ["1"]);
+  assert.deepEqual(filterRoster(roster, " CHRIS ").map((r) => r.id), ["1", "3"]);
+  assert.deepEqual(filterRoster(roster, "小河").map((r) => r.id), ["2"]);
+  assert.deepEqual(filterRoster(roster, "养老").map((r) => r.id), ["3"]);
+  // Empty search: everyone.
+  assert.equal(filterRoster(roster, "").length, 3);
+  assert.equal(filterRoster(roster, null).length, 3);
+  assert.deepEqual(filterRoster(roster, "nobody"), []);
+});

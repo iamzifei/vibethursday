@@ -4,7 +4,7 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { buildRoster, canCheckIn, isSessionDate, verifyCheckinCode, type RosterEntry } from "@/lib/checkin";
+import { buildRoster, canCheckIn, filterRoster, isSessionDate, verifyCheckinCode, type RosterEntry } from "@/lib/checkin";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
 import { listCheckins, listRoster } from "@/lib/db";
 import { formatSession, sydneyToday } from "@/lib/sessions";
@@ -24,6 +24,8 @@ type PageProps = {
     done?: string;
     /** What went wrong on the last post. */
     err?: string;
+    /** A search over the roster (`filterRoster`). */
+    q?: string;
   }>;
 };
 
@@ -116,6 +118,8 @@ export default async function CheckinPage({ searchParams }: PageProps) {
   const roster = buildRoster(session, signups, checkins);
   const hasCard = new Map(signups.map((row) => [row.id, row.has_card]));
   const count = checkins.length;
+  const query = (params.q ?? "").trim().slice(0, 50);
+  const shown = filterRoster(roster, query);
 
   const error =
     params.err === "rate" ? t.rateLimited
@@ -279,17 +283,51 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         </p>
       )}
 
+      {/* Search and the way out sit above the list, not below 45 names
+          (James 2026-10-01). A plain GET form: works with no script. */}
+      <form method="get" action="/checkin" className="stack-2" role="search">
+        <input type="hidden" name="s" value={session} />
+        <input type="hidden" name="k" value={code} />
+        {LANG_PARAM[lang] && <input type="hidden" name="lang" value={LANG_PARAM[lang]} />}
+        <label className="label" htmlFor="roster-search">
+          {t.searchLabel}
+        </label>
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+          <input
+            className="field"
+            id="roster-search"
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder={t.searchPlaceholder}
+            autoComplete="off"
+            style={{ flex: 1 }}
+          />
+          <button className="btn btn--secondary" type="submit">
+            {t.searchSubmit}
+          </button>
+        </div>
+      </form>
+
+      <p>
+        <Link className="btn btn--primary" href={stepHref(session, code, lang, { new: "1" })}>
+          {t.walkInCta}
+        </Link>
+      </p>
+
+      {query && shown.length === 0 && <p className="body-lg">{t.searchNone.replace("{q}", () => query)}</p>}
+
       <ul className="roster">
-        {roster.map((entry) => (
+        {shown.map((entry) => (
           <RosterLine key={entry.id} entry={entry} href={stepHref(session, code, lang, { who: entry.id })} doneLabel={t.done} />
         ))}
       </ul>
 
-      <p>
-        <Link className="btn btn--secondary" href={stepHref(session, code, lang, { new: "1" })}>
-          {t.walkInCta}
-        </Link>
-      </p>
+      {query && (
+        <p>
+          <Link href={stepHref(session, code, lang)}>{t.searchClear}</Link>
+        </p>
+      )}
     </>,
   );
 }
