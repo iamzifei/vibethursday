@@ -195,11 +195,6 @@ export function ensureSchema(): Promise<void> {
        WHERE sessions && waitlist
     `);
 
-    // An organiser's hide, recorded apart from the member's own "keep it off
-    // the wall" so that saving the card from /me cannot undo it (2026-09-28
-    // review: both wrote the same column).
-    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS hidden_by_admin boolean NOT NULL DEFAULT false`);
-
     // ── Member wall ──────────────────────────────────────────────────
     // One row per person who claimed their card. `signup_id` is the only way
     // in, which is what keeps the wall to people who actually turned up: there
@@ -226,6 +221,17 @@ export function ensureSchema(): Promise<void> {
         updated_at    timestamptz NOT NULL DEFAULT now()
       )
     `);
+
+    // An organiser's hide, recorded apart from the member's own "keep it off
+    // the wall" so that saving the card from /me cannot undo it (2026-09-28
+    // review: both wrote the same column).
+    //
+    // ⚠️ Must stay below the CREATE TABLE above. It once ran before it, which
+    // worked on the live database (the table was already there) and failed on
+    // an empty one — every request that needed the schema then errored. Every
+    // ALTER / index in this function goes after the CREATE of its table;
+    // tests/schema-init.test.mts checks that.
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS hidden_by_admin boolean NOT NULL DEFAULT false`);
 
     // Zero or more per member. A card with no assets is a complete card — that
     // is the whole point, it is what someone who only comes to listen has.
