@@ -1,7 +1,7 @@
 // Relative, not "@/": the tests load this through Node's type stripper, which
 // cannot resolve the tsconfig path alias.
 import { isSessionDate } from "./checkin.ts";
-import { bodyTooLarge, checkRateLimit, clientIp } from "./rate-limit.ts";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "./rate-limit.ts";
 
 /**
  * Photos people took at a session, uploaded on that session's page.
@@ -244,34 +244,6 @@ export function limitKey(ip: string): string {
 }
 
 /**
- * Reads at most `max` bytes of the body, or null if there is more.
- *
- * `bodyTooLarge` trusts Content-Length, and a chunked request has none: until
- * this, a 30 MB chunked upload was read into memory in full before any check
- * ran (2026-10-03 review). This counts as it reads and stops at the limit.
- */
-async function readCapped(request: Request, max: number): Promise<Buffer | null> {
-  if (!request.body) return Buffer.alloc(0);
-
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > max) {
-      await reader.cancel().catch(() => {});
-      return null;
-    }
-    chunks.push(value);
-  }
-
-  return Buffer.concat(chunks);
-}
-
-/**
  * Whether the browser says this request came from another site.
  *
  * Uploading needs no cookie and multipart is a content type any page may
@@ -304,14 +276,12 @@ export async function handlePhotoUpload(request: Request, store: UploadStore, to
 
   if (bodyTooLarge(request, MAX_UPLOAD_BODY)) return json({ error: "too_large" }, 413);
 
-  const body = await readCapped(request, MAX_UPLOAD_BODY).catch(() => null);
-  if (!body) return json({ error: "too_large" }, 413);
+  // Counted as it is read: a chunked upload declares no length, so the check
+  // above cannot see it. See `boundedRequest`.
+  const bounded = await boundedRequest(request, MAX_UPLOAD_BODY);
+  if (!bounded) return json({ error: "too_large" }, 413);
 
-  const form = await new Response(new Uint8Array(body), {
-    headers: { "Content-Type": request.headers.get("content-type") ?? "" },
-  })
-    .formData()
-    .catch(() => null);
+  const form = await bounded.formData().catch(() => null);
   if (!form) return json({ error: "invalid_body" }, 400);
 
   const session = form.get("session");

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { bodyTooLarge, boundedRequest } from "@/lib/rate-limit";
 import { parseMove } from "@/lib/game/protocol";
 import { flushAwards } from "@/lib/game/ledger";
 import { leave, move } from "@/lib/game/room";
@@ -22,8 +23,13 @@ export const dynamic = "force-dynamic";
 const MAX_BODY = 2048;
 
 export async function POST(request: Request) {
-  const length = Number(request.headers.get("content-length") ?? 0);
-  if (length > MAX_BODY) return new Response(null, { status: 413 });
+  // Declared length first, then counted while reading: a chunked request
+  // declares none (see `boundedRequest`). A length that is not a number is
+  // refused too — it used to read as NaN and slip past `>`.
+  if (bodyTooLarge(request, MAX_BODY)) return new Response(null, { status: 413 });
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response(null, { status: 413 });
+  request = bounded;
 
   let body: unknown;
 

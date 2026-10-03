@@ -2,8 +2,15 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { correctWechat } from "@/lib/db";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 16 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +20,14 @@ export const dynamic = "force-dynamic";
  * still finds them. A plain form post with a 303 back, like every /admin action.
  */
 export async function POST(request: Request) {
-  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const limited = tooMany(request, "admin-action", 300);
   if (limited) return limited;
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   const key = form?.get("key");
 

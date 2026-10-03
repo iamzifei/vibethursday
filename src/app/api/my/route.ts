@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { cancelSession, findMySignup, getMySignup, moveSessionFor } from "@/lib/db";
 import { canChangeSession, myToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
-import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { nextThursdays, sydneyToday } from "@/lib/sessions";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 8 * 1024;
 
 // Reads and writes Postgres; never prerender or cache.
 export const dynamic = "force-dynamic";
@@ -37,8 +44,11 @@ function clean(value: FormDataEntryValue | null | undefined, maxLength: number):
  * lands on its waitlist rather than past the cap.
  */
 export async function POST(request: Request) {
-  if (bodyTooLarge(request, 8 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   const action = clean(form?.get("action"), 10);
   const lang = resolveLang(clean(form?.get("lang"), 10) ?? undefined);

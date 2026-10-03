@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { board, refreshCrown } from "@/lib/game/ledger";
 import { playerOf } from "@/lib/game/room";
-import { bodyTooLarge } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest } from "@/lib/rate-limit";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +21,10 @@ export const dynamic = "force-dynamic";
 // POST rather than GET so the seat key travels in the body, never in a URL
 // that proxies and access logs keep (2026-09-28 security review).
 export async function POST(request: Request) {
-  if (bodyTooLarge(request, 1024)) return new Response(null, { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response(null, { status: 413 });
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response(null, { status: 413 });
+  request = bounded;
   const body = (await request.json().catch(() => null)) as { id?: unknown; key?: unknown } | null;
   const me = playerOf(typeof body?.id === "string" ? body.id : "", typeof body?.key === "string" ? body.key : "");
 

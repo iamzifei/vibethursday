@@ -3,7 +3,14 @@ import { coachAvailable, coachDraft, type Round } from "@/lib/coach";
 import { spendCoachCall } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { coachRateKey, coachReply } from "@/lib/coach-access";
-import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 16 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +97,7 @@ function readHistory(raw: FormDataEntryValue | null | undefined): Round[] {
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   if (!coachAvailable()) return NextResponse.json({ error: "off" }, { status: 404 });
 
@@ -103,6 +110,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   const draft = form?.get("text");
 

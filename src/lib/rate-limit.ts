@@ -116,12 +116,73 @@ export function tooMany(request: Request, bucket: string, max: number): Response
  * measured one 150 MB POST to /api/feedback adding ~440 MB to the process:
  * every form route parsed the whole body before looking at the code or the
  * rate limit. A declared length that is not a number is refused too. With no
- * declared length (a chunked upload) this says no and the platform's own cap
- * applies.
+ * declared length (a chunked upload) this says no — so on its own it is only
+ * a fast path, and every route also reads the body through `boundedRequest`,
+ * which enforces the same limit on the bytes that actually arrive.
  */
 export function bodyTooLarge(request: Request, maxBytes: number): boolean {
   const declared = request.headers.get("content-length");
   if (declared === null) return false;
   const length = Number(declared);
   return !Number.isFinite(length) || length > maxBytes;
+}
+
+/**
+ * A copy of `request` whose body has been read with a running byte count, or
+ * null if the body turned out to be larger than `maxBytes`.
+ *
+ * ★ Why this exists: `bodyTooLarge` trusts Content-Length, and a chunked
+ * request has none. Until this, any route could be sent a body of any size
+ * that way and `formData()` / `json()` would buffer all of it before a single
+ * check ran (found on the photo upload first, 2026-10-03). This stops reading
+ * the moment the count passes the limit, so what one request can make the
+ * process hold is bounded by `maxBytes` (a small multiple of it while the
+ * chunks are joined and copied into the new request), not by the sender.
+ *
+ * The copy keeps the URL, method and headers, so a route can carry on using
+ * it exactly like the original — including `formData()` and `json()` on it.
+ * Content-Length and Transfer-Encoding are dropped from the copy: the body is
+ * now a plain in-memory buffer and they no longer describe it.
+ *
+ * If the stream breaks part-way (the caller went away), the copy has an empty
+ * body, so the route's own parse fails and it answers as it would for any
+ * malformed request.
+ */
+export async function boundedRequest(request: Request, maxBytes: number): Promise<Request | null> {
+  if (bodyTooLarge(request, maxBytes)) return null;
+
+  const headers = new Headers(request.headers);
+  headers.delete("content-length");
+  headers.delete("transfer-encoding");
+  const copy = (body: Uint8Array | null) =>
+    new Request(request.url, { method: request.method, headers, body: body as BodyInit | null });
+
+  if (!request.body) return copy(null);
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return copy(new Uint8Array(0));
+  }
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return copy(body);
 }

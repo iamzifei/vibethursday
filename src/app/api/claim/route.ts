@@ -2,8 +2,15 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { claimMember } from "@/lib/db";
 import { cookieOptions, issueToken, MEMBER_COOKIE } from "@/lib/member-auth";
-import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { text } from "@/lib/members";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 16 * 1024;
 
 // Reads a cookie and writes to Postgres, so it must never be cached.
 export const dynamic = "force-dynamic";
@@ -19,7 +26,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
+
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
 
   let payload: unknown;
 

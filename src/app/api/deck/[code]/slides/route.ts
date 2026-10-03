@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { keyMatches, MAX_SLIDE_BYTES, MAX_SLIDES, publish } from "@/lib/deck";
 import { addDeckSlide, clearDeckSlides, getDeck } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = MAX_SLIDE_BYTES + 64 * 1024;
+
+/** DELETE carries only the presenter key. */
+const MAX_DELETE_BODY = 16 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +31,16 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 export async function POST(request: Request, { params }: Context) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, MAX_SLIDE_BYTES + 64 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const limited = tooMany(request, "deck-slides", 120);
   if (limited) return limited;
 
   const { code } = await params;
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   const providedKey = form?.get("key");
   const file = form?.get("slide");
@@ -81,6 +94,9 @@ export async function DELETE(request: Request, { params }: Context) {
 
   const { code } = await params;
 
+  const bounded = await boundedRequest(request, MAX_DELETE_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const body = await request.json().catch(() => null);
   const providedKey = typeof body?.key === "string" ? body.key : undefined;
 
