@@ -176,12 +176,19 @@ async function handler(file: string, method: string): Promise<Handler> {
 
 const context = { params: Promise.resolve({ code: "abcd", idx: "0", id: "1" }) };
 
+let address = 0;
+
 for (const [file, method] of ROUTES) {
   test(`★ ${method} ${file.replace("src/app", "").replace("/route.ts", "")} refuses an oversize chunked body with 413`, async () => {
     const run = await handler(file, method);
     // Each content type the routes accept: the size gate must not depend on it.
     for (const type of ["application/json", "multipart/form-data; boundary=x", "application/x-www-form-urlencoded"]) {
-      const { request, pulled } = chunkedRequest(OVERSIZE, type, method, { "sec-fetch-site": "same-origin" });
+      // A fresh address per call, so no route's per-address rate limit can
+      // answer before the size gate does, however many calls this file makes.
+      const { request, pulled } = chunkedRequest(OVERSIZE, type, method, {
+        "sec-fetch-site": "same-origin",
+        "x-forwarded-for": `198.51.100.${++address}`,
+      });
       const response = await run(request, context);
       // Signup takes JSON only and answers anything else with 415 before it
       // touches the body — refused without reading, which is just as good.
@@ -203,9 +210,15 @@ test("every route that reads a body is in the list above and reads it through bo
     if (!/request\.(formData|json|text|arrayBuffer|blob)\(\)|request\.body\b|handlePhotoUpload\(/.test(source)) continue;
     assert.ok(listed.has(file), `${file} reads a body but has no oversize test here`);
     if (file.endsWith("session-photos/route.ts")) continue; // reads through handlePhotoUpload
-    const reads = source.match(/request\.(formData|json|text|arrayBuffer|blob)\(\)/g) ?? [];
-    const bounded = source.match(/request = bounded;/g) ?? [];
-    assert.equal(bounded.length, reads.length, `${file}: every body read comes after a boundedRequest`);
+    // Each read must be the first body read after its own `request = bounded;`
+    // in the same handler — not merely as many of one as of the other.
+    assert.ok(!/request\.clone\(\)/.test(source), `${file}: no clone() around the bounded copy`);
+    for (const handler of source.split(/\nexport async function /).slice(1)) {
+      const reads = [...handler.matchAll(/request\.(formData|json|text|arrayBuffer|blob)\(\)/g)];
+      if (reads.length === 0) continue;
+      const bound = handler.indexOf("request = bounded;");
+      assert.ok(bound >= 0 && bound < reads[0].index!, `${file}: the body is bounded before it is read`);
+    }
   }
 });
 

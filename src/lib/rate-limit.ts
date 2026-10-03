@@ -135,8 +135,9 @@ export function bodyTooLarge(request: Request, maxBytes: number): boolean {
  * request has none. Until this, any route could be sent a body of any size
  * that way and `formData()` / `json()` would buffer all of it before a single
  * check ran (found on the photo upload first, 2026-10-03). This stops reading
- * the moment the count passes the limit, so the most a caller can make the
- * process hold is `maxBytes`.
+ * the moment the count passes the limit, so what one request can make the
+ * process hold is bounded by `maxBytes` (a small multiple of it while the
+ * chunks are joined and copied into the new request), not by the sender.
  *
  * The copy keeps the URL, method and headers, so a route can carry on using
  * it exactly like the original — including `formData()` and `json()` on it.
