@@ -157,6 +157,13 @@ export function ensureSchema(): Promise<void> {
     // week's answer — the failure described at the top of questions.ts.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS purposes jsonb NOT NULL DEFAULT '{}'::jsonb`);
 
+    // How familiar with AI, and which industry (signup-profile.ts). Plain
+    // nullable text, one answer per person: unlike `purposes` these describe
+    // the person, not the morning. NULL means "did not say" — every row from
+    // before the questions existed — and must never be counted as an answer.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS ai_level text`);
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS industry text`);
+
     // Sessions this person is waitlisted for (`capacity.ts`). Kept apart from
     // `sessions` so every existing headcount — /admin, signup-stats, the
     // export — keeps counting only people with a place, with no change.
@@ -570,6 +577,13 @@ export type SignupInput = {
   aiSpend: string | null;
   /** Why they are coming to `firstSession`. Whitelisted by the route. Null = unanswered. */
   purpose: string | null;
+  /**
+   * How familiar with AI, and which industry. Whitelisted by the route.
+   * Null = unanswered. Optional so every caller that predates them (the
+   * check-in desk, the e2e scripts) keeps compiling and stores nothing.
+   */
+  aiLevel?: string | null;
+  industry?: string | null;
   lang: string;
   /** Turnstile verdict for this submission: verified / skipped / unavailable. */
   botCheck: string;
@@ -655,8 +669,8 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
 
   if (!target) {
     const inserted = await pool.query<{ id: string }>(
-      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, sessions, purposes, waitlist, waitlist_since)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+      `INSERT INTO signups (name, email, wechat, building, demo_intent, first_session, source, lang, bot_check, topic, availability, ai_models, ai_spend, ai_level, industry, sessions, purposes, waitlist, waitlist_since)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $16, $17,
                CASE WHEN $6::date IS NULL OR $15::boolean THEN '{}'::date[] ELSE ARRAY[$6::date] END,
                -- Only recorded against a session: an answer to "why are you
                -- coming" means nothing without the morning it is about.
@@ -681,6 +695,9 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
         input.aiSpend,
         input.purpose,
         input.waitlisted === true,
+        // Appended as $16 / $17 so none of the numbered parameters above move.
+        input.aiLevel ?? null,
+        input.industry ?? null,
       ],
     );
 
@@ -754,6 +771,10 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
        ai_models     = CASE WHEN cardinality($13::text[]) = 0
                             THEN ai_models ELSE $13::text[] END,
        ai_spend      = COALESCE($14, ai_spend),
+       -- COALESCE like ai_spend: a stale page or a skipped question sends
+       -- nothing, and that must not wipe an earlier answer.
+       ai_level      = COALESCE($18, ai_level),
+       industry      = COALESCE($19, industry),
        -- Merge, keyed by session: this week's answer is added or corrected,
        -- earlier weeks are left exactly as they were.
        purposes      = CASE WHEN $7::date IS NULL OR $15::text IS NULL THEN purposes
@@ -781,6 +802,10 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
       input.purpose,
       input.waitlisted === true,
       bookedOnAnother(target.id, existing.rows),
+      // Who this person is, so gated on the name the way building and topic
+      // are: someone typing another person's WeChat ID cannot rewrite them.
+      trusted ? (input.aiLevel ?? null) : null,
+      trusted ? (input.industry ?? null) : null,
     ],
   );
 
@@ -896,6 +921,10 @@ export type SignupRow = {
   ai_models: string[];
   /** Monthly AI spend band. Null when they did not answer. */
   ai_spend: string | null;
+  /** How familiar with AI (`AI_LEVELS`). Null when they did not answer. */
+  ai_level: string | null;
+  /** Which industry (`INDUSTRIES`). Null when they did not answer. */
+  industry: string | null;
   /** Sessions this person checked in to on the day, oldest first. */
   checked_in: string[];
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
@@ -926,7 +955,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, source, lang, bot_check, wechat_former, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, source, lang, bot_check, wechat_former, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(

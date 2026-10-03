@@ -274,6 +274,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           aiModels: data.getAll("aiModels"),
           aiSpend: data.get("aiSpend"),
           purpose: data.get("purpose"),
+          // Both optional. `get` returns null when unanswered (no radio
+          // picked) and "" for the industry "skip" option; the route turns
+          // either into "did not answer" (signup-profile.ts).
+          aiLevel: data.get("aiLevel"),
+          industry: data.get("industry"),
           // Boolean, not the browser's "on": the route only publishes on a
           // strict === true, so anything looser would silently never publish.
           publishCard: data.get("publishCard") !== null,
@@ -620,6 +625,43 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         </div>
         <p className="field-hint">{copy.fields.purposeHint}</p>
       </fieldset>
+
+      {/* "How familiar with AI" and "which industry": who is in the room, so a
+          morning can be planned around it. Out in the open rather than in the
+          folded section — the folded AI questions are exactly the ones business
+          owners left blank. Shown to returning visitors too, since nobody had
+          been asked yet; a blank never overwrites an earlier answer.
+          Both optional, never checked before submit, and no default: a
+          pre-selected option would count everyone who scrolled past. */}
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="label">{copy.fields.aiLevel}</legend>
+        <div className="choice-group choice-group--compact">
+          {copy.fields.aiLevelOptions.map((option) => (
+            <label className="choice" key={option.value}>
+              <input type="radio" name="aiLevel" value={option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+        <p className="field-hint">{copy.fields.aiLevelHint}</p>
+      </fieldset>
+
+      {/* A select, like the spend band: twelve options would be a wall of
+          pills on a phone, and "skip" lets someone un-pick. */}
+      <div>
+        <label className="label" htmlFor={fieldId("industry")}>
+          {copy.fields.industry}
+        </label>
+        <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
+          <option value="">{copy.fields.industrySkip}</option>
+          {copy.fields.industryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <p className="field-hint">{copy.fields.industryHint}</p>
+      </div>
 
       {/* The one field that says what someone actually wants from the morning,
           and the one most often too vague to act on ("想了解了解"). The coach

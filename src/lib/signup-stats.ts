@@ -93,3 +93,93 @@ export function countPerSession(
     ...all.filter((s) => s.date < cutoff).sort((a, b) => b.date.localeCompare(a.date)),
   ];
 }
+
+/** The fields the per-session composition reads. Structural, like `CountableSignup`. */
+export type ComposableSignup = {
+  /** Sessions this person has a place in. Waitlisted sessions are not here. */
+  sessions: string[];
+  ai_level: string | null;
+  industry: string | null;
+  /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn" (`listSignups`). */
+  purposes: string;
+};
+
+/** Answer value → how many people gave it. Unanswered is kept apart, never a key here. */
+export type Tally = Record<string, number>;
+
+export type SessionComposition = {
+  date: string;
+  /** Everyone with a place in this session — the same number `countPerSession` gives. */
+  total: number;
+  aiLevel: Tally;
+  industry: Tally;
+  purpose: Tally;
+  /** How many left each question blank, so a tally is never read against the wrong total. */
+  unanswered: { aiLevel: number; industry: number; purpose: number };
+};
+
+/**
+ * Who is in each session's room: how many people per AI-familiarity level,
+ * per industry and per "what I want to take away", for the given dates.
+ *
+ * Counts only people with a place (`sessions`), like every other headcount on
+ * /admin — a waitlisted person is not in the room.
+ *
+ * AI level and industry are one answer per person, so someone who comes to
+ * three sessions is counted with the same answer in all three. The purpose is
+ * per session, read from that session's entry only.
+ *
+ * Blank answers go into `unanswered` rather than into the tallies: every row
+ * from before these questions existed is blank, and counting that as an answer
+ * would make the room look like something it is not.
+ */
+export function compositionPerSession(
+  signups: readonly ComposableSignup[],
+  dates: readonly string[],
+): SessionComposition[] {
+  const byDate = new Map<string, SessionComposition>(
+    dates.map((date) => [
+      date,
+      {
+        date,
+        total: 0,
+        aiLevel: {},
+        industry: {},
+        purpose: {},
+        unanswered: { aiLevel: 0, industry: 0, purpose: 0 },
+      },
+    ]),
+  );
+
+  for (const signup of signups) {
+    // "date=value" pairs, space-separated. Values are whitelisted codes with no
+    // spaces or "=", so a plain split is exact.
+    const purposeFor = new Map(
+      signup.purposes
+        .split(" ")
+        .filter(Boolean)
+        .map((pair) => pair.split("=") as [string, string]),
+    );
+
+    // Deduplicated, so a date stored twice cannot count someone twice.
+    for (const date of new Set(signup.sessions)) {
+      const row = byDate.get(date);
+      if (!row) continue;
+
+      row.total += 1;
+      tally(row, "aiLevel", signup.ai_level);
+      tally(row, "industry", signup.industry);
+      tally(row, "purpose", purposeFor.get(date) ?? null);
+    }
+  }
+
+  return dates.map((date) => byDate.get(date)!);
+}
+
+function tally(row: SessionComposition, field: "aiLevel" | "industry" | "purpose", value: string | null) {
+  if (!value) {
+    row.unanswered[field] += 1;
+    return;
+  }
+  row[field][value] = (row[field][value] ?? 0) + 1;
+}
