@@ -37,6 +37,10 @@ const COLUMNS = [
   "wechat_former",
   // The row id, which /admin's correct and merge actions take.
   "id",
+  // How familiar with AI, and which industry (signup-profile.ts). Appended
+  // after everything else for the same reason as the two above.
+  "ai_level",
+  "industry",
 ] as const;
 
 /**

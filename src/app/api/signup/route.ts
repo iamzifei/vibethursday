@@ -5,6 +5,7 @@ import { admission } from "@/lib/capacity";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+import { parseSignupProfile } from "@/lib/signup-profile";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 // This route writes to Postgres, so it must never be prerendered or cached.
@@ -165,6 +166,10 @@ export async function POST(request: Request) {
   const aiSpendRaw = clean(body.aiSpend, 20);
   const aiSpend = aiSpendRaw && AI_SPEND.has(aiSpendRaw) ? aiSpendRaw : null;
 
+  // "How familiar with AI" and "which industry". Optional, and anything missing
+  // or unrecognised becomes null rather than an error — see signup-profile.ts.
+  const { aiLevel, industry } = parseSignupProfile(body);
+
   // Strict `=== true`: anything else, including the string "false" a hand-rolled
   // client might send, means the box was not ticked. Publishing someone's card
   // is not a thing to do on a truthy value.
@@ -203,6 +208,8 @@ export async function POST(request: Request) {
       aiModels,
       aiSpend,
       purpose,
+      aiLevel,
+      industry,
       source: clean(body.source, 200),
       lang: clean(body.lang, 5) ?? "zh",
       botCheck: verdict,

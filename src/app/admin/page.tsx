@@ -32,7 +32,7 @@ import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/s
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 
-import { countPerSession } from "@/lib/signup-stats";
+import { compositionPerSession, countPerSession, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
 // Always read live data, and keep this page out of any search index.
@@ -196,6 +196,29 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // `countPerSession` on purpose: a waitlisted person has no place, and every
   // existing headcount must keep meaning "people with a place".
   const deskRow = perSession.find((session) => session.date === desk);
+
+  // Who is in each room, for the same sessions as the table above and in the
+  // same order. For deciding what a morning covers and whether to split it.
+  // Capped at the first eight rows (upcoming first, then the most recent past
+  // ones): the full history only grows, and older rows predate the questions.
+  const composition = compositionPerSession(signups, perSession.slice(0, 8).map((session) => session.date));
+  const signupFields = getCopy("zh").signup.fields;
+  /** One cell: every answer in the order the form lists it, zero counts left out. */
+  const tallyCell = (counts: Tally, options: readonly { value: string; label: string }[], blank: number) => {
+    const parts = options
+      .filter((option) => counts[option.value])
+      .map((option) => `${option.label} ${counts[option.value]}`);
+    if (blank > 0) parts.push(`未答 ${blank}`);
+    return parts.length > 0 ? parts.join(" · ") : "—";
+  };
+  // Short labels for the purpose codes: the form's own labels are sentences.
+  const PURPOSE_SHORT = [
+    { value: "biz", label: "做生意" },
+    { value: "product", label: "做产品" },
+    { value: "tech", label: "做技术" },
+    { value: "learn", label: "学习" },
+    { value: "other", label: "其他" },
+  ];
 
   // The detail table: this session by default (booked or waitlisted), all of
   // history with ?all=1, narrowed by ?q= across name, WeChat, email and "building".
@@ -901,6 +924,47 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
                   <td className="mono">{attendance.get(session.date) ?? "—"}</td>
                   <td className="mono">{session.wantsToDemo}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="stack-4" id="composition">
+        <div className="group-head">
+          <h2 className="h3">每场构成</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            报上的人（不含候补）里，按对 AI 的熟悉程度、行业、这次想带走什么各有几个。前两题选填、
+            是新加的，加之前的场次都是「未答」——未答不算任何一档。
+          </span>
+        </div>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Session</th>
+                <th scope="col">报上</th>
+                <th scope="col">对 AI 多熟</th>
+                <th scope="col">行业</th>
+                <th scope="col">想带走什么</th>
+              </tr>
+            </thead>
+            <tbody>
+              {composition.map((row) => (
+                <tr key={row.date}>
+                  <td className="mono">{row.date}</td>
+                  <td className="mono">{row.total}</td>
+                  <td style={{ whiteSpace: "normal", minWidth: "180px" }}>
+                    {tallyCell(row.aiLevel, signupFields.aiLevelOptions, row.unanswered.aiLevel)}
+                  </td>
+                  <td style={{ whiteSpace: "normal", minWidth: "240px" }}>
+                    {tallyCell(row.industry, signupFields.industryOptions, row.unanswered.industry)}
+                  </td>
+                  <td style={{ whiteSpace: "normal", minWidth: "180px" }}>
+                    {tallyCell(row.purpose, PURPOSE_SHORT, row.unanswered.purpose)}
+                  </td>
                 </tr>
               ))}
             </tbody>
