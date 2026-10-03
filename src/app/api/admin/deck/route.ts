@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { isDeckCode } from "@/lib/deck";
 import { deleteDeck } from "@/lib/db";
 import { requestOrigin } from "@/lib/request-origin";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 64 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +28,14 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const limited = tooMany(request, "admin-action", 300);
   if (limited) return limited;
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
 

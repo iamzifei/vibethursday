@@ -6,7 +6,14 @@ import { loginAwards, POINTS, streakFromDays, sydneyDate, type Award } from "@/l
 import { join } from "@/lib/game/room";
 import { installRushSpawner } from "@/lib/game/server-rush";
 import { currentMemberId } from "@/lib/member-auth";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 4 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +32,7 @@ export const dynamic = "force-dynamic";
  * Thursday gets that week's attendance points.
  */
 export async function POST(request: Request) {
-  if (bodyTooLarge(request, 4 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   // Sized for a room of phones on one café's Wi-Fi, not for one person.
   const limited = tooMany(request, "play-join", 120);
@@ -33,6 +40,9 @@ export async function POST(request: Request) {
 
   installRushSpawner();
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const body = (await request.json().catch(() => null)) as { guest?: unknown } | null;
 
   let identity: { memberId: string | null; name: string | null; slug: string | null; guestId: string | null } = {

@@ -12,9 +12,16 @@ import {
   readOrderToken,
   verifyOrderCode,
 } from "@/lib/order";
-import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { sydneyToday } from "@/lib/sessions";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 64 * 1024;
 
 // Writes to Postgres; never prerender or cache.
 export const dynamic = "force-dynamic";
@@ -49,8 +56,11 @@ function clean(value: FormDataEntryValue | null, maxLength: number): string | nu
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
 
   const session = clean(form?.get("session") ?? null, 10) ?? "";

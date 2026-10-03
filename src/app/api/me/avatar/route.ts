@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import { clearMemberAvatar, saveMemberAvatar } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
 import { currentMemberId } from "@/lib/member-auth";
-import { bodyTooLarge, checkRateLimit } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit } from "@/lib/rate-limit";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 512 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +25,7 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 512 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const memberId = await currentMemberId();
   if (!memberId) return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
@@ -30,6 +37,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   const file = form?.get("avatar");
 

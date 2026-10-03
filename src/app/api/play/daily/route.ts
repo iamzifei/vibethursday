@@ -4,7 +4,14 @@ import { currentWeek, invalidateBoard } from "@/lib/game/ledger";
 import { DAILY_TASK_MAX, POINTS, sydneyDate } from "@/lib/game/points";
 import { playerOf } from "@/lib/game/room";
 import { DAILY_KINDS, dailyTasks, type DailyKind } from "@/lib/game/state";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +22,13 @@ export const dynamic = "force-dynamic";
  * (`awardDailyTask`). The most a liar gains is nine points a day.
  */
 export async function POST(request: Request) {
-  if (bodyTooLarge(request, 1024)) return new Response(null, { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response(null, { status: 413 });
   const limited = tooMany(request, "play-daily", 120);
   if (limited) return limited;
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response(null, { status: 413 });
+  request = bounded;
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const id = typeof body?.id === "string" ? body.id : "";
   const key = typeof body?.key === "string" ? body.key : "";

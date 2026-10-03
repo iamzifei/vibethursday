@@ -1,9 +1,16 @@
 import { cookies } from "next/headers";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { getMemberById, saveMember, SlugTakenError } from "@/lib/db";
 import { currentMemberId, MEMBER_COOKIE } from "@/lib/member-auth";
 import { fallbackSlug, parseProfile } from "@/lib/members";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 256 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 256 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const limited = tooMany(request, "me", 60);
   if (limited) return limited;
@@ -21,6 +28,10 @@ export async function POST(request: Request) {
   if (!memberId) {
     return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
   }
+
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
 
   let payload: unknown;
 

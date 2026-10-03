@@ -3,10 +3,17 @@ import { getMySignup, publishCardForSignup, saveSignupWithResult, sessionHeadcou
 import { nextThursdays, sydneyToday } from "@/lib/sessions";
 import { admission } from "@/lib/capacity";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
-import { bodyTooLarge, checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { parseSignupProfile } from "@/lib/signup-profile";
 import { verifyTurnstile } from "@/lib/turnstile";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 64 * 1024;
 
 // This route writes to Postgres, so it must never be prerendered or cached.
 export const dynamic = "force-dynamic";
@@ -68,7 +75,7 @@ function looksLikeEmail(value: string): boolean {
 export async function POST(request: Request) {
   // Refused before the body is read (2026-09-28 review: parsing first let one
   // oversized POST balloon the process). See `bodyTooLarge`.
-  if (bodyTooLarge(request, 64 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   // JSON only. The form always sends it; a plain HTML form on another site
   // cannot (it can only send urlencoded, multipart or text/plain), so this
@@ -77,6 +84,10 @@ export async function POST(request: Request) {
   if (!(request.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) {
     return NextResponse.json({ error: "unsupported_media_type" }, { status: 415 });
   }
+
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
 
   let payload: unknown;
 

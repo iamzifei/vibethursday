@@ -3,8 +3,15 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { approveSessionPhoto, deleteSessionPhoto, rejectAllPendingPhotos, rejectSessionPhoto } from "@/lib/db";
 import { isCrossSite } from "@/lib/session-photos";
-import { bodyTooLarge, tooMany } from "@/lib/rate-limit";
+import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ */
+const MAX_BODY = 16 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +27,14 @@ export async function POST(request: Request) {
   // this came from another site is refused before anything else.
   if (isCrossSite(request)) return NextResponse.json({ error: "cross_site" }, { status: 403 });
 
-  if (bodyTooLarge(request, 16 * 1024)) return new Response("Payload too large", { status: 413 });
+  if (bodyTooLarge(request, MAX_BODY)) return new Response("Payload too large", { status: 413 });
 
   const limited = tooMany(request, "admin-action", 300);
   if (limited) return limited;
 
+  const bounded = await boundedRequest(request, MAX_BODY);
+  if (!bounded) return new Response("Payload too large", { status: 413 });
+  request = bounded;
   const form = await request.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "invalid_body" }, { status: 400 });
 
