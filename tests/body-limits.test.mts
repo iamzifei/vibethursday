@@ -268,3 +268,30 @@ test("a request with a declared, small Content-Length still works as before", as
   );
   assert.equal(response.status, 200);
 });
+
+// The Wharf body limit must leave room for the largest allowed answer image
+// (500 KB). It was once a flat 64 KB, so every image over 64 KB got a 413
+// before the image limit was ever consulted.
+test("a Wharf form carrying a ~400 KB image is not rejected for size", async () => {
+  const run = await handler("src/app/api/wharf/route.ts", "POST");
+  const { bytes, type } = await multipart({
+    action: "coming",
+    question: "1",
+    session: "1999-01-01",
+    image: new Blob([new Uint8Array(400 * 1024).fill(1)]),
+  });
+  const response = await run(chunkedRequest(bytes, type).request, context);
+  // Got past the body limit and reached the route's own validation.
+  assert.notEqual(response.status, 413);
+  assert.equal(response.status, 400);
+});
+
+test("a Wharf body well over the image limit is still rejected with 413", async () => {
+  const run = await handler("src/app/api/wharf/route.ts", "POST");
+  const { bytes, type } = await multipart({
+    action: "coming",
+    image: new Blob([new Uint8Array(700 * 1024).fill(1)]),
+  });
+  const response = await run(chunkedRequest(bytes, type).request, context);
+  assert.equal(response.status, 413);
+});
