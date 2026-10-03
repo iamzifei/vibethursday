@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { langSuffix, MemberCard } from "@/components/MemberCard";
+import { SessionPhotoUpload } from "@/components/SessionPhotoUpload";
 import { SessionRow } from "@/components/SessionRow";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -11,7 +12,8 @@ import { type Copy, getCopy, type Lang, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventJsonLd, pageAlternates } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
-import { countCheckins, listCheckins, listWallMembers, listWharfQuestions } from "@/lib/db";
+import { countCheckins, listApprovedSessionPhotos, listCheckins, listWallMembers, listWharfQuestions } from "@/lib/db";
+import { canUploadTo } from "@/lib/session-photos";
 import { monogram } from "@/lib/members";
 import { formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
 
@@ -66,11 +68,14 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
 
   if (!isSessionDate(date)) notFound();
 
-  const [wall, questions, attendance, checkins] = await Promise.all([
+  const [wall, questions, attendance, checkins, uploaded] = await Promise.all([
     listWallMembers(),
     listWharfQuestions(),
     countCheckins(),
     listCheckins(date),
+    // Approved only — the query filters on it, so a pending photo cannot
+    // reach this page by any path.
+    listApprovedSessionPhotos(date),
   ]);
 
   const row = buildArchive(c.gallery.sessions, wall, questions, attendance).find(
@@ -99,7 +104,10 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
 
   const bySlug = new Map(wall.map((member) => [member.slug, member]));
   const upcoming = nextThursdays(1)[0];
-  const isToday = date === sydneyToday().toISOString().slice(0, 10);
+  const today = sydneyToday().toISOString().slice(0, 10);
+  const isToday = date === today;
+  const photosCopy = a.photos;
+  const takesUploads = canUploadTo(date, today);
 
   // This morning as an Event, for crawlers: the write-up is its description
   // and the poster and photographs are its pictures. Only sessions that have
@@ -136,6 +144,42 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
             </ol>
           </div>
         </section>
+
+        {/* Photos people in the room uploaded, once the organiser has
+            approved them — and the form to add more, for a couple of months
+            after the day (see `canUploadTo`). */}
+        {(uploaded.length > 0 || takesUploads) && (
+          <section className="section" id="photos">
+            <div className="shell stack-8">
+              <div className="stack-4">
+                <h2>{photosCopy.title}</h2>
+                <p className="body-lg" style={{ maxWidth: "58ch" }}>
+                  {photosCopy.lede}
+                </p>
+              </div>
+
+              {uploaded.length > 0 && (
+                <div className="archive__photos" tabIndex={0} role="region" aria-label={photosCopy.title}>
+                  {uploaded.map((photo) => (
+                    <a key={photo.id} href={`/api/session-photo/${photo.id}`} target="_blank" rel="noopener">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/api/session-photo/${photo.id}`}
+                        alt={photosCopy.alt}
+                        width={photo.width}
+                        height={photo.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {takesUploads && <SessionPhotoUpload session={date} copy={photosCopy} />}
+            </div>
+          </section>
+        )}
 
         <section className="section" id="wall">
           <div className="shell stack-8">

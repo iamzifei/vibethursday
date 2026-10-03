@@ -17,6 +17,7 @@ import {
   listCheckins,
   listFeedback,
   listOrders,
+  listPhotosForReview,
   getSessionQuestions,
   listRecentAnswers,
   listRecentDecks,
@@ -83,7 +84,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -99,6 +100,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listFeedback(),
       listOrders(orderSession),
       getSessionQuestions(desk),
+      listPhotosForReview(),
     ]);
 
   // Whatever host this page was actually opened on, so a code scanned off a
@@ -552,6 +554,83 @@ export default async function AdminPage({ searchParams }: PageProps) {
         showing={showing}
         answers={feedback.filter((row) => row.session === showing)}
       />
+
+      {/* ── Uploaded photos ──────────────────────────────────────────
+          What people uploaded on /sessions/<date>. Nothing here is public
+          until it is approved; the thumbnails load only because this browser
+          holds the admin cookie. Before approving, check that everyone you can
+          recognise in it is somebody who agreed to be shown. */}
+      <section className="stack-4" id="photos">
+        <div className="group-head">
+          <h2 className="h3">照片审核</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            待审 {photos.filter((p) => p.status === "pending").length} · 已公开{" "}
+            {photos.filter((p) => p.status === "approved").length} · 共{" "}
+            {(photos.reduce((n, p) => n + p.size, 0) / 1024 / 1024).toFixed(1)} MB
+          </span>
+        </div>
+        <p className="body-sm" style={{ color: "var(--fg3)" }}>
+          通过之前看一眼：照片里认得出来的人，是不是都同意上网。拒绝会删掉图片本身；删除连记录一起删。
+        </p>
+
+        {photos.length === 0 ? (
+          <p className="body-sm">还没有人上传照片。</p>
+        ) : (
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>照片</th>
+                  <th>场次</th>
+                  <th>状态</th>
+                  <th>大小</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {photos.map((photo) => (
+                  <tr key={photo.id}>
+                    <td className="mono">{photo.id}</td>
+                    <td>
+                      <a href={`/api/session-photo/${photo.id}`} target="_blank" rel="noopener">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/session-photo/${photo.id}`}
+                          alt={`#${photo.id}`}
+                          height={96}
+                          width={Math.round((96 * photo.width) / photo.height)}
+                          loading="lazy"
+                          style={{ display: "block", borderRadius: "var(--radius-md)" }}
+                        />
+                      </a>
+                    </td>
+                    <td>
+                      <a href={`/sessions/${photo.session}#photos`}>{photo.session}</a>
+                    </td>
+                    <td>{photo.status === "pending" ? "待审" : "已公开"}</td>
+                    <td className="mono">{Math.round(photo.size / 1024)} KB</td>
+                    <td>
+                      {(photo.status === "pending"
+                        ? (["approve", "reject", "delete"] as const)
+                        : (["reject", "delete"] as const)
+                      ).map((action) => (
+                        <form key={action} method="post" action="/api/admin/photos" style={{ display: "inline" }}>
+                          <input type="hidden" name="action" value={action} />
+                          <input type="hidden" name="id" value={photo.id} />
+                          <button className="linkish" type="submit">
+                            {action === "approve" ? "通过 " : action === "reject" ? (photo.status === "approved" ? "撤下 " : "拒绝 ") : "删除"}
+                          </button>
+                        </form>
+                      ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       </section>
 

@@ -2751,7 +2751,8 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
    flex item here, and a flex item shrinks by default — so the box narrowed
    while the image's height stayed pinned, and every photo came out squashed.
    The overflow-x above is what is meant to absorb the width instead. */
-.archive__photos > picture {
+.archive__photos > picture,
+.archive__photos > a {
   flex: none;
   display: block;
 }
