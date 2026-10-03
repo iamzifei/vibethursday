@@ -550,6 +550,28 @@ export function ensureSchema(): Promise<void> {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS play_points_week_idx ON play_points (week)`);
+
+    // ── Photos people upload on /sessions/<date> (session-photos.ts) ───
+    // In the row, like avatars: no bucket, no second supplier. `status` starts
+    // at 'pending' and nothing reads a pending photo except /admin — the
+    // public list and the image route both filter on 'approved'. A rejected
+    // photo keeps its row (so the queue's history adds up) but loses its bytes.
+    // Only JPEG is ever stored, metadata stripped, so there is no mime column.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session_photos (
+        id          bigserial PRIMARY KEY,
+        session     date NOT NULL,
+        image       bytea,
+        width       int NOT NULL,
+        height      int NOT NULL,
+        size        int NOT NULL,
+        status      text NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'approved', 'rejected')),
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        reviewed_at timestamptz
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS session_photos_session_idx ON session_photos (session, status)`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -3136,4 +3158,161 @@ export async function memberAttendedWeek(memberId: string, week: string): Promis
     [memberId, week],
   );
   return result.rows[0]?.session ?? null;
+}
+
+// ── Session photos ─────────────────────────────────────────────────────
+// Upload, review and serve. The rules (what counts as a photo, how many, from
+// whom) live in session-photos.ts; these are only the statements.
+
+/** A stored photo's metadata, never its bytes. */
+export type SessionPhotoRow = {
+  id: string;
+  session: string;
+  width: number;
+  height: number;
+  size: number;
+  status: "pending" | "approved" | "rejected";
+  created_at: Date;
+};
+
+/** How many photos are waiting for review, across every session. */
+export async function countPendingPhotos(): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM session_photos WHERE status = 'pending'`,
+  );
+  return result.rows[0]?.n ?? 0;
+}
+
+/**
+ * Stores an upload as pending, unless that would take the review queue past
+ * `maxPending` — then stores nothing and answers "full".
+ *
+ * The count and the insert share a transaction behind an advisory lock, so
+ * parallel uploads queue up here instead of all reading the same count and
+ * all going through. One insert statement, so a batch is all or nothing.
+ */
+export async function saveSessionPhotos(
+  session: string,
+  photos: readonly { bytes: Buffer; width: number; height: number }[],
+  maxPending: number,
+): Promise<number | "full"> {
+  await ensureSchema();
+
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    // Any fixed number works; it only has to be this one everywhere.
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('session_photos.pending'))");
+
+    const pending = await client.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM session_photos WHERE status = 'pending'`,
+    );
+    if ((pending.rows[0]?.n ?? 0) + photos.length > maxPending) {
+      await client.query("ROLLBACK");
+      return "full";
+    }
+
+    const result = await client.query(
+      `INSERT INTO session_photos (session, image, width, height, size)
+       SELECT $1::date, p.image, p.width, p.height, length(p.image)
+         FROM unnest($2::bytea[], $3::int[], $4::int[]) AS p(image, width, height)`,
+      [session, photos.map((p) => p.bytes), photos.map((p) => p.width), photos.map((p) => p.height)],
+    );
+    await client.query("COMMIT");
+    return result.rowCount ?? 0;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Status, and the bytes only if this caller may have them: approved, or the
+ * organiser asking. Decided in the query so a refused request reads nothing
+ * heavy — see `servePhoto`, which still checks again.
+ */
+export async function getSessionPhoto(
+  id: string,
+  includeUnapproved: boolean,
+): Promise<{ bytes: Buffer | null; status: string } | null> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ image: Buffer | null; status: string }>(
+    `SELECT CASE WHEN status = 'approved' OR $2::boolean THEN image END AS image, status
+       FROM session_photos WHERE id = $1`,
+    [id, includeUnapproved],
+  );
+  const row = result.rows[0];
+  return row ? { bytes: row.image, status: row.status } : null;
+}
+
+/** The approved photos of one session, oldest first. Public. */
+export async function listApprovedSessionPhotos(session: string): Promise<SessionPhotoRow[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<SessionPhotoRow>(
+    `SELECT id::text, to_char(session, 'YYYY-MM-DD') AS session, width, height, size, status, created_at
+       FROM session_photos
+      WHERE session = $1 AND status = 'approved'
+      ORDER BY created_at, id`,
+    [session],
+  );
+  return result.rows;
+}
+
+/** Everything still holding bytes, for /admin: the queue first, then what is live. */
+export async function listPhotosForReview(): Promise<SessionPhotoRow[]> {
+  await ensureSchema();
+
+  const result = await getPool().query<SessionPhotoRow>(
+    `SELECT id::text, to_char(session, 'YYYY-MM-DD') AS session, width, height, size, status, created_at
+       FROM session_photos
+      WHERE status IN ('pending', 'approved')
+      ORDER BY (status = 'pending') DESC, session DESC, created_at, id`,
+  );
+  return result.rows;
+}
+
+/** Approve a waiting photo. Only a pending one: approving never revives a rejected row. */
+export async function approveSessionPhoto(id: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE session_photos SET status = 'approved', reviewed_at = now() WHERE id = $1 AND status = 'pending'`,
+    [id],
+  );
+}
+
+/** Reject a photo, pending or already live: it stops showing and its bytes go. */
+export async function rejectSessionPhoto(id: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(
+    `UPDATE session_photos SET status = 'rejected', image = NULL, reviewed_at = now() WHERE id = $1`,
+    [id],
+  );
+}
+
+/**
+ * Reject everything still waiting, in one go — the way out if the queue was
+ * flooded. Returns how many were rejected.
+ */
+export async function rejectAllPendingPhotos(): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query(
+    `UPDATE session_photos SET status = 'rejected', image = NULL, reviewed_at = now() WHERE status = 'pending'`,
+  );
+  return result.rowCount ?? 0;
+}
+
+/** Remove a photo and its row entirely. */
+export async function deleteSessionPhoto(id: string): Promise<void> {
+  await ensureSchema();
+
+  await getPool().query(`DELETE FROM session_photos WHERE id = $1`, [id]);
 }
