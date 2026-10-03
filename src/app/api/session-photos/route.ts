@@ -1,4 +1,4 @@
-import { countPendingPhotos, saveSessionPhotos } from "@/lib/db";
+import { saveSessionPhotos } from "@/lib/db";
 import { handlePhotoUpload } from "@/lib/session-photos";
 import { sydneyToday } from "@/lib/sessions";
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     return await handlePhotoUpload(
       request,
-      { pendingCount: countPendingPhotos, save: saveSessionPhotos },
+      { save: saveSessionPhotos },
       sydneyToday().toISOString().slice(0, 10),
     );
   } catch (error) {

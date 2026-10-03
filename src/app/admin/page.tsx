@@ -573,6 +573,15 @@ export default async function AdminPage({ searchParams }: PageProps) {
           通过之前看一眼：照片里认得出来的人，是不是都同意上网。拒绝会删掉图片本身；删除连记录一起删。
         </p>
 
+        {photos.some((p) => p.status === "pending") && (
+          <form method="post" action="/api/admin/photos">
+            <input type="hidden" name="action" value="reject-all-pending" />
+            <button className="btn btn--secondary btn--sm" type="submit">
+              全部待审一键拒绝（被刷屏时用）
+            </button>
+          </form>
+        )}
+
         {photos.length === 0 ? (
           <p className="body-sm">还没有人上传照片。</p>
         ) : (

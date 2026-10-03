@@ -3185,32 +3185,66 @@ export async function countPendingPhotos(): Promise<number> {
   return result.rows[0]?.n ?? 0;
 }
 
-/** Stores an upload as pending. One statement, so a batch is all or nothing. */
+/**
+ * Stores an upload as pending, unless that would take the review queue past
+ * `maxPending` — then stores nothing and answers "full".
+ *
+ * The count and the insert share a transaction behind an advisory lock, so
+ * parallel uploads queue up here instead of all reading the same count and
+ * all going through. One insert statement, so a batch is all or nothing.
+ */
 export async function saveSessionPhotos(
   session: string,
   photos: readonly { bytes: Buffer; width: number; height: number }[],
-): Promise<number> {
+  maxPending: number,
+): Promise<number | "full"> {
   await ensureSchema();
 
-  const result = await getPool().query(
-    `INSERT INTO session_photos (session, image, width, height, size)
-     SELECT $1::date, p.image, p.width, p.height, length(p.image)
-       FROM unnest($2::bytea[], $3::int[], $4::int[]) AS p(image, width, height)`,
-    [session, photos.map((p) => p.bytes), photos.map((p) => p.width), photos.map((p) => p.height)],
-  );
-  return result.rowCount ?? 0;
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    // Any fixed number works; it only has to be this one everywhere.
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('session_photos.pending'))");
+
+    const pending = await client.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM session_photos WHERE status = 'pending'`,
+    );
+    if ((pending.rows[0]?.n ?? 0) + photos.length > maxPending) {
+      await client.query("ROLLBACK");
+      return "full";
+    }
+
+    const result = await client.query(
+      `INSERT INTO session_photos (session, image, width, height, size)
+       SELECT $1::date, p.image, p.width, p.height, length(p.image)
+         FROM unnest($2::bytea[], $3::int[], $4::int[]) AS p(image, width, height)`,
+      [session, photos.map((p) => p.bytes), photos.map((p) => p.width), photos.map((p) => p.height)],
+    );
+    await client.query("COMMIT");
+    return result.rowCount ?? 0;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /**
- * Bytes and status for the image route. The route — not this query — decides
- * who may see a photo that is not approved; see `servePhoto`.
+ * Status, and the bytes only if this caller may have them: approved, or the
+ * organiser asking. Decided in the query so a refused request reads nothing
+ * heavy — see `servePhoto`, which still checks again.
  */
-export async function getSessionPhoto(id: string): Promise<{ bytes: Buffer | null; status: string } | null> {
+export async function getSessionPhoto(
+  id: string,
+  includeUnapproved: boolean,
+): Promise<{ bytes: Buffer | null; status: string } | null> {
   await ensureSchema();
 
   const result = await getPool().query<{ image: Buffer | null; status: string }>(
-    `SELECT image, status FROM session_photos WHERE id = $1`,
-    [id],
+    `SELECT CASE WHEN status = 'approved' OR $2::boolean THEN image END AS image, status
+       FROM session_photos WHERE id = $1`,
+    [id, includeUnapproved],
   );
   const row = result.rows[0];
   return row ? { bytes: row.image, status: row.status } : null;
@@ -3261,6 +3295,19 @@ export async function rejectSessionPhoto(id: string): Promise<void> {
     `UPDATE session_photos SET status = 'rejected', image = NULL, reviewed_at = now() WHERE id = $1`,
     [id],
   );
+}
+
+/**
+ * Reject everything still waiting, in one go — the way out if the queue was
+ * flooded. Returns how many were rejected.
+ */
+export async function rejectAllPendingPhotos(): Promise<number> {
+  await ensureSchema();
+
+  const result = await getPool().query(
+    `UPDATE session_photos SET status = 'rejected', image = NULL, reviewed_at = now() WHERE status = 'pending'`,
+  );
+  return result.rowCount ?? 0;
 }
 
 /** Remove a photo and its row entirely. */

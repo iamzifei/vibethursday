@@ -6,9 +6,12 @@ import {
   canUploadTo,
   cleanJpeg,
   handlePhotoUpload,
+  isCrossSite,
+  limitKey,
   MAX_PENDING_PHOTOS,
   MAX_PHOTO_BYTES,
   MAX_PHOTOS_PER_UPLOAD,
+  PHOTOS_PER_IP_PER_HOUR,
   servePhoto,
   UPLOADS_PER_IP_PER_HOUR,
   type NewPhoto,
@@ -88,6 +91,56 @@ test("★ a real JPEG is kept, its size read, and its EXIF and comments removed"
   assert.ok(clean.bytes.length < jpeg().length);
 });
 
+test("★ nothing after the end of the image survives, and nothing between scans either", () => {
+  const exifSegment = segment(0xe1, Buffer.from("Exif\0\0GPS-between-scans"));
+  const progressive = Buffer.concat([
+    Buffer.from([0xff, 0xd8]),
+    segment(0xdb, Buffer.alloc(65, 1)),
+    sof(800, 600),
+    segment(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])),
+    Buffer.from([0x11, 0xff, 0x00, 0x22]),
+    exifSegment,
+    segment(0xfe, Buffer.from("comment between scans")),
+    segment(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])),
+    Buffer.from([0x33, 0xff, 0xd0, 0x44]), // a restart marker inside the data
+    Buffer.from([0xff, 0xd9]),
+    // What a phone appends: a second image with its own EXIF, then anything.
+    Buffer.from([0xff, 0xd8]),
+    segment(0xe1, Buffer.from("Exif\0\0GPS-in-hidden-image")),
+    Buffer.from("<html>after the end</html>"),
+  ]);
+
+  const clean = cleanJpeg(progressive);
+  assert.ok(clean);
+  const text = clean.bytes.toString("binary");
+  assert.ok(!text.includes("GPS"), "no EXIF anywhere");
+  assert.ok(!text.includes("comment"));
+  assert.ok(!text.includes("<html>"));
+  assert.ok(clean.bytes.subarray(-2).equals(Buffer.from([0xff, 0xd9])), "ends at the end-of-image marker");
+  assert.ok(text.includes("\x33\xff\xd0\x44"), "restart markers inside the data are kept as data");
+});
+
+test("a JFIF thumbnail, an MPF block and a second frame are not kept", () => {
+  const jfifWithThumb = Buffer.concat([Buffer.from("JFIF\0\x01\x01\0\0\x01\0\x01\x02\x01", "binary"), Buffer.alloc(6, 0x7a)]);
+  const clean = cleanJpeg(
+    Buffer.concat([
+      Buffer.from([0xff, 0xd8]),
+      segment(0xe0, jfifWithThumb),
+      segment(0xe0, Buffer.from("JFXX\0thumbnail-of-the-original")),
+      segment(0xe2, Buffer.from("MPF\0hidden-second-image")),
+      sof(100, 100),
+      SCAN,
+    ]),
+  );
+  assert.ok(clean);
+  const text = clean.bytes.toString("binary");
+  assert.ok(!text.includes("JFXX") && !text.includes("MPF") && !text.includes("zzz"));
+  assert.ok(text.includes("JFIF"));
+
+  // Two frames: the stored size could disagree with what a browser draws.
+  assert.equal(cleanJpeg(Buffer.concat([Buffer.from([0xff, 0xd8]), sof(10, 10), sof(4000, 4000), SCAN])), null);
+});
+
 test("★ anything that is not a JPEG by its bytes is refused, whatever it is called", () => {
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0, 0, 0, 0]);
   const html = Buffer.from("<html><script>alert(1)</script></html>");
@@ -103,6 +156,8 @@ test("★ anything that is not a JPEG by its bytes is refused, whatever it is ca
   assert.equal(cleanJpeg(jpeg().subarray(0, 60)), null);
   // No frame header, so no size: not stored.
   assert.equal(cleanJpeg(Buffer.concat([Buffer.from([0xff, 0xd8]), SCAN])), null);
+  // Never reaches the end-of-image marker.
+  assert.equal(cleanJpeg(jpeg().subarray(0, jpeg().length - 2)), null);
   // A frame claiming to be enormous (a decompression bomb for every viewer).
   assert.equal(cleanJpeg(jpeg({ width: 30000, height: 30000 })), null);
   assert.equal(cleanJpeg(jpeg({ width: 0, height: 100 })), null);
@@ -114,12 +169,14 @@ let ipCounter = 0;
 /** A fresh caller address per request group, so tests do not share a rate window. */
 const freshIp = () => `203.0.113.${++ipCounter}`;
 
+/** Mirrors `saveSessionPhotos`: refuses, storing nothing, past the ceiling. */
 function fakeStore(pending = 0): UploadStore & { saved: { session: string; photos: NewPhoto[] }[] } {
   const saved: { session: string; photos: NewPhoto[] }[] = [];
   return {
     saved,
-    pendingCount: async () => pending,
-    save: async (session, photos) => {
+    save: async (session, photos, maxPending) => {
+      if (pending + photos.length > maxPending) return "full";
+      pending += photos.length;
       saved.push({ session, photos });
       return photos.length;
     },
@@ -229,28 +286,92 @@ test("★ the review queue has a ceiling, so a flood cannot fill the database", 
   assert.equal(store.saved.length, 0);
 });
 
-test("★ one address is rate limited per hour; another address is not", async () => {
+test("★ one address is rate limited per hour by requests; another address is not", async () => {
   const store = fakeStore();
   const ip = freshIp();
 
+  // Refused requests (no consent here) count too: the limit runs before the body is read.
   for (let i = 0; i < UPLOADS_PER_IP_PER_HOUR; i += 1) {
-    const response = await handlePhotoUpload(upload([{ bytes: jpeg() }], { ip }), store, TODAY);
-    assert.equal(response.status, 200, `request ${i + 1} is within the limit`);
+    const response = await handlePhotoUpload(upload([{ bytes: jpeg() }], { ip, consent: "" }), store, TODAY);
+    assert.equal(response.status, 400, `request ${i + 1} is within the limit`);
   }
 
   const over = await handlePhotoUpload(upload([{ bytes: jpeg() }], { ip }), store, TODAY);
   assert.equal(over.status, 429);
   assert.ok(Number(over.headers.get("retry-after")) > 0);
-  assert.equal(store.saved.length, UPLOADS_PER_IP_PER_HOUR, "the refused one stored nothing");
+  assert.equal(store.saved.length, 0, "the refused one stored nothing");
 
   const other = await handlePhotoUpload(upload([{ bytes: jpeg() }]), store, TODAY);
   assert.equal(other.status, 200);
 });
 
+test("★ the limit also counts photos, so five-at-a-time cannot fill the queue", async () => {
+  const store = fakeStore();
+  const ip = freshIp();
+  const five = Array.from({ length: 5 }, () => ({ bytes: jpeg() }));
+  let stored = 0;
+
+  for (let i = 0; i < 10; i += 1) {
+    const response = await handlePhotoUpload(upload(five, { ip }), store, TODAY);
+    if (response.status === 200) stored += 5;
+    else assert.equal(response.status, 429);
+  }
+  assert.equal(stored, PHOTOS_PER_IP_PER_HOUR);
+});
+
+test("an IPv6 caller is limited per /64; an IPv4 address written as IPv6 is itself", () => {
+  assert.equal(limitKey("2001:db8:1:2:aaaa::1"), limitKey("2001:db8:1:2:bbbb:cccc:dddd:eeee"));
+  assert.notEqual(limitKey("2001:db8:1:2::1"), limitKey("2001:db8:1:3::1"));
+  assert.equal(limitKey("::ffff:198.51.100.7"), "198.51.100.7");
+  assert.notEqual(limitKey("::ffff:198.51.100.7"), limitKey("::ffff:198.51.100.8"));
+  assert.equal(limitKey("198.51.100.7"), "198.51.100.7");
+});
+
+test("★ a chunked body with no declared length is still capped while it is read", async () => {
+  const store = fakeStore();
+  let sent = 0;
+  const chunk = new Uint8Array(256 * 1024);
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      sent += chunk.byteLength;
+      if (sent > 30 * 1024 * 1024) controller.close();
+      else controller.enqueue(chunk);
+    },
+  });
+  const request = new Request("http://localhost/api/session-photos", {
+    method: "POST",
+    body: stream,
+    headers: { "x-forwarded-for": freshIp(), "content-type": "multipart/form-data; boundary=x" },
+    duplex: "half",
+  } as RequestInit);
+
+  const response = await handlePhotoUpload(request, store, TODAY);
+  assert.equal(response.status, 413);
+  assert.ok(sent < 8 * 1024 * 1024, `stopped reading early (read ${sent} bytes)`);
+});
+
+test("★ a request another site's page sent is refused", async () => {
+  const store = fakeStore();
+  const cross = upload([{ bytes: jpeg() }], { headers: { "sec-fetch-site": "cross-site" } });
+  assert.equal((await handlePhotoUpload(cross, store, TODAY)).status, 403);
+  assert.equal(store.saved.length, 0);
+
+  const same = upload([{ bytes: jpeg() }], { headers: { "sec-fetch-site": "same-origin" } });
+  assert.equal((await handlePhotoUpload(same, store, TODAY)).status, 200);
+
+  assert.equal(isCrossSite(new Request("http://x", { headers: { "sec-fetch-site": "same-site" } })), true);
+  assert.equal(isCrossSite(new Request("http://x")), false, "no header: a script, still bound by every limit");
+});
+
 // ── Serving: nothing public until approved ─────────────────────────────
 
+/** Mirrors `getSessionPhoto`: no bytes unless approved or the organiser asks. */
 function getter(rows: Record<string, StoredPhoto>) {
-  return async (id: string) => rows[id] ?? null;
+  return async (id: string, includeUnapproved: boolean) => {
+    const row = rows[id];
+    if (!row) return null;
+    return { status: row.status, bytes: row.status === "approved" || includeUnapproved ? row.bytes : null };
+  };
 }
 
 const BYTES = cleanJpeg(jpeg())!.bytes;
@@ -334,7 +455,9 @@ test(
 
     try {
       const before = (await db.listApprovedSessionPhotos(session)).length;
-      assert.equal(await db.saveSessionPhotos(session, [cleanJpeg(jpeg())!]), 1);
+      assert.equal(await db.saveSessionPhotos(session, [cleanJpeg(jpeg())!], 1_000_000), 1);
+      // The ceiling is enforced by the insert itself.
+      assert.equal(await db.saveSessionPhotos(session, [cleanJpeg(jpeg())!], 0), "full");
 
       const queued = (await db.listPhotosForReview()).find((row) => row.status === "pending" && row.session === session);
       assert.ok(queued, "the upload is in the review queue");
@@ -355,10 +478,19 @@ test(
 
       // Approving never brings a rejected photo back.
       await db.approveSessionPhoto(queued.id);
-      assert.equal((await db.getSessionPhoto(queued.id))?.status, "rejected");
+      assert.equal((await db.getSessionPhoto(queued.id, true))?.status, "rejected");
 
       await db.deleteSessionPhoto(queued.id);
-      assert.equal(await db.getSessionPhoto(queued.id), null);
+      assert.equal(await db.getSessionPhoto(queued.id, true), null);
+
+      // Twenty uploads at once against a ceiling of current + 3: exactly three get in.
+      const base = await db.countPendingPhotos();
+      const results = await Promise.all(
+        Array.from({ length: 20 }, () => db.saveSessionPhotos(session, [cleanJpeg(jpeg())!], base + 3)),
+      );
+      assert.equal(results.filter((r) => r === 1).length, 3);
+      assert.ok((await db.rejectAllPendingPhotos()) >= 3);
+      assert.equal(await db.countPendingPhotos(), 0);
     } finally {
       await db.getPool().end();
     }
