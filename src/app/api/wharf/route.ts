@@ -17,12 +17,6 @@ import { bodyTooLarge, boundedRequest, checkRateLimit } from "@/lib/rate-limit";
 import { nextThursdays } from "@/lib/sessions";
 import { findSimilar } from "@/lib/wharf-similar";
 
-/**
- * The most this route reads from a request body. Checked twice: up front
- * against the declared length, and again while the body is read, which is
- * what catches a chunked request that declares none (see `boundedRequest`).
- */
-const MAX_BODY = 64 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +38,19 @@ export const dynamic = "force-dynamic";
 
 /** Server-side ceiling. The browser resizes to 1600px and re-encodes first. */
 const MAX_IMAGE_BYTES = 500 * 1024;
+
+/**
+ * The most this route reads from a request body. Checked twice: up front
+ * against the declared length, and again while the body is read, which is
+ * what catches a chunked request that declares none (see `boundedRequest`).
+ *
+ * It must leave room for the largest image an answer may carry plus the text
+ * fields and multipart framing. It used to be a flat 64 KB, which meant any
+ * image over 64 KB was rejected with 413 before MAX_IMAGE_BYTES was ever
+ * checked — the 500 KB image limit could never actually be reached.
+ * 64 KB of headroom covers the text fields (a few KB at most) and boundaries.
+ */
+const MAX_BODY = MAX_IMAGE_BYTES + 64 * 1024;
 const MAX_ANSWER = 2000;
 const MAX_QUESTION = 300;
 const MAX_OUTCOME = 300;
