@@ -57,9 +57,13 @@ export default async function LoginPage({ searchParams }: PageProps) {
   // Whose signup: in WeChat, the one this WeChat is tied to; elsewhere, the
   // one this browser remembers. A failed read is "nobody", never an error page.
   let name: string | null = null;
+  let signedIn = false;
   try {
     const id = inWeChat && openid ? await findSignupIdByOpenid(openid) : rememberedId;
     name = id ? (await getSignupProfile(id))?.name ?? null : null;
+    // Logged in = this browser's remember cookie names that same signup. In
+    // WeChat the tie can exist without it (linked after the WeChat login).
+    signedIn = Boolean(id && rememberedId === id);
   } catch (error) {
     console.error("[login] could not read who this is", error);
   }
@@ -67,7 +71,12 @@ export default async function LoginPage({ searchParams }: PageProps) {
   // Already recognised and not here to confirm a computer: nothing to do on
   // this page — straight back to where they were going (2026-10-05). The form
   // there greets them by name and has its own "not me".
-  if (name && !qr && wechatConfigured()) redirect(langHref(next, lang));
+  // Recognised by WeChat but not yet logged in on this browser: log it in on
+  // the way back, or the form would not know them and the button would seem
+  // to do nothing (2026-10-05, measured on a phone).
+  if (name && !qr && wechatConfigured()) {
+    redirect(signedIn ? langHref(next, lang) : `/api/wechat/session?next=${encodeURIComponent(langHref(next, lang))}`);
+  }
 
   const qrState = qr ? await qrLoginStatus(qr).catch(() => "missing" as const) : null;
   const pin = qr && qrState === "pending" ? await qrLoginPin(qr).catch(() => null) : null;

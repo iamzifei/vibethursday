@@ -90,7 +90,13 @@ export async function POST(request: Request) {
       // The number on the computer's screen. Without it — someone sent the
       // link rather than scanning it — the login cannot go through.
       const pin = clean(form?.get("pin"), 4);
-      if (!pin) return back({ step: "pin" });
+      if (!pin) {
+        // Linked just now: this phone is logged in from here on too, not only
+        // the computer it is about to confirm.
+        const response = back({ step: "pin" });
+        if (proved) response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+        return response;
+      }
       const result = await approveQrLogin(qr, signupId, openid, pin);
       if (result === "wrong") return back({ err: "pin" });
       if (result === "gone") return back({ err: "expired" });
