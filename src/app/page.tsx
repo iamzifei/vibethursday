@@ -327,6 +327,10 @@ export default async function Page({ searchParams }: PageProps) {
               copy={c.signup}
               sessions={sessions}
               knownProfile={knownProfile}
+              wechatBind={(() => {
+                const href = knownProfile && !knownProfile.wechatLinked ? wechatLoginHref("/#signup", LANG_PARAM[lang]) : null;
+                return href ? { href, label: c.login.bindEntry } : null;
+              })()}
               wechatLogin={(() => {
                 const href = wechatLoginHref("/#signup", LANG_PARAM[lang]);
                 return href ? { href, label: c.login.entry, hint: c.login.entryHint, or: c.login.orFill } : null;

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { approveQrLogin, bindOpenid, findMySignup, findSignupIdByOpenid } from "@/lib/db";
-import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
+import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { looksLikeQrToken, readOpenidToken, wechatConfigured } from "@/lib/wechat-auth";
@@ -72,7 +72,16 @@ export async function POST(request: Request) {
     let signupId: string | null = null;
     let proved = false;
 
-    if (name && wechat) {
+    // "Link to X?" on /login: the signup this browser already remembers, tied
+    // with the person's own tap — the remember cookie stands in for typing a
+    // name and WeChat ID, exactly as it already does for /my.
+    const remembered = form?.get("useRemembered") === "1" ? readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value) : null;
+
+    if (remembered) {
+      await bindOpenid(remembered, openid);
+      signupId = remembered;
+      proved = true;
+    } else if (name && wechat) {
       const found = await findMySignup(name, wechat);
       if (!found) return back({ err: "notfound" });
       if ("nameHint" in found) return back({ err: "name", h: found.nameHint });

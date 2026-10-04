@@ -142,7 +142,13 @@ test("★ the browser is only ever given a remembered visitor's name", async () 
   // (2026-10-04 review). The form gets the name; the route fills in the rest.
   const { readFileSync } = await import("node:fs");
   const source = readFileSync(new URL("../src/lib/known-profile.ts", import.meta.url), "utf8");
-  assert.match(source, /return profile \? \{ name: profile\.name \} : null;/);
+  // The one object that leaves: its fields may grow (2026-10-05: whether a
+  // WeChat is linked, a yes/no), but never a contact detail or "building".
+  const returned = /return profile \? (\{[^}]*\}) : null;/.exec(source)?.[1] ?? "";
+  assert.match(returned, /name: profile\.name/);
+  for (const secret of ["email", "wechat:", "building"]) {
+    assert.ok(!returned.includes(secret), `known-profile.ts sends ${secret} to the browser: ${returned}`);
+  }
 });
 
 test("★ a scan-to-log-in code can only be collected by the computer that showed it", async () => {

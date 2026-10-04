@@ -35,6 +35,11 @@ type Props = {
    * in when the form is sent with `fromCookie` (see the signup route).
    */
   knownProfile?: { name: string } | null;
+  /**
+   * "Link WeChat" under the welcome-back line, for someone this browser knows
+   * whose signup has no WeChat tied yet. One tap on /login, no typing.
+   */
+  wechatBind?: { href: string; label: string } | null;
   /** "Continue with WeChat": the link and its words, or null while login is off. */
   wechatLogin?: { href: string; label: string; hint: string; or: string } | null;
 };
@@ -82,7 +87,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  */
 const EXTRA_FIELDS = ["source", "aiSpend", "building", "email", "industry"];
 
-export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null }: Props) {
+export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null, wechatBind = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   useEffect(() => {
     if (status === "done") doneRef.current?.focus();
@@ -651,6 +656,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           <button type="button" className="link-button" onClick={() => setEditing(true)}>
             {copy.returning.notYou}
           </button>
+          {wechatBind && (
+            <a className="body-sm" href={wechatBind.href}>
+              {wechatBind.label}
+            </a>
+          )}
         </div>
       ) : (
         <div className="stack-2">

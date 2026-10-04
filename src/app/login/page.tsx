@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WechatQrLogin } from "@/components/WechatQrLogin";
+import { WeChatMark } from "@/components/WeChatMark";
 import { getCopy, resolveLang } from "@/lib/content";
 import { findSignupIdByOpenid, getSignupProfile, qrLoginPin, qrLoginStatus } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
@@ -16,7 +17,7 @@ import { isWeChatBrowser, safeNext, WX_OPENID_COOKIE } from "@/lib/wechat-gate";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string; next?: string; qr?: string; err?: string; h?: string; ok?: string; done?: string }>;
+  searchParams: Promise<{ lang?: string; next?: string; qr?: string; err?: string; h?: string; ok?: string; done?: string; wx?: string }>;
 };
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -58,15 +59,30 @@ export default async function LoginPage({ searchParams }: PageProps) {
   // one this browser remembers. A failed read is "nobody", never an error page.
   let name: string | null = null;
   let signedIn = false;
+  // The signup this browser remembers, when this WeChat is not tied to any
+  // yet: offered as a one-tap "link to X?" instead of retyping a name and
+  // WeChat ID (James 2026-10-05). Never tied silently — on a shared phone the
+  // remembered signup can be a friend's, so the person confirms it is them.
+  let rememberedName: string | null = null;
   try {
-    const id = inWeChat && openid ? await findSignupIdByOpenid(openid) : rememberedId;
+    const openidId = openid ? await findSignupIdByOpenid(openid) : null;
+    const id = inWeChat && openid ? openidId : rememberedId;
     name = id ? (await getSignupProfile(id))?.name ?? null : null;
     // Logged in = this browser's remember cookie names that same signup. In
     // WeChat the tie can exist without it (linked after the WeChat login).
     signedIn = Boolean(id && rememberedId === id);
+    if (inWeChat && openid && !openidId && rememberedId) {
+      rememberedName = (await getSignupProfile(rememberedId))?.name ?? null;
+    }
   } catch (error) {
     console.error("[login] could not read who this is", error);
   }
+
+  // In WeChat without its login yet — usually someone this browser already
+  // remembers, whom the proxy therefore never sent round — go and get it
+  // first, then come back here (`wx=1` stops a second attempt if it fails).
+  const startHref = `/api/wechat/start?next=${encodeURIComponent(`/login?${new URLSearchParams({ ...(qr ? { qr } : {}), ...(next !== "/" ? { next } : {}), ...(params.lang ? { lang: params.lang } : {}), wx: "1" }).toString()}`)}`;
+  if (wechatConfigured() && inWeChat && !openid && !params.wx) redirect(startHref);
 
   // Already recognised and not here to confirm a computer: nothing to do on
   // this page — straight back to where they were going (2026-10-05). The form
@@ -86,7 +102,6 @@ export default async function LoginPage({ searchParams }: PageProps) {
   // own words above a login button (review).
   const errKey = params.err && Object.hasOwn(t.errors, params.err) ? (params.err as keyof typeof t.errors) : null;
   const error = errKey ? t.errors[errKey].replace("{h}", (params.h ?? "").slice(0, 2)) : null;
-  const startHref = `/api/wechat/start?next=${encodeURIComponent(`/login?${new URLSearchParams({ ...(qr ? { qr } : {}), ...(next !== "/" ? { next } : {}), ...(params.lang ? { lang: params.lang } : {}) }).toString()}`)}`;
 
   const hidden = (
     <>
@@ -177,13 +192,16 @@ export default async function LoginPage({ searchParams }: PageProps) {
       </div>
     );
   } else if (qr) {
-    // A phone that scanned a computer's code.
-    body = name ? (
+    // A phone that scanned a computer's code. Tied already, or remembered by
+    // this browser (then picking the number also ties this WeChat).
+    const who = name ?? rememberedName;
+    body = who ? (
       <form method="post" action="/api/wechat/link" className="card stack-4">
         {hidden}
+        {!name && <input type="hidden" name="useRemembered" value="1" />}
         <h2 className="h3">{t.qrConfirmTitle}</h2>
         <p className="body">{t.qrConfirmBody}</p>
-        <p className="body-lg" style={{ margin: 0 }}><strong>{t.qrConfirmAs.replace("{name}", name)}</strong></p>
+        <p className="body-lg" style={{ margin: 0 }}><strong>{t.qrConfirmAs.replace("{name}", who)}</strong></p>
         {/* Three numbers, one of them on the computer's screen. Each is its own
             submit button, so the pick is the confirmation. */}
         <p className="body" style={{ margin: 0 }}>{t.qrPinPrompt}</p>
@@ -215,6 +233,23 @@ export default async function LoginPage({ searchParams }: PageProps) {
           {notMe}
         </div>
       </div>
+    );
+  } else if (inWeChat && rememberedName) {
+    // One tap instead of retyping: this browser already knows who this is.
+    body = (
+      <form method="post" action="/api/wechat/link" className="card card--accent stack-4">
+        {hidden}
+        <input type="hidden" name="useRemembered" value="1" />
+        <h2 className="h3">{t.bindTitle}</h2>
+        <p className="body" style={{ margin: 0 }}>{t.bindBody.replace("{name}", rememberedName)}</p>
+        <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", alignItems: "center" }}>
+          <button className="btn btn--wechat" type="submit">
+            <WeChatMark />
+            {t.bindCta.replace("{name}", rememberedName)}
+          </button>
+          {notMe}
+        </div>
+      </form>
     );
   } else if (inWeChat) {
     body = (

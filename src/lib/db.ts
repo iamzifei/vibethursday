@@ -1001,15 +1001,15 @@ export type SignupRow = {
  * browser (`known-profile.ts`): a remember cookie rests on a weak proof, so it
  * must not be a way to read someone's email or WeChat ID.
  */
-export async function getSignupProfile(id: string): Promise<{ name: string; email: string; wechat: string; building: string } | null> {
+export async function getSignupProfile(id: string): Promise<{ name: string; email: string; wechat: string; building: string; wechatLinked: boolean } | null> {
   await ensureSchema();
-  const result = await getPool().query<{ name: string; email: string | null; wechat: string | null; building: string | null }>(
-    `SELECT name, email, wechat, building FROM signups WHERE id = $1::bigint`,
+  const result = await getPool().query<{ name: string; email: string | null; wechat: string | null; building: string | null; linked: boolean }>(
+    `SELECT name, email, wechat, building, wechat_openid IS NOT NULL AS linked FROM signups WHERE id = $1::bigint`,
     [id],
   );
   const row = result.rows[0];
   if (!row || (!row.email && !row.wechat)) return null;
-  return { name: row.name, email: row.email ?? "", wechat: row.wechat ?? "", building: row.building ?? "" };
+  return { name: row.name, email: row.email ?? "", wechat: row.wechat ?? "", building: row.building ?? "", wechatLinked: row.linked };
 }
 
 /** QR codes older than this are expired. Kept in step with QR_TTL_MS. */

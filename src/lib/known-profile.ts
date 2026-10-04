@@ -9,11 +9,11 @@ import { readRememberToken, REMEMBER_COOKIE } from "./my-signup.ts";
  * Null when it is not remembered, and on any failure: a page must never fail
  * because of this.
  */
-export async function knownProfileFromCookie(): Promise<{ name: string } | null> {
+export async function knownProfileFromCookie(): Promise<{ name: string; wechatLinked: boolean } | null> {
   try {
     const id = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
     const profile = id ? await getSignupProfile(id) : null;
-    return profile ? { name: profile.name } : null;
+    return profile ? { name: profile.name, wechatLinked: profile.wechatLinked } : null;
   } catch (error) {
     console.error("[signup] could not read the remembered profile", error);
     return null;
