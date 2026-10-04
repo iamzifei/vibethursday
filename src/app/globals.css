@@ -964,6 +964,53 @@ a.pill:hover { border-color: var(--border-strong); background: var(--bg-tertiary
 .btn--wechat:hover { background: #03693a; color: #ffffff; }
 .btn--wechat svg { flex: none; }
 
+/* The signup form's steps (2026-10-05). Phone first: a slim four-part bar
+   and one line of text, then each step under a small numbered label. No
+   sticky header and no "next" buttons — on a narrow screen those cost more
+   room than they save. */
+.signup-progress { display: grid; gap: var(--space-2); }
+.signup-progress__bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+}
+.signup-progress__seg {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  transition: background var(--dur-normal);
+}
+.signup-progress__seg.is-done { background: var(--accent); }
+.signup-progress__seg.is-current { background: var(--accent-muted); }
+.signup-progress__label {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--fg3);
+}
+
+.signup-step { padding-top: var(--space-2); }
+.signup-step + .signup-step { border-top: 1px solid var(--border-subtle); padding-top: var(--space-6); }
+.signup-step__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--fg2);
+}
+.signup-step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
 /* "or fill it in": the line between the WeChat button and the form. */
 .or-divider {
   display: flex;

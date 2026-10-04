@@ -62,8 +62,7 @@ type Receipt = {
   remembered: boolean;
 };
 
-/** Purposes that mean "I build things" — the people Build Tuesday is for. */
-const BUILDER_PURPOSES = new Set(["product", "tech"]);
+
 
 /**
  * Unsent form contents, kept separately from the saved profile
@@ -85,7 +84,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  * checkbox group and the draft does not round-trip those, so it is not listed —
  * see the note on `saveDraft`.
  */
-const EXTRA_FIELDS = ["source", "aiSpend", "building", "email", "industry"];
+const EXTRA_FIELDS = ["source", "email"];
 
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null, wechatBind = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
@@ -100,16 +99,23 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
   const [editing, setEditing] = useState(false);
-  // Read back from the uncontrolled session select and purpose radios, only to
-  // decide whether to suggest Build Tuesday. The form still reads itself with
-  // FormData on submit.
   // The nearest Thursday, never a Build Tuesday: the Tuesday sorts first in
   // the week it falls in, and someone who just presses submit meant Thursday.
   // On /tuesday every option is a Tuesday, so the first one stands.
   const defaultSession = sessions.find((session) => !session.tuesday)?.value ?? sessions[0]?.value;
-  const [pickedSession, setPickedSession] = useState<string | undefined>(defaultSession);
+  // Step 2's answer, read back from the uncontrolled radios: it decides which
+  // questions steps 3 and 4 show. The form still reads itself with FormData.
   const [pickedPurpose, setPickedPurpose] = useState<string | null>(null);
   const sessionRef = useRef<HTMLSelectElement>(null);
+  // Set once the person picks a morning themselves; after that, changing
+  // their answer in step 2 never moves the morning they chose.
+  const sessionTouched = useRef(false);
+  // Whether step 1 is complete, read from the form on every input (the fields
+  // are uncontrolled). Only drives the progress bar.
+  const [identityFilled, setIdentityFilled] = useState(false);
+  // The draft read on mount, kept so it can be applied again to the step 3/4
+  // fields, which only exist once a kind has been picked.
+  const draftRef = useRef<Record<string, string> | null>(null);
   // The one-tap "what else would you come to" on the confirmation.
   const [interest, setInterest] = useState<"idle" | "sending" | "done">("idle");
 
@@ -178,6 +184,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
     const form = formRef.current;
 
     if (!draft || !form) return;
+    draftRef.current = draft;
 
     for (const [name, value] of Object.entries(draft)) {
       const element = form.elements.namedItem(name);
@@ -188,9 +195,14 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         (element as { value: string }).value = value;
       }
     }
-    // The restore writes the DOM directly, so the two values the Build Tuesday
-    // nudge reads are brought back in step with what the form now shows.
-    setPickedSession(sessionRef.current?.value || undefined);
+    // The restore writes the DOM directly, so the state that drives the steps
+    // is brought back in step with what the form now shows. Steps 3 and 4 do
+    // not exist yet; the effect below fills them once the kind is restored.
+    const readField = (name: string) => {
+      const element = form.elements.namedItem(name);
+      return element instanceof HTMLInputElement ? element.value.trim() : "";
+    };
+    setIdentityFilled(Boolean(readField("name") && (readField("wechat") || readField("email"))));
     const restoredPurpose = form.elements.namedItem("purpose");
     setPickedPurpose(restoredPurpose && "value" in restoredPurpose ? (restoredPurpose as { value: string }).value || null : null);
     // Someone who opened the fold and answered something must not come back to
@@ -234,6 +246,49 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
     draftTimer.current = setTimeout(saveDraft, DRAFT_DEBOUNCE_MS);
   }, [saveDraft]);
 
+  // Every input: save the draft, and tell the progress bar whether step 1 is
+  // done (name, plus whichever contact this language requires).
+  const handleFormInput = useCallback(() => {
+    scheduleDraftSave();
+    const form = formRef.current;
+    if (!form) return;
+    const read = (name: string) => {
+      const element = form.elements.namedItem(name);
+      return element instanceof HTMLInputElement ? element.value.trim() : "";
+    };
+    const contact = copy.fields.wechatRequired ? read("wechat") : copy.fields.emailRequired ? read("email") : read("wechat") || read("email");
+    setIdentityFilled(Boolean(read("name") && contact));
+  }, [scheduleDraftSave, copy.fields.wechatRequired, copy.fields.emailRequired]);
+
+  // Steps 3 and 4 only exist once a kind is picked, so a draft restored on
+  // mount could not reach them. When they appear, put back anything the draft
+  // has for them — only into fields still empty, never over a fresh answer.
+  useEffect(() => {
+    const draft = draftRef.current;
+    const form = formRef.current;
+    if (!pickedPurpose || !draft || !form) return;
+    for (const name of ["industry", "building", "demoIntent", "aiLevel", "firstSession", "topic"]) {
+      const value = draft[name];
+      const element = form.elements.namedItem(name);
+      if (!value || !element || !("value" in element)) continue;
+      if (name === "firstSession") {
+        // A morning they had picked themselves stays picked — if it is still
+        // offered. A date gone from the list would leave the picker blank and
+        // the signup with no session.
+        if (!(element instanceof HTMLSelectElement)) continue;
+        const select = element;
+        if (![...select.options].some((option) => option.value === value)) continue;
+        select.value = value;
+        sessionTouched.current = true;
+      } else if (!(element as { value: string }).value) {
+        (element as { value: string }).value = value;
+      }
+    }
+    // Once. Re-applying on every later change of kind would put back a morning
+    // or a sentence they have since changed or cleared.
+    draftRef.current = null;
+  }, [pickedPurpose]);
+
   useEffect(() => () => {
     if (draftTimer.current) clearTimeout(draftTimer.current);
   }, []);
@@ -249,7 +304,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
     const name = returning ? profile!.name : String(data.get("name") ?? "").trim();
     const email = returning ? profile!.email : String(data.get("email") ?? "").trim();
     const wechat = returning ? profile!.wechat : String(data.get("wechat") ?? "").trim();
-    const building = returning ? profile!.building : String(data.get("building") ?? "").trim();
+    // Typed in step 3 wins; a returning visitor who left it empty keeps the
+    // one on file (step 3 now asks returning visitors too, 2026-10-05 review).
+    const building = String(data.get("building") ?? "").trim() || (returning ? profile!.building : "");
 
     // The Chinese form asks for a WeChat ID, the English one for an email —
     // that audience split is real, so the required field follows the language.
@@ -295,6 +352,17 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
     // The one required choice. Enforced here and not on the server: see the
     // PURPOSES note in the signup route. Not asked of someone who picked "no
     // morning works": the answer is stored against a session, and they have none.
+    // A kind the browser restored on its own (back button, reload) is checked
+    // in the page but unknown to React, so steps 3–4 — and the session picker —
+    // never appeared. Show them and let the person check before sending,
+    // rather than saving a signup with no session.
+    if (data.get("purpose") && !pickedPurpose) {
+      setPickedPurpose(String(data.get("purpose")));
+      setStatus("error");
+      setMessage(copy.errorPurpose);
+      return;
+    }
+
     if (data.get("firstSession") !== "none" && !data.get("purpose")) {
       setStatus("error");
       setMessage(copy.errorPurpose);
@@ -324,6 +392,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           availability: data.getAll("availability"),
           // Same reason as availability — a checkbox group, so getAll.
           aiModels: data.getAll("aiModels"),
+          // Step 3 for business owners; a checkbox group, so getAll.
+          bizFocus: data.getAll("bizFocus"),
           aiSpend: data.get("aiSpend"),
           purpose: data.get("purpose"),
           // Both optional. `get` returns null when unanswered (no radio
@@ -572,8 +642,36 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   }
 
   const sending = status === "sending";
-  // The Tuesday to suggest: the first one offered that still has room.
-  const tuesdayOption = sessions.find((session) => session.tuesday && !session.full);
+
+  /** Step 2 answered: record it, and (unless they already chose a morning)
+      move the session picker to the one suggested for this kind of person. */
+  function choosePurpose(value: string) {
+    setPickedPurpose(value);
+    if (!sessionTouched.current) {
+      const suggested = suggestedSession(value);
+      if (sessionRef.current && suggested) sessionRef.current.value = suggested;
+    }
+  }
+
+  /** Builders get the first open Build Tuesday; everyone else the nearest Thursday. */
+  function suggestedSession(purpose: string | null): string | undefined {
+    if (purpose === "product") {
+      const tuesday = sessions.find((session) => session.tuesday && !session.full);
+      if (tuesday) return tuesday.value;
+    }
+    return defaultSession;
+  }
+
+  /** The session list in the order this kind of person should see it. */
+  function orderedSessions(purpose: string | null): SessionOption[] {
+    if (purpose !== "product") return sessions;
+    return [...sessions.filter((session) => session.tuesday), ...sessions.filter((session) => !session.tuesday)];
+  }
+
+  // Progress: step 1 (who), 2 (which kind) and 4 (which morning) can be done;
+  // step 3 is optional and counts as passed once step 2 is.
+  const stepDone = [returning || identityFilled, Boolean(pickedPurpose), Boolean(pickedPurpose), false];
+  const currentStep = !stepDone[0] ? 1 : !stepDone[1] ? 2 : 4;
 
   // The widget stays mounted after it succeeds. Unmounting it on success would
   // also throw away Turnstile's expiry callback, and tokens expire in a few
@@ -614,8 +712,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
       onSubmit={handleSubmit}
       // Both events: `input` covers typing, `change` covers the radio group and
       // the session picker on the browsers that do not fire `input` for those.
-      onInput={scheduleDraftSave}
-      onChange={scheduleDraftSave}
+      onInput={handleFormInput}
+      onChange={handleFormInput}
       noValidate
     >
       {/* Honeypot. Hidden from sighted users and skipped by screen readers and
@@ -634,301 +732,316 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         </p>
       )}
 
-      {/* WeChat first, the way "continue with …" is done everywhere: one
-          full-width button in the brand's colour above the form, a line, then
-          the form for anyone who would rather type (2026-10-05: a text link
-          above the fields went unnoticed). Not for someone already known. */}
-      {!returning && wechatLogin && (
-        <div className="stack-3">
-          <a className="btn btn--wechat btn--block" href={wechatLogin.href}>
-            <WeChatMark />
-            {wechatLogin.label}
-          </a>
-          <p className="field-hint" style={{ margin: 0 }}>{wechatLogin.hint}</p>
-          <p className="or-divider" style={{ margin: 0 }}>{wechatLogin.or}</p>
+      {/* Where they are in the form (2026-10-05): four steps, the last two
+          only once a kind is picked. A slim bar plus "step n of 4" rather than
+          a numbered wizard — one page, one submit, nothing hidden behind a
+          "next" button, and it reads at a glance on a phone. */}
+      <div className="signup-progress" aria-hidden="true">
+        <div className="signup-progress__bar">
+          {copy.fields.steps.map((step, index) => (
+            <span
+              key={step}
+              className={`signup-progress__seg${index + 1 < currentStep || stepDone[index] ? " is-done" : ""}${index + 1 === currentStep ? " is-current" : ""}`}
+            />
+          ))}
         </div>
-      )}
+        <p className="signup-progress__label">
+          {copy.fields.stepOf.replace("{n}", String(currentStep)).replace("{total}", String(copy.fields.steps.length))} ·{" "}
+          {copy.fields.steps[currentStep - 1]}
+        </p>
+      </div>
 
-      {returning ? (
-        /* Known visitor: greeting plus the one thing that changes each week. */
-        <div className="returning">
-          <p className="returning__hello">{copy.returning.hello.replace("{name}", profile!.name)}</p>
-          <button type="button" className="link-button" onClick={() => setEditing(true)}>
-            {copy.returning.notYou}
-          </button>
-          {wechatBind && (
-            <a className="body-sm" href={wechatBind.href}>
-              {wechatBind.label}
+      <section className="signup-step stack-4" aria-labelledby={fieldId("step1")}>
+        <p className="signup-step__label" id={fieldId("step1")}><span className="signup-step__num">1</span>{copy.fields.steps[0]}</p>
+        {/* WeChat first, the way "continue with …" is done everywhere: one
+            full-width button in the brand's colour above the form, a line, then
+            the form for anyone who would rather type (2026-10-05: a text link
+            above the fields went unnoticed). Not for someone already known. */}
+        {!returning && wechatLogin && (
+          <div className="stack-3">
+            <a className="btn btn--wechat btn--block" href={wechatLogin.href}>
+              <WeChatMark />
+              {wechatLogin.label}
             </a>
-          )}
-        </div>
-      ) : (
-        <div className="stack-2">
-          {/* Name and WeChat only. Email moved into the fold on 2026-09-28: it
-              was always optional, and a claim matches on name plus WeChat ID. */}
-          <div className="grid-auto">
-            <div>
-              <label className="label" htmlFor={fieldId("name")}>
-                {copy.fields.name} <span className="required">*</span>
-              </label>
-              <input
-                className="field"
-                id={fieldId("name")}
-                name="name"
-                type="text"
-                required
-                autoComplete="name"
-                placeholder={copy.fields.namePlaceholder}
-              />
-            </div>
-
-            <div>
-              <label className="label" htmlFor={fieldId("wechat")}>
-                {copy.fields.wechat}
-                {copy.fields.wechatRequired && <span className="required"> *</span>}
-              </label>
-              <input
-                className="field"
-                id={fieldId("wechat")}
-                name="wechat"
-                type="text"
-                required={copy.fields.wechatRequired}
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                placeholder={copy.fields.wechatPlaceholder}
-              />
-            </div>
-
-            {/* ⚠️ Where email is required (the English form: WeChat is optional
-                there), it must never sit in the fold — a required field nobody
-                can see is a form nobody can send. Measured 2026-09-28: it did,
-                and English signups failed with the fold shut. */}
-            {copy.fields.emailRequired && emailField}
+            <p className="field-hint" style={{ margin: 0 }}>{wechatLogin.hint}</p>
+            <p className="or-divider" style={{ margin: 0 }}>{wechatLogin.or}</p>
           </div>
-          {/* field-hint, not privacy-note: that one pulls itself up under a pair of
-              inputs and overlapped the single WeChat field by 8px (2026-09-28). */}
-          <p className="field-hint">{copy.fields.contactPrivacy}</p>
-        </div>
-      )}
+        )}
 
-      {/* Which Thursday comes straight after who you are: it is the signup
-          itself, and everything below it is about that morning. */}
-      <div>
-        <label className="label" htmlFor={fieldId("session")}>
-          {copy.fields.session}
-        </label>
-        <select
-          className="field"
-          id={fieldId("session")}
-          name="firstSession"
-          ref={sessionRef}
-          onChange={(event) => setPickedSession(event.target.value)}
-          // The nearest Thursday, full or not. For one day (2026-09-28) this
-          // skipped to the first session with room, and people who meant this
-          // week were quietly signed up for next week instead — then signed up
-          // again, and ended up down for both. A full date says so in its label
-          // ("waitlist only" since 2026-10-01, when waitlisted people stopped
-          // being told to come anyway), so the date they most likely meant is
-          // still the right default — they can see it is full and pick another.
-          defaultValue={defaultSession}
-        >
-          {sessions.map((session) => (
-            <option key={session.value} value={session.value}>
-              {session.label}
-            </option>
-          ))}
-          {/* "none" is not a date, so the route's whitelist turns it into null
-              and the row is stored with no sessions — already a valid state.
-              Last, and never the default. */}
-          <option value="none">{copy.fields.sessionNone}</option>
-        </select>
-        <p className="field-hint">{copy.fields.sessionNoneHint}</p>
-      </div>
-
-      {/* Answered by returning visitors too: it is about this morning, not about
-          them. Full-width cards rather than pills — the labels are sentences, and
-          on a phone a sentence-long pill wraps into something hard to tap. No
-          default: a pre-selected option would count everyone who scrolled past. */}
-      <fieldset ref={purposeRef} style={{ border: 0, padding: 0, margin: 0 }}>
-        <legend className="label">
-          {copy.fields.purpose} <span className="required">*</span>
-        </legend>
-        <div className="choice-group choice-group--pairs">
-          {copy.fields.purposeOptions.map((option) => (
-            <label className="choice" key={option.value}>
-              <input type="radio" name="purpose" value={option.value} onChange={() => setPickedPurpose(option.value)} />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-        {/* Someone who builds things, signing up for a Thursday, while a Build
-            Tuesday has room: suggest it, one tap to switch. A nudge, never a
-            redirect — Thursday is still theirs if they want it. */}
-        {tuesdayOption && pickedPurpose && BUILDER_PURPOSES.has(pickedPurpose) && pickedSession !== tuesdayOption.value && (
-          <p className="field-hint" style={{ color: "var(--fg1)" }}>
-            {copy.tuesdayHint}{" "}
-            <button
-              type="button"
-              className="linkish"
-              onClick={() => {
-                if (sessionRef.current) sessionRef.current.value = tuesdayOption.value;
-                setPickedSession(tuesdayOption.value);
-              }}
-            >
-              {copy.tuesdayHintCta}
+        {returning ? (
+          /* Known visitor: greeting plus the one thing that changes each week. */
+          <div className="returning">
+            <p className="returning__hello">{copy.returning.hello.replace("{name}", profile!.name)}</p>
+            <button type="button" className="link-button" onClick={() => setEditing(true)}>
+              {copy.returning.notYou}
             </button>
-          </p>
-        )}
-      </fieldset>
+            {wechatBind && (
+              <a className="body-sm" href={wechatBind.href}>
+                {wechatBind.label}
+              </a>
+            )}
+          </div>
+        ) : (
+          <div className="stack-2">
+            {/* Name and WeChat only. Email moved into the fold on 2026-09-28: it
+                was always optional, and a claim matches on name plus WeChat ID. */}
+            <div className="grid-auto">
+              <div>
+                <label className="label" htmlFor={fieldId("name")}>
+                  {copy.fields.name} <span className="required">*</span>
+                </label>
+                <input
+                  className="field"
+                  id={fieldId("name")}
+                  name="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  placeholder={copy.fields.namePlaceholder}
+                />
+              </div>
 
-      {/* "How familiar with AI" and "which industry": who is in the room, so a
-          morning can be planned around it. Out in the open rather than in the
-          folded section — the folded AI questions are exactly the ones business
-          owners left blank. Shown to returning visitors too, since nobody had
-          been asked yet; a blank never overwrites an earlier answer.
-          Both optional, never checked before submit, and no default: a
-          pre-selected option would count everyone who scrolled past. */}
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-        <legend className="label">{copy.fields.aiLevel}</legend>
-        <div className="choice-group choice-group--compact">
-          {copy.fields.aiLevelOptions.map((option) => (
-            <label className="choice" key={option.value}>
-              <input type="radio" name="aiLevel" value={option.value} />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-        <p className="field-hint">{copy.fields.aiLevelHint}</p>
-      </fieldset>
+              <div>
+                <label className="label" htmlFor={fieldId("wechat")}>
+                  {copy.fields.wechat}
+                  {copy.fields.wechatRequired && <span className="required"> *</span>}
+                </label>
+                <input
+                  className="field"
+                  id={fieldId("wechat")}
+                  name="wechat"
+                  type="text"
+                  required={copy.fields.wechatRequired}
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder={copy.fields.wechatPlaceholder}
+                />
+              </div>
 
-      {/* The one field that says what someone actually wants from the morning,
-          and the one most often too vague to act on ("想了解了解"). The coach
-          below asks one follow-up question; it never rewrites the sentence and
-          never stands between anyone and the submit button. */}
-      <div>
-        <label className="label" htmlFor={fieldId("topic")}>
-          {copy.fields.topic}
-        </label>
-        <textarea
-          className="field"
-          id={fieldId("topic")}
-          name="topic"
-          rows={2}
-          ref={topicRef}
-          placeholder={copy.fields.topicPlaceholder}
-        />
-        <p className="field-hint">{copy.fields.topicHint}</p>
-
-        {coach && (
-          <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
-            <CoachRounds rounds={helper.rounds} verdict={helper.verdict} thinking={helper.thinking} copy={coach} />
-            <div>
-              <button
-                type="button"
-                className="btn btn--secondary btn--sm"
-                disabled={helper.thinking}
-                onClick={() => {
-                  const text = topicRef.current?.value.trim() ?? "";
-                  if (!text) {
-                    topicRef.current?.focus();
-                    return;
-                  }
-                  void helper.ask(text);
-                }}
-              >
-                {helper.rounds.length > 0 ? coach.coachAgain : coach.coachCta}
-              </button>
+              {/* ⚠️ Where email is required (the English form: WeChat is optional
+                  there), it must never sit in the fold — a required field nobody
+                  can see is a form nobody can send. Measured 2026-09-28: it did,
+                  and English signups failed with the fold shut. */}
+              {copy.fields.emailRequired && emailField}
             </div>
-            {/* The only third party anyone's writing reaches, and only on a press. */}
-            <p className="field-hint">{coach.coachNote}</p>
+            {/* field-hint, not privacy-note: that one pulls itself up under a pair of
+                inputs and overlapped the single WeChat field by 8px (2026-09-28). */}
+            <p className="field-hint">{copy.fields.contactPrivacy}</p>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Everything that is not needed to hold a seat, folded behind one line.
-          Native <details>: opens without JavaScript, announces its own state,
-          and fields inside a closed one still submit and still save to the draft.
-
-          ⚠️ Every field lives inside `.disclosure__body`. Until 2026-09-28 four
-          of them sat outside it and ran edge to edge with no inset. */}
-      <details className="disclosure" ref={extrasRef}>
-        <summary>{copy.fields.extras}</summary>
-
-        <div className="disclosure__body stack-6">
-          {/* A select, like the spend band: twelve options would be a wall of
-              pills on a phone, and "skip" lets someone un-pick. In the fold
-              since 2026-10-05: it is for matching people on the day, not for
-              deciding which morning anyone comes to. */}
-          <div>
-            <label className="label" htmlFor={fieldId("industry")}>
-              {copy.fields.industry}
-            </label>
-            <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
-              <option value="">{copy.fields.industrySkip}</option>
-              {copy.fields.industryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="field-hint">{copy.fields.industryHint}</p>
+      {/* Step 2: the one required choice, and the one everything below
+          follows. No default — a pre-selected option would count everyone who
+          scrolled past. Stored values unchanged since 2026-09-22. */}
+      <section className="signup-step stack-4" aria-labelledby={fieldId("step2")}>
+        <p className="signup-step__label" id={fieldId("step2")}><span className="signup-step__num">2</span>{copy.fields.steps[1]}</p>
+        <fieldset ref={purposeRef} style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="label">
+            {copy.fields.purpose} <span className="required">*</span>
+          </legend>
+          <div className="choice-group choice-group--stack">
+            {copy.fields.purposeOptions.map((option) => (
+              <label className="choice" key={option.value}>
+                <input type="radio" name="purpose" value={option.value} onChange={() => choosePurpose(option.value)} />
+                <span>{option.label}</span>
+              </label>
+            ))}
           </div>
+          <p className="field-hint">{copy.fields.purposeHint}</p>
+        </fieldset>
+      </section>
 
-          {/* New visitors only, as in the identity block this came from: a
-              returning visitor has these on file, and signups merge by WeChat ID,
-              so asking again could overwrite them. */}
-          {!returning && (
-            <>
+      {pickedPurpose && (
+        <>
+          {/* Step 3: one or two questions, chosen by step 2 — only what tells
+              us something about this kind of person. All optional. */}
+          <section className="signup-step stack-4" aria-labelledby={fieldId("step3")}>
+            <p className="signup-step__label" id={fieldId("step3")}><span className="signup-step__num">3</span>{copy.fields.steps[2]}</p>
+
+            {pickedPurpose === "biz" && (
+              <>
+                {/* A select: twelve options would be a wall of pills on a phone,
+                    and "skip" lets someone un-pick. */}
+                <div>
+                  <label className="label" htmlFor={fieldId("industry")}>
+                    {copy.fields.industry}
+                  </label>
+                  <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
+                    <option value="">{copy.fields.industrySkip}</option>
+                    {copy.fields.industryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* What a hands-on class would have to cover (BIZ_FOCUS). */}
+                <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+                  <legend className="label">{copy.fields.bizFocus}</legend>
+                  <div className="choice-group choice-group--compact">
+                    {copy.fields.bizFocusOptions.map((option) => (
+                      <label className="choice" key={option.value}>
+                        <input type="checkbox" name="bizFocus" value={option.value} />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="field-hint">{copy.fields.bizFocusHint}</p>
+                </fieldset>
+              </>
+            )}
+
+            {(pickedPurpose === "product" || pickedPurpose === "tech") && (
               <div>
                 <label className="label" htmlFor={fieldId("building")}>
-                  {copy.fields.building}
+                  {pickedPurpose === "product" ? copy.fields.buildingProduct : copy.fields.buildingTech}
                 </label>
                 <textarea
                   className="field"
                   id={fieldId("building")}
                   name="building"
                   rows={2}
-                  placeholder={copy.fields.buildingPlaceholder}
+                  placeholder={pickedPurpose === "product" ? copy.fields.buildingProductPlaceholder : copy.fields.buildingTechPlaceholder}
                 />
               </div>
+            )}
 
-              {/* Optional here, so folded; where email is required (English)
-                  it stays with name above instead — see emailField. */}
-              {!copy.fields.emailRequired && emailField}
-            </>
-          )}
+            {pickedPurpose === "product" && (
+              /* Stored as yes / maybe / listen — signup-stats.ts and /admin
+                 count on those values. No default any more: "listen" used to
+                 be pre-ticked, and most answers were just that default. */
+              <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+                <legend className="label">{copy.fields.demoProduct}</legend>
+                <div className="choice-group choice-group--compact">
+                  {copy.fields.demoOptions.map((option) => (
+                    <label className="choice" key={option.value}>
+                      <input type="radio" name="demoIntent" value={option.value} />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
 
-          {/* Shown to returning visitors too — they are exactly the people who
-              signed up before the wall existed. Unticked by default, forever:
-              this is the only place anyone is told their answers can go public. */}
-          <div>
-            <label className="consent">
-              <input type="checkbox" name="publishCard" />
-              <span>{copy.fields.publishCard}</span>
-            </label>
-            <p className="field-hint">{copy.fields.publishCardHint}</p>
-          </div>
+            {pickedPurpose === "learn" && (
+              /* "I build AI products" is left out: not something a beginner says. */
+              <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+                <legend className="label">{copy.fields.learnLevel}</legend>
+                <div className="choice-group choice-group--compact">
+                  {copy.fields.aiLevelOptions
+                    .filter((option) => option.value !== "builder")
+                    .map((option) => (
+                      <label className="choice" key={option.value}>
+                        <input type="radio" name="aiLevel" value={option.value} />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                </div>
+              </fieldset>
+            )}
 
-          {/* Stored as yes / maybe / listen whatever the wording says —
-              signup-stats.ts and /admin count on those values. */}
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label">{copy.fields.demoIntent}</legend>
-            <div className="choice-group choice-group--compact">
-              {copy.fields.demoOptions.map((option, index) => (
-                <label className="choice" key={option.value}>
-                  <input
-                    type="radio"
-                    name="demoIntent"
-                    value={option.value}
-                    defaultChecked={index === copy.fields.demoOptions.length - 1}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
+            <p className="field-hint" style={{ margin: 0 }}>{copy.fields.aboutHint}</p>
+          </section>
+
+          {/* Step 4: which morning, ordered for this kind of person — a
+              builder sees Build Tuesday first, marked as suggested. */}
+          <section className="signup-step stack-4" aria-labelledby={fieldId("step4")}>
+            <p className="signup-step__label" id={fieldId("step4")}><span className="signup-step__num">4</span>{copy.fields.steps[3]}</p>
+            <div>
+              <label className="label" htmlFor={fieldId("session")}>
+                {copy.fields.session}
+              </label>
+              <select
+                className="field"
+                id={fieldId("session")}
+                name="firstSession"
+                ref={sessionRef}
+                onChange={() => {
+                  sessionTouched.current = true;
+                }}
+                // Builders: the first open Build Tuesday. Everyone else: the
+                // nearest Thursday, full or not — a full date says so in its
+                // label, and the date they most likely meant is still the right
+                // default (2026-09-28).
+                defaultValue={suggestedSession(pickedPurpose)}
+              >
+                {orderedSessions(pickedPurpose).map((session) => (
+                  <option key={session.value} value={session.value}>
+                    {session.label}
+                  </option>
+                ))}
+                {/* "none" is not a date, so the route's whitelist turns it into
+                    null and the row is stored with no sessions. Last, never the default. */}
+                <option value="none">{copy.fields.sessionNone}</option>
+              </select>
+              {/* Why the picker opened on a Tuesday, under it rather than inside
+                  the option: on a phone the closed select shows one line. */}
+              {pickedPurpose === "product" && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
+                <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommended}</p>
+              )}
+              <p className="field-hint">{copy.fields.sessionNoneHint}</p>
             </div>
-            <p className="field-hint">{copy.fields.demoIntentHint}</p>
-          </fieldset>
+
+            {/* The one field that says what someone actually wants from the morning,
+                and the one most often too vague to act on ("想了解了解"). The coach
+                below asks one follow-up question; it never rewrites the sentence and
+                never stands between anyone and the submit button. */}
+            <div>
+              <label className="label" htmlFor={fieldId("topic")}>
+                {copy.fields.topic}
+              </label>
+              <textarea
+                className="field"
+                id={fieldId("topic")}
+                name="topic"
+                rows={2}
+                ref={topicRef}
+                placeholder={copy.fields.topicPlaceholder}
+              />
+              <p className="field-hint">{copy.fields.topicHint}</p>
+
+              {coach && (
+                <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+                  <CoachRounds rounds={helper.rounds} verdict={helper.verdict} thinking={helper.thinking} copy={coach} />
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      disabled={helper.thinking}
+                      onClick={() => {
+                        const text = topicRef.current?.value.trim() ?? "";
+                        if (!text) {
+                          topicRef.current?.focus();
+                          return;
+                        }
+                        void helper.ask(text);
+                      }}
+                    >
+                      {helper.rounds.length > 0 ? coach.coachAgain : coach.coachCta}
+                    </button>
+                  </div>
+                  {/* The only third party anyone's writing reaches, and only on a press. */}
+                  <p className="field-hint">{coach.coachNote}</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Everything not needed to hold a seat or to route anyone, folded
+          behind one line that says what is inside. Native <details>: opens
+          without JavaScript, and fields in a closed one still submit and still
+          save to the draft. Every field lives inside `.disclosure__body`. */}
+      <details className="disclosure" ref={extrasRef}>
+        <summary>{copy.fields.extras}</summary>
+
+        <div className="disclosure__body stack-6">
+          {/* Optional here, so folded; where email is required (English) it
+              stays with the name in step 1 instead — see emailField. */}
+          {!returning && !copy.fields.emailRequired && emailField}
 
           {/* Asked of everyone, not only whoever picked "none": a Thursday
               regular who would also come on a Saturday counts towards whether a
@@ -959,43 +1072,15 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             />
           </div>
 
-          {/* One checkbox group in two labelled rows: overseas-vs-China is the
-              split being measured, so showing it makes the question quick. */}
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label">{copy.fields.aiModels}</legend>
-            <div className="stack-3">
-              {copy.fields.aiModelGroups.map((group) => (
-                <div key={group.label}>
-                  <p className="choice-subhead">{group.label}</p>
-                  <div className="choice-group choice-group--compact">
-                    {group.options.map((option) => (
-                      <label className="choice" key={option.value}>
-                        <input type="checkbox" name="aiModels" value={option.value} />
-                        <span>{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="field-hint">{copy.fields.aiModelsHint}</p>
-          </fieldset>
-
-          {/* A select: one ordered scale with long labels, and it can be
-              un-picked, which a radio cannot. */}
+          {/* Shown to returning visitors too — they are exactly the people who
+              signed up before the wall existed. Unticked by default, forever:
+              this is the only place anyone is told their answers can go public. */}
           <div>
-            <label className="label" htmlFor={fieldId("aiSpend")}>
-              {copy.fields.aiSpend}
+            <label className="consent">
+              <input type="checkbox" name="publishCard" />
+              <span>{copy.fields.publishCard}</span>
             </label>
-            <select className="field" id={fieldId("aiSpend")} name="aiSpend" defaultValue="">
-              <option value="">{copy.fields.aiSpendSkip}</option>
-              {copy.fields.aiSpendOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="field-hint">{copy.fields.aiSpendHint}</p>
+            <p className="field-hint">{copy.fields.publishCardHint}</p>
           </div>
         </div>
       </details>

@@ -378,15 +378,34 @@ export const copy = {
         wechatHint: "活动通知走微信群，留了我拉你进群。微信号在：微信 → 我 → 头像右边「微信号：」后面那串，不是你的昵称。",
         // 必答的单选，用来数「这场来的人里，有几个是带着生意来的」。按场次存，
         // 同一个人下周换了来意，不会覆盖这周的答案。存储值不能改：按它计数。
-        purpose: "这次来，你最想带走什么？",
+        // 2026-10-05 报名表重构：先分类，题目跟着类别变。存储值不变（biz/product/learn/tech），
+        // 「其他」去掉了——它从来不决定任何事。
+        purpose: "你更像哪一类？",
         purposeOptions: [
-          { value: "biz", label: "做生意，想用 AI 带客户、省人手" },
-          { value: "product", label: "在做产品，想找用户、客户或合作" },
-          { value: "tech", label: "会做 AI / 技术，想找项目或机会" },
-          { value: "learn", label: "学习交流，看看大家在做什么" },
-          { value: "other", label: "其他，现场再说" },
+          { value: "biz", label: "做生意 / 开公司，想用 AI 带客户、省人手" },
+          { value: "product", label: "在做产品 / 写代码，有东西能打开给人看" },
+          { value: "learn", label: "刚开始用 AI，想学怎么用" },
+          { value: "tech", label: "找机会：工作、项目、合作" },
         ],
-        purposeHint: "选最接近的一个，现场好帮你找对的人。",
+        purposeHint: "选一个，下面的问题会跟着变。",
+        steps: ["你是谁", "哪一类", "关于你", "哪一场"],
+        stepOf: "第 {n} 步，共 {total} 步",
+        recommended: "推荐你来周二的 Build Tuesday：十来个做东西的人，打开电脑互相看。周四也可以，两场都来也行。",
+        bizFocus: "最想让 AI 帮你哪一块？",
+        bizFocusOptions: [
+          { value: "leads", label: "找客户、获客" },
+          { value: "content", label: "做内容、营销" },
+          { value: "service", label: "客服、回消息" },
+          { value: "ops", label: "内部流程、省人手" },
+          { value: "unsure", label: "还不知道" },
+        ],
+        bizFocusHint: "选填，可多选。",
+        buildingProduct: "一句话：你在做什么？",
+        buildingProductPlaceholder: "比如：给会计事务所做的税务助手，内测中",
+        buildingTech: "一句话：你擅长什么、想找什么？",
+        buildingTechPlaceholder: "比如：会 React 和 AI agent，想找一起做产品的人",
+        learnLevel: "现在用 AI 用到哪一步？",
+        aboutHint: "都是选填，填了现场好帮你找对的人。",
         // 下面两题是给「这一场讲什么、要不要分场」用的：看一眼就知道屋里是
         // 老板多还是工程师多。都是选填，不答照样报上。存储值不能改：按它计数
         // （跟 src/lib/signup-profile.ts 里的列表一一对应），文字随便改。
@@ -432,10 +451,11 @@ export const copy = {
         // 「想不想上去讲讲」。09-28 起不再分桌，想展示东西的人在「本周主题」那一段讲。
         // 选项的存储值仍是 yes/maybe/listen —— signup-stats.ts 与 /admin 按它统计，不能动。
         demoIntent: "这次想上去讲讲吗？",
+        demoProduct: "能现场打开给大家看吗？",
         demoOptions: [
-          { value: "yes", label: "想讲讲" },
-          { value: "maybe", label: "也许" },
-          { value: "listen", label: "先来听听" },
+          { value: "yes", label: "能，打开就能看" },
+          { value: "maybe", label: "做了一半" },
+          { value: "listen", label: "这次先听" },
         ],
         demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，就在「本周主题」那一段。",
         session: "打算参加哪一场？",
@@ -466,7 +486,7 @@ export const copy = {
         //
         // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
         // 区没人会去点开，这是折叠这个做法最常见的失败方式。
-        extras: "再多说几句（都可跳过）：在做什么、上不上成员墙、想不想上去讲、平时用什么 AI……",
+        extras: "更多（都可跳过）：邮箱、从哪知道的、上午来不了时哪些时间可以、上不上成员墙",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
         // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
@@ -572,10 +592,10 @@ export const copy = {
       errorNeedContact: "至少留一个联系方式，微信号或邮箱都行。",
       // Soft check: shown once, and a second tap submits as-is.
       errorWechatId: "这个看起来像微信昵称，不像微信号。微信号在：打开微信 → 我 → 头像右边「微信号：」后面那串，一般 6 位以上、字母开头，也可以填手机号。昵称搜不到人，我没法拉你进群。确认没填错的话，再点一次提交。",
-      errorPurpose: "选一下「这次来最想带走什么」，一个就行。",
+      errorPurpose: "选一下「你更像哪一类」，一个就行。",
       // Build Tuesday（2026-10-04）：周四人太多，在做东西的人分去周二。
       // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
-      sessionTimeSuffixTuesday: "上午 10:00 · Build Tuesday · Chatswood",
+      sessionTimeSuffixTuesday: "10:00 · Build Tuesday",
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
       hook: "周四是交流局，不是课。在做东西、想打开电脑互相看的，来周二的 Build Tuesday；想有人带着一步步学的，报完名可以告诉我，想要的人多就开一个小班。",
       hookTuesdayCta: "看看 Build Tuesday",
@@ -2032,15 +2052,32 @@ export const copy = {
         wechatPlaceholder: "Optional",
         wechatRequired: false,
         wechatHint: "Announcements currently go through a WeChat group. Leave it and I will add you. Your ID is in WeChat → Me → next to your photo, not your nickname.",
-        purpose: "What do you most want to take away this time?",
+        purpose: "Which sounds most like you?",
         purposeOptions: [
-          { value: "biz", label: "I run a business — AI for customers or saving time" },
-          { value: "product", label: "Building a product — looking for users or partners" },
-          { value: "tech", label: "I build with AI — looking for projects" },
-          { value: "learn", label: "Learning — seeing what everyone is building" },
-          { value: "other", label: "Something else — I'll say on the day" },
+          { value: "biz", label: "I run a business — want AI to bring in customers or save time" },
+          { value: "product", label: "I build things — I have something I can open and show" },
+          { value: "learn", label: "New to AI — want to learn how to use it" },
+          { value: "tech", label: "Looking for opportunities: work, projects, partners" },
         ],
-        purposeHint: "Pick the closest one — it is how we find you the right people on the day.",
+        purposeHint: "Pick one — the questions below change with it.",
+        steps: ["You", "Which kind", "About you", "Which morning"],
+        stepOf: "Step {n} of {total}",
+        recommended: "Build Tuesday suits you: a dozen people who build things, laptops open. Thursday works too — or come to both.",
+        bizFocus: "What would you most like AI to help with?",
+        bizFocusOptions: [
+          { value: "leads", label: "Finding customers" },
+          { value: "content", label: "Content and marketing" },
+          { value: "service", label: "Customer service, replies" },
+          { value: "ops", label: "Internal work, saving time" },
+          { value: "unsure", label: "Not sure yet" },
+        ],
+        bizFocusHint: "Optional, pick any.",
+        buildingProduct: "In a sentence: what are you building?",
+        buildingProductPlaceholder: "e.g. a tax assistant for accounting firms, in beta",
+        buildingTech: "In a sentence: what are you good at, and what are you looking for?",
+        buildingTechPlaceholder: "e.g. React and AI agents; looking for people to build a product with",
+        learnLevel: "How far have you got with AI?",
+        aboutHint: "All optional — it helps us find you the right people on the day.",
         aiLevel: "How familiar are you with AI?",
         aiLevelOptions: [
           { value: "none", label: "Barely used it" },
@@ -2075,10 +2112,11 @@ export const copy = {
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
         demoIntent: "Want to share something this time?",
+        demoProduct: "Could you open it and show people on the day?",
         demoOptions: [
-          { value: "yes", label: "Yes, I'd like to" },
-          { value: "maybe", label: "Maybe" },
-          { value: "listen", label: "Just listening" },
+          { value: "yes", label: "Yes, it opens" },
+          { value: "maybe", label: "Half built" },
+          { value: "listen", label: "Just listening this time" },
         ],
         demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
         session: "Which session are you coming to?",
@@ -2095,7 +2133,7 @@ export const copy = {
         ],
         // See the Chinese block above for why these three are folded away, and
         // why the spend question asks about money rather than about tokens.
-        extras: "A few more, all skippable: what you are building, the member wall, sharing something, which AI you use…",
+        extras: "More, all skippable: email, how you heard, other times you could make, the member wall",
         aiModels: "Which AI models do you mostly use?",
         aiModelsHint: "Optional — pick any.",
         aiModelGroups: [
@@ -2168,8 +2206,8 @@ export const copy = {
       errorRequired: "Name and email are required.",
       errorNeedContact: "Leave at least one way to reach you — email or WeChat.",
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
-      errorPurpose: "Pick what you most want to take away this time — just one.",
-      sessionTimeSuffixTuesday: "10:00am · Build Tuesday · Chatswood",
+      errorPurpose: "Pick which sounds most like you — just one.",
+      sessionTimeSuffixTuesday: "10am · Build Tuesday",
       hook: "Thursday is for meeting people, not a class. If you build things and want to open laptops and look at each other's work, come to Build Tuesday; if you want someone to walk you through it step by step, say so after you sign up — if enough people do, I will run a small class.",
       hookTuesdayCta: "See Build Tuesday",
       tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",

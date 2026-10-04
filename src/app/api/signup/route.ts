@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
+import { bindOpenid, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount, setBizFocus } from "@/lib/db";
 import { bookableSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, capFor } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { parseSignupProfile } from "@/lib/signup-profile";
+import { parseBizFocus, parseSignupProfile } from "@/lib/signup-profile";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { readOpenidToken } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE } from "@/lib/wechat-gate";
@@ -47,7 +47,9 @@ const AI_MODELS = new Set([
 ]);
 
 /**
- * Why someone is coming this time. Kept in step with `copy.fields.purposeOptions`.
+ * Why someone is coming this time. Kept in step with `copy.fields.purposeOptions`,
+ * plus "other": no longer offered (2026-10-05, the routed form), but still
+ * accepted from a page opened before that, and still on older rows.
  *
  * Required on the form, but never required here: a page opened before the
  * question existed must still be able to sign someone up, and a lost signup
@@ -257,6 +259,17 @@ export async function POST(request: Request) {
   // a signup that 500ed is a headcount the venue booking never hears about.
   // Never on somebody else's row: a name that did not match is not allowed to
   // put that person's card on the wall (see `saveSignupWithResult`).
+  // The business-focus answer, saved like the profile fields: only an answer,
+  // only on the person's own row, never fatal to the signup.
+  const bizFocus = parseBizFocus(body.bizFocus);
+  if (bizFocus.length > 0 && profileUpdated) {
+    try {
+      await setBizFocus(signupId, bizFocus);
+    } catch (error) {
+      console.error("[signup] saved, but the business focus did not", error);
+    }
+  }
+
   if (publishCard && profileUpdated) {
     try {
       await publishCardForSignup(signupId);

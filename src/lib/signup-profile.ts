@@ -75,3 +75,21 @@ export function parseSignupProfile(body: Record<string, unknown>): {
     industry: pickOne(body.industry, INDUSTRIES),
   };
 }
+
+/**
+ * For people who run a business: which part of it they most want AI to help
+ * with (2026-10-05, the routed signup form). Several may be picked. It says
+ * what a hands-on class would have to cover, so it is counted — same rule as
+ * above: relabel freely, never rename a value. Kept in step with
+ * `copy.signup.fields.bizFocusOptions`.
+ */
+export const BIZ_FOCUS = ["leads", "content", "service", "ops", "unsure"] as const;
+
+export type BizFocus = (typeof BIZ_FOCUS)[number];
+
+/** The recognised answers, deduplicated in the form's order; anything else is dropped. */
+export function parseBizFocus(value: unknown): BizFocus[] {
+  if (!Array.isArray(value)) return [];
+  const given = new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim()));
+  return BIZ_FOCUS.filter((option) => given.has(option));
+}

@@ -44,6 +44,8 @@ const COLUMNS = [
   // The one-tap "what else would you come to" from the confirmation
   // (signup-interest.ts). Appended last, like the two above.
   "interest",
+  // What a business owner most wants AI for (signup-profile.ts BIZ_FOCUS).
+  "biz_focus",
 ] as const;
 
 /**

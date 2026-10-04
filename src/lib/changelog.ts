@@ -72,6 +72,14 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.3",
+    date: "2026-10-05",
+    kind: "minor",
+    scope: "site",
+    zh: "报名表改成四步：你是谁、你更像哪一类、关于你、哪一场。选了类别，下面只问跟你有关的一两题——做生意的问行业和最想让 AI 帮哪块，做东西的问在做什么、能不能现场打开给大家看，刚开始的问用到哪一步；做东西的人会直接看到周二的 Build Tuesday。用哪些 AI、每月花多少这两题不再问了。",
+    en: "The signup form is now four steps: who you are, which sounds most like you, about you, and which morning. Once you pick, it asks only the one or two questions that matter for you — business owners get industry and what they most want AI for, builders get what they are building and whether they can show it, newcomers get how far they have got — and builders see Build Tuesday first. The questions about which AI you use and what you spend on it are gone.",
+  },
+  {
     version: "5.2",
     date: "2026-10-05",
     kind: "minor",

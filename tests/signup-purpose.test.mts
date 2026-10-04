@@ -30,16 +30,22 @@ function whitelist(name: string): string[] {
   return [...block[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 }
 
-test("the purposes the form offers are exactly the ones the route accepts", () => {
+test("the purposes the form offers are exactly the ones the route accepts, plus the retired \"other\"", () => {
+  // 2026-10-05: "other" left the form (it never routed anyone anywhere) but the
+  // route still takes it from a page opened before, and older rows carry it.
+  // Nothing else may be accepted without being offered.
   const accepted = new Set(whitelist("PURPOSES"));
+  const RETIRED = new Set(["other"]);
 
   for (const lang of LANGS) {
-    const offered = copy[lang].signup.fields.purposeOptions.map((option) => option.value);
+    const offered = new Set<string>(copy[lang].signup.fields.purposeOptions.map((option) => option.value));
 
     for (const value of offered) {
       assert.ok(accepted.has(value), `${lang} offers "${value}", which the route drops`);
     }
-    assert.equal(offered.length, accepted.size, `${lang} offers ${offered.length}, route accepts ${accepted.size}`);
+    for (const value of accepted) {
+      assert.ok(offered.has(value) || RETIRED.has(value), `the route accepts "${value}", which ${lang} never offers`);
+    }
   }
 });
 

@@ -169,6 +169,10 @@ export function ensureSchema(): Promise<void> {
     // person, the latest tap wins. NULL = not asked or did not tap.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS interest text`);
 
+    // What a business owner most wants AI for (signup-profile.ts BIZ_FOCUS,
+    // 2026-10-05). Empty = not asked or not answered.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS biz_focus text[] NOT NULL DEFAULT '{}'`);
+
     // WeChat login (wechat-auth.ts, 2026-10-04): the service account's openid
     // for this person, once they have proved which signup is theirs. One
     // signup per openid — the partial unique index is what stops one WeChat
@@ -784,7 +788,10 @@ export async function saveSignupWithResult(input: SignupInput): Promise<{ id: st
        email         = COALESCE($3, email),
        wechat        = COALESCE($4, wechat),
        building      = COALESCE($5, building),
-       demo_intent   = $6,
+       -- COALESCE since 2026-10-05: the routed form only asks builders, and
+       -- has no default, so most re-signups send nothing here — which must
+       -- not wipe an earlier "yes".
+       demo_intent   = COALESCE($6, demo_intent),
        -- COALESCE, so submitting the compact returning-visitor form without
        -- retyping anything does not wipe what they wrote last time.
        topic         = COALESCE($11, topic),
@@ -984,6 +991,7 @@ export type SignupRow = {
   /** Which industry (`INDUSTRIES`). Null when they did not answer. */
   industry: string | null;
   interest: string | null;
+  biz_focus: string[];
   /** Sessions this person checked in to on the day, oldest first. */
   checked_in: string[];
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
@@ -1144,6 +1152,15 @@ export async function unbindOpenid(signupId: string): Promise<void> {
 }
 
 /**
+ * Saves the business-focus answer. Only ever called with a non-empty list and
+ * for a row the person proved is theirs, so a blank never wipes an answer.
+ */
+export async function setBizFocus(signupId: string, focus: readonly string[]): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`UPDATE signups SET biz_focus = $2::text[] WHERE id = $1::bigint`, [signupId, focus]);
+}
+
+/**
  * Saves the one-tap interest answer against a signup. The id comes from the
  * "this phone remembers you" cookie, never from anything typed, so nobody can
  * answer for someone else.
@@ -1172,7 +1189,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, ai_level, industry, interest, source, lang, bot_check, wechat_former, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(

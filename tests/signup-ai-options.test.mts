@@ -130,9 +130,11 @@ test("the folded section names what is inside it", () => {
   // A disclosure whose contents cannot be guessed does not get opened — that is
   // the standard way this pattern fails. The summary therefore has to mention
   // the questions it hides, not just say "more".
+  // 2026-10-05: the AI questions left the fold (the routed form asks what
+  // matters per kind of person, in the open); email is what it now holds.
   const namesContents: Record<(typeof LANGS)[number], RegExp> = {
-    zh: /AI/,
-    en: /AI/i,
+    zh: /邮箱/,
+    en: /email/i,
   };
 
   for (const lang of LANGS) {
