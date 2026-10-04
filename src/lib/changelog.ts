@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.2",
+    date: "2026-10-05",
+    kind: "minor",
+    scope: "site",
+    zh: "报名表、「查我的报名」和签到页上多了「用微信登录」。在电脑上点它会出一个二维码，用手机微信扫一下，再点一下电脑屏幕上显示的数字，电脑就登录了；在微信里点它，第一次填一下名字和微信号，以后自动认出你。",
+    link: { href: "/login", zh: "用微信登录 →", en: "Log in with WeChat →" },
+    en: "The signup form, \"My signup\" and the check-in page now have \"Log in with WeChat\". On a computer it shows a QR code: scan it with WeChat on your phone and tap the number shown on the computer's screen, and the computer is logged in. Inside WeChat, enter your name and WeChat ID once and you are recognised from then on.",
+  },
+  {
     version: "5.1",
     date: "2026-10-04",
     kind: "minor",

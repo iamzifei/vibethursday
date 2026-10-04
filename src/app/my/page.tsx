@@ -5,7 +5,8 @@ import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCopy, resolveLang } from "@/lib/content";
+import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
+import { wechatLoginHref } from "@/lib/login-link";
 import { getMySignup, type MySignup } from "@/lib/db";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
 import { bookableSessions, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
@@ -112,10 +113,16 @@ export default async function MyPage({ searchParams }: PageProps) {
   );
 
   // ── Not looked up yet (or the token ran out) ─────────────────────
+  const loginHref = wechatLoginHref("/my", LANG_PARAM[lang]);
   if (!mine) {
     return shell(
       <>
         <p className="body-lg">{t.lede}</p>
+        {loginHref && (
+          <p className="body">
+            <a href={loginHref}>{getCopy(lang).login.entry}</a>
+          </p>
+        )}
         {error}
         <form method="post" action="/api/my" className="stack-6">
           <input type="hidden" name="action" value="lookup" />

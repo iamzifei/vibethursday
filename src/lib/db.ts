@@ -179,6 +179,21 @@ export function ensureSchema(): Promise<void> {
       ON signups (wechat_openid) WHERE wechat_openid IS NOT NULL
     `);
 
+    // Scan to log in on a computer (2026-10-05, wechat-auth.ts): one row per
+    // QR code shown. pending → approved (a phone confirmed) → used (the
+    // computer collected it). Five minutes, once; old rows are swept on insert.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS wechat_qr_logins (
+        token text PRIMARY KEY,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        status text NOT NULL DEFAULT 'pending',
+        signup_id bigint,
+        openid text
+      )
+    `);
+    // The number the phone must pick (newQrPin). Wrong pick = 'rejected'.
+    await pool.query(`ALTER TABLE wechat_qr_logins ADD COLUMN IF NOT EXISTS pin text`);
+
     // Sessions this person is waitlisted for (`capacity.ts`). Kept apart from
     // `sessions` so every existing headcount — /admin, signup-stats, the
     // export — keeps counting only people with a place, with no change.
@@ -995,6 +1010,74 @@ export async function getSignupProfile(id: string): Promise<{ name: string; emai
   const row = result.rows[0];
   if (!row || (!row.email && !row.wechat)) return null;
   return { name: row.name, email: row.email ?? "", wechat: row.wechat ?? "", building: row.building ?? "" };
+}
+
+/** QR codes older than this are expired. Kept in step with QR_TTL_MS. */
+const QR_LOGIN_TTL = "5 minutes";
+
+/** Records a freshly shown QR code, and sweeps codes nobody will ever use. */
+export async function createQrLogin(token: string, pin: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`DELETE FROM wechat_qr_logins WHERE created_at < now() - interval '1 day'`);
+  await getPool().query(`INSERT INTO wechat_qr_logins (token, pin) VALUES ($1, $2)`, [token, pin]);
+}
+
+/** The number a pending code was shown with, for the phone's three choices. */
+export async function qrLoginPin(token: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ pin: string | null }>(`SELECT pin FROM wechat_qr_logins WHERE token = $1`, [token]);
+  return result.rows[0]?.pin ?? null;
+}
+
+/** Where a code stands, as the computer and the phone both see it. */
+export async function qrLoginStatus(token: string): Promise<"pending" | "approved" | "used" | "expired" | "missing" | "rejected"> {
+  await ensureSchema();
+  const result = await getPool().query<{ status: string; expired: boolean }>(
+    `SELECT status, created_at < now() - interval '${QR_LOGIN_TTL}' AS expired FROM wechat_qr_logins WHERE token = $1`,
+    [token],
+  );
+  const row = result.rows[0];
+  if (!row) return "missing";
+  if (row.status === "used") return "used";
+  if (row.status === "rejected") return "rejected";
+  if (row.expired) return "expired";
+  return row.status === "approved" ? "approved" : "pending";
+}
+
+/**
+ * The phone's "yes", with the number it picked. Only a pending, unexpired code
+ * with the right number moves on; the wrong number burns the code for good, so
+ * the three choices are one guess, not three.
+ */
+export async function approveQrLogin(token: string, signupId: string, openid: string, pin: string): Promise<"approved" | "wrong" | "gone"> {
+  await ensureSchema();
+  const result = await getPool().query<{ status: string }>(
+    `UPDATE wechat_qr_logins
+        SET status = CASE WHEN pin = $4 THEN 'approved' ELSE 'rejected' END,
+            signup_id = CASE WHEN pin = $4 THEN $2::bigint END,
+            openid = CASE WHEN pin = $4 THEN $3 END
+      WHERE token = $1 AND status = 'pending' AND created_at >= now() - interval '${QR_LOGIN_TTL}'
+      RETURNING status`,
+    [token, signupId, openid, pin],
+  );
+  const status = result.rows[0]?.status;
+  return status === "approved" ? "approved" : status === "rejected" ? "wrong" : "gone";
+}
+
+/**
+ * The computer collecting its login: approved → used in one statement, so the
+ * same code can never log in two browsers, however fast they ask.
+ */
+export async function takeQrLogin(token: string): Promise<{ signupId: string } | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ signup_id: string }>(
+    `UPDATE wechat_qr_logins SET status = 'used'
+      WHERE token = $1 AND status = 'approved' AND created_at >= now() - interval '${QR_LOGIN_TTL}'
+      RETURNING signup_id::text AS signup_id`,
+    [token],
+  );
+  const row = result.rows[0];
+  return row ? { signupId: row.signup_id } : null;
 }
 
 /** The signup a WeChat openid has been tied to, if any. */

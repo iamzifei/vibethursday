@@ -34,6 +34,8 @@ type Props = {
    * in when the form is sent with `fromCookie` (see the signup route).
    */
   knownProfile?: { name: string } | null;
+  /** "Log in with WeChat": the link and its words, or null while login is off. */
+  wechatLogin?: { href: string; label: string } | null;
 };
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -79,7 +81,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  */
 const EXTRA_FIELDS = ["source", "aiSpend", "building", "email"];
 
-export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null }: Props) {
+export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   useEffect(() => {
     if (status === "done") doneRef.current?.focus();
@@ -636,6 +638,13 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         </div>
       ) : (
         <div className="stack-2">
+          {/* The way to skip typing: WeChat login (/login). Above the fields,
+              where someone about to type their WeChat ID will see it. */}
+          {wechatLogin && (
+            <p className="body" style={{ margin: 0 }}>
+              <a href={wechatLogin.href}>{wechatLogin.label}</a>
+            </p>
+          )}
           {/* Name and WeChat only. Email moved into the fold on 2026-09-28: it
               was always optional, and a claim matches on name plus WeChat ID. */}
           <div className="grid-auto">

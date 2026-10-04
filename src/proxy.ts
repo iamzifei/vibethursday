@@ -37,5 +37,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // The pages listed in WX_LOGIN_PATHS, and nothing else: never assets, never API routes.
-  matcher: ["/", "/tuesday", "/my", "/go", "/checkin", "/badge"],
+  matcher: ["/", "/tuesday", "/my", "/go", "/checkin", "/badge", "/login"],
 };

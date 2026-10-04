@@ -13,6 +13,8 @@ import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from
 import { listWharfQuestions, signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { knownProfileFromCookie } from "@/lib/known-profile";
+import { wechatLoginHref } from "@/lib/login-link";
+import { LANG_PARAM } from "@/lib/content";
 import { bookableSessions, formatSession, isSpecialSession } from "@/lib/sessions";
 
 
@@ -325,6 +327,10 @@ export default async function Page({ searchParams }: PageProps) {
               copy={c.signup}
               sessions={sessions}
               knownProfile={knownProfile}
+              wechatLogin={(() => {
+                const href = wechatLoginHref("/#signup", LANG_PARAM[lang]);
+                return href ? { href, label: c.login.entry } : null;
+              })()}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
               // The Wharf's "help me ask this better", on the box where most
               // vague questions are written. Its button and disclosure are the

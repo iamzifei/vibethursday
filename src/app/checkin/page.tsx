@@ -10,6 +10,7 @@ import { listCheckins, listRoster } from "@/lib/db";
 import { formatSession, sydneyToday } from "@/lib/sessions";
 import { cookies } from "next/headers";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
+import { wechatLoginHref } from "@/lib/login-link";
 
 type PageProps = {
   searchParams: Promise<{
@@ -184,6 +185,9 @@ export default async function CheckinPage({ searchParams }: PageProps) {
     if (entry && !entry.checkedIn) recognised = entry;
   }
   const who = params.who ? roster.find((entry) => entry.id === params.who) : recognised;
+  // Back to this same scan once recognised, so it opens on "is this you?".
+  // Hidden once this browser is someone: they are recognised already.
+  const loginHref = recognised || params.q !== undefined ? null : wechatLoginHref(stepHref(session, code, lang), undefined);
 
   if (who) {
     return shell(
@@ -292,6 +296,13 @@ export default async function CheckinPage({ searchParams }: PageProps) {
       {error && (
         <p className="alert alert--error" role="alert">
           {error}
+        </p>
+      )}
+
+      {/* Recognised by WeChat, this page opens on "is this you?" instead. */}
+      {loginHref && (
+        <p className="body" style={{ margin: 0 }}>
+          <a href={loginHref}>{c.login.entry}</a>
         </p>
       )}
 

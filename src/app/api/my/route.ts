@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, cancelSession, findMySignup, getMySignup, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, moveSessionFor, unbindOpenid } from "@/lib/db";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
@@ -108,9 +108,15 @@ export async function POST(request: Request) {
     // otherwise the next visit would sign the same wrong person straight back
     // in — and drops the WeChat cookie, with "tried" so the proxy does not
     // immediately send them round again.
+    // Both ways this browser can be someone: the remember cookie, and (inside
+    // WeChat) the WeChat it carries, which may be tied to a different signup.
     try {
-      const remembered = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
+      const store = await cookies();
+      const remembered = readRememberToken(store.get(REMEMBER_COOKIE)?.value);
       if (remembered) await unbindOpenid(remembered);
+      const openid = readOpenidToken(store.get(WX_OPENID_COOKIE)?.value);
+      const tied = openid ? await findSignupIdByOpenid(openid) : null;
+      if (tied) await unbindOpenid(tied);
     } catch (error) {
       console.error("[my] could not untie the WeChat login", error);
     }

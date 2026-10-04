@@ -7,6 +7,8 @@ import { getCopy, resolveLang } from "@/lib/content";
 import { signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { knownProfileFromCookie } from "@/lib/known-profile";
+import { wechatLoginHref } from "@/lib/login-link";
+import { LANG_PARAM } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
 import { formatSession, upcomingSpecialSessions } from "@/lib/sessions";
 
@@ -129,6 +131,10 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                   copy={c.signup}
                   sessions={sessions}
                   knownProfile={knownProfile}
+                  wechatLogin={(() => {
+                    const href = wechatLoginHref("/tuesday#signup", LANG_PARAM[lang]);
+                    return href ? { href, label: c.login.entry } : null;
+                  })()}
                   turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
                 />
               </div>

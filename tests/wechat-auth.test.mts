@@ -144,3 +144,44 @@ test("★ the browser is only ever given a remembered visitor's name", async () 
   const source = readFileSync(new URL("../src/lib/known-profile.ts", import.meta.url), "utf8");
   assert.match(source, /return profile \? \{ name: profile\.name \} : null;/);
 });
+
+test("★ a scan-to-log-in code can only be collected by the computer that showed it", async () => {
+  const { qrBrowserToken, readQrBrowserToken, QR_TTL_MS, newQrToken, looksLikeQrToken } = await import("../src/lib/wechat-auth.ts");
+  const token = newQrToken();
+  assert.ok(looksLikeQrToken(token));
+  assert.equal(looksLikeQrToken("../../etc"), false);
+  const now = 1_800_000_000_000;
+  const cookie = qrBrowserToken(token, now, KEY);
+  assert.equal(readQrBrowserToken(cookie, now + 1000, KEY), token);
+  assert.equal(readQrBrowserToken(cookie, now + QR_TTL_MS + 1, KEY), null, "expired");
+  assert.equal(readQrBrowserToken(cookie.replace(token, newQrToken()), now, KEY), null, "another code");
+  assert.equal(readQrBrowserToken(cookie, now, "other-key"), null);
+});
+
+test("★ the phone picks the computer's number out of three, the same three on every reload", async () => {
+  const { newQrPin, newQrToken, qrPinChoices } = await import("../src/lib/wechat-auth.ts");
+  for (let i = 0; i < 200; i += 1) {
+    const token = newQrToken();
+    const pin = newQrPin();
+    assert.match(pin, /^\d{2}$/);
+    const choices = qrPinChoices(token, pin);
+    assert.equal(choices.length, 3);
+    assert.equal(new Set(choices).size, 3, "no duplicate choices");
+    assert.ok(choices.includes(pin), "the real number is always offered");
+    for (const choice of choices) assert.match(choice, /^\d{2}$/);
+    assert.deepEqual(qrPinChoices(token, pin), choices, "a reload must not deal fresh guesses");
+  }
+});
+
+test("★ only posts from this site's own pages are accepted", async () => {
+  const { fromThisSite } = await import("../src/lib/same-origin.ts");
+  const origin = "https://vibethursday.com";
+  const post = (headers: Record<string, string>) => new Request(`${origin}/api/wechat/link`, { method: "POST", headers });
+  assert.equal(fromThisSite(post({ origin }), origin), true);
+  assert.equal(fromThisSite(post({ "sec-fetch-site": "same-origin" }), origin), true);
+  assert.equal(fromThisSite(post({}), origin), true, "a browser that says nothing is let through, as before");
+  assert.equal(fromThisSite(post({ origin: "https://evil.example" }), origin), false);
+  assert.equal(fromThisSite(post({ origin: "null" }), origin), false);
+  assert.equal(fromThisSite(post({ "sec-fetch-site": "cross-site" }), origin), false);
+  assert.equal(fromThisSite(post({ "sec-fetch-site": "same-site" }), origin), false, "another subdomain");
+});

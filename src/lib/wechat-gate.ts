@@ -45,11 +45,11 @@ export function isWeChatBrowser(userAgent: string | null | undefined): boolean {
 
 /**
  * The pages where knowing who someone is changes what they see: the signup
- * forms, their own signup, the day-of page, check-in and their badge. Kept to
+ * forms, their own signup, the day-of page, check-in, their badge and /login. Kept to
  * these rather than the whole site, so reading an FAQ or the member wall never
  * takes a detour through WeChat.
  */
-export const WX_LOGIN_PATHS = ["/", "/tuesday", "/my", "/go", "/checkin", "/badge"] as const;
+export const WX_LOGIN_PATHS = ["/", "/tuesday", "/my", "/go", "/checkin", "/badge", "/login"] as const;
 
 export type GateInput = {
   /** Whether WECHAT_APPID and WECHAT_SECRET are both set. */
@@ -93,3 +93,6 @@ export function safeNext(next: unknown): string {
   if (/[\r\n\t\0]/.test(next) || next.includes("\\")) return "/";
   return next;
 }
+
+/** The cookie that ties a scan-to-log-in code to the computer that showed it. */
+export const WX_QR_COOKIE = "vt_wxqr";

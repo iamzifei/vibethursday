@@ -145,3 +145,66 @@ export function readOpenidToken(token: string | null | undefined, now: number = 
 export function wechatCookieOptions(secure: boolean, maxAgeSeconds: number) {
   return { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: maxAgeSeconds };
 }
+
+/* ── Scan to log in on a computer (2026-10-05) ─────────────────────────
+   The computer shows a QR code for /login?qr=<token>; the phone that scans it
+   (inside WeChat, so the service account recognises it) confirms; the computer,
+   asking every few seconds, is then given the login. Uses only the service
+   account already set up — the open platform's website-app QR login would need
+   a second app and days of review. */
+
+/** How long a QR code can be scanned and confirmed: five minutes. */
+export const QR_TTL_MS = 5 * 60 * 1000;
+
+/** 32 hex characters, unguessable, used once. */
+export function newQrToken(): string {
+  return randomBytes(16).toString("hex");
+}
+
+/**
+ * The two-digit number the computer shows next to its code. The phone has to
+ * pick it out of three before the login goes through — the one thing someone
+ * who was only *forwarded* a /login?qr= link cannot know, because they cannot
+ * see the screen it came from (2026-10-05 review: QR login phishing).
+ */
+export function newQrPin(): string {
+  return String(10 + (randomBytes(1)[0] % 90));
+}
+
+/**
+ * The three numbers the phone chooses from: the real one and two others,
+ * shuffled. Derived from the token, so reloading the page shows the same three
+ * in the same order instead of handing out fresh guesses.
+ */
+export function qrPinChoices(token: string, pin: string): string[] {
+  const seed = createHmac("sha256", "vt.wx.qr.choices").update(token).digest();
+  const choices = new Set([pin]);
+  for (let i = 0; choices.size < 3; i += 1) choices.add(String(10 + (seed[i % seed.length] + i * 37) % 90));
+  return [...choices].sort((a, b) => seed[Number(a) % seed.length] - seed[Number(b) % seed.length] || a.localeCompare(b));
+}
+
+export function looksLikeQrToken(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{32}$/.test(value);
+}
+
+const QR_LABEL = "vt.wx.qr.v1";
+
+/**
+ * Held by the computer that showed the code, and required to collect the
+ * login: a photo of someone's screen is enough to scan the code, but not to
+ * be the browser that gets logged in.
+ */
+export function qrBrowserToken(token: string, now: number = Date.now(), key: string = secret()): string {
+  const head = `${QR_LABEL}:${token}.${now + QR_TTL_MS}`;
+  return `${head}~${sign(head, key)}`;
+}
+
+/** The QR token this browser may collect, or null if forged, for another code, or expired. */
+export function readQrBrowserToken(cookie: string | null | undefined, now: number = Date.now(), key: string = secret()): string | null {
+  if (!cookie || cookie.length > 200) return null;
+  const match = /^(vt\.wx\.qr\.v1:([a-f0-9]{32})\.(\d{10,16}))~([A-Za-z0-9_-]{32})$/.exec(cookie);
+  if (!match) return null;
+  const [, head, token, expires, signature] = match;
+  if (!sameSignature(sign(head, key), signature)) return null;
+  return Number(expires) > now ? token : null;
+}
