@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMySignup, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
-import { nextThursdays, sydneyToday } from "@/lib/sessions";
-import { admission } from "@/lib/capacity";
+import { bookableSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { admission, capFor } from "@/lib/capacity";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
@@ -150,8 +150,10 @@ export async function POST(request: Request) {
 
   // Only accept a session date the form actually offered. Without this the
   // column would happily take any string a crafted request sent.
+  // `bookableSessions`, not `nextThursdays`: a Build Tuesday date would
+  // otherwise be stored as "no session" while the person was told they were in.
   const sessionRaw = clean(body.firstSession, 10);
-  const firstSession = sessionRaw && nextThursdays(12).includes(sessionRaw) ? sessionRaw : null;
+  const firstSession = sessionRaw && bookableSessions(12).includes(sessionRaw) ? sessionRaw : null;
 
   // Whitelisted the same way the session date is: this column is read back as
   // counts to decide whether a second session is worth running, and a free
@@ -194,7 +196,7 @@ export async function POST(request: Request) {
   if (firstSession) {
     try {
       const { count, alreadyIn } = await sessionHeadcount(firstSession, email, wechat);
-      waitlisted = admission(count, alreadyIn) === "waitlist";
+      waitlisted = admission(count, alreadyIn, capFor(firstSession)) === "waitlist";
     } catch (error) {
       // Counting failed: book them. A signup lost to a counting error is worse
       // than one person over a soft cap.
@@ -273,7 +275,33 @@ export async function POST(request: Request) {
     }
   }
 
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming });
+  // Waitlisted for a Thursday while a Build Tuesday still has room: say so on
+  // the confirmation, with how many places are left. This is the overflow the
+  // Tuesday exists to take (2026-10-04). Only a hint — nothing is booked for
+  // them; /my moves them in one tap. A failed count just leaves it out.
+  let tuesday: { session: string; left: number } | undefined;
+  if (waitlisted && firstSession) {
+    try {
+      for (const special of upcomingSpecialSessions()) {
+        if (special.date === firstSession) continue;
+        // Matched like the booking itself, so someone already down for the
+        // Tuesday is not told to move there.
+        const { count, alreadyIn } = await sessionHeadcount(special.date, email, wechat);
+        if (alreadyIn) break;
+        if (count < special.cap) {
+          tuesday = { session: special.date, left: special.cap - count };
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("[signup] saved, but could not count the Tuesday", error);
+    }
+  }
+
+  // `remembered`: the cookie below is about to be set, so the confirmation can
+  // offer its one-tap question (/api/signup/interest reads only that cookie).
+  const remembered = profileUpdated && exactName;
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

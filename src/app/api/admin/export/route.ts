@@ -41,6 +41,9 @@ const COLUMNS = [
   // after everything else for the same reason as the two above.
   "ai_level",
   "industry",
+  // The one-tap "what else would you come to" from the confirmation
+  // (signup-interest.ts). Appended last, like the two above.
+  "interest",
 ] as const;
 
 /**

@@ -5,7 +5,7 @@ import { KeepAwake } from "@/components/KeepAwake";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { checkinCode } from "@/lib/checkin";
 import { requestOrigin } from "@/lib/request-origin";
-import { focusSession, formatSession } from "@/lib/sessions";
+import { deskSession, formatSession } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,8 @@ export default async function DoorPage() {
     );
   }
 
-  const session = focusSession().date;
+  // The Tuesday on a Build Tuesday, otherwise the Thursday in focus.
+  const session = deskSession();
   const url = `${await requestOrigin()}/checkin?s=${session}&k=${checkinCode(session)}`;
   // Dark on white, never inverted: plenty of scanners fail on a light-on-dark code.
   const qr = await QRCode.toString(url, {

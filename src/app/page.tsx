@@ -6,13 +6,13 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { currentVersion } from "@/lib/changelog";
 import { coachAvailable } from "@/lib/coach";
-import { SESSION_CAP } from "@/lib/capacity";
+import { capFor, SESSION_CAP } from "@/lib/capacity";
 import { getCopy, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
 import { listWharfQuestions, signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
-import { formatSession, nextThursdays } from "@/lib/sessions";
+import { bookableSessions, formatSession, isSpecialSession } from "@/lib/sessions";
 
 
 type PageProps = {
@@ -57,15 +57,26 @@ export default async function Page({ searchParams }: PageProps) {
   const wharfRead = listWharfQuestions();
   wharfRead.catch(() => {});
   const counts = await signupCountsBySession().catch(() => new Map<string, number>());
-  const sessions = nextThursdays(6).map((value) => ({
-    value,
-    label:
-      `${formatSession(value, lang)} · ${c.signup.fields.sessionTimeSuffix}` +
-      ((counts.get(value) ?? 0) >= SESSION_CAP ? ` · ${c.signup.fields.sessionFull}` : ""),
-    full: (counts.get(value) ?? 0) >= SESSION_CAP,
-  }));
+  // Thursdays plus any open Build Tuesday, in date order. A Tuesday carries its
+  // own time and room in the label and its own cap (`capFor`), and is flagged
+  // so the form can point people who build things at it.
+  const sessions = bookableSessions(6).map((value) => {
+    const tuesday = isSpecialSession(value);
+    const full = (counts.get(value) ?? 0) >= capFor(value);
+    return {
+      value,
+      label:
+        `${formatSession(value, lang)} · ${tuesday ? c.signup.sessionTimeSuffixTuesday : c.signup.fields.sessionTimeSuffix}` +
+        (full ? ` · ${c.signup.fields.sessionFull}` : ""),
+      full,
+      tuesday,
+    };
+  });
 
-  const nextSession = sessions[0];
+  // The next *Thursday*: the pill, the seats warning and the structured data
+  // below are all about the weekly meetup, never the Tuesday.
+  const nextSession = sessions.find((session) => !session.tuesday);
+  const tuesdayOpen = sessions.some((session) => session.tuesday);
   // Places left on the next session, only when it is worth saying (≤ 10).
   const nextLeft = nextSession ? SESSION_CAP - (counts.get(nextSession.value) ?? 0) : null;
   const nextSeats = nextLeft !== null && nextLeft <= 10 ? Math.max(0, nextLeft) : null;
@@ -101,7 +112,7 @@ export default async function Page({ searchParams }: PageProps) {
     }));
 
     thisWeekCount = questions.filter(
-      (question) => question.session === nextSession.value,
+      (question) => question.session === nextSession?.value,
     ).length;
   } catch (error) {
     console.error("[home] the wharf block could not be loaded", error);
@@ -117,7 +128,9 @@ export default async function Page({ searchParams }: PageProps) {
       <JsonLd
         data={[
           organizationJsonLd(c),
-          eventSeriesJsonLd(sessions.slice(0, 2).map((session) => session.value), lang, c),
+          // Thursdays only: the series is "every Thursday at The Avenue", and a
+          // Tuesday in it would be published with Thursday's time and venue.
+          eventSeriesJsonLd(sessions.filter((session) => !session.tuesday).slice(0, 2).map((session) => session.value), lang, c),
           faqJsonLd(c),
         ]}
       />
@@ -291,6 +304,17 @@ export default async function Page({ searchParams }: PageProps) {
               <p className="body-lg" style={{ maxWidth: "62ch" }}>
                 {c.signup.lede}
               </p>
+              {/* The split, said before the form rather than inside it: what
+                  Thursday is, and where the other two kinds of people go.
+                  Only while a Tuesday is open — otherwise it points nowhere. */}
+              {tuesdayOpen && (
+                <p className="body" style={{ maxWidth: "62ch" }}>
+                  {c.signup.hook}{" "}
+                  <a href={langHref("/tuesday", lang)}>
+                    {c.signup.hookTuesdayCta} →
+                  </a>
+                </p>
+              )}
             </div>
 
             <SignupForm

@@ -573,6 +573,26 @@ export const copy = {
       // Soft check: shown once, and a second tap submits as-is.
       errorWechatId: "这个看起来像微信昵称，不像微信号。微信号在：打开微信 → 我 → 头像右边「微信号：」后面那串，一般 6 位以上、字母开头，也可以填手机号。昵称搜不到人，我没法拉你进群。确认没填错的话，再点一次提交。",
       errorPurpose: "选一下「这次来最想带走什么」，一个就行。",
+      // Build Tuesday（2026-10-04）：周四人太多，在做东西的人分去周二。
+      // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
+      sessionTimeSuffixTuesday: "上午 10:00 · Build Tuesday · Chatswood 图书馆小会议室",
+      // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
+      hook: "周四是交流局，不是课。在做东西、想打开电脑互相看的，来周二的 Build Tuesday；想有人带着一步步学的，报完名可以告诉我，想要的人多就开一个小班。",
+      hookTuesdayCta: "看看 Build Tuesday",
+      // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
+      tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人、打开电脑互相看做的东西。",
+      tuesdayHintCta: "改报周二",
+      // 周四进了候补、周二还有位子时，成功页上出现。
+      tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有 {n} 个位子，在做东西的话可以改到那天：",
+      tuesdayOverflowCta: "去改到周二",
+      // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
+      interestTitle: "以后还想来哪种？选填，点一下就行。",
+      interestOptions: [
+        { value: "tuesday", label: "周二动手局：打开电脑，互相看做的东西" },
+        { value: "class", label: "有人带着一步步做的小班" },
+        { value: "none", label: "都不用，周四就够了" },
+      ],
+      interestThanks: "记下了，谢谢。",
       errorEmail: "这个邮箱地址看起来不太对。",
     },
 
@@ -1491,6 +1511,44 @@ export const copy = {
       my: "查我的报名",
     },
 
+    // /tuesday：Build Tuesday（周二动手局）。2026-10-04 定：周四太挤，给在做东西的人
+    // 单开一个上午，小房间、打开电脑互相看，不上台。目的是把周四的人分一部分过来。
+    tuesday: {
+      meta: {
+        title: "Build Tuesday · 周二动手局 · Vibe Thursday",
+        description: "悉尼 Chatswood，周二上午，十来个在做东西的人，打开电脑互相看做的东西。免费。Vibe Thursday 的姊妹场。",
+      },
+      eyebrow: "§ Build Tuesday · 周二动手局",
+      title: "打开电脑，互相看看在做的东西。",
+      lede: "周四的人越来越多，在做东西的人想细看、细聊，在一屋子人里很难。所以单开一个周二上午：小房间，十来个人，不上台，不讲课。",
+      factsTitle: "时间和地点",
+      facts: [
+        { label: "时间", value: "上午 10:00–12:00" },
+        { label: "地点", value: "Chatswood Library · Meeting Room 1A（The Concourse，409 Victoria Ave）" },
+        { label: "人数", value: "15 人，满了进候补（收到通知再来）" },
+        { label: "费用", value: "免费" },
+      ],
+      mapsUrl: "https://maps.google.com/?q=Chatswood+Library+409+Victoria+Ave+Chatswood+NSW",
+      mapsLabel: "在地图上看",
+      whoTitle: "给谁",
+      who: [
+        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。",
+        "判断标准就一条：你能打开电脑，给别人看你做的东西，哪怕只做了一半。",
+        "只想来看看、或者想了解 AI 能帮生意做什么的，更适合周四。",
+      ],
+      formatTitle: "怎么进行",
+      format: [
+        "没有台上，也没有投影。大家围着桌子，轮流打开电脑给旁边的人看。",
+        "每人大约 5–8 分钟：做了什么、卡在哪、想听什么意见。然后大家一起拆。",
+        "带上电脑和充电器。没做完、很粗糙都没关系，卡住的地方最值得聊。",
+      ],
+      thursdayNote: "周四照常办，两场都想来也可以。",
+      thursdayLink: "看周四的 Vibe Thursday",
+      signupTitle: "报名",
+      signupLede: "名额只有 15 个，报了来不了的话请在「查我的报名」里取消，把位子让出来。",
+      noSession: "这一场已经结束了。下一场定了日子会放在这里。",
+    },
+
     // 查 / 改 / 取消我的报名。09-28 一下午群里六七个人问「我报上了吗」「报错周四了怎么改」，
     // 网站两件都做不到：场次只能加不能减，也没有地方看自己报了哪几场。
     my: {
@@ -2042,6 +2100,20 @@ export const copy = {
       errorNeedContact: "Leave at least one way to reach you — email or WeChat.",
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
       errorPurpose: "Pick what you most want to take away this time — just one.",
+      sessionTimeSuffixTuesday: "10:00am · Build Tuesday · Chatswood Library meeting room",
+      hook: "Thursday is for meeting people, not a class. If you build things and want to open laptops and look at each other's work, come to Build Tuesday; if you want someone to walk you through it step by step, say so after you sign up — if enough people do, I will run a small class.",
+      hookTuesdayCta: "See Build Tuesday",
+      tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",
+      tuesdayHintCta: "Switch to Tuesday",
+      tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has {n} places — if you build things, you can move to it:",
+      tuesdayOverflowCta: "Move to Tuesday",
+      interestTitle: "What else would you come to? Optional — one tap.",
+      interestOptions: [
+        { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },
+        { value: "class", label: "A small class where someone walks you through it" },
+        { value: "none", label: "Neither — Thursday is enough" },
+      ],
+      interestThanks: "Noted — thanks.",
       errorEmail: "That email address does not look right.",
     },
 
@@ -2804,6 +2876,42 @@ export const copy = {
       home: "Home",
       members: "The member wall",
       my: "Check my signup",
+    },
+
+    tuesday: {
+      meta: {
+        title: "Build Tuesday · Vibe Thursday",
+        description: "Chatswood, Sydney, Tuesday morning: about a dozen people who build things, laptops open, looking at each other's work. Free. A sister session of Vibe Thursday.",
+      },
+      eyebrow: "§ Build Tuesday",
+      title: "Open your laptop and show each other what you're building.",
+      lede: "Thursday keeps getting bigger, and looking closely at someone's work is hard in a room that full. So people who build things get a Tuesday morning of their own: a small room, about a dozen people, no stage, no talk.",
+      factsTitle: "When and where",
+      facts: [
+        { label: "Time", value: "10:00am–12:00" },
+        { label: "Where", value: "Chatswood Library · Meeting Room 1A (The Concourse, 409 Victoria Ave)" },
+        { label: "Places", value: "15, then a waitlist (come only once you are told there is room)" },
+        { label: "Cost", value: "Free" },
+      ],
+      mapsUrl: "https://maps.google.com/?q=Chatswood+Library+409+Victoria+Ave+Chatswood+NSW",
+      mapsLabel: "Open in Maps",
+      whoTitle: "Who it is for",
+      who: [
+        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not.",
+        "One test: you can open your laptop and show someone what you made, even if it is half done.",
+        "If you mostly want to look around, or to see what AI could do for a business, Thursday will suit you better.",
+      ],
+      formatTitle: "How it runs",
+      format: [
+        "No stage and no projector. Everyone sits round the table and takes turns opening their laptop for the people next to them.",
+        "About 5–8 minutes each: what you made, where you are stuck, what you want an opinion on. Then everyone digs in.",
+        "Bring your laptop and charger. Unfinished and rough is fine — where you are stuck is the best part to talk about.",
+      ],
+      thursdayNote: "Thursday still runs as usual, and you are welcome at both.",
+      thursdayLink: "See Vibe Thursday",
+      signupTitle: "Sign up",
+      signupLede: "There are only 15 places. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
+      noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 
     my: {

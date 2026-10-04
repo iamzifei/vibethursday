@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { admission, bookedOnAnother, exactSignupName, sameSignupName } from "./capacity.ts";
+import { admission, bookedOnAnother, capFor, exactSignupName, sameSignupName } from "./capacity.ts";
 import { nameHint } from "./my-signup.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
@@ -163,6 +163,11 @@ export function ensureSchema(): Promise<void> {
     // before the questions existed — and must never be counted as an answer.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS ai_level text`);
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS industry text`);
+
+    // The one-tap "what else would you come to" on the signup confirmation
+    // (signup-interest.ts): 'tuesday' | 'class' | 'none'. One answer per
+    // person, the latest tap wins. NULL = not asked or did not tap.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS interest text`);
 
     // Sessions this person is waitlisted for (`capacity.ts`). Kept apart from
     // `sessions` so every existing headcount — /admin, signup-stats, the
@@ -953,6 +958,7 @@ export type SignupRow = {
   ai_level: string | null;
   /** Which industry (`INDUSTRIES`). Null when they did not answer. */
   industry: string | null;
+  interest: string | null;
   /** Sessions this person checked in to on the day, oldest first. */
   checked_in: string[];
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
@@ -963,6 +969,16 @@ export type SignupRow = {
   waitlist_since: Record<string, string>;
   created_at: string;
 };
+
+/**
+ * Saves the one-tap interest answer against a signup. The id comes from the
+ * "this phone remembers you" cookie, never from anything typed, so nobody can
+ * answer for someone else.
+ */
+export async function setSignupInterest(signupId: string, interest: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`UPDATE signups SET interest = $2, updated_at = now() WHERE id = $1::bigint`, [signupId, interest]);
+}
 
 export async function listSignups(): Promise<SignupRow[]> {
   await ensureSchema();
@@ -983,7 +999,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, ai_level, industry, source, lang, bot_check, wechat_former, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, interest, source, lang, bot_check, wechat_former, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -2952,7 +2968,7 @@ export async function moveSessionFor(signupId: string, from: string | null, to: 
           WHERE $1::date = ANY(sessions)`,
         [to, signupId],
       );
-      const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false);
+      const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false, capFor(to));
 
       await client.query(
         result === "booked"
@@ -3002,7 +3018,7 @@ export async function addSessionFor(signupId: string, session: string): Promise<
       WHERE $1::date = ANY(sessions)`,
     [session, signupId],
   );
-  const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false);
+  const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false, capFor(session));
 
   await pool.query(
     result === "booked"

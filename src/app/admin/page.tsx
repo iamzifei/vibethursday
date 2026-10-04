@@ -8,7 +8,7 @@ import { OrderDesk } from "@/components/OrderDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
-import { capacityAlert, SESSION_CAP } from "@/lib/capacity";
+import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import {
@@ -29,7 +29,7 @@ import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summa
 import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { formatQuestionList } from "@/lib/session-questions";
 import { walkInMatches } from "@/lib/walk-in-match";
-import { focusSession, formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
+import { deskSession, formatSession, isSpecialSession, nextThursdays, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 
@@ -77,7 +77,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // The desk is set up for the session in focus, not the next one: on a
   // Thursday afternoon `nextThursdays` has already rolled to next week, and
   // the afternoon is when the organiser fixes up who was there this morning.
-  const desk = focusSession().date;
+  // On a Build Tuesday the desk is that Tuesday (`deskSession`).
+  const desk = deskSession();
 
   // Same session as the check-in desk, not `nextThursdays(1)[0]`: that one
   // rolls to next week at noon on the day, and the afternoon is exactly when a
@@ -193,7 +194,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const countSpend = (band: string) => signups.filter((row) => row.ai_spend === band).length;
 
   const nextSession = nextThursdays(1)[0];
-  const perSession = countPerSession(signups, [nextSession]);
+  // Open Build Tuesdays are listed even before anyone signs up, like the next Thursday.
+  const perSession = countPerSession(signups, [nextSession, ...upcomingSpecialSessions().map((special) => special.date)]);
   // Waitlisted signups per session, from the same rows. Not part of
   // `countPerSession` on purpose: a waitlisted person has no place, and every
   // existing headcount must keep meaning "people with a place".
@@ -276,6 +278,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
     {
       label: `下一场 ${nextSession}（报上 / 上限 · 候补）`,
       value: `${nextSessionRow?.total ?? 0} / ${SESSION_CAP} · ${waitlistBySession.get(nextSession) ?? 0}`,
+    },
+    // The one tap on the signup confirmation (signup-interest.ts, 2026-10-04):
+    // sizes Build Tuesday and the small class before either is announced.
+    {
+      label: "成功页一问：以后还想来（周二动手局 · 带着做的小班 · 都不用）",
+      value: `${signups.filter((row) => row.interest === "tuesday").length} · ${signups.filter((row) => row.interest === "class").length} · ${signups.filter((row) => row.interest === "none").length}`,
     },
     // The form preselects "先来听听", so this is who changed it, not a turnout signal.
     { label: "选了「想讲讲」的（默认是先来听听）", value: wantsToDemo },
@@ -393,7 +401,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       )}
 
       <p className="body-sm admin-glance">
-        <strong>{desk}</strong> · 报名 {deskRow?.total ?? 0} / {SESSION_CAP} · 候补{" "}
+        <strong>{desk}</strong>{isSpecialSession(desk) ? " · Build Tuesday" : ""} · 报名 {deskRow?.total ?? 0} / {capFor(desk)} · 候补{" "}
         {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length} · 点单 {orders.length} 杯
       </p>
 
@@ -416,9 +424,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {/* People can cancel on /my now (2026-09-28), which frees a place but
             moves nobody up — that stays a call made here. This line is the
             prompt to make it. */}
-        {deskWaitlist.length > 0 && (deskRow?.total ?? 0) < SESSION_CAP && (
+        {deskWaitlist.length > 0 && (deskRow?.total ?? 0) < capFor(desk) && (
           <p className="alert" role="status">
-            有人取消了：现在空出 {SESSION_CAP - (deskRow?.total ?? 0)} 个位子，候补 {deskWaitlist.length} 人。下面点「给他位子」放人，再在群里告诉他。
+            有人取消了：现在空出 {capFor(desk) - (deskRow?.total ?? 0)} 个位子，候补 {deskWaitlist.length} 人。下面点「给他位子」放人，再在群里告诉他。
           </p>
         )}
         {deskWaitlist.length === 0 ? (
@@ -1004,10 +1012,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <tr key={session.date}>
                   <td className="mono" style={{ color: session.date === nextSession ? "var(--fg1)" : undefined }}>
                     {session.date}
+                    {isSpecialSession(session.date) ? " · Build Tuesday" : ""}
                     {session.date === nextSession ? " ← next" : ""}
                   </td>
                   <td className="mono">
-                    {session.total} / {SESSION_CAP}
+                    {session.total} / {capFor(session.date)}
                   </td>
                   <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
                   <td className="mono">{attendance.get(session.date) ?? "—"}</td>

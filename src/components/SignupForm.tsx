@@ -15,7 +15,8 @@ import {
 import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 
-type SessionOption = { value: string; label: string; full?: boolean };
+/** `tuesday`: a Build Tuesday rather than a Thursday (`SPECIAL_SESSIONS`). */
+type SessionOption = { value: string; label: string; full?: boolean; tuesday?: boolean };
 
 type Props = {
   lang: Lang;
@@ -38,7 +39,15 @@ type Receipt = {
   waitlisted: boolean;
   /** Every upcoming Thursday they are now down for, when the server could say. */
   upcoming: { label: string; waitlisted: boolean }[] | null;
+  /** Waitlisted for a Thursday while a Build Tuesday still has room. */
+  tuesday: { label: string; left: number } | null;
+  /** The server set the "this phone remembers you" cookie, so the one-tap
+      interest question below can be answered without asking who they are. */
+  remembered: boolean;
 };
+
+/** Purposes that mean "I build things" — the people Build Tuesday is for. */
+const BUILDER_PURPOSES = new Set(["product", "tech"]);
 
 /**
  * Unsent form contents, kept separately from the saved profile
@@ -75,6 +84,18 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [botCheckGaveUp, setBotCheckGaveUp] = useState(false);
   const [editing, setEditing] = useState(false);
+  // Read back from the uncontrolled session select and purpose radios, only to
+  // decide whether to suggest Build Tuesday. The form still reads itself with
+  // FormData on submit.
+  // The nearest Thursday, never a Build Tuesday: the Tuesday sorts first in
+  // the week it falls in, and someone who just presses submit meant Thursday.
+  // On /tuesday every option is a Tuesday, so the first one stands.
+  const defaultSession = sessions.find((session) => !session.tuesday)?.value ?? sessions[0]?.value;
+  const [pickedSession, setPickedSession] = useState<string | undefined>(defaultSession);
+  const [pickedPurpose, setPickedPurpose] = useState<string | null>(null);
+  const sessionRef = useRef<HTMLSelectElement>(null);
+  // The one-tap "what else would you come to" on the confirmation.
+  const [interest, setInterest] = useState<"idle" | "sending" | "done">("idle");
 
   // Null on the server and during hydration, then the stored profile if there
   // is one. See the store above for why this is not a useState + useEffect.
@@ -144,6 +165,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         (element as { value: string }).value = value;
       }
     }
+    // The restore writes the DOM directly, so the two values the Build Tuesday
+    // nudge reads are brought back in step with what the form now shows.
+    setPickedSession(sessionRef.current?.value || undefined);
+    const restoredPurpose = form.elements.namedItem("purpose");
+    setPickedPurpose(restoredPurpose && "value" in restoredPurpose ? (restoredPurpose as { value: string }).value || null : null);
     // Someone who opened the fold and answered something must not come back to
     // find it closed again over their own answers — that reads as the draft
     // having been lost, and re-opening to check costs more than the section
@@ -341,6 +367,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
       const accepted = (await response.json().catch(() => null)) as {
         waitlisted?: boolean;
         upcoming?: { session: string; waitlisted: boolean }[];
+        tuesday?: { session: string; left: number };
+        remembered?: boolean;
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -353,7 +381,13 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         upcoming: Array.isArray(accepted?.upcoming)
           ? accepted.upcoming.map((entry) => ({ label: labelOf(entry.session), waitlisted: entry.waitlisted === true }))
           : null,
+        tuesday:
+          accepted?.tuesday && typeof accepted.tuesday.left === "number"
+            ? { label: labelOf(accepted.tuesday.session), left: accepted.tuesday.left }
+            : null,
+        remembered: accepted?.remembered === true,
       });
+      setInterest("idle");
       setStatus("done");
       form.reset();
     } catch {
@@ -381,6 +415,16 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           </div>
         )}
         {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
+        {/* The overflow Build Tuesday exists to take: Thursday is full, the
+            Tuesday is not. A link, not a booking — /my moves them in one tap. */}
+        {receipt?.tuesday && (
+          <p>
+            {copy.tuesdayOverflow
+              .replace("{date}", receipt.tuesday.label.split(" · ")[0])
+              .replace("{n}", String(receipt.tuesday.left))}{" "}
+            <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.tuesdayOverflowCta} →</a>
+          </p>
+        )}
         <p>
           {receipt?.session ? (
             <>
@@ -436,6 +480,46 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           </div>
         )}
 
+        {/* One tap, optional: which other kind of morning they would come to.
+            Only when this phone is remembered — the answer is saved against
+            the signup through that cookie, never through a name typed here. */}
+        {receipt?.remembered && (
+          <div className="stack-2">
+            <p className="body-sm" style={{ margin: 0 }}>{copy.interestTitle}</p>
+            {interest === "done" ? (
+              <p className="body-sm" style={{ margin: 0 }}>{copy.interestThanks}</p>
+            ) : (
+              <div className="choice-group choice-group--stack">
+                {copy.interestOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className="btn btn--secondary btn--sm"
+                    disabled={interest === "sending"}
+                    onClick={async () => {
+                      setInterest("sending");
+                      try {
+                        const result = await fetch("/api/signup/interest", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ interest: option.value }),
+                        });
+                        // A failure is not worth an error message on a
+                        // confirmation screen: the signup itself went through.
+                        setInterest(result.ok ? "done" : "idle");
+                      } catch {
+                        setInterest("idle");
+                      }
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* The one moment where claiming a card is not a chore: the signup it
             needs was created seconds ago, and the details are still in mind. */}
         <p className="body-sm">{copy.successClaimBody}</p>
@@ -457,6 +541,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
   }
 
   const sending = status === "sending";
+  // The Tuesday to suggest: the first one offered that still has room.
+  const tuesdayOption = sessions.find((session) => session.tuesday && !session.full);
 
   // The widget stays mounted after it succeeds. Unmounting it on success would
   // also throw away Turnstile's expiry callback, and tokens expire in a few
@@ -585,6 +671,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           className="field"
           id={fieldId("session")}
           name="firstSession"
+          ref={sessionRef}
+          onChange={(event) => setPickedSession(event.target.value)}
           // The nearest Thursday, full or not. For one day (2026-09-28) this
           // skipped to the first session with room, and people who meant this
           // week were quietly signed up for next week instead — then signed up
@@ -592,7 +680,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           // ("waitlist only" since 2026-10-01, when waitlisted people stopped
           // being told to come anyway), so the date they most likely meant is
           // still the right default — they can see it is full and pick another.
-          defaultValue={sessions[0]?.value}
+          defaultValue={defaultSession}
         >
           {sessions.map((session) => (
             <option key={session.value} value={session.value}>
@@ -618,12 +706,30 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
         <div className="choice-group choice-group--stack">
           {copy.fields.purposeOptions.map((option) => (
             <label className="choice" key={option.value}>
-              <input type="radio" name="purpose" value={option.value} />
+              <input type="radio" name="purpose" value={option.value} onChange={() => setPickedPurpose(option.value)} />
               <span>{option.label}</span>
             </label>
           ))}
         </div>
         <p className="field-hint">{copy.fields.purposeHint}</p>
+        {/* Someone who builds things, signing up for a Thursday, while a Build
+            Tuesday has room: suggest it, one tap to switch. A nudge, never a
+            redirect — Thursday is still theirs if they want it. */}
+        {tuesdayOption && pickedPurpose && BUILDER_PURPOSES.has(pickedPurpose) && pickedSession !== tuesdayOption.value && (
+          <p className="field-hint" style={{ color: "var(--fg1)" }}>
+            {copy.tuesdayHint}{" "}
+            <button
+              type="button"
+              className="linkish"
+              onClick={() => {
+                if (sessionRef.current) sessionRef.current.value = tuesdayOption.value;
+                setPickedSession(tuesdayOption.value);
+              }}
+            >
+              {copy.tuesdayHintCta}
+            </button>
+          </p>
+        )}
       </fieldset>
 
       {/* "How familiar with AI" and "which industry": who is in the room, so a

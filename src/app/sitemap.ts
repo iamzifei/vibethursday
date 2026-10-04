@@ -78,6 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // is exactly what the page is for.
     everyLanguage("/changelog", { changeFrequency: "monthly", priority: 0.5 }),
     everyLanguage("/support", { changeFrequency: "monthly", priority: 0.5 }),
+    everyLanguage("/tuesday", { changeFrequency: "weekly", priority: 0.6 }),
     ...[...dates]
       .sort()
       .map((date) => everyLanguage(`/sessions/${date}`, { changeFrequency: "monthly", priority: 0.5 })),

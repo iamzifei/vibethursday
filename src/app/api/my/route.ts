@@ -4,7 +4,7 @@ import { cancelSession, findMySignup, getMySignup, moveSessionFor } from "@/lib/
 import { canChangeSession, myToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { nextThursdays, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, sydneyToday } from "@/lib/sessions";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -125,9 +125,10 @@ export async function POST(request: Request) {
       return back({ t: token, done: "cancel", d: from });
     }
 
-    // Move (or, with no `from`, add): only to a Thursday the signup form would
-    // offer, so nobody books a date that is not a session.
-    if (!to || !nextThursdays(6).includes(to) || to === from) return back({ t: token, err: "failed" });
+    // Move (or, with no `from`, add): only to a date the signup form would
+    // offer — a Thursday or an open Build Tuesday — so nobody books a date
+    // that is not a session.
+    if (!to || !bookableSessions(6).includes(to) || to === from) return back({ t: token, err: "failed" });
 
     // Cancel and add in one transaction: never "old Thursday gone, new one not taken".
     const result = await moveSessionFor(signupId, from, to);

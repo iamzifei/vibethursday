@@ -58,10 +58,11 @@ test("every release says something, in both written languages", () => {
 
 test("a major release is reserved for the shape of the morning changing", () => {
   // Not a style rule — it is what the page tells the reader the chip means.
-  // Four so far: the first session, the format, the room, and the format
-  // again (2026-09-28: tables retired, the whole room together).
+  // Five so far: the first session, the format, the room, the format again
+  // (2026-09-28: tables retired, the whole room together), and a second
+  // morning (2026-10-05: Build Tuesday).
   const majors = RELEASES.filter((release) => release.kind === "major").map((r) => r.version);
-  assert.deepEqual(majors, ["4.0", "3.0", "2.0", "1.0"]);
+  assert.deepEqual(majors, ["5.0", "4.0", "3.0", "2.0", "1.0"]);
 });
 
 test("the current version is the top of the list", () => {
@@ -72,8 +73,8 @@ test("the current version is the top of the list", () => {
 });
 
 test("★ a release date never claims to be a Thursday", () => {
-  // `formatSession` hard-codes （周四） because every date it was written for is
-  // one. Most of these are not — the format changed on a Wednesday, the member
+  // `formatSession` prints a session's weekday (（周四）, or （周二） for a
+  // Build Tuesday) because every date it is given is a session. Most of these are not — the format changed on a Wednesday, the member
   // wall landed on a Saturday — so reusing it here would have printed a
   // confident, wrong weekday under a third of the entries.
   for (const release of RELEASES) {

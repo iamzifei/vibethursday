@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
 import { getMySignup, type MySignup } from "@/lib/db";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
-import { formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -160,7 +160,7 @@ export default async function MyPage({ searchParams }: PageProps) {
   const pastCount = mine.sessions.filter((s) => !canChangeSession(s, today)).length;
 
   const held = new Set(upcoming.map((entry) => entry.session));
-  const choices = nextThursdays(6).filter((session) => !held.has(session));
+  const choices = bookableSessions(6).filter((session) => !held.has(session));
 
   const doneText =
     params.done && params.d
@@ -202,7 +202,7 @@ export default async function MyPage({ searchParams }: PageProps) {
             {upcoming.map((entry) => (
               <li className="my-row" key={entry.session}>
                 <div className="my-row__head">
-                  <strong>{formatSession(entry.session, lang)}</strong>
+                  <strong>{sessionName(entry.session, lang)}</strong>
                   <span className={entry.position === null ? "chip" : "chip chip--quiet"}>
                     {entry.position === null ? t.booked : fill(t.waitlisted, { n: entry.position })}
                   </span>
@@ -224,7 +224,7 @@ export default async function MyPage({ searchParams }: PageProps) {
                         </option>
                         {choices.map((session) => (
                           <option key={session} value={session}>
-                            {formatSession(session, lang)}
+                            {sessionName(session, lang)}
                           </option>
                         ))}
                       </select>
@@ -276,7 +276,7 @@ export default async function MyPage({ searchParams }: PageProps) {
             </option>
             {choices.map((session) => (
               <option key={session} value={session}>
-                {formatSession(session, lang)}
+                {sessionName(session, lang)}
               </option>
             ))}
           </select>

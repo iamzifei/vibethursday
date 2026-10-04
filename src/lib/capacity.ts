@@ -1,4 +1,5 @@
 // Relative, not "@/": the tests load this through Node's type stripper.
+import { SPECIAL_SESSIONS } from "./sessions.ts";
 
 /**
  * How many people one session takes signups from.
@@ -29,9 +30,17 @@ export type Admission = "booked" | "waitlist";
  * shows); `alreadyIn` is whether this person is one of them. Somebody already
  * booked who submits again — to change their question, say — keeps their place.
  */
-export function admission(count: number, alreadyIn: boolean): Admission {
+export function admission(count: number, alreadyIn: boolean, cap: number = SESSION_CAP): Admission {
   if (alreadyIn) return "booked";
-  return count < SESSION_CAP ? "booked" : "waitlist";
+  return count < cap ? "booked" : "waitlist";
+}
+
+/**
+ * The cap for one date: a special session's own (Build Tuesday's room seats
+ * about fifteen), otherwise Thursday's forty.
+ */
+export function capFor(date: string): number {
+  return SPECIAL_SESSIONS.find((session) => session.date === date)?.cap ?? SESSION_CAP;
 }
 
 /**

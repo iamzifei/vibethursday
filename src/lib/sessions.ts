@@ -102,6 +102,71 @@ export function nextThursdays(count = 6): string[] {
 }
 
 /**
+ * Sessions that are not the weekly Thursday — Build Tuesday so far.
+ *
+ * Decided 2026-10-04: Thursday has outgrown a single room, so people who
+ * build things get a second morning of their own: a small closed room, laptops
+ * open, looking at each other's work rather than a stage. It exists to take
+ * some of Thursday's crowd, not to add to it.
+ *
+ * A list in code rather than a table: there is one of these so far, each is
+ * booked by hand, and a row in the database would need every page that reads
+ * sessions to learn a new shape. Add an entry here when the next room is
+ * booked. Where and when it is, in words, lives in `copy.tuesday`.
+ *
+ * ⚠️ Never on a Thursday. Every per-date table on the site (headcounts,
+ * check-ins, the waitlist) is keyed on the date alone, so a special session on
+ * a Thursday would be counted together with that week's meetup.
+ */
+export type SpecialSession = {
+  /** Sydney date, YYYY-MM-DD. */
+  date: string;
+  kind: "tuesday";
+  /** Sydney hour the session ends; after it the date is no longer offered. */
+  endHour: number;
+  /** Signups taken before the waitlist starts. The room seats about fifteen. */
+  cap: number;
+};
+
+export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
+  { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
+];
+
+/** Whether a date is one of the special sessions above. */
+export function isSpecialSession(date: string): boolean {
+  return SPECIAL_SESSIONS.some((session) => session.date === date);
+}
+
+/**
+ * Special sessions that can still be booked, soonest first.
+ *
+ * Pure in (today, hour) so the tests can stand on any day. Same rollover as a
+ * Thursday: offered up to the morning itself, gone once it has ended.
+ */
+export function openSpecialSessions(today: string, hour: number): SpecialSession[] {
+  return SPECIAL_SESSIONS.filter(
+    (session) => session.date > today || (session.date === today && hour < session.endHour),
+  ).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+/** `openSpecialSessions` against the real Sydney clock. */
+export function upcomingSpecialSessions(): SpecialSession[] {
+  return openSpecialSessions(sydneyToday().toISOString().slice(0, 10), sydneyHour());
+}
+
+/**
+ * Every date someone can sign up for: the next `count` Thursdays plus any
+ * special session still open, in date order.
+ *
+ * ★ The whitelist for every route that books a date. Until 2026-10-04 they all
+ * checked `nextThursdays()`, which would have quietly stored a Tuesday signup
+ * as "no session" while telling the person they were in.
+ */
+export function bookableSessions(count = 6): string[] {
+  return [...nextThursdays(count), ...upcomingSpecialSessions().map((session) => session.date)].sort();
+}
+
+/**
  * How close the next session has to be before the wall looks forward.
  *
  * Three days puts the switch on the Sunday/Monday boundary: Monday through
@@ -168,7 +233,9 @@ export function formatSession(isoDate: string, lang: Lang): string {
   if (lang !== "en") {
     const month = date.getUTCMonth() + 1;
     const day = date.getUTCDate();
-    const formatted = `${month}月${day}日（周四）`;
+    // The weekday comes from the date: until Build Tuesday every session was
+    // a Thursday and this said 周四 whatever the date was.
+    const formatted = `${month}月${day}日（周${"日一二三四五六"[date.getUTCDay()]}）`;
 
     // Built here rather than read from the copy bundle, so it misses the
     // conversion that bundle gets: 周 is 週 in Traditional.
@@ -176,7 +243,7 @@ export function formatSession(isoDate: string, lang: Lang): string {
     // ⚠️ One character swapped by hand, deliberately NOT the converter. This
     // file is imported by client code (the weekly poster, via poster-card),
     // and importing the converter here put its whole dictionary into that
-    // bundle. 月, 日 and 四 are identical in both scripts, so 周 is the only
+    // bundle. 月, 日 and the weekday digits are identical in both scripts, so 周 is the only
     // character this string can ever contain that differs — and
     // `tests/session-focus.test.mts` checks that against the real converter.
     return lang === "zh-Hant" ? formatted.replace("周", "週") : formatted;
@@ -188,4 +255,30 @@ export function formatSession(isoDate: string, lang: Lang): string {
     day: "numeric",
     month: "short",
   }).format(date);
+}
+
+/**
+ * A session's date plus, for a special session, its name — "10月6日（周二）·
+ * Build Tuesday". For lists where both kinds sit side by side (/my), so a
+ * Tuesday does not read as a Thursday that moved. The name is a proper noun
+ * and the same in every language.
+ */
+export function sessionName(isoDate: string, lang: Lang): string {
+  const date = formatSession(isoDate, lang);
+  return isSpecialSession(isoDate) ? `${date} · Build Tuesday` : date;
+}
+
+/**
+ * The session the organiser's check-in desk (/admin, /admin/door) is set up
+ * for: a special session on its own day, otherwise `focusSession`.
+ *
+ * On a Build Tuesday `focusSession` is still looking ahead to Thursday, which
+ * is right for the member wall and wrong for the desk — the people walking in
+ * that morning are the Tuesday's. All day rather than until it ends, for the
+ * same reason the desk looks back on a Thursday afternoon: that is when a
+ * no-show or a missed check-in gets fixed up.
+ */
+export function deskSession(): string {
+  const today = sydneyToday().toISOString().slice(0, 10);
+  return isSpecialSession(today) ? today : focusSession().date;
 }
