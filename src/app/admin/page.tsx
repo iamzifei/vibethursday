@@ -29,11 +29,11 @@ import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summa
 import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { formatQuestionList } from "@/lib/session-questions";
 import { walkInMatches } from "@/lib/walk-in-match";
-import { deskSession, formatSession, isSpecialSession, nextThursdays, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { deskSession, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 
-import { compositionPerSession, countPerSession, type Tally } from "@/lib/signup-stats";
+import { compositionPerSession, countPerSession, tuesdaySplit, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 
 // Always read live data, and keep this page out of any search index.
@@ -1021,6 +1021,47 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <td className="mono">{waitlistBySession.get(session.date) ?? 0}</td>
                   <td className="mono">{attendance.get(session.date) ?? "—"}</td>
                   <td className="mono">{session.wantsToDemo}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Build Tuesday: is it taking people off Thursday, or adding a second
+          crowd? (2026-10-05). One row per Tuesday, against the Thursday two
+          days later. "只报周二" is the number to watch: anyone who moved on /my
+          lands there, since a move drops the Thursday. */}
+      <section className="stack-4" id="split">
+        <div className="group-head">
+          <h2 className="h3">分流 · Build Tuesday</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            成功页一问：周二 {signups.filter((row) => row.interest === "tuesday").length} · 小班 {signups.filter((row) => row.interest === "class").length} · 都不用 {signups.filter((row) => row.interest === "none").length}
+          </span>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">周二</th>
+                <th scope="col">报上 / 上限 · 候补</th>
+                <th scope="col">只报周二</th>
+                <th scope="col">两场都报</th>
+                <th scope="col">老成员</th>
+                <th scope="col">做东西的</th>
+                <th scope="col">同周周四报上</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SPECIAL_SESSIONS.map(({ date }) => tuesdaySplit(signups, date)).map((split) => (
+                <tr key={split.tuesday}>
+                  <td className="mono">{split.tuesday}</td>
+                  <td className="mono">{split.tuesdayBooked} / {capFor(split.tuesday)} · {split.tuesdayWaitlist}</td>
+                  <td className="mono">{split.tuesdayOnly}</td>
+                  <td className="mono">{split.both}</td>
+                  <td className="mono">{split.regulars}</td>
+                  <td className="mono">{split.builders}</td>
+                  <td className="mono">{split.thursdayBooked} / {SESSION_CAP} · {split.thursday}</td>
                 </tr>
               ))}
             </tbody>

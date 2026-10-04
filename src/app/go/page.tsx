@@ -15,7 +15,7 @@ import { currentMemberId } from "@/lib/member-auth";
 import { formatPrice } from "@/lib/menu";
 import { orderCode, orderCookieName, readOrderToken } from "@/lib/order";
 import { checkinCode } from "@/lib/checkin";
-import { focusSession, formatSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
+import { focusSession, formatSession, isSpecialSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -150,6 +150,16 @@ export default async function GoPage({ searchParams }: PageProps) {
 
   const title = phase === "before" ? t.titleBefore : phase === "day" ? t.titleDay : t.titleAfter;
 
+  // Build Tuesday on its own morning (2026-10-05). Everything else on this page
+  // is about the weekly Thursday, which is right the rest of the week; on a
+  // Tuesday the people opening /go are walking into that room, so it gets a
+  // card of its own at the top: what and when, and the same check-in link the
+  // Thursday gets, in the same 10:00–13:00 window. Until 13:00, like the link.
+  const hour = sydneyHour();
+  const tuesdayToday = isSpecialSession(today) && hour < 13;
+  const tuesdayCheckin = tuesdayToday && checkinLinkOpen(true, hour);
+  const tuesdayMine = mine ? mine.sessions.includes(today) || mine.waitlist.some((entry) => entry.session === today) : null;
+
   // Where, read from the home page's venue card, so a venue change is one edit
   // and this page — which the group is told is where the address lives — can
   // never disagree with it. Found by its map link, not by position.
@@ -162,6 +172,28 @@ export default async function GoPage({ searchParams }: PageProps) {
       <main id="main">
         <section className="section">
           <div className="shell stack-8" style={{ maxWidth: "640px" }}>
+            {tuesdayToday && (
+              <div className="card card--accent stack-3">
+                <h2 className="h3" style={{ margin: 0 }}>{t.tuesdayTitle}</h2>
+                <p className="body" style={{ margin: 0 }}>{t.tuesdayWhen}</p>
+                {tuesdayCheckin ? (
+                  <div>
+                    <a className="btn btn--primary" href={withLang(`/checkin?s=${today}&k=${checkinCode(today)}`, lang)}>
+                      {t.tuesdayCheckin}
+                    </a>
+                  </div>
+                ) : (
+                  <p className="body-sm" style={{ margin: 0 }}>{t.tuesdayCheckinLater}</p>
+                )}
+                {tuesdayMine !== true && (
+                  <p className="body-sm" style={{ margin: 0 }}>
+                    {t.tuesdayNotSignedUp}
+                    <a href={`/tuesday${langSuffix(lang)}#signup`}>{t.tuesdaySignup} →</a>
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="stack-3">
               <span className="eyebrow">
                 {t.eyebrow} · {formatSession(session, lang)}

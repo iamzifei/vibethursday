@@ -183,3 +183,74 @@ function tally(row: SessionComposition, field: "aiLevel" | "industry" | "purpose
   }
   row[field][value] = (row[field][value] ?? 0) + 1;
 }
+
+/** What the Build Tuesday split needs from a signup row. */
+export type SplitSignup = {
+  sessions: readonly string[];
+  waitlist: readonly string[];
+  /** "2026-09-24=biz 2026-10-06=tech", as listSignups flattens it. */
+  purposes: string;
+};
+
+export type TuesdaySplit = {
+  tuesday: string;
+  thursday: string;
+  /** Booked on the Tuesday, and on its waitlist. */
+  tuesdayBooked: number;
+  tuesdayWaitlist: number;
+  /** Booked on that week's Thursday. */
+  thursdayBooked: number;
+  /** Down for the Tuesday and not that week's Thursday — the ones it took. */
+  tuesdayOnly: number;
+  /** Down for both. */
+  both: number;
+  /** Of the Tuesday's signups, came to or signed up for an earlier session. */
+  regulars: number;
+  /** Of the Tuesday's signups, said "product" or "tech" for it — the builders it is for. */
+  builders: number;
+};
+
+/**
+ * Whether Build Tuesday is doing its job (2026-10-05): taking people off that
+ * week's Thursday rather than adding a second crowd. Counted per Tuesday,
+ * against the Thursday two days later.
+ *
+ * "Down for" means booked or waitlisted. Someone who moved from Thursday to
+ * Tuesday on /my shows up as Tuesday-only — the move removes the Thursday —
+ * so tuesdayOnly is the number to watch.
+ */
+export function tuesdaySplit(rows: readonly SplitSignup[], tuesday: string): TuesdaySplit {
+  const thursdayDate = new Date(`${tuesday}T00:00:00Z`);
+  thursdayDate.setUTCDate(thursdayDate.getUTCDate() + 2);
+  const thursday = thursdayDate.toISOString().slice(0, 10);
+
+  const split: TuesdaySplit = {
+    tuesday,
+    thursday,
+    tuesdayBooked: 0,
+    tuesdayWaitlist: 0,
+    thursdayBooked: 0,
+    tuesdayOnly: 0,
+    both: 0,
+    regulars: 0,
+    builders: 0,
+  };
+
+  for (const row of rows) {
+    const onTuesday = row.sessions.includes(tuesday) || row.waitlist.includes(tuesday);
+    const onThursday = row.sessions.includes(thursday) || row.waitlist.includes(thursday);
+    if (row.sessions.includes(thursday)) split.thursdayBooked += 1;
+    if (!onTuesday) continue;
+
+    if (row.sessions.includes(tuesday)) split.tuesdayBooked += 1;
+    else split.tuesdayWaitlist += 1;
+    if (onThursday) split.both += 1;
+    else split.tuesdayOnly += 1;
+    if (row.sessions.some((date) => date < tuesday)) split.regulars += 1;
+
+    const purpose = new RegExp(`(?:^|\\s)${tuesday}=(\\w+)`).exec(row.purposes)?.[1];
+    if (purpose === "product" || purpose === "tech") split.builders += 1;
+  }
+
+  return split;
+}

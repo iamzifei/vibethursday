@@ -200,10 +200,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
         {hidden}
         {!name && <input type="hidden" name="useRemembered" value="1" />}
         <h2 className="h3">{t.qrConfirmTitle}</h2>
-        <p className="body">{t.qrConfirmBody}</p>
         <p className="body-lg" style={{ margin: 0 }}><strong>{t.qrConfirmAs.replace("{name}", who)}</strong></p>
         {/* Three numbers, one of them on the computer's screen. Each is its own
-            submit button, so the pick is the confirmation. */}
+            submit button, so the pick is the confirmation — and the warning
+            sits right here, where the decision is made. */}
         <p className="body" style={{ margin: 0 }}>{t.qrPinPrompt}</p>
         <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", alignItems: "center" }}>
           {pin &&
@@ -213,11 +213,14 @@ export default async function LoginPage({ searchParams }: PageProps) {
               </button>
             ))}
         </div>
+        <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>{t.qrConfirmBody}</p>
         {notMe}
       </form>
     ) : (
+      // Linking first, nothing to confirm yet — the warning belongs with the
+      // numbers, one step on, not above a name form (James 2026-10-05: the
+      // first screen read as a threat).
       <div className="stack-6">
-        <p className="body">{t.qrConfirmBody}</p>
         {linkForm}
         <p className="body-sm" style={{ color: "var(--fg3)" }}>{t.firstTimeDesktop}</p>
       </div>
