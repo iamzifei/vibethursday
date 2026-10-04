@@ -130,6 +130,7 @@ export type SpecialSession = {
 
 export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
+  { date: "2026-10-13", kind: "tuesday", endHour: 12, cap: 15 },
 ];
 
 /** Whether a date is one of the special sessions above. */

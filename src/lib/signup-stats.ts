@@ -102,6 +102,8 @@ export type ComposableSignup = {
   industry: string | null;
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn" (`listSignups`). */
   purposes: string;
+  /** What a business owner most wants AI for (BIZ_FOCUS), several allowed. */
+  biz_focus?: readonly string[];
 };
 
 /** Answer value → how many people gave it. Unanswered is kept apart, never a key here. */
@@ -114,6 +116,8 @@ export type SessionComposition = {
   aiLevel: Tally;
   industry: Tally;
   purpose: Tally;
+  /** Business owners' "what should AI help with", counted per mention. */
+  bizFocus: Tally;
   /** How many left each question blank, so a tally is never read against the wrong total. */
   unanswered: { aiLevel: number; industry: number; purpose: number };
 };
@@ -146,6 +150,7 @@ export function compositionPerSession(
         aiLevel: {},
         industry: {},
         purpose: {},
+        bizFocus: {},
         unanswered: { aiLevel: 0, industry: 0, purpose: 0 },
       },
     ]),
@@ -170,6 +175,9 @@ export function compositionPerSession(
       tally(row, "aiLevel", signup.ai_level);
       tally(row, "industry", signup.industry);
       tally(row, "purpose", purposeFor.get(date) ?? null);
+      // Mentions, not people: one owner may want help with two things. Only
+      // business owners are asked, so there is no "unanswered" to keep.
+      for (const focus of new Set(signup.biz_focus ?? [])) row.bizFocus[focus] = (row.bizFocus[focus] ?? 0) + 1;
     }
   }
 

@@ -305,10 +305,9 @@ export default async function Page({ searchParams }: PageProps) {
           <div className="shell stack-8">
             <div className="stack-4">
               <span className="eyebrow">{c.signup.eyebrow}</span>
+              {/* Title, then one line on where people go — no second line
+                  restating the title (2026-10-05 tidy-up). */}
               <h2>{c.signup.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.signup.lede}
-              </p>
               {/* The split, said before the form rather than inside it: what
                   Thursday is, and where the other two kinds of people go.
                   Only while a Tuesday is open — otherwise it points nowhere. */}
@@ -337,14 +336,14 @@ export default async function Page({ searchParams }: PageProps) {
               })()}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
               // The Wharf's "help me ask this better", on the box where most
-              // vague questions are written. Its button and disclosure are the
-              // Wharf's own words; the verdicts are reworded for a signup.
+              // vague questions are written. Its button is the Wharf's own
+              // words; the verdicts and the (shorter) disclosure are the
+              // signup's, from `c.signup.coach`.
               coach={
                 coachAvailable()
                   ? {
                       coachCta: c.wharf.coachCta,
                       coachAgain: c.wharf.coachAgain,
-                      coachNote: c.wharf.coachNote,
                       working: c.wharf.working,
                       ...c.signup.coach,
                     }

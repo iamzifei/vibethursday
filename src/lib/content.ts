@@ -348,12 +348,13 @@ export const copy = {
     signup: {
       eyebrow: "§ 报名",
       title: "报个名，我好知道订几个位子。",
-      lede: "场地按当周人数定，报名人数直接决定我跟店里怎么订位子，所以这一步对我是真有用的。",
       // Shown instead of the identity fields when this browser has signed up
       // before, so a regular only picks a session.
       // 「帮我问得更具体」在报名表里的几句结论。按钮和说明沿用码头那几句，
       // 这几句另写：码头说的是「发」，这里是报名，而且没有「想聊的」那一栏。
       coach: {
+        // 报名表上用短一点的说明；码头那边保留原来那句。说清两件事就够：发给谁、不按不发。
+        coachNote: "点了才会把这句发给 DeepSeek 追问一句；不点不发。",
         coachEnough: "这句已经够具体了。",
         coachSharper: "这样就够了，比刚才那句好接多了。",
         coachSocial: "这更像是想认识人，也很好。想让人当场接得上，可以改成一个具体的问题。",
@@ -387,10 +388,8 @@ export const copy = {
           { value: "learn", label: "刚开始用 AI，想学怎么用" },
           { value: "tech", label: "找机会：工作、项目、合作" },
         ],
-        purposeHint: "选一个，下面的问题会跟着变。",
-        steps: ["你是谁", "哪一类", "关于你", "哪一场"],
-        stepOf: "第 {n} 步，共 {total} 步",
-        recommended: "推荐你来周二的 Build Tuesday：十来个做东西的人，打开电脑互相看。周四也可以，两场都来也行。",
+        steps: ["你是谁", "你更像哪一类？", "关于你（选填）", "哪一场？"],
+        recommended: "推荐周二：十来个做东西的人，打开电脑互相看。",
         bizFocus: "最想让 AI 帮你哪一块？",
         bizFocusOptions: [
           { value: "leads", label: "找客户、获客" },
@@ -405,7 +404,6 @@ export const copy = {
         buildingTech: "一句话：你擅长什么、想找什么？",
         buildingTechPlaceholder: "比如：会 React 和 AI agent，想找一起做产品的人",
         learnLevel: "现在用 AI 用到哪一步？",
-        aboutHint: "都是选填，填了现场好帮你找对的人。",
         // 下面两题是给「这一场讲什么、要不要分场」用的：看一眼就知道屋里是
         // 老板多还是工程师多。都是选填，不答照样报上。存储值不能改：按它计数
         // （跟 src/lib/signup-profile.ts 里的列表一一对应），文字随便改。
@@ -439,13 +437,13 @@ export const copy = {
         // 这里刻意不再以「完全选填」开头。前 49 份报名里只有 3 个人填了这栏，
         // 而它是唯一能提前知道大家想要什么的入口——先说清楚它有什么用，
         // 退路留在最后一句。
-        topicHint: "越具体，越容易有人当场接上。写完可以点下面的按钮，让 AI 追问你一句。",
+        topicHint: "越具体，越容易有人当场接上。",
         // 08-13 有人反馈：来之前翻过成员墙，对几个人先有了印象，但墙上只有一部分人，
         // 剩下的还得现场花时间聊，聊完才发现不相关。当天实测 56 份报名只有 14 张卡在墙上——
         // 缺的不是意愿，是「认领 + 发布」两道闸。这个勾选把两道闸压成一个明示的同意。
         publishCard: "把上面这些放到成员墙上",
         publishCardHint: "名字、在做什么、这周想聊什么会出现在成员墙上。邮箱和微信号永远不公开，随时可以撤下来。",
-        contactPrivacy: "微信号只有我（主办人）看得到：不公开、不给第三方、不拿去发广告。",
+        contactPrivacy: "微信号只有主办人看得到，不公开、不外传。",
         building: "你在做什么？",
         buildingPlaceholder: "在做的产品、在折腾的东西，或者最近在学什么。一两句就够。",
         // 「想不想上去讲讲」。09-28 起不再分桌，想展示东西的人在「本周主题」那一段讲。
@@ -469,13 +467,11 @@ export const copy = {
         // pick a date they will not attend, or close the page. The first
         // corrupts the headcount the table is booked against; the second is
         // the person lost. Listed last so the default stays a real session.
-        sessionNone: "上午都来不了（想要下班后或周末的场）",
-        sessionNoneHint: "周四上午来不了也选这个，一样算登记；以后开晚上或周末的场，我按这份名单找人。",
+        sessionNone: "上午都来不了（以后有晚上或周末的场，先通知你）",
         // Asked of everyone, not just the people who picked "none". Whether a
         // second session is worth running depends on total demand, and a
         // Thursday regular who would also come on a Saturday is part of that.
         availability: "除了周四上午，你还能来什么时间？",
-        availabilityHint: "可多选。够多人选同一个时间，那一场就开。",
         availabilityOptions: [
           { value: "weekday_evening", label: "工作日晚上" },
           { value: "weekend_day", label: "周末白天" },
@@ -486,7 +482,7 @@ export const copy = {
         //
         // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
         // 区没人会去点开，这是折叠这个做法最常见的失败方式。
-        extras: "更多（都可跳过）：邮箱、从哪知道的、上午来不了时哪些时间可以、上不上成员墙",
+        extras: "更多选填：邮箱、来源、其他时间、成员墙",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
         // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
@@ -546,7 +542,7 @@ export const copy = {
       // 用「告知」而不是勾选框：出镜与否本来就是现场随时能改的事，
       // 一个必勾的框只会让人觉得被迫签字。退路写在前面，比声明本身更重要。
       cameraNotice:
-        "现场可能会拍些照片、录一点视频，以后也可能直播，用来记录和分享每一场。不想出镜完全没问题：到场时跟我说一声，镜头会避开你；已经发出去的内容里如果有你、想撤下来，随时告诉我就好。提交报名，就当你已经知道这件事啦。",
+        "现场会拍照、录短视频，以后可能直播。不想出镜，到场说一声；已发出的想撤下，随时告诉我。",
       submit: "提交报名",
       submitting: "提交中…",
       // Stated outright, because "收到了。" alone left people asking in the
@@ -554,7 +550,6 @@ export const copy = {
       successTitle: "报名成功。",
       waitlistTitle: "报上了，在候补名单上。",
       waitlistBody: "这一场的 40 个座位满了，你在候补名单上。场地坐不下更多人，所以没报上的请改到下一场——打开 vibethursday.com/my 就能改。有人取消、或者有特殊情况，我会单独通知你，收到通知再来。",
-      successSession: "你报的是：",
       successAll: "你现在一共报了 {n} 场：",
       successTagBooked: "已报上",
       successTagWaitlist: "候补（收到通知再来）",
@@ -567,17 +562,17 @@ export const copy = {
       // them to watch their inbox sends them looking for something never sent.
       successBodyNoEmail: "我会用你留的微信号拉你进群，地址和当周提醒都在群里发。",
       // 09-28：「我报上了吗」「报错周四怎么改」是那周群里问得最多的两句。
-      successMy: "以后想确认报上没有、改到别的周四或者取消，打开 vibethursday.com/my——用这台手机打开会直接看到，换了手机就填名字和微信号。",
+      successMy: "想改时间或取消，打开 vibethursday.com/my。",
       // The exact values on record. Claiming a card matches these as written,
       // and people were reproducing them from memory and missing.
       successRecap: "你登记的是",
       successRecapName: "名字",
       successRecapWechat: "微信号",
       successRecapEmail: "邮箱",
-      successRecapHint: "认领名片就是用这两项对上你的报名。在这台手机上点下面的按钮会自动填好；换设备的话照上面原样填。",
+      successRecapHint: "换手机认领名片时，照这里原样填。",
       // The highest-intent screen on the site, and claiming a card needs exactly
       // the signup that was just created. Anywhere else this ask is a chore.
-      successClaimBody: "顺手认领一下你的成员卡片吧——已经按你刚才填的内容预填好了，改两个字就能发布。当天还能直接当桌牌用。",
+      successClaimBody: "顺手认领成员名片：已经预填好，当天还能当桌牌用。",
       successClaimCta: "认领我的名片",
       // A quiet second line, never a second button. The card feeds the member
       // wall — the only thing here that accumulates, and the page shown to
@@ -597,7 +592,7 @@ export const copy = {
       // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
       sessionTimeSuffixTuesday: "10:00 · Build Tuesday",
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
-      hook: "周四是交流局，不是课。在做东西、想打开电脑互相看的，来周二的 Build Tuesday；想有人带着一步步学的，报完名可以告诉我，想要的人多就开一个小班。",
+      hook: "周四是交流局。在做东西的，来周二 Build Tuesday；想有人带着学的，报完名可以登记收费小班。",
       hookTuesdayCta: "看看 Build Tuesday",
       // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
       tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人、打开电脑互相看做的东西。",
@@ -609,10 +604,14 @@ export const copy = {
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
         { value: "tuesday", label: "周二动手局：打开电脑，互相看做的东西" },
-        { value: "class", label: "有人带着一步步做的小班" },
+        // 写明收费（James 10-05 改了 10-04 的决定）：先过滤只想要免费的人，也让之后私信时
+        // 预期一致。不写价格——还没定。
+        { value: "class", label: "收费小班：有人带着一步步做" },
         { value: "none", label: "都不用，周四就够了" },
       ],
       interestThanks: "记下了，谢谢。",
+      // 点了「小班」：先把预期说清楚，之后私信过去才不突兀（2026-10-05）。
+      interestThanksClass: "记下了。小班是收费的，价格和首期定下来，我会先私信你。",
       errorEmail: "这个邮箱地址看起来不太对。",
     },
 
@@ -1545,7 +1544,7 @@ export const copy = {
       eyebrow: "§ 微信登录 / 注册",
       title: "微信登录 / 注册",
       entry: "微信登录 / 注册",
-      entryHint: "报过名的，登录后自动填好、关联你之前的报名；第一次来，登录后接着往下填。",
+      entryHint: "报过名的自动填好；第一次来，登录后接着往下填。",
       orFill: "或者直接填写",
       firstTimeTitle: "第一次来？",
       firstTimeBody: "直接报名就行，报完这个微信就记住你了。",
@@ -2031,8 +2030,8 @@ export const copy = {
     signup: {
       eyebrow: "§ Sign up",
       title: "Sign up so I know how many seats to book.",
-      lede: "The booking at the venue follows the headcount, so signing up genuinely helps me book the right number of seats.",
       coach: {
+        coachNote: "Only pressing it sends this line to DeepSeek for one follow-up question.",
         coachEnough: "That one is specific enough.",
         coachSharper: "That will do — much easier to pick up than before.",
         coachSocial: "That reads more like wanting to meet people, which is fine. To get it picked up on the day, turn it into one specific question.",
@@ -2059,10 +2058,8 @@ export const copy = {
           { value: "learn", label: "New to AI — want to learn how to use it" },
           { value: "tech", label: "Looking for opportunities: work, projects, partners" },
         ],
-        purposeHint: "Pick one — the questions below change with it.",
-        steps: ["You", "Which kind", "About you", "Which morning"],
-        stepOf: "Step {n} of {total}",
-        recommended: "Build Tuesday suits you: a dozen people who build things, laptops open. Thursday works too — or come to both.",
+        steps: ["You", "Which sounds most like you?", "About you (optional)", "Which morning?"],
+        recommended: "Suggested: Build Tuesday — a dozen people who build things, laptops open.",
         bizFocus: "What would you most like AI to help with?",
         bizFocusOptions: [
           { value: "leads", label: "Finding customers" },
@@ -2077,7 +2074,6 @@ export const copy = {
         buildingTech: "In a sentence: what are you good at, and what are you looking for?",
         buildingTechPlaceholder: "e.g. React and AI agents; looking for people to build a product with",
         learnLevel: "How far have you got with AI?",
-        aboutHint: "All optional — it helps us find you the right people on the day.",
         aiLevel: "How familiar are you with AI?",
         aiLevelOptions: [
           { value: "none", label: "Barely used it" },
@@ -2105,10 +2101,10 @@ export const copy = {
         industryHint: "Optional — pick the closest one.",
         topic: "What do you most want to talk about, or ask, this week",
         topicPlaceholder: "An iOS cofounder / how the R&D tax offset actually gets claimed / how other people's AI workflows look",
-        topicHint: "The more specific, the more likely someone picks it up on the day. When you have written it, the button below can ask you one follow-up question.",
+        topicHint: "The more specific, the more likely someone picks it up on the day.",
         publishCard: "Put this on the member wall",
         publishCardHint: "Your name, what you are working on and this week's topic go on the member wall. Email and WeChat ID are never shown, and you can take it down any time.",
-        contactPrivacy: "Your WeChat ID is visible only to me, the organiser. Never published, never passed on, never used for marketing.",
+        contactPrivacy: "Only the organiser sees your WeChat ID — never public, never shared.",
         building: "What are you working on?",
         buildingPlaceholder: "A product, a side project, or just what you have been learning. A sentence or two is plenty.",
         demoIntent: "Want to share something this time?",
@@ -2122,10 +2118,8 @@ export const copy = {
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",
-        sessionNone: "Mornings do not work for me (evening or weekend, please)",
-        sessionNoneHint: "Pick this and you are still on the list — if an evening or weekend one happens, this is who I go to.",
+        sessionNone: "Mornings don't work (tell me about evening or weekend sessions)",
         availability: "What other times could you make?",
-        availabilityHint: "Pick any. Enough people on one slot and that slot runs.",
         availabilityOptions: [
           { value: "weekday_evening", label: "Weekday evenings" },
           { value: "weekend_day", label: "Weekend daytime" },
@@ -2133,7 +2127,7 @@ export const copy = {
         ],
         // See the Chinese block above for why these three are folded away, and
         // why the spend question asks about money rather than about tokens.
-        extras: "More, all skippable: email, how you heard, other times you could make, the member wall",
+        extras: "More, optional: email, how you heard, other times, the member wall",
         aiModels: "Which AI models do you mostly use?",
         aiModelsHint: "Optional — pick any.",
         aiModelGroups: [
@@ -2175,13 +2169,12 @@ export const copy = {
       supportNoteCta: "what running it costs",
       supportNoteTail: ". Chipping in is optional and changes nothing either way.",
       cameraNotice:
-        "We sometimes take photos and short videos on the day, and may livestream in future, to share what each session is like. If you would rather stay off camera, that is completely fine: just let me know when you arrive and we will keep the camera away from you. And if you spot yourself in anything we have posted and want it taken down, tell me any time. Signing up means you are aware of this.",
+        "We take photos and short videos on the day, and may livestream. Rather stay off camera? Tell me when you arrive. Want something taken down later? Just ask.",
       submit: "Sign up",
       submitting: "Sending…",
       successTitle: "You are signed up.",
       waitlistTitle: "You are signed up — on the waitlist.",
       waitlistBody: "The 40 seats for this one are taken and you are on the waitlist. The room cannot hold more, so if you are not booked please move to the next Thursday — you can do that at vibethursday.com/my. If someone cancels, or in a special case, I will contact you directly; please come only once you hear from me.",
-      successSession: "Your session: ",
       successAll: "You are now down for {n} Thursdays:",
       successTagBooked: "booked",
       successTagWaitlist: "waitlist (come once you hear from me)",
@@ -2190,13 +2183,13 @@ export const copy = {
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       successBody: "The address is on vibethursday.com/go, and reminders go out in the WeChat group. If you left a WeChat ID I will add you to it.",
       successBodyNoEmail: "I will add you to the WeChat group with the ID you left; the address and reminders go out there.",
-      successMy: "To check you are booked, move to another Thursday or cancel later, open vibethursday.com/my — on this phone it opens straight to your signup; on another, enter your name and WeChat ID.",
+      successMy: "To change or cancel, open vibethursday.com/my.",
       successRecap: "What you signed up with",
       successRecapName: "Name",
       successRecapWechat: "WeChat ID",
       successRecapEmail: "Email",
-      successRecapHint: "Claiming your card matches these against your signup. On this device the button below fills them in for you; on another one, type them exactly as shown.",
-      successClaimBody: "While you are here, claim your member card — it is already prefilled from what you just wrote, so it is a two-word edit away. On the day it doubles as your name badge.",
+      successRecapHint: "Claiming your card on another device? Type these exactly as shown.",
+      successClaimBody: "Claim your member card while you're here — it's prefilled, and doubles as your name badge on the day.",
       successClaimCta: "Claim my card",
       successSupportBody: "Separately: I cover the venue myself — ",
       successSupportCta: "there is a page for it",
@@ -2208,7 +2201,7 @@ export const copy = {
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
       errorPurpose: "Pick which sounds most like you — just one.",
       sessionTimeSuffixTuesday: "10am · Build Tuesday",
-      hook: "Thursday is for meeting people, not a class. If you build things and want to open laptops and look at each other's work, come to Build Tuesday; if you want someone to walk you through it step by step, say so after you sign up — if enough people do, I will run a small class.",
+      hook: "Thursday is for meeting people. If you build things, come to Build Tuesday; if you want to be walked through it, register interest in the paid small class after signing up.",
       hookTuesdayCta: "See Build Tuesday",
       tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",
       tuesdayHintCta: "Switch to Tuesday",
@@ -2217,10 +2210,11 @@ export const copy = {
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
         { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },
-        { value: "class", label: "A small class where someone walks you through it" },
+        { value: "class", label: "A paid small class, walked through step by step" },
         { value: "none", label: "Neither — Thursday is enough" },
       ],
       interestThanks: "Noted — thanks.",
+      interestThanksClass: "Noted. The class is paid — once the price and first date are set, I'll message you first.",
       errorEmail: "That email address does not look right.",
     },
 
@@ -2996,7 +2990,7 @@ export const copy = {
       eyebrow: "§ Continue with WeChat",
       title: "Continue with WeChat",
       entry: "Continue with WeChat",
-      entryHint: "Signed up before? Log in and it fills itself in, linked to your earlier signup. First time? Log in, then carry on below.",
+      entryHint: "Signed up before? It fills itself in. First time? Log in, then keep going below.",
       orFill: "or fill it in",
       firstTimeTitle: "First time?",
       firstTimeBody: "Just sign up — once you have, this WeChat remembers you.",

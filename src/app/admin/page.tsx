@@ -205,6 +205,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // same order. For deciding what a morning covers and whether to split it.
   // Capped at the first eight rows (upcoming first, then the most recent past
   // ones): the full history only grows, and older rows predate the questions.
+  // Tapped "small class" on the confirmation, newest first (listSignups' order).
+  const classInterest = signups.filter((row) => row.interest === "class");
   const composition = compositionPerSession(signups, perSession.slice(0, 8).map((session) => session.date));
   const signupFields = getCopy("zh").signup.fields;
   /** One cell: every answer in the order the form lists it, zero counts left out. */
@@ -1069,6 +1071,53 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
       </section>
 
+      {/* Who tapped "small class" on the signup confirmation (2026-10-05):
+          the follow-up list. Their signup already says who they are and what
+          they want, so the message can be specific — no second form anywhere. */}
+      <section className="stack-4" id="class-interest">
+        <div className="group-head">
+          <h2 className="h3">小班意向 · {classInterest.length} 人</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            成功页点了「有人带着做的小班」的人。首期定了，照这张表私信；链接 jamesai.dev/class
+          </span>
+        </div>
+        {classInterest.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有。</p>
+        ) : (
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">名字</th>
+                  <th scope="col">微信号</th>
+                  <th scope="col">哪一类</th>
+                  <th scope="col">行业</th>
+                  <th scope="col">想让 AI 帮</th>
+                  <th scope="col">报过的场</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classInterest.map((row) => {
+                  const lastPurpose = row.purposes.split(" ").filter(Boolean).pop()?.split("=")[1] ?? "";
+                  return (
+                    <tr key={row.id}>
+                      <td>{row.name}</td>
+                      <td className="mono">{row.wechat ?? "—"}</td>
+                      <td>{PURPOSE_SHORT.find((option) => option.value === lastPurpose)?.label ?? "—"}</td>
+                      <td>{signupFields.industryOptions.find((option) => option.value === row.industry)?.label ?? "—"}</td>
+                      <td style={{ whiteSpace: "normal", minWidth: "160px" }}>
+                        {row.biz_focus.map((focus) => signupFields.bizFocusOptions.find((option) => option.value === focus)?.label ?? focus).join("、") || "—"}
+                      </td>
+                      <td className="mono" style={{ whiteSpace: "normal" }}>{row.sessions.join(" ") || "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <section className="stack-4" id="composition">
         <div className="group-head">
           <h2 className="h3">每场构成</h2>
@@ -1087,6 +1136,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <th scope="col">对 AI 多熟</th>
                 <th scope="col">行业</th>
                 <th scope="col">想带走什么</th>
+                <th scope="col">生意想让 AI 帮</th>
               </tr>
             </thead>
             <tbody>
@@ -1102,6 +1152,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   </td>
                   <td style={{ whiteSpace: "normal", minWidth: "180px" }}>
                     {tallyCell(row.purpose, PURPOSE_SHORT, row.unanswered.purpose)}
+                  </td>
+                  {/* Mentions, not people (multi-select), and only business owners are asked. */}
+                  <td style={{ whiteSpace: "normal", minWidth: "180px" }}>
+                    {tallyCell(row.bizFocus, signupFields.bizFocusOptions, 0)}
                   </td>
                 </tr>
               ))}

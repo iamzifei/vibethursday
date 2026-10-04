@@ -982,22 +982,19 @@ a.pill:hover { border-color: var(--border-strong); background: var(--bg-tertiary
 }
 .signup-progress__seg.is-done { background: var(--accent); }
 .signup-progress__seg.is-current { background: var(--accent-muted); }
-.signup-progress__label {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--fg3);
-}
 
 .signup-step { padding-top: var(--space-2); }
 .signup-step + .signup-step { border-top: 1px solid var(--border-subtle); padding-top: var(--space-6); }
+/* The step header is the step's question (2026-10-05 tidy-up), so it reads
+   as a heading: body size, full colour. */
 .signup-step__label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  color: var(--fg2);
+  color: var(--fg1);
 }
 .signup-step__num {
   display: inline-grid;

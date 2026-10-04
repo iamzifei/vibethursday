@@ -34,7 +34,7 @@ test("both languages say plainly that the signup worked, and repeat what is on r
     const s = copy[lang].signup;
     for (const key of [
       "successTitle",
-      "successSession",
+      // successSession retired 2026-10-05: the pass card shows the session.
       "successNoSession",
       "successBody",
       "successBodyNoEmail",

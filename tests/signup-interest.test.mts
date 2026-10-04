@@ -23,11 +23,16 @@ test("★ the buttons on the confirmation send exactly these values, in both lan
   }
 });
 
-test("the confirmation never talks money", () => {
-  // This is the free meetup's own page; the question only asks what people
-  // would come to.
+test("★ the class is called paid wherever it is offered, but no price is ever named", () => {
+  // Decided 2026-10-05 (reversing 10-04): saying "paid" up front filters out
+  // people who only want free, and keeps the later message consistent with
+  // what they signed up to hear about. The price is not set, so no figure.
   for (const lang of ["zh", "en"] as const) {
-    const text = JSON.stringify(copy[lang].signup.interestOptions) + copy[lang].signup.interestTitle;
-    assert.doesNotMatch(text, /\$|收费|付费|价|paid|price|fee/i, lang);
+    const s = copy[lang].signup;
+    const classOption = s.interestOptions.find((option) => option.value === "class")!.label;
+    for (const text of [classOption, s.interestThanksClass, s.hook]) {
+      assert.match(text, /收费|paid/i, `${lang}: "${text}" offers the class without saying it is paid`);
+      assert.doesNotMatch(text, /\$|¥|\d/, `${lang}: "${text}" names a price`);
+    }
   }
 });

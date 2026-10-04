@@ -118,6 +118,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   const draftRef = useRef<Record<string, string> | null>(null);
   // The one-tap "what else would you come to" on the confirmation.
   const [interest, setInterest] = useState<"idle" | "sending" | "done">("idle");
+  // Which answer was tapped, so the thanks can say what happens next.
+  const [interestPicked, setInterestPicked] = useState<string | null>(null);
 
   // Null on the server and during hydration, then the stored profile if there
   // is one. See the store above for why this is not a useState + useEffect.
@@ -526,16 +528,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.tuesdayOverflowCta} →</a>
           </p>
         )}
-        <p>
-          {receipt?.session ? (
-            <>
-              {copy.successSession}
-              <strong>{receipt.session}</strong>
-            </>
-          ) : (
-            copy.successNoSession
-          )}
-        </p>
+        {/* With a session, the pass card above already says which one; only
+            "no morning picked" needs saying in words (2026-10-05 tidy-up). */}
+        {!receipt?.session && <p>{copy.successNoSession}</p>}
         {/* Everything they are down for now, not just this week: a second
             signup that added a Thursday used to be invisible, and read as
             "it signed me up twice" (2026-09-28). */}
@@ -588,7 +583,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           <div className="stack-2">
             <p className="body-sm" style={{ margin: 0 }}>{copy.interestTitle}</p>
             {interest === "done" ? (
-              <p className="body-sm" style={{ margin: 0 }}>{copy.interestThanks}</p>
+              <p className="body-sm" style={{ margin: 0 }}>{interestPicked === "class" ? copy.interestThanksClass : copy.interestThanks}</p>
             ) : (
               <div className="choice-group choice-group--stack">
                 {copy.interestOptions.map((option) => (
@@ -599,6 +594,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                     disabled={interest === "sending"}
                     onClick={async () => {
                       setInterest("sending");
+                      setInterestPicked(option.value);
                       try {
                         const result = await fetch("/api/signup/interest", {
                           method: "POST",
@@ -745,10 +741,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             />
           ))}
         </div>
-        <p className="signup-progress__label">
-          {copy.fields.stepOf.replace("{n}", String(currentStep)).replace("{total}", String(copy.fields.steps.length))} ·{" "}
-          {copy.fields.steps[currentStep - 1]}
-        </p>
       </div>
 
       <section className="signup-step stack-4" aria-labelledby={fieldId("step1")}>
@@ -836,11 +828,14 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           follows. No default — a pre-selected option would count everyone who
           scrolled past. Stored values unchanged since 2026-09-22. */}
       <section className="signup-step stack-4" aria-labelledby={fieldId("step2")}>
-        <p className="signup-step__label" id={fieldId("step2")}><span className="signup-step__num">2</span>{copy.fields.steps[1]}</p>
+        <p className="signup-step__label" id={fieldId("step2")}>
+          <span className="signup-step__num">2</span>
+          {copy.fields.steps[1]} <span className="required">*</span>
+        </p>
+        {/* The step header above is the question; the legend repeats it for
+            screen readers only, so it is not said twice on screen. */}
         <fieldset ref={purposeRef} style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="label">
-            {copy.fields.purpose} <span className="required">*</span>
-          </legend>
+          <legend className="visually-hidden">{copy.fields.purpose}</legend>
           <div className="choice-group choice-group--stack">
             {copy.fields.purposeOptions.map((option) => (
               <label className="choice" key={option.value}>
@@ -849,7 +844,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               </label>
             ))}
           </div>
-          <p className="field-hint">{copy.fields.purposeHint}</p>
         </fieldset>
       </section>
 
@@ -942,7 +936,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               </fieldset>
             )}
 
-            <p className="field-hint" style={{ margin: 0 }}>{copy.fields.aboutHint}</p>
           </section>
 
           {/* Step 4: which morning, ordered for this kind of person — a
@@ -950,7 +943,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           <section className="signup-step stack-4" aria-labelledby={fieldId("step4")}>
             <p className="signup-step__label" id={fieldId("step4")}><span className="signup-step__num">4</span>{copy.fields.steps[3]}</p>
             <div>
-              <label className="label" htmlFor={fieldId("session")}>
+              <label className="visually-hidden" htmlFor={fieldId("session")}>
                 {copy.fields.session}
               </label>
               <select
@@ -981,7 +974,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               {pickedPurpose === "product" && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
                 <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommended}</p>
               )}
-              <p className="field-hint">{copy.fields.sessionNoneHint}</p>
             </div>
 
             {/* The one field that says what someone actually wants from the morning,
@@ -1056,7 +1048,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                 </label>
               ))}
             </div>
-            <p className="field-hint">{copy.fields.availabilityHint}</p>
           </fieldset>
 
           <div>

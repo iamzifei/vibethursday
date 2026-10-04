@@ -35,3 +35,30 @@ test("a purpose answered for another date does not count as the Tuesday's", () =
   const split = tuesdaySplit([{ sessions: [TUE], waitlist: [], purposes: `2026-09-24=tech ${TUE}=learn` }], TUE);
   assert.equal(split.builders, 0);
 });
+
+test("business focus: only known answers, deduplicated, in the form's order", async () => {
+  const { parseBizFocus } = await import("../src/lib/signup-profile.ts");
+  assert.deepEqual(parseBizFocus(["service", "leads", "leads", "hack", 3, " ops "]), ["leads", "service", "ops"]);
+  assert.deepEqual(parseBizFocus("leads"), []);
+  assert.deepEqual(parseBizFocus(undefined), []);
+});
+
+test("the composition table counts business focus per mention, per session", async () => {
+  const { compositionPerSession } = await import("../src/lib/signup-stats.ts");
+  const [row] = compositionPerSession(
+    [
+      { sessions: [THU], ai_level: null, industry: "food", purposes: `${THU}=biz`, biz_focus: ["leads", "service"] },
+      { sessions: [THU], ai_level: null, industry: "property", purposes: `${THU}=biz`, biz_focus: ["leads"] },
+      { sessions: [THU], ai_level: "daily", industry: null, purposes: `${THU}=product` },
+    ],
+    [THU],
+  );
+  assert.deepEqual(row.bizFocus, { leads: 2, service: 1 });
+});
+
+test("every registered Build Tuesday really is a Tuesday", async () => {
+  const { SPECIAL_SESSIONS } = await import("../src/lib/sessions.ts");
+  for (const session of SPECIAL_SESSIONS) {
+    assert.equal(new Date(`${session.date}T00:00:00Z`).getUTCDay(), 2, session.date);
+  }
+});
