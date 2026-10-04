@@ -72,6 +72,14 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.1",
+    date: "2026-10-04",
+    kind: "minor",
+    scope: "site",
+    zh: "在微信里打开网站时，会自动认出你：第一次用自己的名字报名或查一下「我的报名」之后，这个微信就和你的报名连上了。之后报名不用再填微信号，扫门口的签到码，第一屏就是「你是 XX？」，点一下就签上。用的是别人的手机、认错了，点「不是我」就会解开。",
+    en: "Open the site inside WeChat and it now recognises you: once you have signed up, or looked yourself up under \"My signup\", with your own name, that WeChat is linked to your signup. After that you no longer type your WeChat ID to sign up, and scanning the check-in code at the door opens on \"Is this you?\" — one tap and you are in. On someone else's phone, or if it got it wrong, \"Not me\" unlinks it.",
+  },
+  {
     version: "5.0",
     date: "2026-10-04",
     kind: "major",
