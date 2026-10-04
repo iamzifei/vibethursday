@@ -93,9 +93,9 @@ export const RELEASES: readonly Release[] = [
     date: "2026-10-04",
     kind: "major",
     scope: "room",
-    zh: "多了一个周二上午：Build Tuesday（周二动手局）。给在做东西的人，Chatswood 图书馆的小会议室，15 个人，不上台、不讲课，打开电脑互相看做的东西。周四照常，还是交流局。报名表里能直接选周二；周四满了的话，成功页会告诉你周二还有几个位子。",
+    zh: "多了一个周二上午：Build Tuesday（周二动手局）。给在做东西的人，Chatswood 的一间小会议室，15 个人，不上台、不讲课，打开电脑互相看做的东西。周四照常，还是交流局。报名表里能直接选周二；周四满了的话，成功页会告诉你周二还有几个位子。",
     link: { href: "/tuesday", zh: "看看 Build Tuesday →", en: "See Build Tuesday →" },
-    en: "A second morning: Build Tuesday. For people who build things — a small meeting room at Chatswood Library, 15 people, no stage and no talk, laptops open, looking at each other's work. Thursday carries on as before, for meeting people. The signup form now offers the Tuesday too, and if Thursday is full the confirmation tells you how many places the Tuesday still has.",
+    en: "A second morning: Build Tuesday. For people who build things — a small meeting room in Chatswood, 15 people, no stage and no talk, laptops open, looking at each other's work. Thursday carries on as before, for meeting people. The signup form now offers the Tuesday too, and if Thursday is full the confirmation tells you how many places the Tuesday still has.",
   },
   {
     version: "4.10",

@@ -14,6 +14,7 @@ import {
 } from "@/lib/saved-profile";
 import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
+import { WeChatMark } from "@/components/WeChatMark";
 
 /** `tuesday`: a Build Tuesday rather than a Thursday (`SPECIAL_SESSIONS`). */
 type SessionOption = { value: string; label: string; full?: boolean; tuesday?: boolean };
@@ -34,8 +35,8 @@ type Props = {
    * in when the form is sent with `fromCookie` (see the signup route).
    */
   knownProfile?: { name: string } | null;
-  /** "Log in with WeChat": the link and its words, or null while login is off. */
-  wechatLogin?: { href: string; label: string } | null;
+  /** "Continue with WeChat": the link and its words, or null while login is off. */
+  wechatLogin?: { href: string; label: string; hint: string; or: string } | null;
 };
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -79,7 +80,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  * checkbox group and the draft does not round-trip those, so it is not listed —
  * see the note on `saveDraft`.
  */
-const EXTRA_FIELDS = ["source", "aiSpend", "building", "email"];
+const EXTRA_FIELDS = ["source", "aiSpend", "building", "email", "industry"];
 
 export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
@@ -628,6 +629,21 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         </p>
       )}
 
+      {/* WeChat first, the way "continue with …" is done everywhere: one
+          full-width button in the brand's colour above the form, a line, then
+          the form for anyone who would rather type (2026-10-05: a text link
+          above the fields went unnoticed). Not for someone already known. */}
+      {!returning && wechatLogin && (
+        <div className="stack-3">
+          <a className="btn btn--wechat btn--block" href={wechatLogin.href}>
+            <WeChatMark />
+            {wechatLogin.label}
+          </a>
+          <p className="field-hint" style={{ margin: 0 }}>{wechatLogin.hint}</p>
+          <p className="or-divider" style={{ margin: 0 }}>{wechatLogin.or}</p>
+        </div>
+      )}
+
       {returning ? (
         /* Known visitor: greeting plus the one thing that changes each week. */
         <div className="returning">
@@ -638,13 +654,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         </div>
       ) : (
         <div className="stack-2">
-          {/* The way to skip typing: WeChat login (/login). Above the fields,
-              where someone about to type their WeChat ID will see it. */}
-          {wechatLogin && (
-            <p className="body" style={{ margin: 0 }}>
-              <a href={wechatLogin.href}>{wechatLogin.label}</a>
-            </p>
-          )}
           {/* Name and WeChat only. Email moved into the fold on 2026-09-28: it
               was always optional, and a claim matches on name plus WeChat ID. */}
           <div className="grid-auto">
@@ -735,7 +744,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         <legend className="label">
           {copy.fields.purpose} <span className="required">*</span>
         </legend>
-        <div className="choice-group choice-group--stack">
+        <div className="choice-group choice-group--pairs">
           {copy.fields.purposeOptions.map((option) => (
             <label className="choice" key={option.value}>
               <input type="radio" name="purpose" value={option.value} onChange={() => setPickedPurpose(option.value)} />
@@ -743,7 +752,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             </label>
           ))}
         </div>
-        <p className="field-hint">{copy.fields.purposeHint}</p>
         {/* Someone who builds things, signing up for a Thursday, while a Build
             Tuesday has room: suggest it, one tap to switch. A nudge, never a
             redirect — Thursday is still theirs if they want it. */}
@@ -783,23 +791,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         </div>
         <p className="field-hint">{copy.fields.aiLevelHint}</p>
       </fieldset>
-
-      {/* A select, like the spend band: twelve options would be a wall of
-          pills on a phone, and "skip" lets someone un-pick. */}
-      <div>
-        <label className="label" htmlFor={fieldId("industry")}>
-          {copy.fields.industry}
-        </label>
-        <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
-          <option value="">{copy.fields.industrySkip}</option>
-          {copy.fields.industryOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <p className="field-hint">{copy.fields.industryHint}</p>
-      </div>
 
       {/* The one field that says what someone actually wants from the morning,
           and the one most often too vague to act on ("想了解了解"). The coach
@@ -855,6 +846,25 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         <summary>{copy.fields.extras}</summary>
 
         <div className="disclosure__body stack-6">
+          {/* A select, like the spend band: twelve options would be a wall of
+              pills on a phone, and "skip" lets someone un-pick. In the fold
+              since 2026-10-05: it is for matching people on the day, not for
+              deciding which morning anyone comes to. */}
+          <div>
+            <label className="label" htmlFor={fieldId("industry")}>
+              {copy.fields.industry}
+            </label>
+            <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
+              <option value="">{copy.fields.industrySkip}</option>
+              {copy.fields.industryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="field-hint">{copy.fields.industryHint}</p>
+          </div>
+
           {/* New visitors only, as in the identity block this came from: a
               returning visitor has these on file, and signups merge by WeChat ID,
               so asking again could overwrite them. */}

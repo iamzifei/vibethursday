@@ -112,7 +112,7 @@ export function WechatQrLogin({ copy, next }: Props) {
           <p className="body" style={{ margin: 0 }}>{copy.qrWaiting}</p>
           {/* The number the phone has to pick: proof the person confirming can
               see this screen, not just a link someone sent them. */}
-          <p className="mono" style={{ margin: 0, fontSize: "2.5rem", fontWeight: 700, letterSpacing: "0.1em" }} aria-live="polite">
+          <p className="mono" style={{ margin: 0, fontSize: "2.5rem", fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg1)" }} aria-live="polite">
             {state.pin}
           </p>
         </>

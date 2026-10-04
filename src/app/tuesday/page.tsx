@@ -133,7 +133,7 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                   knownProfile={knownProfile}
                   wechatLogin={(() => {
                     const href = wechatLoginHref("/tuesday#signup", LANG_PARAM[lang]);
-                    return href ? { href, label: c.login.entry } : null;
+                    return href ? { href, label: c.login.entry, hint: c.login.entryHint, or: c.login.orFill } : null;
                   })()}
                   turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
                 />

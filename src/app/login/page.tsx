@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WechatQrLogin } from "@/components/WechatQrLogin";
@@ -42,7 +43,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const lang = resolveLang(params.lang);
   const c = getCopy(lang);
   const t = c.login;
-  const next = safeNext(params.next);
+  // Never back to /login itself: the "already recognised → go to next" jump
+  // below would then send this page to itself forever.
+  const wanted = safeNext(params.next);
+  const next = wanted === "/login" || wanted.startsWith("/login?") || wanted.startsWith("/login#") ? "/" : wanted;
   const qr = looksLikeQrToken(params.qr) ? params.qr : null;
 
   const store = await cookies();
@@ -59,6 +63,11 @@ export default async function LoginPage({ searchParams }: PageProps) {
   } catch (error) {
     console.error("[login] could not read who this is", error);
   }
+
+  // Already recognised and not here to confirm a computer: nothing to do on
+  // this page — straight back to where they were going (2026-10-05). The form
+  // there greets them by name and has its own "not me".
+  if (name && !qr && wechatConfigured()) redirect(langHref(next, lang));
 
   const qrState = qr ? await qrLoginStatus(qr).catch(() => "missing" as const) : null;
   const pin = qr && qrState === "pending" ? await qrLoginPin(qr).catch(() => null) : null;
@@ -83,7 +92,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
     <form method="post" action="/api/wechat/link" className="stack-4">
       {hidden}
       <div className="stack-2">
-        <h2 className="h3">{t.linkTitle}</h2>
+        <h2 className="h3">{t.linkedBeforeTitle}</h2>
         <p className="body">{t.linkLede}</p>
       </div>
       <div className="grid-auto">
@@ -99,10 +108,19 @@ export default async function LoginPage({ searchParams }: PageProps) {
       <div>
         <button className="btn btn--primary" type="submit">{t.linkSubmit}</button>
       </div>
-      <p className="body-sm">
-        {t.notSignedUp} <Link href={langHref("/#signup", lang)}>{t.signupCta} →</Link>
-      </p>
     </form>
+  );
+
+  // The other half of the choice, for a WeChat nobody has linked yet: no need
+  // to log in to anything — signing up from this browser links it.
+  const firstTime = (
+    <div className="card stack-3">
+      <h2 className="h3">{t.firstTimeTitle}</h2>
+      <p className="body" style={{ margin: 0 }}>{t.firstTimeBody}</p>
+      <div>
+        <a className="btn btn--primary" href={langHref(next === "/" ? "/#signup" : next, lang)}>{t.firstTimeCta}</a>
+      </div>
+    </div>
   );
 
   // "Not me": /my's forget, which also unties this WeChat from that signup.
@@ -171,9 +189,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
         {notMe}
       </form>
     ) : (
-      <div className="stack-4">
+      <div className="stack-6">
         <p className="body">{t.qrConfirmBody}</p>
         {linkForm}
+        <p className="body-sm" style={{ color: "var(--fg3)" }}>{t.firstTimeDesktop}</p>
       </div>
     );
   } else if (name) {
@@ -189,12 +208,20 @@ export default async function LoginPage({ searchParams }: PageProps) {
       </div>
     );
   } else if (inWeChat) {
-    body = linkForm;
+    body = (
+      <div className="stack-8">
+        {firstTime}
+        {linkForm}
+      </div>
+    );
   } else {
     body = (
       <div className="stack-4">
         <p className="body-lg">{t.desktopLede}</p>
         <WechatQrLogin copy={t} next={langHref(next, lang)} />
+        <p className="body-sm">
+          {t.firstTimeDesktop} <a href={langHref(next === "/" ? "/#signup" : next, lang)}>{t.firstTimeCta} →</a>
+        </p>
         <p className="body-sm">
           {t.orMy}<Link href={langHref("/my", lang)}>{t.orMyLink}</Link>
         </p>

@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
+import { WeChatMark } from "@/components/WeChatMark";
 import { getMySignup, type MySignup } from "@/lib/db";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
 import { bookableSessions, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
@@ -119,9 +120,13 @@ export default async function MyPage({ searchParams }: PageProps) {
       <>
         <p className="body-lg">{t.lede}</p>
         {loginHref && (
-          <p className="body">
-            <a href={loginHref}>{getCopy(lang).login.entry}</a>
-          </p>
+          <div className="stack-3">
+            <a className="btn btn--wechat btn--block" href={loginHref}>
+              <WeChatMark />
+              {getCopy(lang).login.entry}
+            </a>
+            <p className="or-divider" style={{ margin: 0 }}>{getCopy(lang).login.orFill}</p>
+          </div>
         )}
         {error}
         <form method="post" action="/api/my" className="stack-6">

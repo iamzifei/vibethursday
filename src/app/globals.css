@@ -954,6 +954,32 @@ a.pill:hover { border-color: var(--border-strong); background: var(--bg-tertiary
 
 .btn--block { width: 100%; }
 
+/* WeChat login (2026-10-05). In WeChat's own green with its mark, the way every
+   "continue with …" button is done: people recognise the brand before they
+   read the words. The one place this site uses a colour outside its palette —
+   on purpose, and only for this. A deeper shade than WeChat's own #07C160:
+   white on that is 2.38:1, which fails WCAG AA; white on #047A42 is 5.43:1
+   (measured), and still reads as WeChat green. */
+.btn--wechat { background: #047a42; color: #ffffff; }
+.btn--wechat:hover { background: #03693a; color: #ffffff; }
+.btn--wechat svg { flex: none; }
+
+/* "or fill it in": the line between the WeChat button and the form. */
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--fg3);
+  font-size: var(--text-sm);
+}
+.or-divider::before,
+.or-divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border-default);
+}
+
 .field {
   width: 100%;
   min-height: 48px;
@@ -1074,6 +1100,13 @@ select.field {
 .choice-group--stack {
   grid-template-columns: 1fr;
 }
+
+/* Short sentences, two to a row where there is room and one on a phone: five
+   full-width cards were the tallest thing on the signup form (2026-10-05). */
+.choice-group--pairs {
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+.choice-group--pairs .choice { line-height: var(--leading-snug); }
 
 .choice-group--stack .choice {
   line-height: var(--leading-snug);

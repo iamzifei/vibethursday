@@ -11,6 +11,7 @@ import { formatSession, sydneyToday } from "@/lib/sessions";
 import { cookies } from "next/headers";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { wechatLoginHref } from "@/lib/login-link";
+import { WeChatMark } from "@/components/WeChatMark";
 
 type PageProps = {
   searchParams: Promise<{
@@ -179,15 +180,17 @@ export default async function CheckinPage({ searchParams }: PageProps) {
   // "is this you?" straight away. Only on a bare scan: a search, the walk-in
   // form, an error, or "not me" (which carries an empty q) all show the list.
   let recognised: RosterEntry | undefined;
+  const rememberedId = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
   if (!params.who && params.q === undefined && !params.new && !params.err) {
-    const rememberedId = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
     const entry = rememberedId ? roster.find((row) => row.id === rememberedId) : undefined;
     if (entry && !entry.checkedIn) recognised = entry;
   }
   const who = params.who ? roster.find((entry) => entry.id === params.who) : recognised;
   // Back to this same scan once recognised, so it opens on "is this you?".
   // Hidden once this browser is someone: they are recognised already.
-  const loginHref = recognised || params.q !== undefined ? null : wechatLoginHref(stepHref(session, code, lang), undefined);
+  // Hidden for anyone this browser already knows — on today's list or not:
+  // /login would only send them straight back here (2026-10-05 review).
+  const loginHref = rememberedId || params.q !== undefined ? null : wechatLoginHref(stepHref(session, code, lang), undefined);
 
   if (who) {
     return shell(
@@ -301,9 +304,10 @@ export default async function CheckinPage({ searchParams }: PageProps) {
 
       {/* Recognised by WeChat, this page opens on "is this you?" instead. */}
       {loginHref && (
-        <p className="body" style={{ margin: 0 }}>
-          <a href={loginHref}>{c.login.entry}</a>
-        </p>
+        <a className="btn btn--wechat btn--block" href={loginHref}>
+          <WeChatMark />
+          {c.login.entry}
+        </a>
       )}
 
       {/* Search and the way out sit above the list, not below 45 names

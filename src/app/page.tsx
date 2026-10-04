@@ -329,7 +329,7 @@ export default async function Page({ searchParams }: PageProps) {
               knownProfile={knownProfile}
               wechatLogin={(() => {
                 const href = wechatLoginHref("/#signup", LANG_PARAM[lang]);
-                return href ? { href, label: c.login.entry } : null;
+                return href ? { href, label: c.login.entry, hint: c.login.entryHint, or: c.login.orFill } : null;
               })()}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
               // The Wharf's "help me ask this better", on the box where most
