@@ -169,6 +169,16 @@ export function ensureSchema(): Promise<void> {
     // person, the latest tap wins. NULL = not asked or did not tap.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS interest text`);
 
+    // WeChat login (wechat-auth.ts, 2026-10-04): the service account's openid
+    // for this person, once they have proved which signup is theirs. One
+    // signup per openid — the partial unique index is what stops one WeChat
+    // being tied to two rows when two binds race.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS wechat_openid text`);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS signups_wechat_openid_idx
+      ON signups (wechat_openid) WHERE wechat_openid IS NOT NULL
+    `);
+
     // Sessions this person is waitlisted for (`capacity.ts`). Kept apart from
     // `sessions` so every existing headcount — /admin, signup-stats, the
     // export — keeps counting only people with a place, with no change.
@@ -969,6 +979,86 @@ export type SignupRow = {
   waitlist_since: Record<string, string>;
   created_at: string;
 };
+
+/**
+ * Name, contact and "what I'm building" for one signup, for the signup route
+ * to fill in a remembered visitor server-side. Only the name ever goes to the
+ * browser (`known-profile.ts`): a remember cookie rests on a weak proof, so it
+ * must not be a way to read someone's email or WeChat ID.
+ */
+export async function getSignupProfile(id: string): Promise<{ name: string; email: string; wechat: string; building: string } | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ name: string; email: string | null; wechat: string | null; building: string | null }>(
+    `SELECT name, email, wechat, building FROM signups WHERE id = $1::bigint`,
+    [id],
+  );
+  const row = result.rows[0];
+  if (!row || (!row.email && !row.wechat)) return null;
+  return { name: row.name, email: row.email ?? "", wechat: row.wechat ?? "", building: row.building ?? "" };
+}
+
+/** The signup a WeChat openid has been tied to, if any. */
+export async function findSignupIdByOpenid(openid: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `SELECT id::text AS id FROM signups WHERE wechat_openid = $1 LIMIT 1`,
+    [openid],
+  );
+  return result.rows[0]?.id ?? null;
+}
+
+/**
+ * Ties a WeChat openid to a signup. The latest proof wins.
+ *
+ * Called only right after someone proved a signup is theirs with its whole
+ * name (signing up, or /my). That proof is weak — a name and a WeChat ID are
+ * both visible in the group chat — so a binding must never be the final word:
+ * a later proof moves this openid off any other signup and onto this one, and
+ * replaces whatever WeChat this signup had. The real owner can always take
+ * their signup back by proving it again, and someone who signed a friend up
+ * from their own WeChat is moved back to themselves the next time they sign
+ * themselves up (2026-10-04 review).
+ */
+export async function bindOpenid(signupId: string, openid: string): Promise<boolean> {
+  await ensureSchema();
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    try {
+      await client.query(
+        `UPDATE signups SET wechat_openid = NULL, updated_at = now() WHERE wechat_openid = $2 AND id <> $1::bigint`,
+        [signupId, openid],
+      );
+      const result = await client.query(
+        `UPDATE signups SET wechat_openid = $2, updated_at = now() WHERE id = $1::bigint`,
+        [signupId, openid],
+      );
+      await client.query("COMMIT");
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      // Two binds of the same openid racing: the unique index let one win.
+      if ((error as { code?: string }).code === "23505") return false;
+      throw error;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * "Not me" on a shared phone: unties whatever WeChat is tied to that signup.
+ * By signup, not by openid, so it works even when this browser no longer holds
+ * the WeChat cookie. If it was the owner's own WeChat, their next proof ties it
+ * back.
+ */
+export async function unbindOpenid(signupId: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE signups SET wechat_openid = NULL, updated_at = now() WHERE id = $1::bigint AND wechat_openid IS NOT NULL`,
+    [signupId],
+  );
+}
 
 /**
  * Saves the one-tap interest answer against a signup. The id comes from the
@@ -2776,11 +2866,11 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
 
       // Read what to carry over, then delete the row before writing it onto
       // `keep`, so the unique email/WeChat indexes never see both at once.
-      const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null }>(
+      const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null; openid: string | null }>(
         `DELETE FROM signups WHERE id = $1::bigint
           RETURNING ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) d) AS sessions,
                     ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) d) AS waitlist,
-                    waitlist_since AS since, wechat_former AS former, email, wechat`,
+                    waitlist_since AS since, wechat_former AS former, email, wechat, wechat_openid AS openid`,
         [drop],
       );
       const o = other.rows[0];
@@ -2797,6 +2887,9 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
                                    THEN ARRAY[$5::text] ELSE '{}'::text[] END) AS f
                               WHERE f IS NOT NULL AND lower(f) IS DISTINCT FROM lower(wechat)),
             email = COALESCE(email, $6),
+            -- A WeChat login tied to the dropped row moves with it (deleted
+            -- above, so the unique index is free).
+            wechat_openid = COALESCE(wechat_openid, $8),
             -- The earlier of the two join times for a session both rows waited
             -- on. Keys for sessions no longer waited on are dropped at read time.
             waitlist_since = COALESCE((
@@ -2808,7 +2901,7 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
                        GROUP BY k) AS merged), '{}'::jsonb),
             updated_at = now()
           WHERE id = $1::bigint`,
-        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email, JSON.stringify(o.since ?? {})],
+        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email, JSON.stringify(o.since ?? {}), o.openid ?? null],
       );
 
       await client.query("COMMIT");

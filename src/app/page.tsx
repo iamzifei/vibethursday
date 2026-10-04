@@ -12,6 +12,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
 import { listWharfQuestions, signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
+import { knownProfileFromCookie } from "@/lib/known-profile";
 import { bookableSessions, formatSession, isSpecialSession } from "@/lib/sessions";
 
 
@@ -57,6 +58,8 @@ export default async function Page({ searchParams }: PageProps) {
   const wharfRead = listWharfQuestions();
   wharfRead.catch(() => {});
   const counts = await signupCountsBySession().catch(() => new Map<string, number>());
+  // Who this browser is, when its remember cookie says (e.g. WeChat login).
+  const knownProfile = await knownProfileFromCookie();
   // Thursdays plus any open Build Tuesday, in date order. A Tuesday carries its
   // own time and room in the label and its own cap (`capFor`), and is flagged
   // so the form can point people who build things at it.
@@ -321,6 +324,7 @@ export default async function Page({ searchParams }: PageProps) {
               lang={lang}
               copy={c.signup}
               sessions={sessions}
+              knownProfile={knownProfile}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
               // The Wharf's "help me ask this better", on the box where most
               // vague questions are written. Its button and disclosure are the

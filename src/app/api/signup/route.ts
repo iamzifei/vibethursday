@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { getMySignup, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
+import { cookies } from "next/headers";
+import { bindOpenid, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
 import { bookableSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, capFor } from "@/lib/capacity";
-import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
+import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { parseSignupProfile } from "@/lib/signup-profile";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { readOpenidToken } from "@/lib/wechat-auth";
+import { WX_OPENID_COOKIE } from "@/lib/wechat-gate";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -129,9 +132,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "failed_bot_check" }, { status: 403 });
   }
 
-  const name = clean(body.name, 100);
-  const email = clean(body.email, 200);
-  const wechat = clean(body.wechat, 100);
+  // A visitor the form knew only from the remember cookie (WeChat login, on a
+  // phone that never signed up here) sends no contact details: they never
+  // reached the browser (`known-profile.ts`). Read them from the signup the
+  // cookie names instead. A missing or forged cookie just leaves them empty,
+  // and the check below turns that away like any incomplete form.
+  let fromCookie: { name: string; email: string; wechat: string } | null = null;
+  if (body.fromCookie === true) {
+    try {
+      const id = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
+      fromCookie = id ? await getSignupProfile(id) : null;
+    } catch (error) {
+      console.error("[signup] could not read the remembered signup", error);
+    }
+  }
+
+  const name = fromCookie ? fromCookie.name : clean(body.name, 100);
+  const email = fromCookie ? fromCookie.email || null : clean(body.email, 200);
+  const wechat = fromCookie ? fromCookie.wechat || null : clean(body.wechat, 100);
   const topic = clean(body.topic, 2000);
 
   // Which of the two is mandatory differs per language, and `lang` comes from
@@ -314,6 +332,18 @@ export async function POST(request: Request) {
       response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions((await requestOrigin()).startsWith("https://")));
     } catch (error) {
       console.error("[signup] could not set the remember cookie", error);
+    }
+
+    // Signed up from inside WeChat, recognised by WeChat but not yet tied to a
+    // signup: tie it now, behind the same whole-name gate as the cookie above.
+    // From here on this WeChat is recognised on any phone (wechat-auth.ts).
+    // Not when the identity itself came from the cookie: that proves nothing
+    // new, and binding is reserved for someone who typed their whole name.
+    try {
+      const openid = fromCookie ? null : readOpenidToken((await cookies()).get(WX_OPENID_COOKIE)?.value);
+      if (openid) await bindOpenid(signupId, openid);
+    } catch (error) {
+      console.error("[signup] could not tie the WeChat login", error);
     }
   }
 

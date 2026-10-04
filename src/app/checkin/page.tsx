@@ -8,6 +8,8 @@ import { buildRoster, canCheckIn, filterRoster, isSessionDate, verifyCheckinCode
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
 import { listCheckins, listRoster } from "@/lib/db";
 import { formatSession, sydneyToday } from "@/lib/sessions";
+import { cookies } from "next/headers";
+import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 
 type PageProps = {
   searchParams: Promise<{
@@ -171,7 +173,17 @@ export default async function CheckinPage({ searchParams }: PageProps) {
   }
 
   // ── Confirm one name ──────────────────────────────────────────────
-  const who = params.who ? roster.find((entry) => entry.id === params.who) : undefined;
+  // Recognised (remember cookie — after WeChat login, usually without ever
+  // typing anything) and on today's list, not yet in: skip the list and ask
+  // "is this you?" straight away. Only on a bare scan: a search, the walk-in
+  // form, an error, or "not me" (which carries an empty q) all show the list.
+  let recognised: RosterEntry | undefined;
+  if (!params.who && params.q === undefined && !params.new && !params.err) {
+    const rememberedId = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
+    const entry = rememberedId ? roster.find((row) => row.id === rememberedId) : undefined;
+    if (entry && !entry.checkedIn) recognised = entry;
+  }
+  const who = params.who ? roster.find((entry) => entry.id === params.who) : recognised;
 
   if (who) {
     return shell(
@@ -194,7 +206,7 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         <WallChoice session={session} code={code} lang={lang} signupId={who.id} copy={t} />
 
         <p>
-          <Link href={stepHref(session, code, lang)}>{t.notMe}</Link>
+          <Link href={stepHref(session, code, lang, { q: "" })}>{t.notMe}</Link>
         </p>
       </>,
     );
@@ -266,7 +278,7 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         </form>
 
         <p>
-          <Link href={stepHref(session, code, lang)}>{t.notMe}</Link>
+          <Link href={stepHref(session, code, lang, { q: "" })}>{t.notMe}</Link>
         </p>
       </>,
     );

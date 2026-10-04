@@ -6,6 +6,7 @@ import { capFor } from "@/lib/capacity";
 import { getCopy, resolveLang } from "@/lib/content";
 import { signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
+import { knownProfileFromCookie } from "@/lib/known-profile";
 import { pageAlternates } from "@/lib/seo";
 import { formatSession, upcomingSpecialSessions } from "@/lib/sessions";
 
@@ -52,6 +53,7 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
     };
   });
   const next = sessions[0];
+  const knownProfile = await knownProfileFromCookie();
 
   return (
     <div lang={c.htmlLang}>
@@ -126,6 +128,7 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                   lang={lang}
                   copy={c.signup}
                   sessions={sessions}
+                  knownProfile={knownProfile}
                   turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
                 />
               </div>

@@ -26,6 +26,14 @@ type Props = {
   turnstileSiteKey: string | null;
   /** The follow-up-question helper's strings, or null when this deployment has no key for it. */
   coach?: CoachCopy | null;
+  /**
+   * Who this browser is, when the server knows from its remember cookie —
+   * typically someone recognised by WeChat login on a phone that has never
+   * signed up here. Used when this browser has no saved profile of its own.
+   * The name only: the contact details stay on the server, which fills them
+   * in when the form is sent with `fromCookie` (see the signup route).
+   */
+  knownProfile?: { name: string } | null;
 };
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -71,7 +79,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  */
 const EXTRA_FIELDS = ["source", "aiSpend", "building", "email"];
 
-export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Props) {
+export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   useEffect(() => {
     if (status === "done") doneRef.current?.focus();
@@ -99,7 +107,14 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
 
   // Null on the server and during hydration, then the stored profile if there
   // is one. See the store above for why this is not a useState + useEffect.
-  const profile = useSyncExternalStore(subscribeProfile, profileSnapshot, () => null);
+  // Falls back to what the server knows (`knownProfile`), so someone WeChat
+  // recognised gets the two-tap form too. The server render and hydration both
+  // see the same fallback, so there is no mismatch.
+  const stored = useSyncExternalStore(subscribeProfile, profileSnapshot, () => null);
+  const profile: (SavedProfile & { fromServer?: true }) | null =
+    stored ?? (knownProfile ? { name: knownProfile.name, email: "", wechat: "", building: "", fromServer: true } : null);
+  // Identity comes from the server's cookie, not from anything this browser holds.
+  const fromServer = profile?.fromServer === true;
 
   // Compact mode: known visitor, and they have not asked to edit their details.
   const returning = profile !== null && !editing;
@@ -230,8 +245,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
 
     // The Chinese form asks for a WeChat ID, the English one for an email —
     // that audience split is real, so the required field follows the language.
-    const missingRequired =
-      !name || (copy.fields.emailRequired && !email) || (copy.fields.wechatRequired && !wechat);
+    // A server-known visitor has no contact details in this browser at all;
+    // the route fills them in from the cookie, so there is nothing to check.
+    const missingRequired = !fromServer || !returning
+      ? !name || (copy.fields.emailRequired && !email) || (copy.fields.wechatRequired && !wechat)
+      : false;
 
     if (missingRequired) {
       setStatus("error");
@@ -249,7 +267,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
     }
 
     // Whichever language, one contact method has to be there.
-    if (!email && !wechat) {
+    if (!(returning && fromServer) && !email && !wechat) {
       setStatus("error");
       setMessage(copy.errorNeedContact);
       return;
@@ -310,6 +328,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
           publishCard: data.get("publishCard") !== null,
           source: data.get("source"),
           company: data.get("company"),
+          // Identity from the remember cookie (WeChat login): the route reads
+          // name and contact from the signup the cookie names, not from here.
+          fromCookie: returning && fromServer,
           turnstileToken: token,
           lang,
         }),
@@ -346,7 +367,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach }: Pr
       // Remember them so the next session is a two-tap job. Written only after
       // the server accepted the signup, so a failed submission never leaves a
       // profile behind that was never actually registered.
-      try {
+      // Not for a server-known visitor: this browser never had their contact
+      // details, and a saved profile without them could not sign up again.
+      if (!(returning && fromServer)) try {
         window.localStorage.setItem(
           PROFILE_KEY,
           JSON.stringify({ name, email, wechat, building } satisfies SavedProfile),

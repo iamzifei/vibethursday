@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { cancelSession, findMySignup, getMySignup, moveSessionFor } from "@/lib/db";
-import { canChangeSession, myToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
+import { bindOpenid, cancelSession, findMySignup, getMySignup, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
+import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
+import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { bookableSessions, sydneyToday } from "@/lib/sessions";
@@ -81,6 +84,13 @@ export async function POST(request: Request) {
       // link above; it just is not worth a 60-day pass.
       if (found.exactName) {
         response.cookies.set(REMEMBER_COOKIE, rememberToken(found.id), rememberCookieOptions(origin.startsWith("https://")));
+        // Same gate ties a pending WeChat login to this signup (wechat-auth.ts).
+        try {
+          const openid = readOpenidToken((await cookies()).get(WX_OPENID_COOKIE)?.value);
+          if (openid) await bindOpenid(found.id, openid);
+        } catch (error) {
+          console.error("[my] could not tie the WeChat login", error);
+        }
       }
       return response;
     } catch (error) {
@@ -92,8 +102,21 @@ export async function POST(request: Request) {
   // "Not me": a shared phone, or a signup made on a friend's. Forget it and
   // go back to the form.
   if (action === "forget") {
+    const secure = origin.startsWith("https://");
     const response = back({});
-    response.cookies.set(REMEMBER_COOKIE, "", { ...rememberCookieOptions(origin.startsWith("https://")), maxAge: 0 });
+    // With WeChat login, "not me" also unties this WeChat from that signup —
+    // otherwise the next visit would sign the same wrong person straight back
+    // in — and drops the WeChat cookie, with "tried" so the proxy does not
+    // immediately send them round again.
+    try {
+      const remembered = readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value);
+      if (remembered) await unbindOpenid(remembered);
+    } catch (error) {
+      console.error("[my] could not untie the WeChat login", error);
+    }
+    response.cookies.set(REMEMBER_COOKIE, "", { ...rememberCookieOptions(secure), maxAge: 0 });
+    response.cookies.set(WX_OPENID_COOKIE, "", wechatCookieOptions(secure, 0));
+    response.cookies.set(WX_TRIED_COOKIE, "1", wechatCookieOptions(secure, WX_TRIED_MAX_AGE_S));
     return response;
   }
 
