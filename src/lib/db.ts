@@ -1088,6 +1088,17 @@ export async function takeQrLogin(token: string): Promise<{ signupId: string } |
   return row ? { signupId: row.signup_id } : null;
 }
 
+/** The kind of person this signup said it was most recently (step 2 of the form), or null. */
+export async function latestPurpose(signupId: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ purpose: string | null }>(
+    `SELECT (SELECT value FROM jsonb_each_text(purposes) ORDER BY key DESC LIMIT 1) AS purpose
+       FROM signups WHERE id = $1::bigint`,
+    [signupId],
+  );
+  return result.rows[0]?.purpose ?? null;
+}
+
 /** The signup a WeChat openid has been tied to, if any. */
 export async function findSignupIdByOpenid(openid: string): Promise<string | null> {
   await ensureSchema();
@@ -3133,7 +3144,13 @@ export async function getMySignupForMember(memberId: string): Promise<MySignup |
  * not locked against other signups: two people taking the fortieth place in
  * the same instant can both get it, which a soft cap can afford.
  */
-export async function moveSessionFor(signupId: string, from: string | null, to: string): Promise<"booked" | "waitlist"> {
+export async function moveSessionFor(
+  signupId: string,
+  from: string | null,
+  to: string,
+  /** A builder moving onto a Thursday whose week has an open Build Tuesday (`builderToWaitlist`). */
+  waitlistOnly = false,
+): Promise<"booked" | "waitlist"> {
   await ensureSchema();
 
   const client = await getPool().connect();
@@ -3161,7 +3178,10 @@ export async function moveSessionFor(signupId: string, from: string | null, to: 
           WHERE $1::date = ANY(sessions)`,
         [to, signupId],
       );
-      const result = admission(Number(counted.rows[0]?.count ?? 0), counted.rows[0]?.already ?? false, capFor(to));
+      const already = counted.rows[0]?.already ?? false;
+      // Someone already holding the place keeps it; otherwise a builder sent
+      // to Tuesday gets the Thursday's waitlist however much room it has.
+      const result = waitlistOnly && !already ? "waitlist" : admission(Number(counted.rows[0]?.count ?? 0), already, capFor(to));
 
       await client.query(
         result === "booked"

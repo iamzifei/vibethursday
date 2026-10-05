@@ -106,3 +106,33 @@ export const UNVERIFIED_ALERT = 10;
 export function capacityAlert(counts: { waitlist: number; unverifiedLastDay: number }) {
   return counts.waitlist >= WAITLIST_ALERT || counts.unverifiedLastDay >= UNVERIFIED_ALERT ? counts : null;
 }
+
+/**
+ * "AI builders" as the signup form sees them: people who picked "I build
+ * things" or "looking for opportunities: work, projects, partners" (mostly
+ * developers). James 2026-10-06: builders belong on Build Tuesday.
+ */
+export function isBuilderPurpose(purpose: string | null | undefined): boolean {
+  return purpose === "product" || purpose === "tech";
+}
+
+/**
+ * Whether a builder asking for a Thursday should only get its waitlist
+ * (James 2026-10-06): yes when that week has a Build Tuesday that still has
+ * room — the Tuesday is where they are meant to go, and their Thursday place
+ * goes to the business owners and newcomers it is for.
+ *
+ * Never when that week has no open Tuesday (they would have nowhere to go),
+ * never for someone already holding the place (nobody is demoted), and never
+ * for the Tuesday itself.
+ */
+export function builderToWaitlist(input: {
+  purpose: string | null | undefined;
+  session: string;
+  isTuesday: boolean;
+  alreadyIn: boolean;
+  /** A Build Tuesday in the same week as `session` with places left. */
+  sameWeekTuesdayOpen: boolean;
+}): boolean {
+  return isBuilderPurpose(input.purpose) && !input.isTuesday && !input.alreadyIn && input.sameWeekTuesdayOpen;
+}

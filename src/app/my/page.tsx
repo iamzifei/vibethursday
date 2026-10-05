@@ -21,6 +21,8 @@ type PageProps = {
     done?: string;
     /** The session that change was about. */
     d?: string;
+    /** Same-week sessions given up by that change (one morning a week), comma-separated. */
+    gave?: string;
     /** What went wrong: notfound · name · rate · expired · failed. */
     err?: string;
     /** With err=name: the first and last letter of the name on file (`nameHint`). */
@@ -174,6 +176,8 @@ export default async function MyPage({ searchParams }: PageProps) {
   const held = new Set(upcoming.map((entry) => entry.session));
   const choices = bookableSessions(6).filter((session) => !held.has(session));
 
+  // Only well-formed dates from the address bar; anything else is ignored.
+  const gaveDates = (params.gave ?? "").split(",").filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)).slice(0, 2);
   const doneText =
     params.done && params.d
       ? params.done === "cancel" ? fill(t.doneCancel, { date: formatSession(params.d, lang) })
@@ -198,6 +202,7 @@ export default async function MyPage({ searchParams }: PageProps) {
       {doneText && (
         <p className="alert" role="status">
           {doneText}
+          {gaveDates.length > 0 && <> {fill(t.doneGave, { date: gaveDates.map((date) => formatSession(date, lang)).join("、") })}</>}
         </p>
       )}
       {error}

@@ -1078,7 +1078,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <div className="group-head">
           <h2 className="h3">小班意向 · {classInterest.length} 人</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            成功页点了「有人带着做的小班」的人。首期定了，照这张表私信；链接 jamesai.dev/class
+            在报名表上直接报了小班课，或在成功页点了「收费小班」的人。首期定了，照这张表私信；链接 jamesai.dev/class
           </span>
         </div>
         {classInterest.length === 0 ? (

@@ -72,6 +72,14 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.4",
+    date: "2026-10-06",
+    kind: "minor",
+    scope: "room",
+    zh: "同一周的周二和周四只能报一场：报了这周的 Build Tuesday，会自动退掉这周四的位子或候补，反过来也一样，成功页和「查我的报名」里都会写清楚退掉了哪一场。另外，选了「在做产品 / 写代码」或「找机会」的朋友会被引到周二；那一周的周二还有位子时，报周四只能进候补——周四优先留给做生意和刚开始学 AI 的朋友。",
+    en: "One morning per week: signing up for a week's Build Tuesday gives up that week's Thursday place or waitlist spot, and the other way round — the confirmation and \"My signup\" both say which one went. And people who build things are pointed to Tuesday: while that week's Tuesday has room, a builder signing up for Thursday goes on its waitlist, since Thursday is kept first for business owners and newcomers.",
+  },
+  {
     version: "5.3",
     date: "2026-10-05",
     kind: "minor",

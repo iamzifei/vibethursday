@@ -67,3 +67,36 @@ test("★ a Tuesday is labelled 周二, and Thursdays are still 周四", () => {
   assert.equal(formatSession("2026-10-08", "zh"), "10月8日（周四）");
   assert.equal(formatSession("2026-10-08", "zh-Hant"), "10月8日（週四）");
 });
+
+test("★ one morning a week: a Tuesday and that week's Thursday are the same week", async () => {
+  const { sameWeekSessions } = await import("../src/lib/sessions.ts");
+  // Tue 6 Oct and Thu 8 Oct share a week; Thu 1 Oct and Tue 13 Oct do not.
+  assert.deepEqual(sameWeekSessions("2026-10-06", ["2026-10-01", "2026-10-08", "2026-10-13"]), ["2026-10-08"]);
+  assert.deepEqual(sameWeekSessions("2026-10-08", ["2026-10-06", "2026-10-15"]), ["2026-10-06"]);
+  assert.deepEqual(sameWeekSessions("2026-10-13", ["2026-10-08", "2026-10-15", "2026-10-15"]), ["2026-10-15"]);
+  // The date itself, and garbage, never count.
+  assert.deepEqual(sameWeekSessions("2026-10-08", ["2026-10-08", "none", ""]), []);
+  // Monday and Sunday bound the week.
+  assert.deepEqual(sameWeekSessions("2026-10-12", ["2026-10-11", "2026-10-18"]), ["2026-10-18"]);
+});
+
+test("★ builders get only the Thursday waitlist when that week's Tuesday has room", async () => {
+  const { builderToWaitlist, isBuilderPurpose } = await import("../src/lib/capacity.ts");
+  const base = { purpose: "product", session: "2026-10-08", isTuesday: false, alreadyIn: false, sameWeekTuesdayOpen: true };
+  assert.equal(isBuilderPurpose("product"), true);
+  assert.equal(isBuilderPurpose("tech"), true);
+  assert.equal(isBuilderPurpose("biz"), false);
+  assert.equal(isBuilderPurpose("learn"), false);
+  assert.equal(builderToWaitlist(base), true);
+  assert.equal(builderToWaitlist({ ...base, purpose: "tech" }), true);
+  // Business owners and newcomers are who Thursday is for.
+  assert.equal(builderToWaitlist({ ...base, purpose: "biz" }), false);
+  assert.equal(builderToWaitlist({ ...base, purpose: "learn" }), false);
+  assert.equal(builderToWaitlist({ ...base, purpose: null }), false);
+  // No open Tuesday that week: nowhere else to go, so Thursday as usual.
+  assert.equal(builderToWaitlist({ ...base, sameWeekTuesdayOpen: false }), false);
+  // Nobody already holding a place is demoted.
+  assert.equal(builderToWaitlist({ ...base, alreadyIn: true }), false);
+  // The Tuesday itself is never affected.
+  assert.equal(builderToWaitlist({ ...base, isTuesday: true }), false);
+});

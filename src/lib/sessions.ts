@@ -283,3 +283,21 @@ export function deskSession(): string {
   const today = sydneyToday().toISOString().slice(0, 10);
   return isSpecialSession(today) ? today : focusSession().date;
 }
+
+/**
+ * The other dates in `held` that fall in the same Monday–Sunday week as `date`.
+ *
+ * One morning a week (James 2026-10-05): a week's Build Tuesday and its
+ * Thursday are alternatives, not a pair — signing up for one gives up the
+ * other, so each room keeps its places for people who will actually use them.
+ * Pure, so the rule is tested without a clock or a database.
+ */
+export function sameWeekSessions(date: string, held: readonly string[]): string[] {
+  const monday = (iso: string) => {
+    const day = new Date(`${iso}T00:00:00Z`);
+    day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+    return day.toISOString().slice(0, 10);
+  };
+  const week = monday(date);
+  return [...new Set(held)].filter((other) => other !== date && /^\d{4}-\d{2}-\d{2}$/.test(other) && monday(other) === week);
+}

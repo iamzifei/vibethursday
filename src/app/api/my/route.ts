@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { isBuilderPurpose } from "@/lib/capacity";
+import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { bookableSessions, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, sameWeekSessions, sydneyToday } from "@/lib/sessions";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -159,9 +161,23 @@ export async function POST(request: Request) {
     // that is not a session.
     if (!to || !bookableSessions(6).includes(to) || to === from) return back({ t: token, err: "failed" });
 
+    // A builder moving onto a Thursday whose week has an open Build Tuesday
+    // gets that Thursday's waitlist, as on the signup form (James 2026-10-06).
+    const waitlistOnly = isBuilderPurpose(await latestPurpose(signupId)) && (await sameWeekTuesdayOpen(to));
+
     // Cancel and add in one transaction: never "old Thursday gone, new one not taken".
-    const result = await moveSessionFor(signupId, from, to);
-    return back({ t: token, done: result === "booked" ? "booked" : "waitlist", d: to });
+    const result = await moveSessionFor(signupId, from, to, waitlistOnly);
+
+    // One morning a week, as on the signup form: taking a week's Tuesday gives
+    // up that week's Thursday (booked or waitlisted), and the other way round.
+    // After the move, so the new place is held before the old one is let go.
+    const after = await getMySignup(signupId);
+    const switched = after
+      ? sameWeekSessions(to, [...after.sessions, ...after.waitlist.map((entry) => entry.session)])
+      : [];
+    for (const other of switched) await cancelSession(signupId, other);
+
+    return back({ t: token, done: result === "booked" ? "booked" : "waitlist", d: to, ...(switched.length ? { gave: switched.join(",") } : {}) });
   } catch (error) {
     console.error("[my] change failed", error);
     return back({ t: token, err: "failed" });

@@ -15,6 +15,7 @@ import {
 import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
+import { formatSession, sameWeekSessions } from "@/lib/sessions";
 
 /** `tuesday`: a Build Tuesday rather than a Thursday (`SPECIAL_SESSIONS`). */
 type SessionOption = { value: string; label: string; full?: boolean; tuesday?: boolean };
@@ -60,6 +61,12 @@ type Receipt = {
   /** The server set the "this phone remembers you" cookie, so the one-tap
       interest question below can be answered without asking who they are. */
   remembered: boolean;
+  /** Same-week sessions given up by this signup (one morning a week). */
+  switched: string[];
+  /** A builder put on Thursday's waitlist because that week's Tuesday has room. */
+  builderRouted: boolean;
+  /** Registered for the small class from the form (learners' step 4). */
+  classSignup: boolean;
 };
 
 
@@ -106,6 +113,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   // Step 2's answer, read back from the uncontrolled radios: it decides which
   // questions steps 3 and 4 show. The form still reads itself with FormData.
   const [pickedPurpose, setPickedPurpose] = useState<string | null>(null);
+  // Learners (step 2 = "learn") are pointed at the paid small class first
+  // (James 2026-10-06); "thursday" is their way to sign up for a morning anyway.
+  const [learnChoice, setLearnChoice] = useState<"class" | "thursday">("class");
+  const classMode = pickedPurpose === "learn" && learnChoice === "class";
   const sessionRef = useRef<HTMLSelectElement>(null);
   // Set once the person picks a morning themselves; after that, changing
   // their answer in step 2 never moves the morning they chose.
@@ -396,6 +407,8 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           aiModels: data.getAll("aiModels"),
           // Step 3 for business owners; a checkbox group, so getAll.
           bizFocus: data.getAll("bizFocus"),
+          // "class" only from a learner's step 4 in class mode (hidden input).
+          interest: data.get("interest"),
           aiSpend: data.get("aiSpend"),
           purpose: data.get("purpose"),
           // Both optional. `get` returns null when unanswered (no radio
@@ -472,6 +485,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         upcoming?: { session: string; waitlisted: boolean }[];
         tuesday?: { session: string; left: number };
         remembered?: boolean;
+        switched?: string[];
+        builderRouted?: boolean;
+        classSignup?: boolean;
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -489,6 +505,12 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             ? { label: labelOf(accepted.tuesday.session), left: accepted.tuesday.left }
             : null,
         remembered: accepted?.remembered === true,
+        builderRouted: accepted?.builderRouted === true,
+        classSignup: accepted?.classSignup === true,
+        // Formatted here, not looked up: on /tuesday the list only has Tuesdays.
+        switched: Array.isArray(accepted?.switched)
+          ? accepted.switched.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).map((date) => formatSession(date, lang))
+          : [],
       });
       setInterest("idle");
       setStatus("done");
@@ -517,10 +539,20 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             <span className="body-sm" style={{ color: "var(--fg3)" }}>{copy.successPassHint}</span>
           </div>
         )}
-        {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
+        {receipt?.waitlisted && !receipt.builderRouted && <p>{copy.waitlistBody}</p>}
+        {receipt?.builderRouted && (
+          <p>
+            {copy.builderWaitlist}{" "}
+            <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.builderWaitlistCta} →</a>
+          </p>
+        )}
+        {/* One morning a week: say plainly what this signup gave up. */}
+        {receipt && receipt.switched.length > 0 && (
+          <p>{copy.successSwitched.replace("{date}", receipt.switched.join("、"))}</p>
+        )}
         {/* The overflow Build Tuesday exists to take: Thursday is full, the
             Tuesday is not. A link, not a booking — /my moves them in one tap. */}
-        {receipt?.tuesday && (
+        {receipt?.tuesday && !receipt.builderRouted && (
           <p>
             {copy.tuesdayOverflow
               .replace("{date}", receipt.tuesday.label.split(" · ")[0])
@@ -530,7 +562,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         )}
         {/* With a session, the pass card above already says which one; only
             "no morning picked" needs saying in words (2026-10-05 tidy-up). */}
-        {!receipt?.session && <p>{copy.successNoSession}</p>}
+        {receipt?.classSignup ? (
+          <p><strong>{copy.classDone}</strong></p>
+        ) : (
+          !receipt?.session && <p>{copy.successNoSession}</p>
+        )}
         {/* Everything they are down for now, not just this week: a second
             signup that added a Thursday used to be invisible, and read as
             "it signed me up twice" (2026-09-28). */}
@@ -579,7 +615,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         {/* One tap, optional: which other kind of morning they would come to.
             Only when this phone is remembered — the answer is saved against
             the signup through that cookie, never through a name typed here. */}
-        {receipt?.remembered && (
+        {receipt?.remembered && !receipt.classSignup && (
           <div className="stack-2">
             <p className="body-sm" style={{ margin: 0 }}>{copy.interestTitle}</p>
             {interest === "done" ? (
@@ -651,16 +687,23 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
 
   /** Builders get the first open Build Tuesday; everyone else the nearest Thursday. */
   function suggestedSession(purpose: string | null): string | undefined {
-    if (purpose === "product") {
+    if (purpose === "product" || purpose === "tech") {
       const tuesday = sessions.find((session) => session.tuesday && !session.full);
       if (tuesday) return tuesday.value;
     }
     return defaultSession;
   }
 
+  /** Whether this Thursday is waitlist-only for a builder: its week has an open Build Tuesday. */
+  function builderWaitlistOnly(purpose: string | null, session: SessionOption): boolean {
+    if ((purpose !== "product" && purpose !== "tech") || session.tuesday) return false;
+    const openTuesdays = sessions.filter((other) => other.tuesday && !other.full).map((other) => other.value);
+    return sameWeekSessions(session.value, openTuesdays).length > 0;
+  }
+
   /** The session list in the order this kind of person should see it. */
   function orderedSessions(purpose: string | null): SessionOption[] {
-    if (purpose !== "product") return sessions;
+    if (purpose !== "product" && purpose !== "tech") return sessions;
     return [...sessions.filter((session) => session.tuesday), ...sessions.filter((session) => !session.tuesday)];
   }
 
@@ -941,7 +984,22 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           {/* Step 4: which morning, ordered for this kind of person — a
               builder sees Build Tuesday first, marked as suggested. */}
           <section className="signup-step stack-4" aria-labelledby={fieldId("step4")}>
-            <p className="signup-step__label" id={fieldId("step4")}><span className="signup-step__num">4</span>{copy.fields.steps[3]}</p>
+            <p className="signup-step__label" id={fieldId("step4")}><span className="signup-step__num">4</span>{classMode ? copy.classStep : copy.fields.steps[3]}</p>
+            {classMode ? (
+              /* The class first, for people who want to learn: the submit
+                 button below registers them for it (no session, no second
+                 form). A morning is one tap away for anyone who would rather. */
+              <div className="card card--accent stack-3">
+                <input type="hidden" name="firstSession" value="none" />
+                <input type="hidden" name="interest" value="class" />
+                <h3 className="h3" style={{ margin: 0 }}>{copy.classCardTitle}</h3>
+                <p className="body" style={{ margin: 0 }}>{copy.classCardBody}</p>
+                <button type="button" className="link-button" style={{ alignSelf: "start" }} onClick={() => setLearnChoice("thursday")}>
+                  {copy.thursdayInstead}
+                </button>
+              </div>
+            ) : (
+            <>
             <div>
               <label className="visually-hidden" htmlFor={fieldId("session")}>
                 {copy.fields.session}
@@ -963,6 +1021,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                 {orderedSessions(pickedPurpose).map((session) => (
                   <option key={session.value} value={session.value}>
                     {session.label}
+                    {/* Said before they pick it, not after: a builder's Thursday
+                        is waitlist-only when that week's Tuesday has room. */}
+                    {builderWaitlistOnly(pickedPurpose, session) ? ` · ${copy.fields.builderThursday}` : ""}
                   </option>
                 ))}
                 {/* "none" is not a date, so the route's whitelist turns it into
@@ -971,7 +1032,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               </select>
               {/* Why the picker opened on a Tuesday, under it rather than inside
                   the option: on a phone the closed select shows one line. */}
-              {pickedPurpose === "product" && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
+              {(pickedPurpose === "product" || pickedPurpose === "tech") && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
                 <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommended}</p>
               )}
             </div>
@@ -1019,6 +1080,13 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                 </div>
               )}
             </div>
+            {pickedPurpose === "learn" && (
+              <button type="button" className="link-button" style={{ alignSelf: "start" }} onClick={() => setLearnChoice("class")}>
+                {copy.classInstead}
+              </button>
+            )}
+            </>
+            )}
           </section>
         </>
       )}
@@ -1094,7 +1162,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
       {/* Never disabled by the bot check — only while a submission is in
           flight. A failed challenge must not be able to block a signup. */}
       <button className="btn btn--primary btn--block" type="submit" disabled={sending}>
-        {sending ? copy.submitting : copy.submit}
+        {sending ? copy.submitting : classMode ? copy.classSubmit : copy.submit}
       </button>
     </form>
   );

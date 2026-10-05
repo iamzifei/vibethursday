@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount, setBizFocus } from "@/lib/db";
-import { bookableSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
-import { admission, capFor } from "@/lib/capacity";
+import { bindOpenid, cancelSession, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
+import { parseInterest } from "@/lib/signup-interest";
+import { bookableSessions, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { admission, builderToWaitlist, capFor, isBuilderPurpose } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { parseBizFocus, parseSignupProfile } from "@/lib/signup-profile";
+import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { readOpenidToken } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE } from "@/lib/wechat-gate";
@@ -212,11 +214,23 @@ export async function POST(request: Request) {
   // (`capacity.ts`). Someone already booked keeps their place. Walk-ins at the
   // door never come through here, so the cap never turns anybody away there.
   let waitlisted = false;
+  // Set when a builder asked for a Thursday and got its waitlist because that
+  // week's Build Tuesday has room (`builderToWaitlist`), so the confirmation
+  // can say why instead of "it is full".
+  let builderRouted = false;
 
   if (firstSession) {
     try {
       const { count, alreadyIn } = await sessionHeadcount(firstSession, email, wechat);
       waitlisted = admission(count, alreadyIn, capFor(firstSession)) === "waitlist";
+
+      if (!waitlisted && isBuilderPurpose(purpose) && !isSpecialSession(firstSession)) {
+        const open = await sameWeekTuesdayOpen(firstSession);
+        if (builderToWaitlist({ purpose, session: firstSession, isTuesday: false, alreadyIn, sameWeekTuesdayOpen: open })) {
+          waitlisted = true;
+          builderRouted = true;
+        }
+      }
     } catch (error) {
       // Counting failed: book them. A signup lost to a counting error is worse
       // than one person over a soft cap.
@@ -259,6 +273,18 @@ export async function POST(request: Request) {
   // a signup that 500ed is a headcount the venue booking never hears about.
   // Never on somebody else's row: a name that did not match is not allowed to
   // put that person's card on the wall (see `saveSignupWithResult`).
+  // "Sign me up for the small class" from the form itself (learners' step 4,
+  // 2026-10-06): the same answer as the confirmation's one-tap question, saved
+  // the same way, so they land on /admin's class list with no second form.
+  const classSignup = parseInterest(body.interest) === "class";
+  if (classSignup && profileUpdated) {
+    try {
+      await setSignupInterest(signupId, "class");
+    } catch (error) {
+      console.error("[signup] saved, but the class registration did not", error);
+    }
+  }
+
   // The business-focus answer, saved like the profile fields: only an answer,
   // only on the person's own row, never fatal to the signup.
   const bizFocus = parseBizFocus(body.bizFocus);
@@ -267,6 +293,25 @@ export async function POST(request: Request) {
       await setBizFocus(signupId, bizFocus);
     } catch (error) {
       console.error("[signup] saved, but the business focus did not", error);
+    }
+  }
+
+  // One morning a week (James 2026-10-05): signing up for a week's Tuesday
+  // gives up that week's Thursday, booked or waitlisted, and the other way
+  // round — so a place held "just in case" goes back to someone waiting for it.
+  // Only on the person's own row, after the new signup is safely stored, and
+  // never fatal: the worst case is one person down for both, as before.
+  let switched: string[] = [];
+  if (firstSession && profileUpdated) {
+    try {
+      const mine = await getMySignup(signupId);
+      if (mine) {
+        switched = sameWeekSessions(firstSession, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]);
+        for (const other of switched) await cancelSession(signupId, other);
+      }
+    } catch (error) {
+      console.error("[signup] saved, but could not give up the other session that week", error);
+      switched = [];
     }
   }
 
@@ -332,7 +377,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only
