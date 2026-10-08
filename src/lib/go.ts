@@ -103,8 +103,8 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
   return [...(state.checkinOpen ? (["checkin"] as GoItem[]) : []), "feedback", "chat", "session", "nextSignup"];
 }
 
-/** Where "chat" goes: James's booking page for a one-to-one after a session. */
-export const CHAT_URL = "https://cal.com/jamesgong/vibe-thursday-chat";
+/** Where "chat" goes: James's paid one-to-one consultation booking page. */
+export const CHAT_URL = "https://cal.com/jamesgong/ai-business-consultation";
 
 /** Hours (Sydney) during which /go links straight to check-in, on the session's own date. */
 export const CHECKIN_LINK_FROM = 10;

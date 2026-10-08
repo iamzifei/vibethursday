@@ -1483,8 +1483,8 @@ export const copy = {
         badge: { title: "我的名牌", body: "有你的二维码，别人一扫就能看到你在做什么、想找什么。" },
         badgeNew: { title: "填资料，拿到我的名牌", body: "填好就上成员墙，也有自己的名牌二维码，方便大家互相认识。" },
         feedback: { title: "说两句", body: "一分钟，匿名，每一条都会被读。" },
-        // 2026-10-07：和 jamesai.dev/consult 对齐——免费 30 分钟诊断，先填三个问题；完整一小时的付费咨询在那边。
-        chat: { title: "免费 30 分钟诊断：约 James", body: "给有具体业务问题的老板，预约时先填三个问题。要一小时完整建议的，看 jamesai.dev/consult。" },
+        // 2026-10-08：改为直接预约付费的一对一咨询（与 jamesai.dev/consult 同一个价格和链接）。
+        chat: { title: "一对一咨询：约 James", body: "60 分钟，$380（含 GST），咨询费可以抵扣后续的项目费用。详情见 jamesai.dev/consult。" },
         session: { title: "这一场都有谁", body: "到场墙和这一场的记录。" },
         nextSignup: { title: "报名下一场", body: "每周四上午，同一个地方。" },
       },
@@ -2955,7 +2955,7 @@ export const copy = {
         badge: { title: "My badge", body: "Your QR code: one scan and people see what you are working on and looking for." },
         badgeNew: { title: "Fill in your card, get your badge", body: "It puts you on the member wall and gives you your own badge QR code, so people can find you." },
         feedback: { title: "Tell us how it went", body: "One minute, anonymous, and every one is read." },
-        chat: { title: "Free 30-minute diagnosis: book James", body: "For business owners with a concrete problem — answer three questions when you book. For a full hour of advice, see jamesai.dev/consult." },
+        chat: { title: "One-to-one consultation: book James", body: "60 minutes, $380 incl. GST, and the fee counts toward any project that follows. Details at jamesai.dev/consult." },
         session: { title: "Who was there", body: "The attendance wall and notes for that session." },
         nextSignup: { title: "Sign up for the next one", body: "Every Thursday morning, same place." },
       },
