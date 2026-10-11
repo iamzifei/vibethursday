@@ -105,7 +105,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 {order.status === "cancelled" ? (
                   <p className="body-lg">这条报名已经取消了，不用转账。想重新报名，回到报名页再填一次就行。</p>
                 ) : order.status === "waitlist" ? (
-                  <p className="body-lg">40 个名额已经满了。有人退出，我们会按顺序微信联系你，先不用转账。</p>
+                  <p className="body-lg">名额已经满了。有人退出，我们会按顺序微信联系你，先不用转账。</p>
                 ) : order.status === "paid" ? (
                   <p className="body-lg">已经收到你的转账了，{COURSE.dateLabel}见。</p>
                 ) : (
@@ -183,7 +183,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>3　一对一专属咨询，15 分钟</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>3　限时一对一专属咨询（每人 15 分钟）</h3>
                     <p style={{ margin: 0 }}>
                       课后在线上，只有你和我。带着你的需求单，和用助理时卡住的地方来。你的生意、你的数据，别人听不到。
                     </p>
@@ -191,11 +191,11 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　免费定制交付</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　抽中的需求，免费为你做出来</h3>
                     <p style={{ margin: 0 }}>
-                      从大家交上来的需求单里抽取一部分，专门为你的生意做一个 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具，做好交到你手上。
+                      交了需求单就有机会。我们从大家的需求单里抽取一部分，按你的需求单，做一个你生意里能直接用的 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具。做好交到你手上，教会你怎么用，不另外收费。
                     </p>
-                    <p className="hint" style={{ margin: 0 }}>抽中的名额会考虑需求本身的大小，以实际评估为准。</p>
+                    <p className="hint" style={{ margin: 0 }}>抽取会考虑需求本身的大小，以实际评估为准。</p>
                   </div>
                 </div>
 
@@ -248,7 +248,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   费用：{COURSE.priceLabel}，银行转账
                   <br />
-                  名额：{COURSE.cap} 个
+                  席位有限，报满即止
                 </p>
 
                 {error && <p className="alert" role="alert">{error}</p>}
