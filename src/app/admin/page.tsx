@@ -11,10 +11,12 @@ import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
+import { COURSE } from "@/lib/course";
 import {
   countCheckins,
   listAllMembers,
   listCheckins,
+  listCourseOrders,
   listFeedback,
   listLoginStats,
   listOrders,
@@ -97,7 +99,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -116,6 +118,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listPhotosForReview(),
       // Counting only; a failure here must not take the admin page down.
       listLoginStats().catch(() => []),
+      listCourseOrders(COURSE.id).catch(() => []),
     ]);
 
   // Whatever host this page was actually opened on, so a code scanned off a
@@ -1083,6 +1086,66 @@ export default async function AdminPage({ searchParams }: PageProps) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* The paid class (2026-10-12): who signed up, and whose transfer has
+          arrived. Paid by bank transfer, so "paid" is set here by hand once
+          the money shows up under their reference. */}
+      <section className="stack-4" id="course">
+        <div className="group-head">
+          <h2 className="h3">{COURSE.title} · {COURSE.date}</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            已付 {courseOrders.filter((o) => o.status === "paid").length} · 待付 {courseOrders.filter((o) => o.status === "pending").length} · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {COURSE.cap}
+          </span>
+        </div>
+        {courseOrders.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名。</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">备注编号</th>
+                  <th scope="col">名字</th>
+                  <th scope="col">微信号</th>
+                  <th scope="col">状态</th>
+                  <th scope="col">想让 AI 帮</th>
+                  <th scope="col">行业</th>
+                  <th scope="col">报名时间</th>
+                  <th scope="col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courseOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="mono">{order.ref}</td>
+                    <td>{order.name}{order.signup_id ? "" : " ·新"}</td>
+                    <td className="mono">{order.wechat}</td>
+                    <td>{{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}</td>
+                    <td>{order.biz_focus.join(" / ") || "—"}</td>
+                    <td>{order.industry ?? "—"}</td>
+                    <td className="mono">{order.created_at}</td>
+                    <td>
+                      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                        {(["paid", "pending", "cancelled"] as const)
+                          .filter((status) => status !== order.status)
+                          .map((status) => (
+                            <form method="post" action="/api/admin/course" key={status}>
+                              <input type="hidden" name="id" value={order.id} />
+                              <input type="hidden" name="status" value={status} />
+                              <button className="linkish" type="submit">
+                                {{ paid: "标已付", pending: "改回待付", cancelled: "取消" }[status]}
+                              </button>
+                            </form>
+                          ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* How people get recognised (2026-10-11): which login is actually

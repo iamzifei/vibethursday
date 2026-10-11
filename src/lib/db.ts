@@ -627,6 +627,32 @@ export function ensureSchema(): Promise<void> {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS login_events_created_idx ON login_events (created_at)`);
+
+    // ── The paid class (2026-10-12, course.ts) ────────────────────────
+    // One row per person per class. Paid by bank transfer, so `status` is
+    // set by hand on /admin once the money is seen: pending → paid, or
+    // cancelled. `waitlist` is anyone who signed up after the cap was full.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS course_orders (
+        id          bigserial PRIMARY KEY,
+        course      text NOT NULL,
+        signup_id   bigint,
+        name        text NOT NULL,
+        wechat      text NOT NULL,
+        industry    text,
+        biz_focus   text[] NOT NULL DEFAULT '{}',
+        note        text,
+        ref         text NOT NULL UNIQUE,
+        status      text NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'paid', 'cancelled', 'waitlist')),
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        paid_at     timestamptz
+      )
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS course_orders_person_idx
+      ON course_orders (course, lower(regexp_replace(wechat, '\\s+', '', 'g')))
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -2735,6 +2761,117 @@ export async function ensureMemberForSignup(signupId: string): Promise<string | 
     [signupId, fallbackSlug(signupId)],
   );
   return result.rows[0]?.id ?? null;
+}
+
+/* ── The paid class (2026-10-12) ──────────────────────────────────────── */
+
+export type CourseOrder = {
+  id: string;
+  signup_id: string | null;
+  name: string;
+  wechat: string;
+  industry: string | null;
+  biz_focus: string[];
+  note: string | null;
+  ref: string;
+  status: "pending" | "paid" | "cancelled" | "waitlist";
+  created_at: string;
+  paid_at: string | null;
+};
+
+/**
+ * Signs someone up for a class, or hands back the order they already have.
+ *
+ * One order per WeChat ID per class: signing up twice returns the first
+ * order's reference, so a nervous double tap never means two transfers. The
+ * cap is checked under a transaction-scoped advisory lock, so two people
+ * taking the 40th place at the same moment cannot both get it.
+ */
+export async function createCourseOrder(input: {
+  course: string;
+  cap: number;
+  signupId: string | null;
+  name: string;
+  wechat: string;
+  industry: string | null;
+  bizFocus: string[];
+  note: string | null;
+  ref: string;
+}): Promise<{ ref: string; status: CourseOrder["status"]; existing: boolean }> {
+  await ensureSchema();
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`course:${input.course}`]);
+
+    const existing = await client.query<{ ref: string; status: CourseOrder["status"] }>(
+      `SELECT ref, status FROM course_orders
+        WHERE course = $1 AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($2, '\\s+', '', 'g'))`,
+      [input.course, input.wechat],
+    );
+    if (existing.rows[0] && existing.rows[0].status !== "cancelled") {
+      await client.query("COMMIT");
+      return { ...existing.rows[0], existing: true };
+    }
+
+    const taken = await client.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM course_orders WHERE course = $1 AND status IN ('pending', 'paid')`,
+      [input.course],
+    );
+    const status: CourseOrder["status"] = Number(taken.rows[0].n) < input.cap ? "pending" : "waitlist";
+
+    // A cancelled order for the same person is reopened rather than duplicated
+    // (the unique index allows one row per person per class).
+    const saved = await client.query<{ ref: string; status: CourseOrder["status"] }>(
+      `INSERT INTO course_orders (course, signup_id, name, wechat, industry, biz_focus, note, ref, status)
+       VALUES ($1, $2::bigint, $3, $4, $5, $6::text[], $7, $8, $9)
+       ON CONFLICT (course, lower(regexp_replace(wechat, '\\s+', '', 'g')))
+       DO UPDATE SET status = EXCLUDED.status, name = EXCLUDED.name, industry = EXCLUDED.industry,
+                     biz_focus = EXCLUDED.biz_focus, note = EXCLUDED.note, signup_id = EXCLUDED.signup_id,
+                     created_at = now(), paid_at = NULL
+       RETURNING ref, status`,
+      [input.course, input.signupId, input.name, input.wechat, input.industry, input.bizFocus, input.note, input.ref, status],
+    );
+    await client.query("COMMIT");
+    return { ...saved.rows[0], existing: false };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** One order by its payment reference, for the "how to pay" view. */
+export async function getCourseOrderByRef(ref: string): Promise<{ ref: string; status: CourseOrder["status"]; course: string } | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ ref: string; status: CourseOrder["status"]; course: string }>(
+    `SELECT ref, status, course FROM course_orders WHERE ref = $1`,
+    [ref],
+  );
+  return result.rows[0] ?? null;
+}
+
+/** Every order for a class, newest first, for /admin. */
+export async function listCourseOrders(course: string): Promise<CourseOrder[]> {
+  await ensureSchema();
+  const result = await getPool().query<CourseOrder>(
+    `SELECT id::text AS id, signup_id::text AS signup_id, name, wechat, industry, biz_focus, note, ref, status,
+            to_char(created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
+            to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at
+       FROM course_orders WHERE course = $1 ORDER BY created_at DESC`,
+    [course],
+  );
+  return result.rows;
+}
+
+/** Marks an order paid, cancelled, or back to pending. */
+export async function setCourseOrderStatus(id: string, status: "pending" | "paid" | "cancelled"): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE course_orders SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END WHERE id = $1::bigint`,
+    [id, status],
+  );
 }
 
 /* ── Feedback ──────────────────────────────────────────────────────────── */
