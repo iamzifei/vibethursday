@@ -171,3 +171,8 @@ test("the site URL never ends in a slash", () => {
     else process.env.NEXT_PUBLIC_SITE_URL = previous;
   }
 });
+
+test("the Wharf is out of the nav bar (2026-10-11) but its page still exists", () => {
+  assert.ok(!NAV_LINKS.some((link) => (link.href as string) === "/wharf"));
+  assert.ok(readdirSync(path.join(process.cwd(), "src/app/wharf")).includes("page.tsx"));
+});

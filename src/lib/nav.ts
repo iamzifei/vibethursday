@@ -23,8 +23,10 @@ export const NAV_LINKS = [
   // that being in it makes something look like a main attribute of the meetup.
   // That reasoning is why this one belongs in it.
   { href: "/works", label: "works" },
-  { href: "/wharf", label: "wharf" },
-  // The same members, works and questions as the three links before it, in a
+  // "/wharf" sat here until 2026-10-11. Its replies never took off, so it left
+  // the bar; the page and its questions stay, reachable from the home page
+  // and the archive.
+  // The same members, works and questions as the links before it, in a
   // pixel Sydney you walk through. Next to them because it is made of them.
   { href: "/play", label: "play" },
   { href: "/sessions", label: "sessions" },
