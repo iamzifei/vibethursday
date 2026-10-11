@@ -19,7 +19,7 @@ export const COURSE = {
   title: "老板的 AI 第一课",
   date: "2026-10-25",
   dateLabel: "10 月 25 日（周日）",
-  timeLabel: "上午 9:00 签到，9:30 开始，三个小时左右，中间有茶歇",
+  timeLabel: "上午 9:00 到下午 1:00，中间有茶歇",
   placeLabel: "1/71 Chandos St, St Leonards NSW 2065",
   priceLabel: "599 澳元（不含 GST）",
   /** What to transfer: the price plus 10% GST. */

@@ -202,14 +202,14 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <div className="card stack-3">
                   <h2 className="h3">当天大致安排</h2>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                    <li><strong>9:00</strong>　签到</li>
-                    <li><strong>9:30</strong>　先弄清楚 AI 能干什么、不能干什么</li>
-                    <li><strong>10:00</strong>　装好你的 AI 助理，用你自己的生意问它</li>
+                    <li><strong>9:00</strong>　开始：先弄清楚 AI 能干什么、不能干什么</li>
+                    <li><strong>9:40</strong>　装好你的 AI 助理，用你自己的生意问它</li>
                     <li><strong>10:40</strong>　茶歇</li>
-                    <li><strong>10:55</strong>　写你的需求单</li>
-                    <li><strong>11:45</strong>　交给 AI 之前要注意的事：客人隐私、对客人的承诺</li>
-                    <li><strong>12:00</strong>　一对一咨询怎么约、免费定制交付怎么抽、会员有哪些权益</li>
-                    <li><strong>12:30</strong>　左右结束</li>
+                    <li><strong>11:00</strong>　写你的需求单</li>
+                    <li><strong>12:00</strong>　交给 AI 之前要注意的事：客人隐私、对客人的承诺</li>
+                    <li><strong>12:20</strong>　一对一咨询怎么约、免费定制交付怎么抽、会员有哪些权益</li>
+                    <li><strong>12:40</strong>　答疑、合影</li>
+                    <li><strong>13:00</strong>　结束</li>
                   </ul>
                 </div>
 
