@@ -126,7 +126,8 @@ export default async function LoginPage({ searchParams }: PageProps) {
         </div>
         <div>
           <label className="label" htmlFor="login-wechat">{t.wechat}</label>
-          <input className="field" id="login-wechat" name="wechat" required autoCapitalize="off" autoCorrect="off" maxLength={60} />
+          <input className="field" id="login-wechat" name="wechat" required autoCapitalize="off" autoCorrect="off" maxLength={60} aria-describedby="login-wechat-hint" />
+          <p className="body-sm" id="login-wechat-hint" style={{ margin: "var(--space-1) 0 0", color: "var(--fg3)" }}>{t.wechatHint}</p>
         </div>
       </div>
       <div>
