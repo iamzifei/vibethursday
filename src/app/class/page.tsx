@@ -144,27 +144,101 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <span className="eyebrow">§ 收费小班 · {COURSE.dateLabel}</span>
                   <h1>{COURSE.title}</h1>
                   <p className="body-lg">
-                    给听过 AI、但还不知道它在自己生意里能干什么的老板。不讲概念，带着你自己的生意来。
+                    给听过 AI、但不知道它在自己生意里能干什么的老板。不讲概念，带着你自己的生意来。
                   </p>
                 </div>
 
                 <div className="card stack-3">
+                  <h2 className="h3">周四局的老板们报名时，问得最多的是这几件事</h2>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li>AI 到底怎么和我的生意结合起来？</li>
+                    <li>每天的杂事，能不能交给 AI，让我从小事里脱身？</li>
+                    <li>客人从哪来？生意刚起步，怎么让客人相信我们？</li>
+                    <li>能不能有一个 AI 客服，帮我回客人消息？</li>
+                  </ul>
+                  <p style={{ margin: 0 }}>这门课就是冲着这些问题来的。</p>
+                </div>
+
+                <div className="stack-4">
                   <h2 className="h3">你会得到</h2>
-                  <ol className="stack-2" style={{ margin: 0, paddingLeft: "1.3em" }}>
-                    <li><strong>你的私人 AI 经营助理</strong>：这个月钱为什么少了、客人从哪来、这单该不该接，随时问它，帮你把问题一步步理清楚</li>
-                    <li><strong>一份需求单</strong>：把你最想交给 AI 的事写清楚——哪件事、现在谁在做、每周花多少时间、做成什么样算好，课上一起写</li>
-                    <li><strong>一对一专属咨询 15 分钟</strong>：线上，只看你的生意和你的需求单，别人不在场。需要提前预约，没约的不安排</li>
-                    <li><strong>免费定制交付</strong>：从大家的需求单里抽取一部分，专门为你的生意开发一个 AI 工具，做好交到你手上（抽中名额会考虑需求大小，以实际评估为准）</li>
-                  </ol>
+
+                  <div className="card stack-2">
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>1　一个懂你生意的私人 AI 助理</h3>
+                    <p style={{ margin: 0 }}>
+                      课上装到你的手机上。先告诉它你做什么生意、客人是谁、现在最头疼的事。
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      之后可以问它：这个月生意为什么差了？它不会马上给你一个答案，会先问你：是来的客人少了，每个客人买得少了，还是价格变了？一步步帮你找到原因。也可以问：我的客人主要从哪来？怎么让第一次来的客人信我？
+                    </p>
+                  </div>
+
+                  <div className="card stack-2">
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>2　一张需求单</h3>
+                    <p style={{ margin: 0 }}>
+                      很多老板说「帮我弄个 AI」。这句话谁都没法开工，因为不知道要做什么。
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      课上你挑一件最想交给 AI 的事，回客人消息、整理客户资料、做内容都行。助理会一格一格问你：这件事现在谁在做？每周花多少时间？做成什么样算好？答完，就是一张需求单。以后不管找谁做 AI，都用得上。
+                    </p>
+                  </div>
+
+                  <div className="card stack-2">
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>3　一对一专属咨询，15 分钟</h3>
+                    <p style={{ margin: 0 }}>
+                      课后在线上，只有你和我。带着你的需求单，和用助理时卡住的地方来。你的生意、你的数据，别人听不到。
+                    </p>
+                    <p style={{ margin: 0 }}>需要提前预约，没约的不安排。</p>
+                  </div>
+
+                  <div className="card stack-2">
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　免费定制交付</h3>
+                    <p style={{ margin: 0 }}>
+                      从大家交上来的需求单里抽取一部分，专门为你的生意做一个 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具，做好交到你手上。
+                    </p>
+                    <p className="hint" style={{ margin: 0 }}>抽中的名额会考虑需求本身的大小，以实际评估为准。</p>
+                  </div>
+                </div>
+
+                <div className="card stack-3">
+                  <h2 className="h3">当天大致安排</h2>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
+                    <li><strong>9:00</strong>　签到</li>
+                    <li><strong>9:30</strong>　先弄清楚 AI 能干什么、不能干什么</li>
+                    <li><strong>10:00</strong>　装好你的 AI 助理，用你自己的生意问它</li>
+                    <li><strong>10:40</strong>　茶歇</li>
+                    <li><strong>10:55</strong>　写你的需求单</li>
+                    <li><strong>11:45</strong>　交给 AI 之前要注意的事：客人隐私、对客人的承诺</li>
+                    <li><strong>12:00</strong>　一对一咨询怎么约、免费定制交付怎么抽、会员有哪些权益</li>
+                    <li><strong>12:30</strong>　左右结束</li>
+                  </ul>
+                </div>
+
+                <div className="card stack-3">
+                  <h2 className="h3">要准备什么</h2>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li>手机充好电。课上用手机，不用带电脑</li>
+                    <li>想好你生意里最头疼的一件事</li>
+                    <li>想拿来练的客人聊天截图或单据可以带上，客人的姓名和电话先遮掉</li>
+                  </ul>
                 </div>
 
                 <div className="card stack-3">
                   <h2 className="h3">报名送一年 AI 创始人 IP 会员（单买 365 澳元）</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em" }}>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                     <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体 IP</li>
                     <li>知识星球资料库，一直在更新</li>
                     <li>周四局会员席：每周另外加位子给会员，不占公开名额</li>
                   </ul>
+                </div>
+
+                <div className="card stack-3">
+                  <h2 className="h3">常见问题</h2>
+                  <div className="stack-3">
+                    <p style={{ margin: 0 }}><strong>我完全不懂 AI，能跟上吗？</strong><br />能。每一步都在手机上跟着做，卡住了举手，我们过来帮你。</p>
+                    <p style={{ margin: 0 }}><strong>要带电脑吗？</strong><br />不用，手机就行。</p>
+                    <p style={{ margin: 0 }}><strong>用中文上课吗？</strong><br />是，全程中文。</p>
+                    <p style={{ margin: 0 }}><strong>我生意上的事，会被其他人听到吗？</strong><br />课上的练习在你自己的手机上做。具体的生意问题，留到一对一咨询里说，只有你和我。</p>
+                  </div>
                 </div>
 
                 <p className="body-lg">
