@@ -107,12 +107,12 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 ) : order.status === "waitlist" ? (
                   <p className="body-lg">40 个名额已经满了。有人退出，我们会按顺序微信联系你，先不用转账。</p>
                 ) : order.status === "paid" ? (
-                  <p className="body-lg">已经收到你的转账了，10 月 18 日见。</p>
+                  <p className="body-lg">已经收到你的转账了，{COURSE.dateLabel}见。</p>
                 ) : (
                   <>
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>
-                        金额：<strong>{COURSE.priceLabel}</strong>
+                        转账金额：<strong>{COURSE.payLabel}</strong>
                       </p>
                       <p className="body-lg" style={{ margin: 0 }}>
                         转账备注填：<strong className="mono" style={{ fontSize: "1.4rem" }}>{order.ref}</strong>
