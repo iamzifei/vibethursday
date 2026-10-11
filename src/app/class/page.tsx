@@ -159,9 +159,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </div>
 
                 <div className="card stack-3">
-                  <h2 className="h3">报名送一年 AI+IP 会员（单买 365 澳元）</h2>
+                  <h2 className="h3">报名送一年 AI 创始人 IP 会员（单买 365 澳元）</h2>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em" }}>
-                    <li>全年不少于 6 场线下公开课</li>
+                    <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体 IP</li>
                     <li>知识星球资料库，一直在更新</li>
                     <li>周四局会员席：每周另外加位子给会员，不占公开名额</li>
                   </ul>
