@@ -191,11 +191,16 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　抽中的需求，免费为你做出来</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　彩蛋：好需求，免费为你做出来</h3>
                     <p style={{ margin: 0 }}>
-                      交了需求单就有机会。我们从大家的需求单里抽取一部分，按你的需求单，做一个你生意里能直接用的 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具。做好交到你手上，教会你怎么用，不另外收费。
+                      课后我们会看每一张需求单，挑出几份，免费做成你生意里能直接用的 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具。做好交到你手上，教会你怎么用。
                     </p>
-                    <p className="hint" style={{ margin: 0 }}>抽取会考虑需求本身的大小，以实际评估为准。</p>
+                    <p style={{ margin: 0 }}>我们怎么挑：</p>
+                    <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                      <li>写得清楚：六格都填了，谁在做、花多久、做成什么样算好，一看就懂</li>
+                      <li>很多老板都用得上：不只你一家有这个麻烦</li>
+                      <li>能尽快做出来：太大的需求，我们会在一对一里跟你说怎么拆</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -207,7 +212,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     <li><strong>10:40</strong>　茶歇</li>
                     <li><strong>11:00</strong>　写你的需求单</li>
                     <li><strong>12:00</strong>　交给 AI 之前要注意的事：客人隐私、对客人的承诺</li>
-                    <li><strong>12:20</strong>　一对一咨询怎么约、免费定制交付怎么抽、会员有哪些权益</li>
+                    <li><strong>12:20</strong>　一对一咨询怎么约、彩蛋怎么挑、会员有哪些权益</li>
                     <li><strong>12:40</strong>　答疑、合影</li>
                     <li><strong>13:00</strong>　结束</li>
                   </ul>
