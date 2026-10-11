@@ -21,7 +21,7 @@ export const COURSE = {
   dateLabel: "10 月 18 日（周六）",
   timeLabel: "上午 9:00 签到，9:30 开始，三个小时左右，中间有茶歇",
   placeLabel: "1/71 Chandos St, St Leonards NSW 2065",
-  priceLabel: "365 澳元（含 GST）",
+  priceLabel: "599 澳元（含 GST）",
   cap: 40,
 } as const;
 
