@@ -149,12 +149,12 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </div>
 
                 <div className="card stack-3">
-                  <h2 className="h3">这门课不是听完就散</h2>
+                  <h2 className="h3">你会得到</h2>
                   <ol className="stack-2" style={{ margin: 0, paddingLeft: "1.3em" }}>
-                    <li>上课三小时：装好一个专门帮你理生意的 AI 助理，现场用它把你最想交给 AI 的几件事理出来</li>
-                    <li>回去用两周：拿你自己的客户聊天、单据、录音去练</li>
-                    <li>一对一线上答疑：每人 15 分钟，带着用的时候卡住的地方来；只有你和我，不用担心隐私。需要提前登记，没登记的不安排</li>
-                    <li>还是没做成的：从里面挑一些，直接帮你做出来</li>
+                    <li><strong>你的私人 AI 经营助理</strong>：这个月钱为什么少了、客人从哪来、这单该不该接，随时问它，帮你把问题一步步理清楚</li>
+                    <li><strong>一份需求单</strong>：把你最想交给 AI 的事写清楚——哪件事、现在谁在做、每周花多少时间、做成什么样算好，课上一起写</li>
+                    <li><strong>一对一专属咨询 15 分钟</strong>：线上，只看你的生意和你的需求单，别人不在场。需要提前预约，没约的不安排</li>
+                    <li><strong>免费定制交付</strong>：从大家的需求单里抽取一部分，专门为你的生意开发一个 AI 工具，做好交到你手上（抽中名额会考虑需求大小，以实际评估为准）</li>
                   </ol>
                 </div>
 
