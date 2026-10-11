@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { archiveTotals, buildArchive } from "@/lib/archive";
 import { getCopy, resolveLang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
-import { countCheckins, countSignups, listWallMembers, listWharfQuestions } from "@/lib/db";
+import { countBookings, countCheckins, countSignups, listWallMembers, listWharfQuestions } from "@/lib/db";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -47,7 +47,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  * no business holding a table of names, emails and WeChat IDs to print a
  * number. A test pins this down.
  *
- * ⚠️ And no headcounts are computed. How many people were actually in the room
+ * ⚠️ The only computed headcount is the labelled estimate (`estimateTurnout`),
+ * shown where check-ins fell short. Otherwise no headcounts are computed. How many people were actually in the room
  * is in each session's hand-written note, which says both how many signed up
  * and how many came — numbers this site has measured to be different, once by
  * enough to matter.
@@ -57,14 +58,15 @@ export default async function SessionsPage({ searchParams }: PageProps) {
   const c = getCopy(lang);
   const a = c.archive;
 
-  const [wall, questions, signups, attendance] = await Promise.all([
+  const [wall, questions, signups, attendance, bookings] = await Promise.all([
     listWallMembers(),
     listWharfQuestions(),
     countSignups(),
     countCheckins(),
+    countBookings(),
   ]);
 
-  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance);
+  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings);
   const totals = archiveTotals(
     rows,
     wall.length,

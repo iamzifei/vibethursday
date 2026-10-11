@@ -27,7 +27,8 @@ type Props = {
 export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Props) {
   // On the session's own page the title is the page's h1 (axe page-has-heading-one).
   const Heading = standalone ? "h1" : "h2";
-  const title = row.title ?? a.sessionN.replace("{n}", String(row.index));
+  // A Build Tuesday is not one of the numbered Thursdays (`archive.ts`).
+  const title = row.title ?? (row.index > 0 ? a.sessionN.replace("{n}", String(row.index)) : a.tuesdaySession);
 
   return (
     <li className="archive__row">
@@ -69,13 +70,15 @@ export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Prop
         </picture>
       )}
 
-      {/* The one real headcount on this site, from the day's
-        check-ins. Older sessions have no such record and show
-        nothing here rather than a zero that would read as
-        "nobody came". */}
+      {/* The day's check-ins, or — where those fell short of the
+        room — the labelled estimate next to them. Older sessions
+        have no such record and show nothing here rather than a
+        zero that would read as "nobody came". */}
       {row.attended !== null && (
         <p className="archive__attended mono">
-          {a.attended.replace("{n}", String(row.attended))}
+          {row.estimated !== null
+            ? a.estimated.replace("{n}", String(row.estimated)).replace("{m}", String(row.attended))
+            : a.attended.replace("{n}", String(row.attended))}
         </p>
       )}
 

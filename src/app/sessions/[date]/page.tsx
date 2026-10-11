@@ -12,7 +12,7 @@ import { type Copy, getCopy, type Lang, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventJsonLd, pageAlternates } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
-import { countCheckins, listApprovedSessionPhotos, listCheckins, listWallMembers, listWharfQuestions } from "@/lib/db";
+import { countBookings, countCheckins, listApprovedSessionPhotos, listCheckins, listWallMembers, listWharfQuestions } from "@/lib/db";
 import { canUploadTo } from "@/lib/session-photos";
 import { monogram } from "@/lib/members";
 import { formatSession, nextThursdays, sydneyToday } from "@/lib/sessions";
@@ -68,17 +68,18 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
 
   if (!isSessionDate(date)) notFound();
 
-  const [wall, questions, attendance, checkins, uploaded] = await Promise.all([
+  const [wall, questions, attendance, bookings, checkins, uploaded] = await Promise.all([
     listWallMembers(),
     listWharfQuestions(),
     countCheckins(),
+    countBookings(),
     listCheckins(date),
     // Approved only — the query filters on it, so a pending photo cannot
     // reach this page by any path.
     listApprovedSessionPhotos(date),
   ]);
 
-  const row = buildArchive(c.gallery.sessions, wall, questions, attendance).find(
+  const row = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings).find(
     (candidate) => candidate.date === date,
   );
 
@@ -196,7 +197,7 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
             ) : (
               <>
                 <p className="mono" style={{ color: "var(--fg3)" }}>
-                  {a.attended.replace("{n}", String(attendees.total))}
+                  {a.checkedIn.replace("{n}", String(attendees.total))}
                 </p>
 
                 {attendees.entries.length > 0 && (

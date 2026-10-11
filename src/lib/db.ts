@@ -2634,6 +2634,24 @@ export async function countCheckins(): Promise<Map<string, number>> {
   return new Map(result.rows.map((row) => [row.session, Number(row.n)]));
 }
 
+/**
+ * How many people booked or waitlisted each morning, for the archive's
+ * turnout estimate (`estimateTurnout`). A waitlist place counts: on this site
+ * it means "can come, just without a reserved seat" (2026-09-28).
+ */
+export async function countBookings(): Promise<Map<string, number>> {
+  await ensureSchema();
+
+  const result = await getPool().query<{ session: string; n: string }>(
+    `SELECT to_char(d, 'YYYY-MM-DD') AS session, count(DISTINCT s.id)::text AS n
+       FROM signups s
+      CROSS JOIN LATERAL unnest(s.sessions || s.waitlist) AS d
+      GROUP BY d`,
+  );
+
+  return new Map(result.rows.map((row) => [row.session, Number(row.n)]));
+}
+
 /* ── Feedback ──────────────────────────────────────────────────────────── */
 
 export type FeedbackInput = {

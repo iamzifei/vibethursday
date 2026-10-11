@@ -33,7 +33,36 @@ import type { Lane } from "./questions.ts";
  *
  * A session with check-ins but no entry in the copy bundle yet — today's, on
  * the day — is still a row: title and photos come later, the people came now.
+ *
+ * ★ 2026-10-11: check-in stopped being a headcount. From the ninth Thursday
+ * on, the room outgrew the door — around seventy people came on 1 October and
+ * eighteen checked in — so "18 turned up" was a number that was simply wrong.
+ * Where check-ins fall short, a row now also carries `estimated`: everyone who
+ * booked or waitlisted that morning, times SHOW_UP_RATE. It is always shown
+ * with "about" and says it is an estimate, so it never passes for a count.
+ *
+ * Only Thursdays are numbered. A Build Tuesday has check-ins too, and used to
+ * slip into the sequence as "session 10", pushing every Thursday after it one
+ * number out of step with what everyone calls them.
  */
+
+/**
+ * The share of people booked or waitlisted for a morning who actually come.
+ * From the sessions with a hand-counted headcount next to their signups:
+ * 0.71, 0.86, about 1.0, about 0.91 and 0.74, median about 0.86. Rounded down
+ * a little, since walk-ins are the reason some of those run high.
+ */
+export const SHOW_UP_RATE = 0.85;
+
+/** Whether a YYYY-MM-DD date is a Thursday (the meetup's own day). */
+export function isThursday(date: string): boolean {
+  return new Date(`${date}T00:00:00Z`).getUTCDay() === 4;
+}
+
+/** Whether a YYYY-MM-DD date is a Tuesday (Build Tuesday). */
+export function isTuesday(date: string): boolean {
+  return new Date(`${date}T00:00:00Z`).getUTCDay() === 2;
+}
 
 /** A session as `content.ts` describes it. Photos and prose, no numbers. */
 export type ArchiveSession = {
@@ -45,7 +74,10 @@ export type ArchiveSession = {
 
 export type ArchiveRow = {
   date: string;
-  /** 1-based, by date, across every session including ones not yet written up. */
+  /**
+   * 1-based, by date, across every Thursday including ones not yet written up.
+   * Zero for a morning on another day (a Build Tuesday), which is not numbered.
+   */
   index: number;
   /** Null until the session has been written up in the copy bundle. */
   title: string | null;
@@ -62,6 +94,12 @@ export type ArchiveRow = {
   photos: ArchiveSession["photos"];
   /** How many checked in on the day. Null before check-in existed. */
   attended: number | null;
+  /**
+   * About how many came, from bookings × SHOW_UP_RATE. Null unless check-ins
+   * exist for the morning and fall short of it — then this is the better
+   * number, and the row shows it with "about".
+   */
+  estimated: number | null;
   /** What was on the Wharf for that session, in wall order. */
   questions: { slug: string; name: string; topic: string }[];
   /** People with a published card who signed up for that session. */
@@ -90,6 +128,8 @@ export function buildArchive(
     lane: Lane;
   }[],
   attendance: ReadonlyMap<string, number> = new Map(),
+  /** People booked or waitlisted per morning (`countBookings`). */
+  bookings: ReadonlyMap<string, number> = new Map(),
 ): ArchiveRow[] {
   const written = [...sessions]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -103,15 +143,17 @@ export function buildArchive(
     .filter((date) => !sessions.some((session) => session.date === date))
     .map((date) => ({ date, title: null, note: null, poster: null, photos: [] as ArchiveSession["photos"] }));
 
+  let thursdays = 0;
   const numbered = [...written, ...unwritten]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .map((session, index) => ({ ...session, index: index + 1 }));
+    .map((session) => ({ ...session, index: isThursday(session.date) ? (thursdays += 1) : 0 }));
 
   return numbered
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map((session) => ({
       ...session,
       attended: attendance.get(session.date) ?? null,
+      estimated: estimateTurnout(attendance.get(session.date), bookings.get(session.date)),
       // Only the answerable lane. The archive is a record of what a morning
       // was about, and "I came to meet people" — true and useful as it is on
       // the wall — is not what that row is for.
@@ -122,6 +164,17 @@ export function buildArchive(
         .filter((member) => member.sessions.includes(session.date))
         .map((member) => ({ slug: member.slug, name: member.display_name })),
     }));
+}
+
+/**
+ * About how many came, or null when there is nothing better than the check-in
+ * count to say: no check-ins (an older morning, whose note has the number), no
+ * bookings, or an estimate that does not exceed the people who checked in.
+ */
+export function estimateTurnout(attended: number | undefined, booked: number | undefined): number | null {
+  if (attended === undefined || !booked) return null;
+  const estimate = Math.round(booked * SHOW_UP_RATE);
+  return estimate > attended ? estimate : null;
 }
 
 /**
@@ -139,5 +192,6 @@ export function archiveTotals(
   signups: number,
   questions: number,
 ): { sessions: number; signups: number; cards: number; questions: number } {
-  return { sessions: rows.length, signups, cards, questions };
+  // Thursdays only, so the total matches the last "session N".
+  return { sessions: rows.filter((row) => row.index > 0).length, signups, cards, questions };
 }
