@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { claimMember } from "@/lib/db";
+import { claimMember, recordLogin } from "@/lib/db";
 import { cookieOptions, issueToken, MEMBER_COOKIE } from "@/lib/member-auth";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { text } from "@/lib/members";
@@ -75,6 +75,7 @@ export async function POST(request: Request) {
   }
 
   (await cookies()).set(MEMBER_COOKIE, issueToken(memberId), cookieOptions());
+  await recordLogin("claim", null);
 
   return NextResponse.json({ ok: true });
 }

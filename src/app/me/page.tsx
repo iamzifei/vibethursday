@@ -5,10 +5,11 @@ import { langSuffix } from "@/components/MemberCard";
 import { MemberEditor } from "@/components/MemberEditor";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
-import { getMemberById, getMySignupForMember, listPublishedTags } from "@/lib/db";
+import { ensureMemberForSignup, getMemberById, getMySignupForMember, listPublishedTags } from "@/lib/db";
 import { myToken } from "@/lib/my-signup";
 import { formatSession, sydneyToday } from "@/lib/sessions";
 import { currentMemberId } from "@/lib/member-auth";
+import { currentAccount } from "@/lib/account";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -27,8 +28,20 @@ export default async function MePage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);
   const c = getCopy(lang);
 
-  const memberId = await currentMemberId();
-
+  // Recognised but without a card yet (remembered, or known through WeChat):
+  // make the draft a claim would have made, instead of asking them to prove
+  // again who they are. A draft is not on the wall until they publish it.
+  let memberId = await currentMemberId();
+  if (!memberId) {
+    const account = await currentAccount();
+    if (account) {
+      try {
+        memberId = await ensureMemberForSignup(account.signupId);
+      } catch (error) {
+        console.error("[me] could not open a card for a recognised visitor", error);
+      }
+    }
+  }
   if (!memberId) redirect(`/claim${langSuffix(lang)}`);
 
   const member = await getMemberById(memberId);

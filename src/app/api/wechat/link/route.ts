@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { approveQrLogin, bindOpenid, findMySignup, findSignupIdByOpenid } from "@/lib/db";
+import { approveQrLogin, bindOpenid, findMySignup, findSignupIdByOpenid, recordLogin } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
@@ -103,7 +103,10 @@ export async function POST(request: Request) {
         // Linked just now: this phone is logged in from here on too, not only
         // the computer it is about to confirm.
         const response = back({ step: "pin" });
-        if (proved) response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+        if (proved) {
+          response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+          await recordLogin("wechat_link", signupId);
+        }
         return response;
       }
       const result = await approveQrLogin(qr, signupId, openid, pin);
@@ -113,7 +116,10 @@ export async function POST(request: Request) {
 
     const response = back(qr ? { done: "1" } : { ok: "1" });
     // This phone too, after a whole-name proof, as /my does.
-    if (proved) response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+    if (proved) {
+      response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+      await recordLogin("wechat_link", signupId);
+    }
     return response;
   } catch (error) {
     console.error("[wechat/link] failed", error);

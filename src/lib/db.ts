@@ -612,6 +612,21 @@ export function ensureSchema(): Promise<void> {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS session_photos_session_idx ON session_photos (session, status)`);
+
+    // ── Logins (2026-10-11) ───────────────────────────────────────────
+    // One row each time a browser comes to be recognised as somebody, by how.
+    // Only ever counted, on /admin: until this existed nobody could say how
+    // much WeChat login was used, because QR codes are deleted after a day.
+    // `signup_id` is null where the route only knows a card (a claim).
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS login_events (
+        id         bigserial PRIMARY KEY,
+        method     text NOT NULL,
+        signup_id  bigint,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS login_events_created_idx ON login_events (created_at)`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -2650,6 +2665,76 @@ export async function countBookings(): Promise<Map<string, number>> {
   );
 
   return new Map(result.rows.map((row) => [row.session, Number(row.n)]));
+}
+
+/* ── One account (2026-10-11) ──────────────────────────────────────────── */
+
+/** How a browser came to be recognised (`recordLogin`). */
+export type LoginMethod = "wechat_silent" | "wechat_link" | "wechat_qr" | "wechat_session" | "lookup" | "claim" | "signup";
+
+/**
+ * Counts one login. Never throws: a login must not fail because counting it
+ * did, so every error is logged and swallowed here rather than at each caller.
+ */
+export async function recordLogin(method: LoginMethod, signupId: string | null): Promise<void> {
+  try {
+    await ensureSchema();
+    await getPool().query(`INSERT INTO login_events (method, signup_id) VALUES ($1, $2::bigint)`, [method, signupId]);
+  } catch (error) {
+    console.error("[login] could not count a login", error);
+  }
+}
+
+/** Logins in the last `days` days, by method: how many, and how many people. */
+export async function listLoginStats(days = 30): Promise<{ method: string; logins: number; people: number }[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ method: string; logins: string; people: string }>(
+    `SELECT method, count(*)::text AS logins, count(DISTINCT signup_id)::text AS people
+       FROM login_events
+      WHERE created_at >= now() - make_interval(days => $1::int)
+      GROUP BY method
+      ORDER BY count(*) DESC`,
+    [days],
+  );
+  return result.rows.map((row) => ({ method: row.method, logins: Number(row.logins), people: Number(row.people) }));
+}
+
+/** The signup behind a card, or null if the card is gone. */
+export async function findSignupIdForMember(memberId: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `SELECT signup_id::text AS id FROM members WHERE id = $1::bigint`,
+    [memberId],
+  );
+  return result.rows[0]?.id ?? null;
+}
+
+/** The card for a signup, or null if they have not got one. */
+export async function findMemberIdForSignup(signupId: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `SELECT id::text AS id FROM members WHERE signup_id = $1::bigint`,
+    [signupId],
+  );
+  return result.rows[0]?.id ?? null;
+}
+
+/**
+ * The card for a signup, creating a draft from the signup if there is none —
+ * what a claim does, for someone the site already recognises. A draft has no
+ * `published_at`, so it is not on the wall until they choose. Null if the
+ * signup itself is gone.
+ */
+export async function ensureMemberForSignup(signupId: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `INSERT INTO members (signup_id, slug, display_name, bio, looking_for)
+     SELECT id, $2, name, building, topic FROM signups WHERE id = $1::bigint
+     ON CONFLICT (signup_id) DO UPDATE SET updated_at = now()
+     RETURNING id::text AS id`,
+    [signupId, fallbackSlug(signupId)],
+  );
+  return result.rows[0]?.id ?? null;
 }
 
 /* ── Feedback ──────────────────────────────────────────────────────────── */

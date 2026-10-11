@@ -16,6 +16,7 @@ import {
   listAllMembers,
   listCheckins,
   listFeedback,
+  listLoginStats,
   listOrders,
   listPhotosForReview,
   getSessionQuestions,
@@ -47,6 +48,17 @@ export const metadata: Metadata = {
 type PageProps = {
   /** `fb` picks which session's feedback is read out below the summary. */
   searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string; msg?: string }>;
+};
+
+/** What each `login_events.method` means, for the logins table. */
+const LOGIN_METHOD_LABEL: Record<string, string> = {
+  wechat_silent: "微信内自动认出（新设备）",
+  wechat_session: "微信登录按钮",
+  wechat_link: "手机微信确认 / 首次绑定",
+  wechat_qr: "电脑扫码",
+  lookup: "我的报名 · 微信号 + 名字",
+  signup: "报名时记住",
+  claim: "认领名片",
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
@@ -85,7 +97,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -102,6 +114,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listOrders(orderSession),
       getSessionQuestions(desk),
       listPhotosForReview(),
+      // Counting only; a failure here must not take the admin page down.
+      listLoginStats().catch(() => []),
     ]);
 
   // Whatever host this page was actually opened on, so a code scanned off a
@@ -1069,6 +1083,41 @@ export default async function AdminPage({ searchParams }: PageProps) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* How people get recognised (2026-10-11): which login is actually
+          used. Counted from the day this table existed, not before. */}
+      <section className="stack-4" id="logins">
+        <div className="group-head">
+          <h2 className="h3">登录方式 · 近 30 天</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            2026-10-11 起才开始记
+          </span>
+        </div>
+        {logins.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有记录。</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">方式</th>
+                  <th scope="col">次数</th>
+                  <th scope="col">人数</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logins.map((row) => (
+                  <tr key={row.method}>
+                    <td>{LOGIN_METHOD_LABEL[row.method] ?? row.method}</td>
+                    <td className="mono">{row.logins}</td>
+                    <td className="mono">{row.method === "claim" ? "—" : row.people}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Who tapped "small class" on the signup confirmation (2026-10-05):

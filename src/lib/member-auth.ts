@@ -63,10 +63,22 @@ export function readToken(token: string | undefined): string | null {
   return memberId;
 }
 
-/** The signed-in member id for the current request, or null. */
+/**
+ * The signed-in member id for the current request, or null.
+ *
+ * The card cookie when there is one. Otherwise, since 2026-10-11, the card of
+ * whoever the site already recognises another way — remembered on this phone,
+ * or through WeChat (`account.ts`) — so nobody the site knows is asked to
+ * claim a card they already have. Imported lazily: `account.ts` imports this
+ * file for `readToken`.
+ */
 export async function currentMemberId(): Promise<string | null> {
   const store = await cookies();
-  return readToken(store.get(MEMBER_COOKIE)?.value);
+  const fromCookie = readToken(store.get(MEMBER_COOKIE)?.value);
+  if (fromCookie) return fromCookie;
+
+  const { currentAccount } = await import("./account.ts");
+  return (await currentAccount())?.memberId ?? null;
 }
 
 export function cookieOptions() {

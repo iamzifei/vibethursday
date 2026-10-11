@@ -6,6 +6,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
 import { currentMemberId } from "@/lib/member-auth";
+import { currentAccount } from "@/lib/account";
 
 type PageProps = {
   /** `in=1`: sent here by /badge right after checking in, with no card yet. */
@@ -27,8 +28,9 @@ export default async function ClaimPage({ searchParams }: PageProps) {
   const lang = resolveLang(params.lang);
   const c = getCopy(lang);
 
-  // Already claimed on this device: there is nothing to do here.
-  if (await currentMemberId()) redirect(`/me${langSuffix(lang)}`);
+  // Recognised any way at all (card, this phone, WeChat): /me opens or makes
+  // their card, so there is nothing to claim.
+  if ((await currentMemberId()) || (await currentAccount())) redirect(`/me${langSuffix(lang)}`);
 
   return (
     <div lang={c.htmlLang}>

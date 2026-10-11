@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { findSignupIdByOpenid } from "@/lib/db";
+import { findSignupIdByOpenid, recordLogin } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { requestOrigin } from "@/lib/request-origin";
 import {
@@ -69,7 +69,10 @@ export async function GET(request: Request) {
     if (readRememberToken(store.get(REMEMBER_COOKIE)?.value)) return back;
 
     const found = await findSignupIdByOpenid(openid);
-    if (found) back.cookies.set(REMEMBER_COOKIE, rememberToken(found), rememberCookieOptions(secure));
+    if (found) {
+      back.cookies.set(REMEMBER_COOKIE, rememberToken(found), rememberCookieOptions(secure));
+      await recordLogin("wechat_silent", found);
+    }
   } catch (error) {
     // The openid cookie above still stands, so the next signup or /my lookup
     // can tie it; only this visit goes unrecognised.

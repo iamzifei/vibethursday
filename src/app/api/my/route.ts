@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
 import { isBuilderPurpose } from "@/lib/capacity";
 import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
@@ -86,6 +86,7 @@ export async function POST(request: Request) {
       // link above; it just is not worth a 60-day pass.
       if (found.exactName) {
         response.cookies.set(REMEMBER_COOKIE, rememberToken(found.id), rememberCookieOptions(origin.startsWith("https://")));
+        await recordLogin("lookup", found.id);
         // Same gate ties a pending WeChat login to this signup (wechat-auth.ts).
         try {
           const openid = readOpenidToken((await cookies()).get(WX_OPENID_COOKIE)?.value);

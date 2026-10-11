@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, getMySignup, getSignupProfile, publishCardForSignup, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
+import { bindOpenid, cancelSession, getMySignup, getSignupProfile, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
 import { parseInterest } from "@/lib/signup-interest";
 import { bookableSessions, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, builderToWaitlist, capFor, isBuilderPurpose } from "@/lib/capacity";
@@ -388,6 +388,7 @@ export async function POST(request: Request) {
   if (profileUpdated && exactName) {
     try {
       response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions((await requestOrigin()).startsWith("https://")));
+      await recordLogin("signup", signupId);
     } catch (error) {
       console.error("[signup] could not set the remember cookie", error);
     }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import QRCode from "qrcode";
-import { createQrLogin, qrLoginStatus, takeQrLogin } from "@/lib/db";
+import { createQrLogin, qrLoginStatus, recordLogin, takeQrLogin } from "@/lib/db";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
@@ -85,6 +85,7 @@ export async function GET(request: Request) {
     // that stays in the WeChat browser that actually logged in, or a computer
     // could approve new codes and move the WeChat tie on its own (review).
     response.cookies.set(REMEMBER_COOKIE, rememberToken(login.signupId), rememberCookieOptions(secure));
+    await recordLogin("wechat_qr", login.signupId);
     response.cookies.set(WX_QR_COOKIE, "", wechatCookieOptions(secure, 0));
     return response;
   } catch (error) {

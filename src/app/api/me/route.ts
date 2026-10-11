@@ -3,6 +3,8 @@ import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { getMemberById, saveMember, SlugTakenError } from "@/lib/db";
 import { currentMemberId, MEMBER_COOKIE } from "@/lib/member-auth";
+import { REMEMBER_COOKIE } from "@/lib/my-signup";
+import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { fallbackSlug, parseProfile } from "@/lib/members";
 
 /**
@@ -69,11 +71,28 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, slug: saved?.slug ?? slug, published: saved?.published ?? false });
 }
 
-/** Signs out. Nothing to revoke server-side — the cookie was the whole session. */
+/**
+ * Signs out. Nothing to revoke server-side — the cookies are the whole session.
+ *
+ * Every proof the site recognises someone by (`account.ts`), not only the
+ * card's: clearing one left the others, and the next page load recognised
+ * them again. The WeChat "already tried" marker is set so WeChat's silent
+ * login does not undo this on the very next page.
+ */
 export async function DELETE(request: Request) {
   const limited = tooMany(request, "me", 60);
   if (limited) return limited;
 
-  (await cookies()).delete(MEMBER_COOKIE);
+  const store = await cookies();
+  store.delete(MEMBER_COOKIE);
+  store.delete(REMEMBER_COOKIE);
+  store.delete(WX_OPENID_COOKIE);
+  store.set(WX_TRIED_COOKIE, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: WX_TRIED_MAX_AGE_S,
+  });
   return NextResponse.json({ ok: true });
 }

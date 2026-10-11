@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { findSignupIdByOpenid } from "@/lib/db";
+import { findSignupIdByOpenid, recordLogin } from "@/lib/db";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { requestOrigin } from "@/lib/request-origin";
 import { readOpenidToken, wechatConfigured } from "@/lib/wechat-auth";
@@ -32,7 +32,10 @@ export async function GET(request: Request) {
   try {
     const openid = readOpenidToken((await cookies()).get(WX_OPENID_COOKIE)?.value);
     const signupId = openid ? await findSignupIdByOpenid(openid) : null;
-    if (signupId) response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(origin.startsWith("https://")));
+    if (signupId) {
+      response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(origin.startsWith("https://")));
+      await recordLogin("wechat_session", signupId);
+    }
   } catch (error) {
     console.error("[wechat/session] could not log in", error);
   }
