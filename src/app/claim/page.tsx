@@ -10,7 +10,7 @@ import { currentAccount } from "@/lib/account";
 
 type PageProps = {
   /** `in=1`: sent here by /badge right after checking in, with no card yet. */
-  searchParams: Promise<{ lang?: string; in?: string }>;
+  searchParams: Promise<{ lang?: string; in?: string; from?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,9 @@ export default async function ClaimPage({ searchParams }: PageProps) {
 
   // Recognised any way at all (card, this phone, WeChat): /me opens or makes
   // their card, so there is nothing to claim.
-  if ((await currentMemberId()) || (await currentAccount())) redirect(`/me${langSuffix(lang)}`);
+  // Not when /me just sent them here because it could not open a card: then
+  // the form is the way forward, and redirecting back would loop.
+  if (params.from !== "me" && ((await currentMemberId()) || (await currentAccount()))) redirect(`/me${langSuffix(lang)}`);
 
   return (
     <div lang={c.htmlLang}>

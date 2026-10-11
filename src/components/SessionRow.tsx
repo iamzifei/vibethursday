@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { langSuffix } from "@/components/MemberCard";
-import type { ArchiveRow } from "@/lib/archive";
+import { isTuesday, type ArchiveRow } from "@/lib/archive";
 import type { Copy, Lang } from "@/lib/content";
 import { formatSession } from "@/lib/sessions";
 
@@ -28,7 +28,13 @@ export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Prop
   // On the session's own page the title is the page's h1 (axe page-has-heading-one).
   const Heading = standalone ? "h1" : "h2";
   // A Build Tuesday is not one of the numbered Thursdays (`archive.ts`).
-  const title = row.title ?? (row.index > 0 ? a.sessionN.replace("{n}", String(row.index)) : a.tuesdaySession);
+  const title =
+    row.title ??
+    (row.index > 0
+      ? a.sessionN.replace("{n}", String(row.index))
+      : isTuesday(row.date)
+        ? a.tuesdaySession
+        : a.extraSession);
 
   return (
     <li className="archive__row">

@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { archiveTotals, buildArchive, estimateTurnout, isThursday, SHOW_UP_RATE } from "../src/lib/archive.ts";
+import { archiveTotals, buildArchive, estimateTurnout, isThursday, isTuesday, SHOW_UP_RATE } from "../src/lib/archive.ts";
 import { copy } from "../src/lib/content.ts";
 
 const thursday = (date: string) => ({ date, title: `T ${date}`, note: "", photos: [] });
@@ -48,4 +48,10 @@ test("every written-up session in the copy is a Thursday", () => {
 test("the estimate is labelled as one in both languages", () => {
   assert.match(copy.zh.archive.estimated, /约.*估算/);
   assert.match(copy.en.archive.estimated, /About.*estimated/);
+});
+
+test("weekday helpers read the date as a calendar day, not a moment", () => {
+  assert.ok(isThursday("2026-10-08"));
+  assert.ok(isTuesday("2026-10-06"));
+  assert.ok(!isTuesday("2026-10-08"));
 });

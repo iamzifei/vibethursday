@@ -74,10 +74,11 @@ export async function POST(request: Request) {
 /**
  * Signs out. Nothing to revoke server-side — the cookies are the whole session.
  *
- * Every proof the site recognises someone by (`account.ts`), not only the
+ * Every cookie the site recognises someone by (`account.ts`), not only the
  * card's: clearing one left the others, and the next page load recognised
- * them again. The WeChat "already tried" marker is set so WeChat's silent
- * login does not undo this on the very next page.
+ * them again. The WeChat "already tried" marker stops WeChat's silent login
+ * undoing this for half a day. ⚠️ The WeChat tie itself stays on the signup,
+ * so after that, opening the site in the same WeChat recognises them again.
  */
 export async function DELETE(request: Request) {
   const limited = tooMany(request, "me", 60);

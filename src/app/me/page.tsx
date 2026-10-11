@@ -42,14 +42,18 @@ export default async function MePage({ searchParams }: PageProps) {
       }
     }
   }
-  if (!memberId) redirect(`/claim${langSuffix(lang)}`);
+  // `from=me` stops /claim sending them straight back here: without it, a
+  // remembered signup that has since been merged away (or a failed insert)
+  // would bounce between the two pages forever (2026-10-11 review).
+  const toClaim = `/claim?from=me${langSuffix(lang, true)}`;
+  if (!memberId) redirect(toClaim);
 
   const member = await getMemberById(memberId);
 
   // The cookie outlives the row if the organiser deleted a signup. Sending them
   // back to /claim is the only useful thing to do, and claiming again rebuilds
   // the card from the signup if one still exists.
-  if (!member) redirect(`/claim${langSuffix(lang)}`);
+  if (!member) redirect(toClaim);
 
   const suggestedTags = await listPublishedTags();
 

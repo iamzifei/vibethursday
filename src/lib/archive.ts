@@ -35,8 +35,8 @@ import type { Lane } from "./questions.ts";
  * the day — is still a row: title and photos come later, the people came now.
  *
  * ★ 2026-10-11: check-in stopped being a headcount. From the ninth Thursday
- * on, the room outgrew the door — around seventy people came on 1 October and
- * eighteen checked in — so "18 turned up" was a number that was simply wrong.
+ * on, check-in fell far short of the room, so the check-in count understated
+ * turnout badly.
  * Where check-ins fall short, a row now also carries `estimated`: everyone who
  * booked or waitlisted that morning, times SHOW_UP_RATE. It is always shown
  * with "about" and says it is an estimate, so it never passes for a count.
@@ -47,10 +47,8 @@ import type { Lane } from "./questions.ts";
  */
 
 /**
- * The share of people booked or waitlisted for a morning who actually come.
- * From the sessions with a hand-counted headcount next to their signups:
- * 0.71, 0.86, about 1.0, about 0.91 and 0.74, median about 0.86. Rounded down
- * a little, since walk-ins are the reason some of those run high.
+ * The share of people booked or waitlisted for a morning who actually come,
+ * from the mornings that were counted by hand before check-in existed.
  */
 export const SHOW_UP_RATE = 0.85;
 

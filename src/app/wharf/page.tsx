@@ -58,10 +58,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
  * published member card. `listWharfQuestions` filters on `published_at IS NOT
  * NULL AND NOT hidden`, and a question cannot exist without a member row.
  *
- * **Anti-spam, and why there is none:** writing anything here needs the member
- * cookie, which is only issued at /claim, which only matches somebody who has
- * already signed up for a session. A stranger cannot reach the write path at
- * all. See `api/wharf/route.ts`.
+ * **Anti-spam, and why there is none:** writing anything here needs a member
+ * card and proof of whose it is (`currentMemberId`: the card cookie from
+ * /claim, or since 2026-10-11 being remembered or known through WeChat — each
+ * resting on the same name-plus-contact proof of an existing signup). A
+ * stranger cannot reach the write path at all. See `api/wharf/route.ts`.
  */
 export default async function WharfPage({ searchParams }: PageProps) {
   const lang = resolveLang((await searchParams).lang);

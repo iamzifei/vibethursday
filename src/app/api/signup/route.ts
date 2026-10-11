@@ -388,7 +388,9 @@ export async function POST(request: Request) {
   if (profileUpdated && exactName) {
     try {
       response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions((await requestOrigin()).startsWith("https://")));
-      await recordLogin("signup", signupId);
+      // Counted only when this browser did not already remember them, so a
+      // regular booking next week is not a "login".
+      if (readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value) !== signupId) await recordLogin("signup", signupId);
     } catch (error) {
       console.error("[signup] could not set the remember cookie", error);
     }
