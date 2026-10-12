@@ -30,6 +30,8 @@ export const NAV_LINKS = [
   // pixel Sydney you walk through. Next to them because it is made of them.
   { href: "/play", label: "play" },
   { href: "/sessions", label: "sessions" },
+  // The paid class, in the bar since 2026-10-12.
+  { href: "/class", label: "class" },
   // "流程" used to sit here and no longer does. It is an anchor a third of the
   // way down the home page, and anyone reading the home page reaches it by
   // scrolling; the bar's remaining slots are worth more to the four pages that

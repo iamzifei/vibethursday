@@ -8,7 +8,7 @@ import { BIZ_FOCUS, INDUSTRIES } from "./signup-profile.ts";
  *
  * Kept apart from the Thursday signup on purpose. Thursdays are free and stay
  * that way; this is a separate thing people pay for, with its own list, its
- * own cap and its own page that the nav does not point at.
+ * own cap and its own page (in the nav since 2026-10-12).
  *
  * The bank details are not in this file or anywhere in this repository: they
  * come from the COURSE_PAYMENT_INFO environment variable, and are shown only

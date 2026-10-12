@@ -392,7 +392,7 @@ textarea:focus-visible,
    Site nav
    =============================================================================
    Sticky, so the way back out of a page is always one tap away. Two renderings
-   of the same links live in the markup: an inline row above 860px, a panel
+   of the same links live in the markup: an inline row above 920px, a panel
    behind a button below it. The breakpoint is set by the English labels, which
    are the widest, plus the CTA and the language pill.
 ============================================================================= */
@@ -714,7 +714,7 @@ textarea:focus-visible,
 /* The compact CTA only exists where the wide row does not. */
 .nav .nav__cta--compact { display: none; }
 
-@media (max-width: 860px) {
+@media (max-width: 920px) {
   .nav__wide { display: none; }
   .nav__toggle { display: inline-flex; }
 
@@ -730,7 +730,7 @@ textarea:focus-visible,
 /* Above the breakpoint the panel is not just unused, it must be unreachable:
    a menu opened on a phone that is then rotated into the wide layout would
    otherwise stay hanging under the bar with no button left to close it. */
-@media (min-width: 861px) {
+@media (min-width: 921px) {
   .nav__panel { display: none; }
 }
 
