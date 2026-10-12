@@ -66,3 +66,46 @@ test("no bank details anywhere in the source", () => {
     assert.doesNotMatch(text, /\bBSB\b\s*[:：]?\s*\d{3}-?\d{3}/i, file);
   }
 });
+
+/*
+ * Signing up again with the same WeChat ID returns the first order (one
+ * transfer, never two) — but what they tell us the second time must not be
+ * thrown away: people come back precisely to add what they want from the
+ * class. Blank answers the second time keep what was there.
+ *
+ * Needs a throwaway local Postgres, like the schema test:
+ *   COURSE_TEST_DATABASE_URL=postgres://localhost:55432/vt_course_test pnpm test
+ */
+const courseDb = process.env.COURSE_TEST_DATABASE_URL;
+
+test(
+  "★ signing up again keeps the order but saves the new needs",
+  { skip: courseDb ? false : "set COURSE_TEST_DATABASE_URL to a throwaway local Postgres to run this" },
+  async () => {
+    assert.ok(["localhost", "127.0.0.1", "::1", "[::1]"].includes(new URL(courseDb!).hostname), "only a database on this machine");
+    process.env.DATABASE_URL = courseDb;
+    const { createCourseOrder, listCourseOrders, getPool } = await import("../src/lib/db.ts");
+    const course = `test-${Date.now()}`;
+    const base = { course, cap: 40, signupId: null, name: "王老板", wechat: "wang123" };
+    try {
+      const first = await createCourseOrder({ ...base, industry: null, bizFocus: [], note: null, ref: newCourseRef() });
+      const again = await createCourseOrder({
+        ...base, wechat: " Wang123 ", industry: "property", bizFocus: ["leads"], note: "回客人微信太花时间", ref: newCourseRef(),
+      });
+      assert.equal(again.ref, first.ref, "same order, same reference");
+      assert.equal(again.existing, true);
+
+      // A third time with nothing filled in keeps the answers from the second.
+      await createCourseOrder({ ...base, industry: null, bizFocus: [], note: null, ref: newCourseRef() });
+
+      const orders = await listCourseOrders(course);
+      assert.equal(orders.length, 1);
+      assert.equal(orders[0].industry, "property");
+      assert.deepEqual(orders[0].biz_focus, ["leads"]);
+      assert.equal(orders[0].note, "回客人微信太花时间");
+      assert.equal(orders[0].status, "pending");
+    } finally {
+      await getPool().end();
+    }
+  },
+);

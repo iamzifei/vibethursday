@@ -2809,14 +2809,26 @@ export async function createCourseOrder(input: {
     await client.query("BEGIN");
     await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`course:${input.course}`]);
 
-    const existing = await client.query<{ ref: string; status: CourseOrder["status"] }>(
-      `SELECT ref, status FROM course_orders
+    const existing = await client.query<{ id: string; ref: string; status: CourseOrder["status"] }>(
+      `SELECT id::text AS id, ref, status FROM course_orders
         WHERE course = $1 AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($2, '\\s+', '', 'g'))`,
       [input.course, input.wechat],
     );
     if (existing.rows[0] && existing.rows[0].status !== "cancelled") {
+      // Same person again: keep their order and reference, but save what they
+      // filled in this time — coming back to add their needs is the usual
+      // reason. A blank answer keeps the earlier one instead of wiping it.
+      await client.query(
+        `UPDATE course_orders
+            SET industry  = coalesce($2, industry),
+                biz_focus = CASE WHEN cardinality($3::text[]) > 0 THEN $3::text[] ELSE biz_focus END,
+                note      = coalesce($4, note)
+          WHERE id = $1::bigint`,
+        [existing.rows[0].id, input.industry, input.bizFocus, input.note],
+      );
       await client.query("COMMIT");
-      return { ...existing.rows[0], existing: true };
+      const { ref, status } = existing.rows[0];
+      return { ref, status, existing: true };
     }
 
     const taken = await client.query<{ n: string }>(
