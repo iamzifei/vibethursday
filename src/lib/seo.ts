@@ -200,7 +200,9 @@ export function organizationJsonLd(c: Copy) {
     name: "Vibe Thursday",
     alternateName: c.hero.subtitle,
     url: base,
-    logo: `${base}/icon.png`,
+    // The whole logo, 1024px: search engines want at least 112px, and the
+    // 48px tab icon is only the head.
+    logo: `${base}/avatar.png`,
     sameAs: [
       "https://github.com/iamzifei/vibethursday",
       "https://events.humanitix.com/vibe-thursday-sydney-ai-meetup-chatswood-every-thursday",

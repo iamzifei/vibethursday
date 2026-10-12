@@ -1,80 +1,50 @@
 /**
- * Renders the Harbour Bridge mark to the PNGs the site and the avatars need.
+ * Cuts the logo artwork into the PNGs the site and the avatars need.
  *
- * Run manually, output committed — the same arrangement as the other two art
- * scripts, so nothing image-related runs during a build:
+ * Run manually, output committed — the same arrangement as the other art
+ * scripts, so nothing image-related runs during a build. Needs ImageMagick
+ * (`brew install imagemagick`):
  *
  *   node --experimental-strip-types scripts/build-icons.mts
  *
- * Geometry is imported from src/lib/mark.ts rather than repeated here. That is
- * the whole reason this file exists instead of a hand-drawn SVG: the component
- * on the page and the icon in the browser tab cannot be allowed to drift.
+ * The sources are the two logo files in public/brand/ (2026-10-12): the full
+ * logo with the wordmark, and the same drawing with the lettering removed.
+ * Small sizes use only the head — at 16–32px the whole figure is a smudge,
+ * while the sunglasses and the fried chicken still read.
  */
 
-import { writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { chromium } from "playwright";
-
-import {
-  ARCH_PATH,
-  BACKDROP,
-  DECK,
-  HANGERS,
-  MARK_COLOR,
-  MARK_SIZE,
-  PYLONS,
-} from "../src/lib/mark.ts";
-
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const rect = (r: { x: number; y: number; width: number; height: number }) =>
-  `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}"/>`;
+const FULL = "public/brand/vibethursday-logo.png";
+const NO_TEXT = "public/brand/vibethursday-logo-notext.png";
 
-function markSvg(size: number): string {
-  return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"`,
-    ` viewBox="0 0 ${MARK_SIZE} ${MARK_SIZE}">`,
-    `<rect width="${MARK_SIZE}" height="${MARK_SIZE}" rx="${BACKDROP.radius}" fill="${BACKDROP.fill}"/>`,
-    `<g fill="${MARK_COLOR}">`,
-    HANGERS.map(rect).join(""),
-    `<path d="${ARCH_PATH}"/>`,
-    rect(DECK),
-    PYLONS.map(rect).join(""),
-    `</g></svg>`,
-  ].join("");
-}
+/** The head and the chicken, in pixels of the 1254×1254 no-text source. */
+const HEAD_CROP = "540x540+320+140";
 
-/** Files to write: the browser tab icon, the iOS home-screen icon, an avatar. */
 const TARGETS = [
   // A tab icon is drawn at 16–32px and an iOS home-screen icon at 180px; the
   // old 512px files were re-downloaded on every page (2026-09-28 review).
-  { file: "src/app/icon.png", size: 48 },
-  { file: "src/app/apple-icon.png", size: 180 },
-  // Ko-fi, WeChat and anywhere else the community needs a square portrait.
-  { file: "public/avatar.png", size: 1024 },
+  { file: "src/app/icon.png", source: NO_TEXT, crop: HEAD_CROP, size: 48 },
+  { file: "src/app/apple-icon.png", source: NO_TEXT, crop: HEAD_CROP, size: 180 },
+  // The nav bar shows it at 28px; 84px covers a 3× screen.
+  { file: "public/brand/mark.png", source: NO_TEXT, crop: HEAD_CROP, size: 84 },
+  // Ko-fi, WeChat, search results and anywhere else that needs a square
+  // portrait: the whole logo, wordmark included.
+  { file: "public/avatar.png", source: FULL, crop: null, size: 1024 },
 ];
 
-const browser = await chromium.launch();
-
 for (const target of TARGETS) {
-  const page = await browser.newPage({
-    viewport: { width: target.size, height: target.size },
-    // Transparent page background: the mark supplies its own backdrop, so a
-    // white page would only show up as fringing on the rounded corners.
-    deviceScaleFactor: 1,
-  });
-
-  await page.setContent(
-    `<style>html,body{margin:0;padding:0;background:transparent}</style>${markSvg(target.size)}`,
-  );
-
-  const png = await page.screenshot({ omitBackground: true });
-  await writeFile(path.join(root, target.file), png);
-  await page.close();
-
+  execFileSync("magick", [
+    path.join(root, target.source),
+    ...(target.crop ? ["-crop", target.crop, "+repage"] : []),
+    "-resize",
+    `${target.size}x${target.size}`,
+    "-strip",
+    path.join(root, target.file),
+  ]);
   console.log(`${target.file}  ${target.size}×${target.size}`);
 }
-
-await browser.close();

@@ -470,7 +470,7 @@ textarea:focus-visible,
 }
 
 .nav__brand:hover { color: var(--fg1); }
-.nav__mark { color: var(--accent); display: flex; }
+.nav__mark { display: block; border-radius: 50%; }
 
 .nav__wide {
   display: flex;

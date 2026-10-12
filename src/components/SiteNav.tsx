@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { VibeThursdayMark } from "@/components/VibeThursdayMark";
 
 export type NavItem = { href: string; label: string };
 
@@ -91,12 +90,11 @@ export function SiteNav({
 
       <div className="shell nav__bar">
         <Link className="nav__brand mono" href={brandHref} onClick={() => setOpen(false)}>
-          {/* Accent-coloured while the wordmark stays foreground: the bridge is
-              the logo, the name is the label, and colouring both flattens them
-              into one shape. Decorative — the link text already says the name. */}
-          <span className="nav__mark">
-            <VibeThursdayMark size={26} />
-          </span>
+          {/* The logo's head (2026-10-12, cut by scripts/build-icons.mts).
+              Decorative — the link text already says the name. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- an 11 KB
+              file already cut to size; the optimiser would only add a hop. */}
+          <img className="nav__mark" src="/brand/mark.png" width={28} height={28} alt="" />
           {brand}
         </Link>
 
