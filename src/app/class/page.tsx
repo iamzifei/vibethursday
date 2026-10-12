@@ -191,14 +191,14 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　彩蛋：好需求，免费为你做出来</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　彩蛋：你的刚需，我们免费做出来</h3>
                     <p style={{ margin: 0 }}>
                       课后我们会看每一张需求单，挑出几份，免费做成你生意里能直接用的 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具。做好交到你手上，教会你怎么用。
                     </p>
                     <p style={{ margin: 0 }}>我们怎么挑：</p>
                     <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                       <li>写得清楚：六格都填了，谁在做、花多久、做成什么样算好，一看就懂</li>
-                      <li>很多老板都用得上：不只你一家有这个麻烦</li>
+                      <li>是刚需：每天都在花时间，很多老板都有这个麻烦</li>
                       <li>能尽快做出来：太大的需求，我们会在一对一里跟你说怎么拆</li>
                     </ul>
                   </div>
@@ -228,11 +228,14 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </div>
 
                 <div className="card stack-3">
-                  <h2 className="h3">报名送一年 AI 创始人 IP 会员（单买 365 澳元）</h2>
+                  <h2 className="h3">报名送一年 AI 创始人 IP 会员（价值 365 澳元）</h2>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                     <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体 IP</li>
-                    <li>知识星球资料库，一直在更新</li>
+                    <li>会员专属线下活动和聚会</li>
                     <li>周四局会员席：每周另外加位子给会员，不占公开名额</li>
+                    <li>一年会员群：AI 资讯和答疑</li>
+                    <li>知识星球资料库，一直在更新</li>
+                    <li>会员专属 AI 智能体，一年使用权</li>
                   </ul>
                 </div>
 
