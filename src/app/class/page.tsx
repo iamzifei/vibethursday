@@ -232,7 +232,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                     <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体 IP</li>
                     <li>会员专属线下活动和聚会</li>
-                    <li>周四局会员席：每周另外加位子给会员，不占公开名额</li>
+                    <li>周四局会员专属留位</li>
                     <li>一年会员群：AI 资讯和答疑</li>
                     <li>知识星球资料库，一直在更新</li>
                     <li>会员专属 AI 智能体，一年使用权</li>
