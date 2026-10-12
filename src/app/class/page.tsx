@@ -203,7 +203,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                     <li><strong>从你的生意出发</strong>：带着你自己的事来，走的时候手上是一张能开工的需求单，不是一堆功能演示</li>
                     <li><strong>不是听完就散</strong>：课后有一对一专属咨询，大家的刚需我们挑出来免费做出来</li>
-                    <li><strong>讲课的人自己用 AI 拿到了结果</strong>：零员工，一个人运营数十款面向海外市场的软件产品，开发、上线、获客到客服，大部分交给 AI 去跑。课上讲的，都是自己每天在用的</li>
+                    <li><strong>讲课的人自己用 AI 拿到了结果</strong>：零员工，一个人运营数十款面向海外市场的软件产品，开发、上线、获客到客服，大部分交给 AI 去跑。每周还和悉尼各行各业的老板聊 AI 怎么落地。是自己做生意的人来讲，不是只会讲工具的导师</li>
                   </ul>
                 </div>
 
