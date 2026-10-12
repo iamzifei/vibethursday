@@ -653,6 +653,9 @@ export function ensureSchema(): Promise<void> {
       CREATE UNIQUE INDEX IF NOT EXISTS course_orders_person_idx
       ON course_orders (course, lower(regexp_replace(wechat, '\\s+', '', 'g')))
     `);
+    // When the person tapped "I've transferred" (2026-10-12). Only their word
+    // for it: "paid" is still set by hand on /admin once the money shows up.
+    await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS claimed_at timestamptz`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -2777,6 +2780,8 @@ export type CourseOrder = {
   status: "pending" | "paid" | "cancelled" | "waitlist";
   created_at: string;
   paid_at: string | null;
+  /** When they said they had transferred. */
+  claimed_at: string | null;
 };
 
 /**
@@ -2843,13 +2848,28 @@ export async function createCourseOrder(input: {
 }
 
 /** One order by its payment reference, for the "how to pay" view. */
-export async function getCourseOrderByRef(ref: string): Promise<{ ref: string; status: CourseOrder["status"]; course: string } | null> {
+export async function getCourseOrderByRef(
+  ref: string,
+): Promise<{ ref: string; status: CourseOrder["status"]; course: string; name: string; claimed: boolean } | null> {
   await ensureSchema();
-  const result = await getPool().query<{ ref: string; status: CourseOrder["status"]; course: string }>(
-    `SELECT ref, status, course FROM course_orders WHERE ref = $1`,
+  const result = await getPool().query<{ ref: string; status: CourseOrder["status"]; course: string; name: string; claimed: boolean }>(
+    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed FROM course_orders WHERE ref = $1`,
     [ref],
   );
   return result.rows[0] ?? null;
+}
+
+/**
+ * "I've transferred": records when, for a pending order only. Returns whether
+ * the reference belongs to a pending order. Never marks anything paid.
+ */
+export async function claimCourseTransfer(ref: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `UPDATE course_orders SET claimed_at = coalesce(claimed_at, now()) WHERE ref = $1 AND status = 'pending'`,
+    [ref],
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 /** Every order for a class, newest first, for /admin. */
@@ -2858,7 +2878,8 @@ export async function listCourseOrders(course: string): Promise<CourseOrder[]> {
   const result = await getPool().query<CourseOrder>(
     `SELECT id::text AS id, signup_id::text AS signup_id, name, wechat, industry, biz_focus, note, ref, status,
             to_char(created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
-            to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at
+            to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
+            to_char(claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at
        FROM course_orders WHERE course = $1 ORDER BY created_at DESC`,
     [course],
   );

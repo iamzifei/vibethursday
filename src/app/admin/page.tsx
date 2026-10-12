@@ -1121,7 +1121,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td className="mono">{order.ref}</td>
                     <td>{order.name}{order.signup_id ? "" : " ·新"}</td>
                     <td className="mono">{order.wechat}</td>
-                    <td>{{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}</td>
+                    <td>
+                      {{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}
+                      {order.status === "pending" && order.claimed_at && <strong style={{ color: "var(--accent)" }}> · 说已转账 {order.claimed_at}</strong>}
+                    </td>
                     <td>{order.biz_focus.join(" / ") || "—"}</td>
                     <td>{order.industry ?? "—"}</td>
                     <td className="mono">{order.created_at}</td>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
+import { Celebration } from "@/components/Celebration";
 import { currentAccount } from "@/lib/account";
 import { getCopy } from "@/lib/content";
 import { COURSE, looksLikeCourseRef } from "@/lib/course";
@@ -12,7 +13,7 @@ import { wechatLoginHref } from "@/lib/login-link";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ ref?: string; err?: string; other?: string }>;
+  searchParams: Promise<{ ref?: string; err?: string; other?: string; done?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -98,7 +99,11 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       ? "这条报名已取消"
                       : order.status === "waitlist"
                         ? "名额已满，你在候补名单上"
-                        : "报上了，最后一步：转账"}
+                        : order.status === "paid"
+                          ? `${order.name}，欢迎加入！`
+                          : order.claimed
+                            ? `${order.name}，欢迎加入！`
+                            : "报上了，最后一步：转账"}
                   </h1>
                 </div>
 
@@ -108,7 +113,32 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <p className="body-lg">名额已经满了。有人退出，我们会按顺序微信联系你，先不用转账。</p>
                 ) : order.status === "paid" ? (
                   <p className="body-lg">已经收到你的转账了，{COURSE.dateLabel}见。</p>
-                ) : (
+                ) : order.claimed ? (
+                  <div className="stack-6">
+                    {params.done === "1" && <Celebration />}
+                    <div className="tick" aria-hidden="true">✓</div>
+                    <p className="body-lg" style={{ margin: 0 }}>
+                      转账通知收到了。我们核对到账后，会在微信上联系你，拉你进学员群。
+                    </p>
+                    <p className="body-lg" style={{ margin: 0 }}>
+                      很多老板听 AI 听了一年，你是真的动手的那一个。
+                    </p>
+                    <div className="card card--accent stack-2">
+                      <h2 className="h3">{COURSE.dateLabel}之前，你可以先做一件事</h2>
+                      <p style={{ margin: 0 }}>
+                        想好你生意里最头疼的那一件事。那天上午，我们就从它开始：把它写成一张需求单，看看 AI 能帮你做掉多少。
+                      </p>
+                    </div>
+                    <p className="body" style={{ margin: 0 }}>建议带上笔记本电脑，充好电；手机也带上。</p>
+                    <details>
+                      <summary className="body-sm">再看一下转账信息</summary>
+                      <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+                        <p style={{ margin: 0 }}>转账金额：{COURSE.payLabel} · 转账备注：<strong className="mono">{order.ref}</strong></p>
+                        {paymentInfo && <pre className="body" style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{paymentInfo}</pre>}
+                      </div>
+                    </details>
+                  </div>
+                                ) : (
                   <>
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>
@@ -125,8 +155,14 @@ export default async function ClassPage({ searchParams }: PageProps) {
                         </p>
                       )}
                     </div>
-                    <p className="body-lg">
-                      转完把截图发给 James 的微信就行（<a href="/#contact">James 的微信二维码在这里</a>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
+                    <form method="post" action="/api/course/claim">
+                      <input type="hidden" name="ref" value={order.ref} />
+                      <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>
+                        我已经转账了
+                      </button>
+                    </form>
+                    <p className="body">
+                      转完点上面的按钮，再把截图发给 James 的微信（<a href="/#contact">James 的微信二维码在这里</a>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
                     </p>
                   </>
                 )}
