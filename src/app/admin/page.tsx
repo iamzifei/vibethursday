@@ -1128,7 +1128,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     </td>
                     <td>{order.biz_focus.join(" / ") || "—"}</td>
                     <td>{order.industry ?? "—"}</td>
-                    <td style={{ minWidth: "16em", whiteSpace: "pre-wrap" }}>{order.note ?? "—"}</td>
+                    <td style={{ minWidth: "16em", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{order.note ?? "—"}</td>
                     <td className="mono">{order.created_at}</td>
                     <td>
                       <div style={{ display: "flex", gap: "var(--space-2)" }}>
