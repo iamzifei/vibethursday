@@ -221,7 +221,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <div className="card stack-3">
                   <h2 className="h3">要准备什么</h2>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>手机充好电。课上用手机，不用带电脑</li>
+                    <li>建议带上笔记本电脑，充好电；手机也带上</li>
                     <li>想好你生意里最头疼的一件事</li>
                     <li>想拿来练的客人聊天截图或单据可以带上，客人的姓名和电话先遮掉</li>
                   </ul>
@@ -242,8 +242,8 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <div className="card stack-3">
                   <h2 className="h3">常见问题</h2>
                   <div className="stack-3">
-                    <p style={{ margin: 0 }}><strong>我完全不懂 AI，能跟上吗？</strong><br />能。每一步都在手机上跟着做，卡住了举手，我们过来帮你。</p>
-                    <p style={{ margin: 0 }}><strong>要带电脑吗？</strong><br />不用，手机就行。</p>
+                    <p style={{ margin: 0 }}><strong>我完全不懂 AI，能跟上吗？</strong><br />能。每一步都跟着做，卡住了举手，我们过来帮你。</p>
+                    <p style={{ margin: 0 }}><strong>要带电脑吗？</strong><br />建议带上笔记本电脑，课上操作更方便。实在没有，用手机也能跟。</p>
                     <p style={{ margin: 0 }}><strong>用中文上课吗？</strong><br />是，全程中文。</p>
                     <p style={{ margin: 0 }}><strong>我生意上的事，会被其他人听到吗？</strong><br />课上的练习在你自己的手机上做。具体的生意问题，留到一对一咨询里说，只有你和我。</p>
                   </div>
