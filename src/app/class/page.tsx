@@ -165,7 +165,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <div className="card stack-2">
                     <h3 className="h3" style={{ fontSize: "1.15em" }}>1　一个懂你生意的私人 AI 助理</h3>
                     <p style={{ margin: 0 }}>
-                      课上装到你的手机上。先告诉它你做什么生意、客人是谁、现在最头疼的事。
+                      课上帮你装好，电脑和手机都能用。先告诉它你做什么生意、客人是谁、现在最头疼的事。
                     </p>
                     <p style={{ margin: 0 }}>
                       之后可以问它：这个月生意为什么差了？它不会马上给你一个答案，会先问你：是来的客人少了，每个客人买得少了，还是价格变了？一步步帮你找到原因。也可以问：我的客人主要从哪来？怎么让第一次来的客人信我？
