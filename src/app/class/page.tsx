@@ -141,7 +141,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
               // ── Not signed up yet ─────────────────────────────────────
               <>
                 <div className="stack-4">
-                  <span className="eyebrow">§ 收费小班 · {COURSE.dateLabel}</span>
+                  <span className="eyebrow">§ 精品小班课 · {COURSE.dateLabel}</span>
                   <h1>{COURSE.title}</h1>
                   <p className="body-lg">
                     给听过 AI、但不知道它在自己生意里能干什么的老板。不讲概念，带着你自己的生意来。
