@@ -195,6 +195,18 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <p style={{ margin: 0 }}>这门课就是冲着这些问题来的。</p>
                 </div>
 
+                <div className="card card--accent stack-3">
+                  <h2 className="h3">这门课和别的 AI 课有什么不一样</h2>
+                  <p style={{ margin: 0 }}>
+                    很多 AI 课是带你看 AI 能做什么、教你在对话框里打字。当场看着挺惊艳，回到店里，生意还是老样子。
+                  </p>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li><strong>从你的生意出发</strong>：带着你自己的事来，走的时候手上是一张能开工的需求单，不是一堆功能演示</li>
+                    <li><strong>不是听完就散</strong>：课后有一对一专属咨询，大家的刚需我们挑出来免费做出来</li>
+                    <li><strong>讲课的人自己用 AI 拿到了结果</strong>：零员工，一个人运营数十款面向海外市场的软件产品，开发、上线、获客到客服，大部分交给 AI 去跑。课上讲的，都是自己每天在用的</li>
+                  </ul>
+                </div>
+
                 <div className="stack-4">
                   <h2 className="h3">你会得到</h2>
 
