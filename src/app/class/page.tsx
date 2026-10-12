@@ -363,6 +363,12 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div>
+                    <label className="label" htmlFor="class-note">你的生意里，具体哪件事最想交给 AI？（选填）</label>
+                    <textarea className="field" id="class-note" name="note" maxLength={500} placeholder="比如：每天回客人微信太花时间；房源文案写不过来" />
+                    <p className="hint">写得越具体，课上越能对着你的事讲。</p>
+                  </div>
+
+                  <div>
                     <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>
                       报名，看转账信息
                     </button>

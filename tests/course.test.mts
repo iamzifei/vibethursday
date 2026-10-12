@@ -31,6 +31,20 @@ test("the form keeps only known industries and focus areas, trimmed", () => {
   assert.equal(parseCourseForm((name) => (name === "industry" ? "made-up" : null), () => []).industry, null);
 });
 
+test("the free-text need is kept, trimmed and capped at 500", () => {
+  const read = (note: unknown) => parseCourseForm((name) => (name === "note" ? note : null), () => []).note;
+  assert.equal(read("  每天回客人微信太花时间 "), "每天回客人微信太花时间");
+  assert.equal(read("字".repeat(800))?.length, 500);
+  assert.equal(read("   "), null);
+});
+
+test("/class sends the need and /admin shows it", () => {
+  const page = readFileSync(path.join(import.meta.dirname, "../src/app/class/page.tsx"), "utf8");
+  assert.match(page, /<textarea[^>]*name="note"/);
+  const admin = readFileSync(path.join(import.meta.dirname, "../src/app/admin/page.tsx"), "utf8");
+  assert.match(admin, /order\.note/);
+});
+
 test("forty places, then the waitlist", () => {
   assert.equal(COURSE.cap, 40);
   assert.ok(hasPlace(39));

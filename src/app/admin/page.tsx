@@ -1111,6 +1111,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <th scope="col">状态</th>
                   <th scope="col">想让 AI 帮</th>
                   <th scope="col">行业</th>
+                  <th scope="col">具体需求</th>
                   <th scope="col">报名时间</th>
                   <th scope="col">操作</th>
                 </tr>
@@ -1127,6 +1128,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     </td>
                     <td>{order.biz_focus.join(" / ") || "—"}</td>
                     <td>{order.industry ?? "—"}</td>
+                    <td style={{ minWidth: "16em", whiteSpace: "pre-wrap" }}>{order.note ?? "—"}</td>
                     <td className="mono">{order.created_at}</td>
                     <td>
                       <div style={{ display: "flex", gap: "var(--space-2)" }}>
