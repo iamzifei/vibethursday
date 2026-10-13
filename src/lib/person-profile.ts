@@ -190,8 +190,8 @@ export function countValues(lists: readonly (readonly string[])[]): { value: str
 /** One CSV field, quoted when it has to be. */
 export function csvField(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? "" : String(value);
-  // A leading = + - @ would run as a formula when the file is opened in a spreadsheet.
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  // A leading = + - @ (or tab / CR) would run as a formula when the file is opened in a spreadsheet.
+  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 

@@ -80,6 +80,7 @@ export async function POST(request: Request) {
  * Organiser cookie only. A BOM up front so Excel reads the Chinese as UTF-8.
  */
 export async function GET(request: Request) {
+  if (!fromThisSite(request, await requestOrigin())) return new Response("Forbidden", { status: 403 });
   const limited = tooMany(request, "admin-profile", 600);
   if (limited) return limited;
   if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, null)) {

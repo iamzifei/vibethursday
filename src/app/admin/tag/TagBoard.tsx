@@ -92,22 +92,36 @@ export function TagBoard({ session, people, suggestions, labels }: Props) {
     setCards((all) => all.map((card) => (card.row.id === id ? { ...card, ...change } : card)));
   }, []);
 
+  // One save at a time per person, in order. Each reads the card when it
+  // runs rather than when it was queued, so the last one to land is always
+  // the latest state — two requests in flight can never finish the wrong way round.
+  const queues = useRef(new Map<string, Promise<boolean>>());
+
   const save = useCallback(
-    async (id: string) => {
-      const card = latest.current.find((item) => item.row.id === id);
-      if (!card) return;
-      patch(id, { status: "saving" });
-      try {
-        const response = await fetch("/api/admin/profile", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ op: "save", signupId: id, session, profile: card.profile, sessionNote: card.sessionNote }),
-        });
-        if (!response.ok) throw new Error(String(response.status));
-        patch(id, { status: "saved", tagged: true });
-      } catch {
-        patch(id, { status: "error" });
-      }
+    (id: string): Promise<boolean> => {
+      const run = async () => {
+        const card = latest.current.find((item) => item.row.id === id);
+        if (!card) return false;
+        patch(id, { status: "saving" });
+        try {
+          const response = await fetch("/api/admin/profile", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ op: "save", signupId: id, session, profile: card.profile, sessionNote: card.sessionNote }),
+          });
+          if (!response.ok) throw new Error(String(response.status));
+          // Only "saved" when nothing newer is waiting behind this one.
+          if (!timers.current.has(id)) patch(id, { status: "saved", tagged: true });
+          else patch(id, { tagged: true });
+          return true;
+        } catch {
+          patch(id, { status: "error" });
+          return false;
+        }
+      };
+      const queued = (queues.current.get(id) ?? Promise.resolve(true)).then(run);
+      queues.current.set(id, queued);
+      return queued;
     },
     [patch, session],
   );
@@ -129,11 +143,11 @@ export function TagBoard({ session, people, suggestions, labels }: Props) {
   );
 
   const flush = useCallback(
-    async (id: string) => {
+    (id: string): Promise<boolean> => {
       const pending = timers.current.get(id);
       if (pending) clearTimeout(pending);
       timers.current.delete(id);
-      await save(id);
+      return save(id);
     },
     [save],
   );
@@ -166,7 +180,9 @@ export function TagBoard({ session, people, suggestions, labels }: Props) {
 
   /** Folds this card and opens the next arrived one still to do. */
   const doneAndNext = async (id: string) => {
-    await flush(id);
+    // A failed save keeps the card open, with its retry link in view, rather
+    // than folding it away looking done.
+    if (!(await flush(id))) return;
     const order = arrived.map((card) => card.row.id);
     const next = order.slice(order.indexOf(id) + 1).concat(order.slice(0, order.indexOf(id)))
       .find((other) => !latest.current.find((card) => card.row.id === other)?.tagged);
@@ -205,7 +221,8 @@ export function TagBoard({ session, people, suggestions, labels }: Props) {
       return updated;
     });
 
-  const shown = onlyTodo ? arrived.filter((card) => !card.tagged) : arrived;
+  // A card being worked on stays put even once its first save marks it tagged.
+  const shown = onlyTodo ? arrived.filter((card) => !card.tagged || open.has(card.row.id)) : arrived;
 
   return (
     <div className="stack-6">
@@ -306,7 +323,7 @@ function FoldedCard({ card, labels, onOpen }: { card: Card; labels: Props["label
               .join(" · ") || "已标，未选任何项"
           : "还没标"}
       </span>
-      <span className="tagger-folded__edit">{card.tagged ? "改" : "标"}</span>
+      <span className="tagger-folded__edit">{card.status === "error" ? "没存上" : card.tagged ? "改" : "标"}</span>
     </button>
   );
 }
@@ -508,6 +525,9 @@ function TagInput({
   onChange: (next: string[], added: string[]) => void;
 }) {
   const [text, setText] = useState("");
+  // Whether a Chinese IME is mid-word. Tracked by hand as well as read off the
+  // key event: Safari ends composition before the Enter that picks the word.
+  const composing = useRef(false);
 
   const add = (raw: string) => {
     const known = new Set(value.map((tag) => tag.toLowerCase()));
@@ -548,14 +568,23 @@ function TagInput({
           className="tagger-tags__input"
           value={text}
           placeholder={value.length ? "" : placeholder}
+          onCompositionStart={() => {
+            composing.current = true;
+          }}
+          onCompositionEnd={() => {
+            // After this tick, so the Enter that ended it is still treated as composing.
+            setTimeout(() => {
+              composing.current = false;
+            }, 0);
+          }}
           onChange={(event) => {
-            // A typed comma adds what came before it.
-            if (/[,，、;；]$/.test(event.target.value)) add(event.target.value);
+            // A typed comma adds what came before it — not one typed mid-word.
+            if (!composing.current && /[,，、;；]$/.test(event.target.value)) add(event.target.value);
             else setText(event.target.value);
           }}
           onKeyDown={(event) => {
             // Not while a Chinese IME is still composing: that Enter picks a character.
-            if (event.nativeEvent.isComposing) return;
+            if (composing.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (event.key === "Enter") {
               event.preventDefault();
               if (text.trim()) add(text);

@@ -81,6 +81,7 @@ test("CSV fields are quoted when needed and never run as formulas", () => {
   assert.equal(csvField('say "hi"'), '"say ""hi"""');
   assert.equal(csvField("=HYPERLINK(1)"), "'=HYPERLINK(1)");
   assert.equal(csvField(null), "");
+  assert.equal(csvField("\tcmd"), "'\tcmd");
 });
 
 /** Every source file under src. */
@@ -135,9 +136,11 @@ test(
         )
       ).rows[0].id;
 
+    const made: string[] = [];
     try {
       const keep = await insert("Ann", `ann-${stamp}`);
       const drop = await insert("Ann", `ann2-${stamp}`);
+      made.push(keep, drop);
       await pool.query(`INSERT INTO checkins (session, signup_id, source) VALUES ('2026-10-13', $1, 'admin')`, [drop]);
 
       await savePersonProfile({
@@ -176,6 +179,7 @@ test(
       await savePersonProfile({ signupId: keep, profile: merged, session: "2026-10-13", sessionNote: null });
       assert.deepEqual((await listProfiledPeople()).find((person) => person.id === keep)!.session_notes, []);
     } finally {
+      await pool.query(`DELETE FROM signups WHERE id = ANY($1::bigint[])`, [made]).catch(() => {});
       await pool.end();
     }
   },
