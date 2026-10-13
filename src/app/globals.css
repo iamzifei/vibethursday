@@ -4769,3 +4769,180 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vq-rank__n { font-family: var(--font-mono); color: var(--fg3); }
 .vq-rank__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vq-rank__pts { font-family: var(--font-mono); font-weight: var(--weight-bold); }
+
+/* =============================================================================
+   Tagging people (/admin/tag, /admin/people — 2026-10-13)
+   Organiser-only pages. Built for speed after a morning: big tap targets,
+   one card per person, every tap saved.
+============================================================================= */
+
+.tagger { max-width: 880px; }
+.tagger-muted { color: var(--fg3); font-weight: var(--weight-regular); }
+
+.tagger-top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.tagger-top__links { display: flex; gap: var(--space-4); font-size: var(--text-sm); }
+
+/* Progress, pinned so "how many left" is always in view. */
+.tagger-progress {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: var(--space-3) 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.tagger-progress__row { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-sm); color: var(--fg2); }
+.tagger-progress__row strong { color: var(--fg1); font-size: var(--text-base); }
+.tagger-progress__filter { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
+.tagger-progress__bar { height: 4px; margin-top: var(--space-2); border-radius: var(--radius-full); background: var(--bg-tertiary); overflow: hidden; }
+.tagger-progress__bar span { display: block; height: 100%; background: var(--accent); transition: width var(--dur-normal); }
+
+/* One person, open. */
+.tagger-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  scroll-margin-top: 80px;
+}
+.tagger-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); }
+.tagger-card__name { margin: 0; font-size: var(--text-xl); font-weight: var(--weight-semibold); color: var(--fg1); }
+.tagger-card__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); font-size: var(--text-xs); color: var(--fg3); }
+.tagger-card__actions { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.tagger-card__foot { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding-top: var(--space-2); }
+
+.tagger-badge { padding: 1px var(--space-2); border: 1px solid var(--border-default); border-radius: var(--radius-full); color: var(--fg2); }
+.tagger-badge--new { border-color: var(--accent-muted); background: var(--accent-subtle); color: var(--accent); }
+
+.tagger-link {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--fg3);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.tagger-link:hover { color: var(--fg1); }
+
+.tagger-save { font-size: var(--text-xs); color: var(--fg3); }
+.tagger-save--ok { color: var(--success); }
+.tagger-save--error { border: 0; background: none; padding: 0; font: inherit; font-size: var(--text-xs); color: var(--error); cursor: pointer; text-decoration: underline; }
+
+/* What they said themselves: quieter than what the organiser is choosing. */
+.tagger-said {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  font-size: var(--text-sm);
+}
+.tagger-said div { display: grid; grid-template-columns: 6em 1fr; gap: var(--space-2); }
+.tagger-said dt { color: var(--fg3); }
+.tagger-said dd { margin: 0; color: var(--fg2); overflow-wrap: anywhere; }
+
+.tagger-field { display: grid; gap: var(--space-2); }
+.tagger-field__label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--fg1); }
+
+.tagger-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tagger-pill {
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-primary);
+  color: var(--fg2);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-normal), background var(--dur-normal), color var(--dur-normal);
+}
+.tagger-pill:hover { border-color: var(--border-strong); color: var(--fg1); }
+.tagger-pill--on,
+.tagger-pill--on:hover { border-color: var(--accent); background: var(--accent-subtle); color: var(--fg1); font-weight: var(--weight-medium); }
+.tagger-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Free tags: chips plus a borderless input, inside one field-looking box. */
+.tagger-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+}
+.tagger-tags:focus-within { border-color: var(--accent); }
+.tagger-tags__input { flex: 1 1 8em; min-width: 6em; min-height: 32px; border: 0; background: transparent; color: var(--fg1); font: inherit; font-size: 16px; outline: none; }
+.tagger-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 2px 2px var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--accent-subtle);
+  color: var(--fg1);
+  font-size: var(--text-sm);
+}
+.tagger-tag button { width: 28px; height: 28px; border: 0; border-radius: var(--radius-full); background: none; color: var(--fg3); font-size: 1rem; cursor: pointer; }
+.tagger-tag button:hover { color: var(--fg1); background: var(--bg-tertiary); }
+.tagger-suggest { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tagger-suggest__item {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--fg2);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.tagger-suggest__item:hover { border-style: solid; border-color: var(--accent); color: var(--fg1); }
+.tagger-note { min-height: 64px; }
+
+/* One person, folded: a single row you can tap to reopen. */
+.tagger-folded {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  color: var(--fg2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-margin-top: 80px;
+}
+.tagger-folded:hover { border-color: var(--border-strong); }
+.tagger-folded__name { flex: none; min-width: 6em; color: var(--fg1); font-weight: var(--weight-medium); }
+.tagger-folded__summary { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
+.tagger-folded__edit { flex: none; font-size: var(--text-sm); color: var(--accent); }
+
+.tagger-absent summary { min-height: 44px; display: flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--fg2); font-size: var(--text-sm); }
+.tagger-absent__list { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.tagger-absent__list li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: var(--text-sm); }
+.tagger-small-btn { min-height: 40px; padding-inline: var(--space-4); flex: none; }
+
+.tagger-facets { display: grid; gap: var(--space-4); }
+.tagger-facet { display: grid; gap: var(--space-2); }
+.tagger-table td { vertical-align: top; }
+.tagger-table__note { min-width: 16em; white-space: normal; overflow-wrap: anywhere; }
+
+@media (max-width: 560px) {
+  .tagger-card { padding: var(--space-4); }
+  .tagger-said div { grid-template-columns: 1fr; gap: 0; }
+  .tagger-folded__summary { display: none; }
+  .tagger-folded__edit { margin-left: auto; }
+}

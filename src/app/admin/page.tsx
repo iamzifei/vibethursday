@@ -406,6 +406,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <a href="#after">散场后</a>
         <a href="#community">社群</a>
         <a href="#data">数据与工具</a>
+        {/* Their own pages, not sections of this one (2026-10-13). */}
+        <a href="/admin/tag">标注来的人</a>
+        <a href="/admin/people">所有人画像</a>
       </nav>
 
       <section className="stack-8 admin-group" id="week">
@@ -569,6 +572,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       <section className="stack-8 admin-group" id="after">
         <h2 className="eyebrow">② 散场后</h2>
+        <p className="body-sm">
+          <a href="/admin/tag">给这一场来的人做标注 →</a>　<a href="/admin/people">看所有人的画像</a>
+        </p>
       {/* ── Feedback ─────────────────────────────────────────────────
           The other half of a session: check-in says who was in the room,
           this says whether the morning was worth their while. */}

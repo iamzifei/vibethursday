@@ -9,6 +9,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
+import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 
 /**
  * Postgres access.
@@ -656,6 +657,34 @@ export function ensureSchema(): Promise<void> {
     // When the person tapped "I've transferred" (2026-10-12). Only their word
     // for it: "paid" is still set by hand on /admin once the money shows up.
     await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS claimed_at timestamptz`);
+
+    // ── The organiser's notes on people (2026-10-13, person-profile.ts) ──
+    // Read only by /admin pages. Kept off `signups` so nothing in the signup
+    // flow, which rewrites that row, can ever touch them. `mergeSignups`
+    // carries both tables across before it deletes a row, because the
+    // cascade below would otherwise drop them silently.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS person_profiles (
+        signup_id   bigint PRIMARY KEY REFERENCES signups(id) ON DELETE CASCADE,
+        roles       text[] NOT NULL DEFAULT '{}',
+        level       smallint CHECK (level BETWEEN 1 AND 4),
+        industry    text,
+        tags        text[] NOT NULL DEFAULT '{}',
+        resources   text[] NOT NULL DEFAULT '{}',
+        note        text,
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    // One line per person per morning: "showed the X demo", "looking for a co-founder".
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS person_session_notes (
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        session     date NOT NULL,
+        note        text NOT NULL,
+        updated_at  timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (signup_id, session)
+      )
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -3248,6 +3277,34 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
         await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
       }
 
+      // The organiser's notes on the person, before the delete below cascades
+      // them away. Lists are joined; a single value on `keep` wins and the
+      // other row's fills a gap; two standing notes are both kept.
+      await client.query(
+        `INSERT INTO person_profiles (signup_id, roles, level, industry, tags, resources, note)
+         SELECT $1::bigint, roles, level, industry, tags, resources, note FROM person_profiles WHERE signup_id = $2::bigint
+         ON CONFLICT (signup_id) DO UPDATE SET
+           roles     = ARRAY(SELECT DISTINCT r FROM unnest(person_profiles.roles || EXCLUDED.roles) AS r ORDER BY 1),
+           level     = COALESCE(person_profiles.level, EXCLUDED.level),
+           industry  = COALESCE(person_profiles.industry, EXCLUDED.industry),
+           tags      = person_profiles.tags || ARRAY(SELECT t FROM unnest(EXCLUDED.tags) AS t
+                         WHERE lower(t) NOT IN (SELECT lower(x) FROM unnest(person_profiles.tags) AS x)),
+           resources = person_profiles.resources || ARRAY(SELECT t FROM unnest(EXCLUDED.resources) AS t
+                         WHERE lower(t) NOT IN (SELECT lower(x) FROM unnest(person_profiles.resources) AS x)),
+           note      = CASE WHEN person_profiles.note IS NOT NULL AND EXCLUDED.note IS NOT NULL
+                            THEN person_profiles.note || E'\\n' || EXCLUDED.note
+                            ELSE COALESCE(person_profiles.note, EXCLUDED.note) END,
+           updated_at = now()`,
+        [keep, drop],
+      );
+      await client.query(
+        `INSERT INTO person_session_notes (signup_id, session, note)
+         SELECT $1::bigint, session, note FROM person_session_notes WHERE signup_id = $2::bigint
+         ON CONFLICT (signup_id, session) DO UPDATE SET
+           note = person_session_notes.note || E'\\n' || EXCLUDED.note, updated_at = now()`,
+        [keep, drop],
+      );
+
       // Read what to carry over, then delete the row before writing it onto
       // `keep`, so the unique email/WeChat indexes never see both at once.
       const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null; openid: string | null }>(
@@ -3823,4 +3880,217 @@ export async function deleteSessionPhoto(id: string): Promise<void> {
   await ensureSchema();
 
   await getPool().query(`DELETE FROM session_photos WHERE id = $1`, [id]);
+}
+
+/* =============================================================================
+   The organiser's notes on people (2026-10-13, person-profile.ts)
+
+   Every function here is for /admin pages only. Nothing public may read these
+   tables — tests/person-profile.test.mts fails if anything outside the admin
+   pages imports these functions.
+============================================================================= */
+
+/** One person on the tagging page for a session, with what they said and what has been noted. */
+export type TaggingRow = {
+  id: string;
+  name: string;
+  wechat: string | null;
+  building: string | null;
+  topic: string | null;
+  ai_level: string | null;
+  industry: string | null;
+  /** What they said they came for, that morning or else most recently. */
+  purpose: string | null;
+  biz_focus: string[];
+  demo_intent: string | null;
+  checked_in: boolean;
+  /** Mornings checked in to, this one included when they were there. */
+  attended: number;
+  /** Null until the organiser has tagged them at least once. */
+  profile: PersonProfile | null;
+  session_note: string | null;
+};
+
+type ProfileColumns = {
+  p_roles: string[] | null;
+  p_level: number | null;
+  p_industry: string | null;
+  p_tags: string[] | null;
+  p_resources: string[] | null;
+  p_note: string | null;
+  tagged: boolean;
+};
+
+function profileFrom(row: ProfileColumns): PersonProfile | null {
+  if (!row.tagged) return null;
+  return {
+    roles: (row.p_roles ?? []) as PersonRole[],
+    level: (row.p_level ?? null) as PersonLevel | null,
+    industry: row.p_industry,
+    tags: row.p_tags ?? [],
+    resources: row.p_resources ?? [],
+    note: row.p_note,
+  };
+}
+
+const PROFILE_SELECT = `
+  p.roles AS p_roles, p.level AS p_level, p.industry AS p_industry,
+  p.tags AS p_tags, p.resources AS p_resources, p.note AS p_note,
+  (p.signup_id IS NOT NULL) AS tagged`;
+
+/**
+ * Everyone for one morning: signed up for it or checked in to it. Those who
+ * checked in come first; the rest are the "signed up, not checked in" list,
+ * since a check-in count is a floor — speakers often never scan.
+ */
+export async function listTaggingRoster(session: string): Promise<TaggingRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<Omit<TaggingRow, "profile"> & ProfileColumns>(
+    `SELECT g.id::text AS id, g.name, g.wechat, g.building, g.topic, g.ai_level, g.industry,
+            COALESCE(g.purposes ->> ($1::date::text),
+                     (SELECT value #>> '{}' FROM jsonb_each(g.purposes) ORDER BY key DESC LIMIT 1)) AS purpose,
+            g.biz_focus, g.demo_intent,
+            EXISTS (SELECT 1 FROM checkins c WHERE c.signup_id = g.id AND c.session = $1::date) AS checked_in,
+            (SELECT count(*)::int FROM checkins c WHERE c.signup_id = g.id) AS attended,
+            n.note AS session_note,
+            ${PROFILE_SELECT}
+       FROM signups g
+       LEFT JOIN person_profiles p ON p.signup_id = g.id
+       LEFT JOIN person_session_notes n ON n.signup_id = g.id AND n.session = $1::date
+      WHERE $1::date = ANY(g.sessions)
+         OR EXISTS (SELECT 1 FROM checkins c WHERE c.signup_id = g.id AND c.session = $1::date)
+      ORDER BY checked_in DESC, g.name`,
+    [session],
+  );
+  return result.rows.map(({ p_roles, p_level, p_industry, p_tags, p_resources, p_note, tagged, ...row }) => ({
+    ...row,
+    profile: profileFrom({ p_roles, p_level, p_industry, p_tags, p_resources, p_note, tagged }),
+  }));
+}
+
+/** Past mornings worth tagging, newest first, with how many came and how many of those are tagged. */
+export async function listTaggingSessions(today: string, limit = 12): Promise<{ session: string; attended: number; tagged: number }[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ session: string; attended: number; tagged: number }>(
+    `SELECT to_char(d, 'YYYY-MM-DD') AS session,
+            (SELECT count(*)::int FROM checkins c WHERE c.session = d) AS attended,
+            (SELECT count(*)::int FROM checkins c JOIN person_profiles p ON p.signup_id = c.signup_id
+              WHERE c.session = d) AS tagged
+       FROM (SELECT DISTINCT unnest(sessions) AS d FROM signups
+             UNION SELECT DISTINCT session FROM checkins) AS dates
+      WHERE d <= $1::date
+      ORDER BY d DESC
+      LIMIT $2`,
+    [today, limit],
+  );
+  return result.rows;
+}
+
+/**
+ * Saves one person's profile — the whole of it, every time, so two saves
+ * arriving out of order still leave one consistent state — and, when a
+ * session is given, that morning's one-line note (blank removes it).
+ */
+export async function savePersonProfile(input: {
+  signupId: string;
+  profile: PersonProfile;
+  session: string | null;
+  sessionNote: string | null;
+}): Promise<void> {
+  await ensureSchema();
+  const { profile } = input;
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO person_profiles (signup_id, roles, level, industry, tags, resources, note, updated_at)
+       VALUES ($1::bigint, $2::text[], $3, $4, $5::text[], $6::text[], $7, now())
+       ON CONFLICT (signup_id) DO UPDATE SET
+         roles = EXCLUDED.roles, level = EXCLUDED.level, industry = EXCLUDED.industry,
+         tags = EXCLUDED.tags, resources = EXCLUDED.resources, note = EXCLUDED.note, updated_at = now()`,
+      [input.signupId, profile.roles, profile.level, profile.industry, profile.tags, profile.resources, profile.note],
+    );
+    if (input.session) {
+      if (input.sessionNote) {
+        await client.query(
+          `INSERT INTO person_session_notes (signup_id, session, note) VALUES ($1::bigint, $2::date, $3)
+           ON CONFLICT (signup_id, session) DO UPDATE SET note = EXCLUDED.note, updated_at = now()`,
+          [input.signupId, input.session, input.sessionNote],
+        );
+      } else {
+        await client.query(`DELETE FROM person_session_notes WHERE signup_id = $1::bigint AND session = $2::date`, [
+          input.signupId,
+          input.session,
+        ]);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** Every tag and resource used so far, with counts — the suggestions under the tag boxes. */
+export async function listProfileTags(): Promise<{ tags: { value: string; count: number }[]; resources: { value: string; count: number }[] }> {
+  await ensureSchema();
+  const read = async (column: "tags" | "resources") =>
+    (
+      await getPool().query<{ value: string; count: number }>(
+        `SELECT min(t) AS value, count(*)::int AS count
+           FROM person_profiles, unnest(${column}) AS t
+          GROUP BY lower(t) ORDER BY count(*) DESC, min(t)`,
+      )
+    ).rows;
+  const [tags, resources] = await Promise.all([read("tags"), read("resources")]);
+  return { tags, resources };
+}
+
+/** One tagged person for /admin/people. */
+export type ProfiledPerson = PersonProfile & {
+  id: string;
+  name: string;
+  wechat: string | null;
+  building: string | null;
+  /** Mornings checked in to, oldest first. */
+  attended: string[];
+  /** Every morning's one-line note, newest first. */
+  session_notes: { session: string; note: string }[];
+  updated_at: string;
+};
+
+/** Everyone who has been tagged, most recently tagged first. Filtering happens in the page (see `matchesFilter`). */
+export async function listProfiledPeople(): Promise<ProfiledPerson[]> {
+  await ensureSchema();
+  const result = await getPool().query<
+    Omit<ProfiledPerson, keyof PersonProfile> & ProfileColumns
+  >(
+    `SELECT g.id::text AS id, g.name, g.wechat, g.building,
+            COALESCE((SELECT array_agg(to_char(c.session, 'YYYY-MM-DD') ORDER BY c.session)
+                        FROM checkins c WHERE c.signup_id = g.id), '{}') AS attended,
+            COALESCE((SELECT json_agg(json_build_object('session', to_char(n.session, 'YYYY-MM-DD'), 'note', n.note)
+                                      ORDER BY n.session DESC)
+                        FROM person_session_notes n WHERE n.signup_id = g.id), '[]'::json) AS session_notes,
+            to_char(p.updated_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS updated_at,
+            ${PROFILE_SELECT}
+       FROM person_profiles p
+       JOIN signups g ON g.id = p.signup_id
+      ORDER BY p.updated_at DESC`,
+  );
+  return result.rows.map(({ p_roles, p_level, p_industry, p_tags, p_resources, p_note, tagged, ...row }) => ({
+    ...row,
+    ...(profileFrom({ p_roles, p_level, p_industry, p_tags, p_resources, p_note, tagged }) as PersonProfile),
+  }));
+}
+
+/** How many people have checked in at least once but were never tagged — the backlog. */
+export async function countUntaggedAttendees(): Promise<number> {
+  await ensureSchema();
+  const result = await getPool().query<{ n: number }>(
+    `SELECT count(DISTINCT c.signup_id)::int AS n FROM checkins c
+      WHERE NOT EXISTS (SELECT 1 FROM person_profiles p WHERE p.signup_id = c.signup_id)`,
+  );
+  return result.rows[0]?.n ?? 0;
 }
