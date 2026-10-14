@@ -52,6 +52,13 @@ test("no bank details in the source: they come from TUESDAY_PAYMENT_INFO", () =>
   }
 });
 
+test("★ the signup only answers about fees when the name matched", () => {
+  // Otherwise typing someone's WeChat ID would return their reference and
+  // whether they are a member (2026-10-14 review).
+  const route = readFileSync(path.join(import.meta.dirname, "../src/app/api/signup/route.ts"), "utf8");
+  assert.match(route, /if \(firstSession && !waitlisted && profileUpdated && feeFor\(firstSession\) !== null\)/);
+});
+
 /*
  * Against a throwaway local Postgres, like the schema test:
  *   FEE_TEST_DATABASE_URL=postgres://localhost:55433/vt_fee_test pnpm test
@@ -103,6 +110,17 @@ test(
       assert.deepEqual(await mergeSignups(dupe, guest), { ok: true });
       const after = await listTuesdayFeeDesk("2026-10-20");
       assert.equal(after.find((row) => row.signup_id === dupe)?.ref, "TUAAAAA");
+
+      // Both rows have a fee for the same Tuesday: the paid one survives the merge.
+      const a = await insert("Pat", `pat-${stamp}`);
+      const b = await insert("Pat", `pat2-${stamp}`);
+      await getOrCreateSessionFee("2026-10-20", a, "TUCCCCC");
+      await getOrCreateSessionFee("2026-10-20", b, "TUDDDDD");
+      await pool.query(`UPDATE session_fees SET status = 'paid', paid_at = now() WHERE ref = 'TUDDDDD'`);
+      assert.deepEqual(await mergeSignups(a, b), { ok: true });
+      const merged = (await listTuesdayFeeDesk("2026-10-20")).find((row) => row.signup_id === a);
+      assert.equal(merged?.ref, "TUDDDDD");
+      assert.equal(merged?.status, "paid");
     } finally {
       await pool.query(`DELETE FROM course_orders WHERE course = 'test'`).catch(() => {});
       await pool.query(`DELETE FROM signups WHERE id = ANY($1::bigint[])`, [made]).catch(() => {});

@@ -135,9 +135,8 @@ export type SpecialSession = {
 };
 
 /**
- * Weekly from 20 October 2026, $30 + GST each (James 2026-10-14: "还是确定周二
- * 日期，且都办"). Listed to mid-December: whether the Christmas and New Year
- * weeks run is not decided yet.
+ * Weekly from 20 October 2026, $30 + GST each. Listed to mid-December; the
+ * Christmas and New Year weeks are not scheduled yet.
  */
 const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01", "2026-12-08", "2026-12-15"];
 
@@ -175,7 +174,8 @@ export function openSpecialSessions(today: string, hour: number): SpecialSession
 /**
  * How far ahead a special session is offered. Tuesdays are weekly from
  * 2026-10-20 and listed months ahead; offering all of them would put nine
- * Tuesdays in every signup dropdown. Two weeks = this Tuesday and the next.
+ * Tuesdays in every signup dropdown. Fourteen days: the next two Tuesdays
+ * (three on a Tuesday morning, when that day's is still open).
  */
 const SPECIAL_HORIZON_DAYS = 14;
 

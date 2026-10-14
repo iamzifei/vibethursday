@@ -45,7 +45,9 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                 <div className="stack-3">
                   <span className="eyebrow">§ Build Tuesday · {formatSession(fee.session, "zh")}</span>
                   <h1>
-                    {fee.status === "paid" || fee.status === "waived"
+                    {!fee.booked && fee.status !== "paid"
+                      ? "这一场不用付了"
+                      : fee.status === "paid" || fee.status === "waived"
                       ? `${fee.name}，周二见！`
                       : fee.claimed_at
                         ? `${fee.name}，收到了`
@@ -53,7 +55,9 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                   </h1>
                 </div>
 
-                {fee.status === "paid" || fee.status === "waived" ? (
+                {!fee.booked && fee.status !== "paid" ? (
+                  <p className="body-lg">这一场的报名已经取消或改了，不用转账。想再报，去 <Link href="/tuesday">周二报名页</Link>。</p>
+                ) : fee.status === "paid" || fee.status === "waived" ? (
                   <p className="body-lg">已经收到了，不用再转。到了在门口扫码签到就行。</p>
                 ) : fee.claimed_at ? (
                   <div className="stack-3">

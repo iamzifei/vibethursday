@@ -5,10 +5,7 @@ import { randomBytes } from "node:crypto";
  * Build Tuesday's fee (James 2026-10-14).
  *
  * From 20 October a Tuesday costs $30 + GST, paid by bank transfer when you
- * sign up — everyone, presenters included: a Tuesday is a morning of
- * consulting, and the people showing their work get the most of it. Members
- * of the year-long membership come free. Thursdays stay free, and the rule
- * against charging presenters still holds there.
+ * sign up. Members of the year-long membership come free. Thursdays stay free.
  *
  * The bank details are not in this file or anywhere in this repository: they
  * come from the TUESDAY_PAYMENT_INFO environment variable and are shown only

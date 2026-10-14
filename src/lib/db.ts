@@ -3295,8 +3295,15 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
         await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
       }
 
-      // Tuesday fees: move, except a Tuesday `keep` already has one for (that
-      // one stays; the other row's goes with the delete below).
+      // Tuesday fees: move, except a Tuesday `keep` already has one for. When
+      // both have one, the settled one wins: `keep`'s pending fee gives way to
+      // the other row's paid or waived one, rather than a payment being lost.
+      await client.query(
+        `DELETE FROM session_fees k USING session_fees d
+          WHERE k.signup_id = $1::bigint AND d.signup_id = $2::bigint AND k.session = d.session
+            AND k.status = 'pending' AND d.status IN ('paid', 'waived')`,
+        [keep, drop],
+      );
       await client.query(
         `UPDATE session_fees SET signup_id = $1::bigint
           WHERE signup_id = $2::bigint
@@ -4152,12 +4159,12 @@ export async function getOrCreateSessionFee(
   session: string,
   signupId: string,
   ref: string,
-): Promise<{ id: string; ref: string; status: "pending" | "paid" | "waived" }> {
+): Promise<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }> {
   await ensureSchema();
-  const result = await getPool().query<{ id: string; ref: string; status: "pending" | "paid" | "waived" }>(
+  const result = await getPool().query<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }>(
     `INSERT INTO session_fees (session, signup_id, ref) VALUES ($1::date, $2::bigint, $3)
      ON CONFLICT (session, signup_id) DO UPDATE SET session = EXCLUDED.session
-     RETURNING id::text AS id, ref, status`,
+     RETURNING id::text AS id, ref, status, claimed_at IS NOT NULL AS claimed`,
     [session, signupId, ref],
   );
   return result.rows[0];

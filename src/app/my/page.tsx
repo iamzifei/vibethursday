@@ -180,7 +180,7 @@ export default async function MyPage({ searchParams }: PageProps) {
   // well as on the signup confirmation because a Tuesday is also reached by
   // moving a Thursday or coming off the waitlist, and neither passes through
   // the signup form. A failed lookup leaves the row without the line.
-  const fees = new Map<string, { member: true } | { member: false; ref: string; status: string }>();
+  const fees = new Map<string, { member: true } | { member: false; ref: string; status: string; claimed: boolean }>();
   const paidTuesdays = upcoming.filter((entry) => entry.position === null && feeFor(entry.session) !== null);
   if (paidTuesdays.length > 0) {
     try {
@@ -191,7 +191,7 @@ export default async function MyPage({ searchParams }: PageProps) {
           continue;
         }
         const fee = await getOrCreateSessionFee(entry.session, mine.id, newFeeRef());
-        fees.set(entry.session, { member: false, ref: fee.ref, status: fee.status });
+        fees.set(entry.session, { member: false, ref: fee.ref, status: fee.status, claimed: fee.claimed });
       }
     } catch (error) {
       console.error("[my] could not read the Tuesday fees", error);
@@ -253,6 +253,7 @@ export default async function MyPage({ searchParams }: PageProps) {
                   if (!fee) return null;
                   if (fee.member) return <p className="field-hint">{t.feeMember}</p>;
                   if (fee.status === "paid" || fee.status === "waived") return <p className="field-hint">{t.feePaid}</p>;
+                  if (fee.claimed) return <p className="field-hint">{t.feeClaimed}</p>;
                   return (
                     <p className="body-sm" style={{ margin: 0 }}>
                       {fill(t.feeDue, { amount: `A$${feeToPay(feeFor(entry.session)!)}` })} ·{" "}

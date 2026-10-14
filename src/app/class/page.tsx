@@ -176,9 +176,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
             ) : (
               // ── Not signed up yet ─────────────────────────────────────
               <>
-                {/* The membership first, the class as its first step (James
-                    2026-10-14): what is worth paying for is a year of people
-                    and getting things built, not four hours of content. */}
+                {/* The membership first (2026-10-14), the class as its first step. */}
                 <div className="stack-4">
                   <span className="eyebrow">§ Vibe Thursday 共创会员 · 一年</span>
                   <h1>Vibe Thursday 共创会员</h1>

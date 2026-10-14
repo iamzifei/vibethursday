@@ -322,7 +322,10 @@ export async function POST(request: Request) {
   // Never fatal: a booking whose fee could not be set up is still a booking,
   // and the organiser sees it on the door list.
   let fee: FeeReceipt | undefined;
-  if (firstSession && !waitlisted && feeFor(firstSession) !== null) {
+  // Only when the name matched (`profileUpdated`), like `upcoming` below:
+  // otherwise typing someone's WeChat ID would hand over their reference,
+  // their name on the payment page, and whether they are a member.
+  if (firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null) {
     try {
       fee = (await isMember(signupId))
         ? { member: true }
