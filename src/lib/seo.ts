@@ -1,7 +1,7 @@
 // Relative, not "@/": the tests load this through Node's type stripper, which
 // does not read tsconfig's path aliases.
 import { type Copy, LANG_PARAM, type Lang } from "./content.ts";
-import { FIRST_SESSION_DATE, formatSession } from "./sessions.ts";
+import { feeFor, FIRST_SESSION_DATE, formatSession } from "./sessions.ts";
 import { siteUrl } from "./site.ts";
 
 /**
@@ -254,8 +254,13 @@ export function eventJsonLd(
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: place(),
     organizer: organizer(),
-    isAccessibleForFree: true,
-    offers: freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`),
+    // A paid Build Tuesday (2026-10-14) says so: $30 + GST, as transferred.
+    isAccessibleForFree: feeFor(isoDate) === null,
+    offers: (() => {
+      const offer = freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`);
+      const fee = feeFor(isoDate);
+      return fee === null ? offer : { ...offer, price: (fee * 1.1).toFixed(2) };
+    })(),
     inLanguage: inLanguage(lang),
     image: options.images?.length ? [...options.images] : [`${base}/og.jpg`],
     url:

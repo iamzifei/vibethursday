@@ -126,12 +126,31 @@ export type SpecialSession = {
   endHour: number;
   /** Signups taken before the waitlist starts. The room seats about fifteen. */
   cap: number;
+  /**
+   * The fee in Australian dollars, before GST; members of the year-long
+   * membership come free (James 2026-10-14, tuesday-fee.ts). Absent = free,
+   * as the first two Tuesdays were.
+   */
+  fee?: number;
 };
+
+/**
+ * Weekly from 20 October 2026, $30 + GST each (James 2026-10-14: "还是确定周二
+ * 日期，且都办"). Listed to mid-December: whether the Christmas and New Year
+ * weeks run is not decided yet.
+ */
+const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01", "2026-12-08", "2026-12-15"];
 
 export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
   { date: "2026-10-13", kind: "tuesday", endHour: 12, cap: 15 },
+  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: 12, cap: 15, fee: 30 })),
 ];
+
+/** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays). */
+export function feeFor(date: string): number | null {
+  return SPECIAL_SESSIONS.find((session) => session.date === date)?.fee ?? null;
+}
 
 /** Whether a date is one of the special sessions above. */
 export function isSpecialSession(date: string): boolean {
@@ -145,10 +164,20 @@ export function isSpecialSession(date: string): boolean {
  * Thursday: offered up to the morning itself, gone once it has ended.
  */
 export function openSpecialSessions(today: string, hour: number): SpecialSession[] {
+  const horizon = new Date(`${today}T00:00:00Z`);
+  horizon.setUTCDate(horizon.getUTCDate() + SPECIAL_HORIZON_DAYS);
+  const last = horizon.toISOString().slice(0, 10);
   return SPECIAL_SESSIONS.filter(
-    (session) => session.date > today || (session.date === today && hour < session.endHour),
+    (session) => (session.date > today || (session.date === today && hour < session.endHour)) && session.date <= last,
   ).sort((a, b) => (a.date < b.date ? -1 : 1));
 }
+
+/**
+ * How far ahead a special session is offered. Tuesdays are weekly from
+ * 2026-10-20 and listed months ahead; offering all of them would put nine
+ * Tuesdays in every signup dropdown. Two weeks = this Tuesday and the next.
+ */
+const SPECIAL_HORIZON_DAYS = 14;
 
 /** `openSpecialSessions` against the real Sydney clock. */
 export function upcomingSpecialSessions(): SpecialSession[] {

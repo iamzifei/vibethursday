@@ -67,6 +67,8 @@ type Receipt = {
   builderRouted: boolean;
   /** Registered for the small class from the form (learners' step 4). */
   classSignup: boolean;
+  /** A paid Build Tuesday: free as a member, or the reference to pay against. */
+  fee: { member: true } | { member: false; ref: string; amount: string } | null;
 };
 
 
@@ -488,6 +490,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         switched?: string[];
         builderRouted?: boolean;
         classSignup?: boolean;
+        fee?: { member: boolean; ref?: string; status?: string; amount?: string };
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -507,6 +510,11 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         remembered: accepted?.remembered === true,
         builderRouted: accepted?.builderRouted === true,
         classSignup: accepted?.classSignup === true,
+        fee: accepted?.fee?.member
+          ? { member: true }
+          : accepted?.fee && typeof accepted.fee.ref === "string" && accepted.fee.status === "pending"
+            ? { member: false, ref: accepted.fee.ref, amount: String(accepted.fee.amount ?? "") }
+            : null,
         // Formatted here, not looked up: on /tuesday the list only has Tuesdays.
         switched: Array.isArray(accepted?.switched)
           ? accepted.switched.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).map((date) => formatSession(date, lang))
@@ -537,6 +545,17 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               {receipt.session} · {receipt.waitlisted ? copy.successTagWaitlist : copy.successTagBooked}
             </span>
             <span className="body-sm" style={{ color: "var(--fg3)" }}>{copy.successPassHint}</span>
+          </div>
+        )}
+        {receipt?.fee?.member && <p>{copy.feeMember}</p>}
+        {receipt?.fee && !receipt.fee.member && (
+          <div className="stack-3">
+            <p style={{ margin: 0 }}>
+              <strong>{copy.feeDue.replace("{amount}", receipt.fee.amount)}</strong>
+            </p>
+            <a className="btn btn--primary btn--block" href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
+              {copy.feeDueCta} →
+            </a>
           </div>
         )}
         {receipt?.waitlisted && !receipt.builderRouted && <p>{copy.waitlistBody}</p>}

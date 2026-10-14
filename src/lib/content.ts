@@ -613,6 +613,10 @@ export const copy = {
       // 周四进了候补、周二还有位子时，成功页上出现。
       tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有 {n} 个位子，在做东西的话可以改到那天：",
       tuesdayOverflowCta: "去改到周二",
+      // A paid Build Tuesday (2026-10-14): the one step left after booking.
+      feeMember: "你是共创会员，这一场免费。",
+      feeDue: "最后一步：转账 {amount}，位子才算确认。",
+      feeDueCta: "去付款",
       // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
@@ -1624,7 +1628,7 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood，周二上午，十来个在做东西的人，打开电脑互相看做的东西。免费。Vibe Thursday 的姊妹场。",
+        description: "悉尼 Chatswood，周二上午的闭门研讨会：十来个在做东西的人，打开电脑互相看做的东西，现场咨询、对接资源。30 澳元 + GST，共创会员免费。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "打开电脑，互相看看在做的东西。",
@@ -1634,7 +1638,7 @@ export const copy = {
         { label: "时间", value: "上午 10:00–12:00" },
         { label: "地点", value: "Chatswood 的一间小会议室，具体地址报名后在群里发" },
         { label: "人数", value: "15 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "免费" },
+        { label: "费用", value: "30 澳元 + GST，报名时转账；共创会员免费" },
       ],
       mapsUrl: "https://maps.google.com/?q=Chatswood+NSW",
       mapsLabel: "在地图上看",
@@ -1649,6 +1653,7 @@ export const copy = {
         "没有台上，也没有投影。大家围着桌子，轮流打开电脑给旁边的人看。",
         "每人大约 5–8 分钟：做了什么、卡在哪、想听什么意见。然后大家一起拆。",
         "带上电脑和充电器。没做完、很粗糙都没关系，卡住的地方最值得聊。",
+        "James 现场做咨询和 Q&A；几个人卡在同一类问题上的，帮你们对接社群里能做的人。",
       ],
       thursdayNote: "周四照常办。同一周的周二和周四只能报一场，报了周二会自动退掉那周的周四。",
       thursdayLink: "看周四的 Vibe Thursday",
@@ -1676,6 +1681,12 @@ export const copy = {
       booked: "已报上",
       waitlisted: "候补第 {n} 位",
       waitlistNote: "候补要收到 James 的通知再来；没收到的话，请改到下一个周四。",
+      // Build Tuesday's fee (2026-10-14): what this row still owes, if anything.
+      feeMember: "共创会员，免费",
+      feeDue: "需转账 {amount}",
+      feeClaimed: "已说转账，等核对",
+      feePaid: "已付",
+      feePay: "去付款",
       none: "你现在没有报以后的场次。",
       past: "以前报过 {n} 场。",
       cancel: "取消这一场",
@@ -2241,6 +2252,9 @@ export const copy = {
       tuesdayHintCta: "Switch to Tuesday",
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has {n} places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
+      feeMember: "You are a member, so this one is free.",
+      feeDue: "One step left: transfer {amount} to confirm your place.",
+      feeDueCta: "Pay now",
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
         { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },
@@ -3087,7 +3101,7 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, Tuesday morning: about a dozen people who build things, laptops open, looking at each other's work. Free. A sister session of Vibe Thursday.",
+        description: "Chatswood, Sydney, a closed Tuesday-morning workshop: about a dozen people who build things, laptops open, looking at each other's work, with consulting and introductions on the spot. A$30 + GST; members free. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
       title: "Open your laptop and show each other what you're building.",
@@ -3097,7 +3111,7 @@ export const copy = {
         { label: "Time", value: "10:00am–12:00" },
         { label: "Where", value: "A small meeting room in Chatswood — the exact address goes to the group after you sign up" },
         { label: "Places", value: "15, then a waitlist (come only once you are told there is room)" },
-        { label: "Cost", value: "Free" },
+        { label: "Cost", value: "A$30 + GST, paid by transfer when you sign up; members free" },
       ],
       mapsUrl: "https://maps.google.com/?q=Chatswood+NSW",
       mapsLabel: "Open in Maps",
@@ -3112,6 +3126,7 @@ export const copy = {
         "No stage and no projector. Everyone sits round the table and takes turns opening their laptop for the people next to them.",
         "About 5–8 minutes each: what you made, where you are stuck, what you want an opinion on. Then everyone digs in.",
         "Bring your laptop and charger. Unfinished and rough is fine — where you are stuck is the best part to talk about.",
+        "James consults and takes questions on the spot; where several people are stuck on the same kind of problem, he introduces you to people in the community who can build it.",
       ],
       thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
       thursdayLink: "See Vibe Thursday",
@@ -3137,6 +3152,11 @@ export const copy = {
       booked: "Booked",
       waitlisted: "Waitlist, #{n}",
       waitlistNote: "Waitlisted people come once James contacts them; if you have not heard, please move to the next Thursday.",
+      feeMember: "Member — free",
+      feeDue: "To pay: {amount}",
+      feeClaimed: "Transfer noted, being checked",
+      feePaid: "Paid",
+      feePay: "Pay",
       none: "You are not down for any upcoming Thursdays.",
       past: "You have signed up for {n} earlier sessions.",
       cancel: "Cancel this one",

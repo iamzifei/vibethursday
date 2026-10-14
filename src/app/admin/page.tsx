@@ -17,6 +17,7 @@ import {
   listAllMembers,
   listCheckins,
   listCourseOrders,
+  listTuesdayFeeDesk,
   listFeedback,
   listLoginStats,
   listOrders,
@@ -32,7 +33,7 @@ import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summa
 import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { formatQuestionList } from "@/lib/session-questions";
 import { walkInMatches } from "@/lib/walk-in-match";
-import { deskSession, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 
@@ -120,6 +121,15 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listLoginStats().catch(() => []),
       listCourseOrders(COURSE.id).catch(() => []),
     ]);
+
+  // Build Tuesday's fee (2026-10-14): today's Tuesday if it is a paid one, and
+  // the paid Tuesdays still open for booking. Counting only fails soft.
+  const feeTuesdays = [...new Set([desk, ...upcomingSpecialSessions().map((special) => special.date)])].filter(
+    (date) => feeFor(date) !== null,
+  );
+  const tuesdayFees = await Promise.all(
+    feeTuesdays.map(async (session) => ({ session, rows: await listTuesdayFeeDesk(session).catch(() => []) })),
+  );
 
   // Whatever host this page was actually opened on, so a code scanned off a
   // phone goes back to the same deployment. Read once: the desk's code and the
@@ -1093,6 +1103,84 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </table>
         </div>
       </section>
+
+      {/* Build Tuesday's fee (2026-10-14): who is booked, who has paid, who
+          is a member. "Paid" is set here by hand once the transfer shows up
+          under their reference; members are free and need nothing. */}
+      {tuesdayFees.length > 0 && (
+        <section className="stack-4" id="tuesday-fees">
+          {tuesdayFees.map(({ session, rows }) => {
+            const owing = rows.filter((row) => !row.member && row.status !== "paid" && row.status !== "waived");
+            return (
+              <div className="stack-3" key={session}>
+                <div className="group-head">
+                  <h2 className="h3">周二收费 · {formatSession(session, "zh")}</h2>
+                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
+                    报名 {rows.length} · 会员 {rows.filter((row) => row.member).length} · 已付 {rows.filter((row) => row.status === "paid").length} · 未付 {owing.length}
+                  </span>
+                </div>
+                {rows.length === 0 ? (
+                  <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名。</p>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">名字</th>
+                          <th scope="col">微信号</th>
+                          <th scope="col">备注编号</th>
+                          <th scope="col">状态</th>
+                          <th scope="col">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row) => (
+                          <tr key={row.signup_id}>
+                            <td>{row.name}</td>
+                            <td className="mono">{row.wechat ?? "—"}</td>
+                            <td className="mono">{row.ref ?? "—"}</td>
+                            <td>
+                              {row.member
+                                ? "会员，免费"
+                                : row.status === "paid"
+                                  ? `已付 ${row.paid_at ?? ""}`
+                                  : row.status === "waived"
+                                    ? "免收"
+                                    : row.claimed_at
+                                      ? <strong style={{ color: "var(--accent)" }}>说已转账 {row.claimed_at}</strong>
+                                      : row.ref
+                                        ? "待付"
+                                        : "待付（还没打开付款页）"}
+                            </td>
+                            <td>
+                              {!row.member && (
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  {(["paid", "waived", "pending"] as const)
+                                    .filter((status) => status !== (row.status ?? "pending"))
+                                    .map((status) => (
+                                      <form method="post" action="/api/admin/tuesday-fee" key={status}>
+                                        <input type="hidden" name="session" value={session} />
+                                        <input type="hidden" name="signupId" value={row.signup_id} />
+                                        <input type="hidden" name="status" value={status} />
+                                        <button className="linkish" type="submit">
+                                          {{ paid: "标已付", waived: "免收", pending: "改回待付" }[status]}
+                                        </button>
+                                      </form>
+                                    ))}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {/* The paid class (2026-10-12): who signed up, and whose transfer has
           arrived. Paid by bank transfer, so "paid" is set here by hand once

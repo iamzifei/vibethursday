@@ -685,6 +685,24 @@ export function ensureSchema(): Promise<void> {
         PRIMARY KEY (signup_id, session)
       )
     `);
+
+    // ── Build Tuesday's fee (2026-10-14, tuesday-fee.ts) ─────────────
+    // One row per person per paid Tuesday: the reference they transfer
+    // against, and whether it has arrived. "paid" is set by hand on /admin,
+    // like the class; "waived" is the organiser letting it go.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session_fees (
+        id          bigserial PRIMARY KEY,
+        session     date NOT NULL,
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        ref         text NOT NULL UNIQUE,
+        status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'waived')),
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        claimed_at  timestamptz,
+        paid_at     timestamptz,
+        UNIQUE (session, signup_id)
+      )
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -3277,6 +3295,15 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
         await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
       }
 
+      // Tuesday fees: move, except a Tuesday `keep` already has one for (that
+      // one stays; the other row's goes with the delete below).
+      await client.query(
+        `UPDATE session_fees SET signup_id = $1::bigint
+          WHERE signup_id = $2::bigint
+            AND session NOT IN (SELECT session FROM session_fees WHERE signup_id = $1::bigint)`,
+        [keep, drop],
+      );
+
       // The organiser's notes on the person, before the delete below cascades
       // them away. Lists are joined; a single value on `keep` wins and the
       // other row's fills a gap; two standing notes are both kept.
@@ -4093,4 +4120,144 @@ export async function countUntaggedAttendees(): Promise<number> {
       WHERE NOT EXISTS (SELECT 1 FROM person_profiles p WHERE p.signup_id = c.signup_id)`,
   );
   return result.rows[0]?.n ?? 0;
+}
+
+/* =============================================================================
+   Build Tuesday's fee (2026-10-14, tuesday-fee.ts)
+============================================================================= */
+
+/**
+ * Whether this person is a member: a paid class order (the year-long
+ * membership's entry), within a year of paying, matched by the signup it was
+ * made from or by WeChat ID — the class form does not always know the signup.
+ */
+export async function isMember(signupId: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query<{ member: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM course_orders o, signups g
+        WHERE g.id = $1::bigint
+          AND o.status = 'paid'
+          AND o.paid_at > now() - interval '1 year'
+          AND (o.signup_id = g.id
+               OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+     ) AS member`,
+    [signupId],
+  );
+  return result.rows[0]?.member ?? false;
+}
+
+/** The fee row for one person and one Tuesday, created on first ask. Signing up twice keeps the first reference. */
+export async function getOrCreateSessionFee(
+  session: string,
+  signupId: string,
+  ref: string,
+): Promise<{ id: string; ref: string; status: "pending" | "paid" | "waived" }> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string; ref: string; status: "pending" | "paid" | "waived" }>(
+    `INSERT INTO session_fees (session, signup_id, ref) VALUES ($1::date, $2::bigint, $3)
+     ON CONFLICT (session, signup_id) DO UPDATE SET session = EXCLUDED.session
+     RETURNING id::text AS id, ref, status`,
+    [session, signupId, ref],
+  );
+  return result.rows[0];
+}
+
+export type SessionFee = {
+  id: string;
+  ref: string;
+  session: string;
+  status: "pending" | "paid" | "waived";
+  name: string;
+  wechat: string | null;
+  claimed_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+  /** Still down for that Tuesday — false once they cancelled. */
+  booked: boolean;
+};
+
+const FEE_SELECT = `
+  SELECT f.id::text AS id, f.ref, to_char(f.session, 'YYYY-MM-DD') AS session, f.status, g.name, g.wechat,
+         to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
+         to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
+         to_char(f.created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
+         (f.session = ANY(g.sessions)) AS booked
+    FROM session_fees f JOIN signups g ON g.id = f.signup_id`;
+
+/** One fee by its payment reference, for the payment page. */
+export async function getSessionFeeByRef(ref: string): Promise<SessionFee | null> {
+  await ensureSchema();
+  const result = await getPool().query<SessionFee>(`${FEE_SELECT} WHERE f.ref = $1`, [ref]);
+  return result.rows[0] ?? null;
+}
+
+/** "I've transferred": records when, for a pending fee only. Never marks anything paid. */
+export async function claimSessionFee(ref: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `UPDATE session_fees SET claimed_at = coalesce(claimed_at, now()) WHERE ref = $1 AND status = 'pending'`,
+    [ref],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Every fee for the given Tuesdays, for /admin. */
+export async function listSessionFees(sessions: string[]): Promise<SessionFee[]> {
+  await ensureSchema();
+  if (sessions.length === 0) return [];
+  const result = await getPool().query<SessionFee>(
+    `${FEE_SELECT} WHERE f.session = ANY($1::date[]) ORDER BY f.session, f.created_at`,
+    [sessions],
+  );
+  return result.rows;
+}
+
+/** Marks a fee paid, waived, or back to pending. */
+export async function setSessionFeeStatus(id: string, status: "pending" | "paid" | "waived"): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE session_fees SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END WHERE id = $1::bigint`,
+    [id, status],
+  );
+}
+
+/** One person booked on a paid Tuesday, with where their fee stands — the organiser's door list. */
+export type TuesdayFeeRow = {
+  signup_id: string;
+  name: string;
+  wechat: string | null;
+  member: boolean;
+  fee_id: string | null;
+  ref: string | null;
+  status: "pending" | "paid" | "waived" | null;
+  claimed_at: string | null;
+  paid_at: string | null;
+};
+
+/**
+ * Everyone booked on a Tuesday, whether or not a fee row exists yet: someone
+ * who moved a Thursday onto it, or came off its waitlist, has none until they
+ * open /my. Members first flagged, so the list reads "who still owes".
+ */
+export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<TuesdayFeeRow>(
+    `SELECT g.id::text AS signup_id, g.name, g.wechat,
+            EXISTS (
+              SELECT 1 FROM course_orders o
+               WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+                 AND (o.signup_id = g.id
+                      OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+            ) AS member,
+            f.id::text AS fee_id, f.ref, f.status,
+            to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
+            to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at
+       FROM signups g
+       LEFT JOIN session_fees f ON f.signup_id = g.id AND f.session = $1::date
+      WHERE $1::date = ANY(g.sessions)
+      ORDER BY g.created_at`,
+    [session],
+  );
+  return result.rows;
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, getMySignup, getSignupProfile, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
+import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
+import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { parseInterest } from "@/lib/signup-interest";
-import { bookableSessions, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, builderToWaitlist, capFor, isBuilderPurpose } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -315,6 +316,26 @@ export async function POST(request: Request) {
     }
   }
 
+  // A paid Tuesday (2026-10-14): members come free; everyone else gets a
+  // reference to transfer against, the same one if they sign up again. Only
+  // once actually booked — a waitlisted place is not charged until it is one.
+  // Never fatal: a booking whose fee could not be set up is still a booking,
+  // and the organiser sees it on the door list.
+  let fee: FeeReceipt | undefined;
+  if (firstSession && !waitlisted && feeFor(firstSession) !== null) {
+    try {
+      fee = (await isMember(signupId))
+        ? { member: true }
+        : {
+            member: false,
+            ...(({ ref, status }) => ({ ref, status }))(await getOrCreateSessionFee(firstSession, signupId, newFeeRef())),
+            amount: `A$${feeToPay(feeFor(firstSession)!)}`,
+          };
+    } catch (error) {
+      console.error("[signup] booked, but could not set up the Tuesday fee", error);
+    }
+  }
+
   if (publishCard && profileUpdated) {
     try {
       await publishCardForSignup(signupId);
@@ -377,7 +398,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

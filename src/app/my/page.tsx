@@ -8,9 +8,10 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
-import { getMySignup, type MySignup } from "@/lib/db";
+import { getMySignup, getOrCreateSessionFee, isMember, type MySignup } from "@/lib/db";
+import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
-import { bookableSessions, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -174,6 +175,28 @@ export default async function MyPage({ searchParams }: PageProps) {
   const pastCount = mine.sessions.filter((s) => !canChangeSession(s, today)).length;
 
   const held = new Set(upcoming.map((entry) => entry.session));
+
+  // Paid Tuesdays this person is booked on, and what each still owes. Here as
+  // well as on the signup confirmation because a Tuesday is also reached by
+  // moving a Thursday or coming off the waitlist, and neither passes through
+  // the signup form. A failed lookup leaves the row without the line.
+  const fees = new Map<string, { member: true } | { member: false; ref: string; status: string }>();
+  const paidTuesdays = upcoming.filter((entry) => entry.position === null && feeFor(entry.session) !== null);
+  if (paidTuesdays.length > 0) {
+    try {
+      const member = await isMember(mine.id);
+      for (const entry of paidTuesdays) {
+        if (member) {
+          fees.set(entry.session, { member: true });
+          continue;
+        }
+        const fee = await getOrCreateSessionFee(entry.session, mine.id, newFeeRef());
+        fees.set(entry.session, { member: false, ref: fee.ref, status: fee.status });
+      }
+    } catch (error) {
+      console.error("[my] could not read the Tuesday fees", error);
+    }
+  }
   const choices = bookableSessions(6).filter((session) => !held.has(session));
 
   // Only well-formed dates from the address bar; anything else is ignored.
@@ -225,6 +248,18 @@ export default async function MyPage({ searchParams }: PageProps) {
                   </span>
                 </div>
                 {entry.position !== null && <p className="field-hint">{t.waitlistNote}</p>}
+                {(() => {
+                  const fee = fees.get(entry.session);
+                  if (!fee) return null;
+                  if (fee.member) return <p className="field-hint">{t.feeMember}</p>;
+                  if (fee.status === "paid" || fee.status === "waived") return <p className="field-hint">{t.feePaid}</p>;
+                  return (
+                    <p className="body-sm" style={{ margin: 0 }}>
+                      {fill(t.feeDue, { amount: `A$${feeToPay(feeFor(entry.session)!)}` })} ·{" "}
+                      <a href={`/tuesday/pay?ref=${fee.ref}`}>{t.feePay} →</a>
+                    </p>
+                  );
+                })()}
 
                 <div className="my-row__actions">
                   {choices.length > 0 && (
