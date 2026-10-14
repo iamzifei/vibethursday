@@ -17,7 +17,7 @@ type PageProps = {
 };
 
 export const metadata: Metadata = {
-  title: `${COURSE.title} · Vibe Thursday`,
+  title: `Vibe Thursday 共创会员 · ${COURSE.title}`,
   // Shared by link in the group and on Moments; not something to rank for,
   // and Thursdays stay the face of this site.
   robots: { index: false },
@@ -176,9 +176,36 @@ export default async function ClassPage({ searchParams }: PageProps) {
             ) : (
               // ── Not signed up yet ─────────────────────────────────────
               <>
+                {/* The membership first, the class as its first step (James
+                    2026-10-14): what is worth paying for is a year of people
+                    and getting things built, not four hours of content. */}
                 <div className="stack-4">
-                  <span className="eyebrow">§ 精品小班课 · {COURSE.dateLabel}</span>
-                  <h1>{COURSE.title}</h1>
+                  <span className="eyebrow">§ Vibe Thursday 共创会员 · 一年</span>
+                  <h1>Vibe Thursday 共创会员</h1>
+                  <p className="body-lg">
+                    一年时间，和悉尼一群用 AI 做生意、做产品的人在一起，把 AI 真正落地到你的生意里。从 {COURSE.dateLabel}的「{COURSE.title}」开始。
+                  </p>
+                </div>
+
+                <div className="card card--accent stack-3">
+                  <h2 className="h3">加入以后，这一年你有什么</h2>
+                  <ul className="stack-3" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
+                    <li><strong>1　入会第一课：{COURSE.title}</strong><br />{COURSE.dateLabel}，4 小时实战，带着你的生意来，装好一个懂你生意的 AI 助理，写出一张能开工的需求单。课后一对一咨询。详情在下面</li>
+                    <li><strong>2　周二闭门研讨会，全年免费</strong><br />每周二上午，十来个人打开电脑讲自己在做的事：项目落地交流、现场咨询答疑、对接资源。不是会员单次 30 澳元 + GST</li>
+                    <li><strong>3　共性需求，我们免费做出来</strong><br />会员的需求单我们都会看，很多人都有的刚需，挑出来做成能直接用的 AI 工具，并协助启动</li>
+                    <li><strong>4　复杂需求，对接社群里靠谱的人</strong><br />做产品、做推广这类大活，优先介绍社群里做过、靠得住的人</li>
+                    <li><strong>5　一年的圈子</strong><br />会员群和线下交流，和一群在把 AI 用进生意的人一起往前走</li>
+                    <li><strong>6　另送一年 AI 创始人 IP 会员</strong>（价值 365 澳元）<br />用 AI 做自媒体、做内容获客，详情在下面</li>
+                  </ul>
+                  <p style={{ margin: 0 }}>社群产生的收益，会用在社群活动和对大家的激励上。</p>
+                  <p className="body-lg" style={{ margin: 0 }}>
+                    <strong>入会：{COURSE.priceLabel}，一年</strong>　<a href="#class-signup">去报名 ↓</a>
+                  </p>
+                </div>
+
+                <div className="stack-2">
+                  <span className="eyebrow">§ 入会第一课 · {COURSE.dateLabel}</span>
+                  <h2>{COURSE.title}</h2>
                   <p className="body-lg">
                     老板要的不是 AI，是用 AI 降本增效、获客成交。不讲空泛概念，带着你自己的生意来，4 小时边学边练，带走一个懂你生意的 AI 助理。
                   </p>
@@ -293,7 +320,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <div className="card stack-3">
                   <h2 className="h3">599 买的是什么，送的 365 又是什么</h2>
                   <p style={{ margin: 0 }}>
-                    <strong>599 澳元 + GST</strong>：这一上午的课、课后 15 分钟一对一咨询，和彩蛋的机会。
+                    <strong>599 澳元 + GST</strong>：一年的 Vibe Thursday 共创会员。包括这一上午的课、课后 15 分钟一对一咨询、彩蛋的机会、全年周二闭门研讨会，和上面列的其他会员权益。
                   </p>
                   <p style={{ margin: 0 }}>
                     <strong>另送一年 AI 创始人 IP 会员（价值 365 澳元）</strong>：这门课讲用 AI 理生意；会员讲用 AI 做自媒体、做内容获客，让更多人认识你。想用 AI 做内容、持续获客的，主要在会员里学。会员包括：
@@ -319,12 +346,13 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
                 </div>
 
+                <h2 className="h3" id="class-signup">报名入会</h2>
                 <p className="body-lg">
-                  时间：{COURSE.dateLabel}，{COURSE.timeLabel}
+                  第一课：{COURSE.dateLabel}，{COURSE.timeLabel}
                   <br />
                   地点：{COURSE.placeLabel}
                   <br />
-                  费用：{COURSE.priceLabel}，银行转账
+                  入会：{COURSE.priceLabel}（一年），银行转账
                   <br />
                   席位有限，报满即止
                 </p>
