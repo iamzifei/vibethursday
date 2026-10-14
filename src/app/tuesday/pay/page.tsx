@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy } from "@/lib/content";
@@ -82,7 +83,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                         <pre className="body" style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{paymentInfo}</pre>
                       ) : (
                         <p className="body" style={{ margin: 0 }}>
-                          转账信息请私信 James 获取（<a href="/#contact">微信二维码</a>）。
+                          转账信息请私信 James 获取（<Link href="/#contact">微信二维码</Link>）。
                         </p>
                       )}
                     </div>
