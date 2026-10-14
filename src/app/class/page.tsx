@@ -180,8 +180,18 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <span className="eyebrow">§ 精品小班课 · {COURSE.dateLabel}</span>
                   <h1>{COURSE.title}</h1>
                   <p className="body-lg">
-                    给听过 AI、但不知道它在自己生意里能干什么的老板。不讲概念，带着你自己的生意来。
+                    老板要的不是 AI，是用 AI 降本增效、获客成交。不讲空泛概念，带着你自己的生意来，4 小时边学边练，带走一个懂你生意的 AI 助理。
                   </p>
+                </div>
+
+                <div className="card card--accent stack-3">
+                  <h2 className="h3">先看这门课适不适合你</h2>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li><strong>适合谁</strong>：自己做生意的老板和创业者，房产、贷款、建筑装修、餐饮、门店、电商外贸、教育咨询都行。听过 AI、可能也用过，但生意还是老样子</li>
+                    <li><strong>要什么基础</strong>：会用微信、会打字就够了。不用懂技术，不写代码</li>
+                    <li><strong>解决什么问题</strong>：你生意里那件最费时间的事（回客人消息、写文案、整理资料、找客人），AI 到底能接多少、怎么接、接到什么程度算好</li>
+                    <li><strong>不太适合谁</strong>：已经自己在做 AI 产品、写代码的朋友。这门课偏入门，周四局更适合你</li>
+                  </ul>
                 </div>
 
                 <div className="card stack-3">
@@ -193,6 +203,30 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     <li>能不能有一个 AI 客服，帮我回客人消息？</li>
                   </ul>
                   <p style={{ margin: 0 }}>这门课就是冲着这些问题来的。</p>
+                </div>
+
+                <div className="card stack-3">
+                  <h2 className="h3">举个例子：一位做装修的老板，这一上午做了什么</h2>
+                  <p className="hint" style={{ margin: 0 }}>课上用的示范，不是真实客户。你带来的会是你自己的事。</p>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li><strong>原来怎么做</strong>：客人在微信、小红书私信里问。白天在工地顾不上，晚上一条条回。「大概多少钱一平」「多久能完工」「有没有做过类似的」，这几句每天要回好几遍</li>
+                    <li><strong>卡在哪</strong>：回慢了，客人转头就去问别家。想过请人帮着回，可新人不懂行，报错价更麻烦</li>
+                    <li><strong>课上做成什么</strong>：一张需求单。要交给 AI 的事是回新客人的第一轮咨询；做到常见问题当天有回复、说法跟他本人一致就算好；要用的资料是价格区间、做过的案例和常见问答；具体报价、工期承诺和折扣必须他拍板，AI 只起草，不替他发</li>
+                    <li><strong>回去用在哪</strong>：把常见问答和价格区间交给助理，客人的问题贴进去，它出草稿，他看一眼再发（客人的电话、地址不用贴）。想做成客人一来消息就自动回，拿着这张需求单去找人做，可以直接开工。写得清楚的，还有机会被挑中，我们免费做出来</li>
+                  </ul>
+                </div>
+
+                <div className="card stack-3">
+                  <h2 className="h3">课程大纲：这四个小时，你亲手做什么</h2>
+                  <ul className="stack-3" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
+                    <li><strong>9:00　AI 能干什么、不能干什么</strong><br />把 AI 能接的活分成四类：搬运、归类、生成、拍板，哪些今天就能交，哪些不能交。你先在卡片上写下自己生意里最头疼的一件事</li>
+                    <li><strong>9:40　装好你的 AI 助理</strong><br />现场装在你的电脑和手机上，告诉它你做什么生意、客人是谁，再用那件头疼的事问它。带走：它回答你生意问题的截图</li>
+                    <li><strong>10:40　茶歇</strong></li>
+                    <li><strong>11:00　写你的需求单</strong>（今天最重要的一段）<br />助理一格一格问你：哪件事、现在谁在做、每周花多久、做成什么样算好、用到哪些资料、值多少。带走：一张填好的需求单</li>
+                    <li><strong>12:00　交给 AI 之前，先对一遍</strong><br />两个真实的翻车案，和四条线：拍板的事不交、对客人的承诺你本人看过再发、客人隐私先遮掉、数字人名日期对原件</li>
+                    <li><strong>12:20　下课以后</strong><br />约好一对一咨询，讲清楚彩蛋怎么挑、会员有哪些权益</li>
+                    <li><strong>12:40　答疑、合影，13:00 结束</strong></li>
+                  </ul>
                 </div>
 
                 <div className="card card--accent stack-3">
@@ -221,12 +255,12 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>2　一张需求单</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>2　一张需求单：把生意问题变成 AI 能接的任务</h3>
                     <p style={{ margin: 0 }}>
                       很多老板说「帮我弄个 AI」。这句话谁都没法开工，因为不知道要做什么。
                     </p>
                     <p style={{ margin: 0 }}>
-                      课上你挑一件最想交给 AI 的事，回客人消息、整理客户资料、做内容都行。助理会一格一格问你：这件事现在谁在做？每周花多少时间？做成什么样算好？答完，就是一张需求单。以后不管找谁做 AI，都用得上。
+                      课上你挑一件最想交给 AI 的事：回客人消息、写营销文案、把产品和报价整理成 AI 能查的资料、日常重复的杂事，都行。助理会一格一格问你：这件事现在谁在做？每周花多少时间？做成什么样算好？答完，就是一张需求单。以后不管找谁做 AI，都用得上。
                     </p>
                   </div>
 
@@ -248,20 +282,6 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </div>
 
                 <div className="card stack-3">
-                  <h2 className="h3">当天大致安排</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                    <li><strong>9:00</strong>　开始：先弄清楚 AI 能干什么、不能干什么</li>
-                    <li><strong>9:40</strong>　装好你的 AI 助理，用你自己的生意问它</li>
-                    <li><strong>10:40</strong>　茶歇</li>
-                    <li><strong>11:00</strong>　写你的需求单</li>
-                    <li><strong>12:00</strong>　交给 AI 之前要注意的事：客人隐私、对客人的承诺</li>
-                    <li><strong>12:20</strong>　一对一咨询怎么约、彩蛋怎么挑、会员有哪些权益</li>
-                    <li><strong>12:40</strong>　答疑、合影</li>
-                    <li><strong>13:00</strong>　结束</li>
-                  </ul>
-                </div>
-
-                <div className="card stack-3">
                   <h2 className="h3">要准备什么</h2>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
                     <li>建议带上笔记本电脑，充好电；手机也带上</li>
@@ -271,9 +291,15 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </div>
 
                 <div className="card stack-3">
-                  <h2 className="h3">报名送一年 AI 创始人 IP 会员（价值 365 澳元）</h2>
+                  <h2 className="h3">599 买的是什么，送的 365 又是什么</h2>
+                  <p style={{ margin: 0 }}>
+                    <strong>599 澳元 + GST</strong>：这一上午的课、课后 15 分钟一对一咨询，和彩蛋的机会。
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    <strong>另送一年 AI 创始人 IP 会员（价值 365 澳元）</strong>：这门课讲用 AI 理生意；会员讲用 AI 做自媒体、做内容获客，让更多人认识你。想用 AI 做内容、持续获客的，主要在会员里学。会员包括：
+                  </p>
                   <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体 IP</li>
+                    <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体内容、获客</li>
                     <li>会员专属线下活动和聚会</li>
                     <li>周四局会员专属留位</li>
                     <li>一年会员群：AI 资讯和答疑</li>
@@ -286,6 +312,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <h2 className="h3">常见问题</h2>
                   <div className="stack-3">
                     <p style={{ margin: 0 }}><strong>我完全不懂 AI，能跟上吗？</strong><br />能。每一步都跟着做，卡住了举手，我们过来帮你。</p>
+                    <p style={{ margin: 0 }}><strong>我主要想用 AI 做内容、获客，这门课管用吗？</strong><br />课上你可以把「做内容」这件事写成需求单，用助理把选题、文案这一步理清楚。系统地讲用 AI 做自媒体获客，是送你的一年会员里的公开课。两个加起来正好接上。</p>
                     <p style={{ margin: 0 }}><strong>要带电脑吗？</strong><br />建议带上笔记本电脑，课上操作更方便。实在没有，用手机也能跟。</p>
                     <p style={{ margin: 0 }}><strong>用中文上课吗？</strong><br />是，全程中文。</p>
                     <p style={{ margin: 0 }}><strong>我生意上的事，会被其他人听到吗？</strong><br />课上的练习在你自己的手机上做。具体的生意问题，留到一对一咨询里说，只有你和我。</p>
