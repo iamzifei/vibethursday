@@ -1176,7 +1176,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
         {pledges && (
           <p className="body-sm">
-            到场点单：饮品 {pledges.drink}（已提前交给吧台）· 简餐 {pledges.food} · 没选 {pledges.none}
+            到场点单：饮品 {pledges.drink} · 简餐 {pledges.food} · 没选 {pledges.none}
             <span style={{ color: "var(--fg3)" }}>（「没选」多是规则上线前报名的人，开场提醒一句）</span>
           </p>
         )}

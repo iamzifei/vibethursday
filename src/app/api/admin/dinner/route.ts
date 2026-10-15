@@ -33,6 +33,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  await setDinnerStatus(id, status);
+  try {
+    await setDinnerStatus(id, status);
+  } catch {
+    return NextResponse.json({ error: "bad_id" }, { status: 400 });
+  }
   return NextResponse.redirect(new URL("/admin#dinner", await requestOrigin()), 303);
 }

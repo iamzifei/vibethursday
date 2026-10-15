@@ -473,7 +473,7 @@ export const copy = {
         venuePledge: "到场你会点什么？",
         venuePledgePick: "选一样",
         venuePledgeFood: "到了点吃的（简餐）",
-        venuePledgeHint: "免费参加。每人到场在店里点一份，这是我们和场地的约定。选了饮品的会提前交给吧台，到了报名字付钱。",
+        venuePledgeHint: "免费参加，到场每人在店里点一份。选了饮品的会提前交给吧台，到了报名字付钱。",
         // 散场聚餐（2026-10-15）：可选、付费占座、统一价、几样菜式。
         dinner: "散场后留下聚餐（{price} 澳元，含 GST，限 {cap} 席）",
         dinnerDish: "选一个菜式",
@@ -655,6 +655,7 @@ export const copy = {
       dinnerDue: "聚餐占座：去付款，付了才算占上。",
       dinnerDueCta: "去付聚餐的钱",
       dinnerWaitlist: "聚餐席位已满，你在候补名单上，有空位会微信通知你。",
+      dinnerSkipped: "这一场周四你在候补，聚餐要等报上之后再订。",
       // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
@@ -2202,7 +2203,7 @@ export const copy = {
         venuePledge: "What will you order at the venue?",
         venuePledgePick: "Pick one",
         venuePledgeFood: "Something to eat, ordered there",
-        venuePledgeHint: "Free to attend. Everyone orders one thing from the venue; that is our arrangement with them. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
+        venuePledgeHint: "Free to attend; everyone orders one thing from the venue. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
         dinner: "Stay for dinner afterwards (A${price} incl. GST, {cap} seats)",
         dinnerDish: "Pick a dish",
         dinnerHint: "{place}, {time}. Everyone gets a one-minute introduction, then one question each, so everyone has the same time. A seat is held once paid; no refunds, but you can pass it to someone else.",
@@ -2327,6 +2328,7 @@ export const copy = {
       dinnerDue: "Dinner seat: pay to hold it.",
       dinnerDueCta: "Pay for dinner",
       dinnerWaitlist: "Dinner is full; you're on the waitlist and we'll message you if a seat opens.",
+      dinnerSkipped: "You're on Thursday's waitlist, so dinner can be booked once you have a place.",
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
         { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },

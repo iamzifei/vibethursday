@@ -74,7 +74,7 @@ type Receipt = {
   /** A paid Build Tuesday: free as a member, or the reference to pay against. */
   fee: { member: true } | { member: false; ref: string; amount: string } | null;
   /** A dinner seat taken with this signup: pay against the reference, or waitlisted. */
-  dinner: { ref: string; waitlist: boolean } | null;
+  dinner: { ref: string; waitlist: boolean } | { skipped: true } | null;
 };
 
 
@@ -505,7 +505,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         builderRouted?: boolean;
         classSignup?: boolean;
         fee?: { member: boolean; ref?: string; status?: string; amount?: string };
-        dinner?: { ref?: string; status?: string };
+        dinner?: { ref?: string; status?: string; skipped?: string };
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -530,7 +530,9 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
           : accepted?.fee && typeof accepted.fee.ref === "string" && accepted.fee.status === "pending"
             ? { member: false, ref: accepted.fee.ref, amount: String(accepted.fee.amount ?? "") }
             : null,
-        dinner: typeof accepted?.dinner?.ref === "string" ? { ref: accepted.dinner.ref, waitlist: accepted.dinner.status === "waitlist" } : null,
+        dinner: typeof accepted?.dinner?.ref === "string"
+          ? { ref: accepted.dinner.ref, waitlist: accepted.dinner.status === "waitlist" }
+          : accepted?.dinner?.skipped ? { skipped: true } : null,
         // Formatted here, not looked up: on /tuesday the list only has Tuesdays.
         switched: Array.isArray(accepted?.switched)
           ? accepted.switched.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).map((date) => formatSession(date, lang))
@@ -574,7 +576,8 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             </a>
           </div>
         )}
-        {receipt?.dinner && (
+        {receipt?.dinner && "skipped" in receipt.dinner && <p>{copy.dinnerSkipped}</p>}
+        {receipt?.dinner && "ref" in receipt.dinner && (
           <div className="stack-2">
             <p style={{ margin: 0 }}><strong>{receipt.dinner.waitlist ? copy.dinnerWaitlist : copy.dinnerDue}</strong></p>
             {!receipt.dinner.waitlist && (
@@ -1091,9 +1094,8 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                     </div>
                   )}
                   <p className="field-hint">{copy.fields.openingShareHint}</p>
-                  {/* Everyone orders one thing at the venue (James 2026-10-15):
-                      the café hosts forty people for a morning. A drink chosen
-                      here is pre-ordered for the bar; food is ordered there. */}
+                  {/* Everyone orders one thing at the venue (2026-10-15). A drink
+                      chosen here is pre-ordered for the bar; food is ordered there. */}
                   <div>
                     <label className="label" htmlFor={fieldId("venuePledge")}>{copy.fields.venuePledge}</label>
                     <select className="field" id={fieldId("venuePledge")} name="venuePledge" required defaultValue="">

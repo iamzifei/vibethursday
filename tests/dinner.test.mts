@@ -57,6 +57,10 @@ test(
       const again = await bookDinner({ session, signupId: a, dish: "y", ref: newDinnerRef(), cap: 2 });
       assert.equal(again.ref, first.ref, "same seat, same reference");
       assert.equal((await listDinner(session)).find((row) => row.ref === first.ref)?.dish, "y");
+      // Cancelling the Thursday frees an unpaid seat, so it no longer counts against the cap.
+      const { cancelSession } = await import("../src/lib/db.ts");
+      await cancelSession(a, session);
+      assert.equal((await listDinner(session)).find((row) => row.ref === first.ref)?.status, "cancelled");
     } finally {
       await pool.query(`DELETE FROM signups WHERE id = ANY($1::bigint[])`, [made]).catch(() => {});
       await pool.end();

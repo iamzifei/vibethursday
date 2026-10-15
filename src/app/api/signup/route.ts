@@ -316,7 +316,7 @@ export async function POST(request: Request) {
   // bar, updating this person's order for that morning if there is one. Only
   // on their own row, never fatal.
   const pledgeRaw = clean(body.venuePledge, 40);
-  if (firstSession && !isSpecialSession(firstSession) && profileUpdated && pledgeRaw) {
+  if (firstSession && !isSpecialSession(firstSession) && !waitlisted && profileUpdated && pledgeRaw) {
     const priced = pledgeRaw === "food" ? null : priceOrder(VENUE_MENU, pledgeRaw, "small");
     if (pledgeRaw === "food" || priced) {
       try {
@@ -345,7 +345,7 @@ export async function POST(request: Request) {
   // the morning itself, with a dish from the configured list. Same gate as the
   // fee: only on their own row, so a typed-in WeChat ID cannot take or see
   // someone else's seat. Never fatal.
-  let dinner: { ref: string; status: string } | undefined;
+  let dinner: { ref: string; status: string } | { skipped: "waitlisted" } | undefined;
   const dinnerOffer = dinnerConfig();
   const dishRaw = clean(body.dinnerDish, 20);
   if (dinnerOffer && dishRaw && firstSession && !isSpecialSession(firstSession) && !waitlisted && profileUpdated && dinnerOffer.dishes.some((d) => d.id === dishRaw)) {
@@ -354,6 +354,9 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("[signup] booked, but the dinner seat did not", error);
     }
+  } else if (dinnerOffer && dishRaw && waitlisted && profileUpdated) {
+    // A dinner seat needs a place on the morning; say so instead of dropping it.
+    dinner = { skipped: "waitlisted" };
   }
 
   // One morning a week (James 2026-10-05): signing up for a week's Tuesday

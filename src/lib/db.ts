@@ -3332,7 +3332,20 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
         await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
       }
 
-      // Dinner seats: move, except a Thursday `keep` already has one for.
+      // Dinner seats: move, except a Thursday `keep` already has one for. When
+      // both have one, a paid seat wins over an unpaid one.
+      await client.query(
+        `DELETE FROM dinner_orders k USING dinner_orders d
+          WHERE k.signup_id = $1::bigint AND d.signup_id = $2::bigint AND k.session = d.session
+            AND k.status <> 'paid' AND d.status = 'paid'`,
+        [keep, drop],
+      );
+      await client.query(
+        `UPDATE session_shares SET signup_id = $1::bigint
+          WHERE signup_id = $2::bigint
+            AND session NOT IN (SELECT session FROM session_shares WHERE signup_id = $1::bigint)`,
+        [keep, drop],
+      );
       await client.query(
         `UPDATE dinner_orders SET signup_id = $1::bigint
           WHERE signup_id = $2::bigint
@@ -3667,8 +3680,22 @@ export async function cancelSession(signupId: string, session: string): Promise<
         SET sessions = array_remove(sessions, $2::date),
             waitlist = array_remove(waitlist, $2::date),
             waitlist_since = waitlist_since - ($2::date::text),
+            venue_pledges = venue_pledges - ($2::date::text),
             updated_at = now()
       WHERE id = $1::bigint`,
+    [signupId, session],
+  );
+  // What hung off that morning goes with it (2026-10-15): not picked to open,
+  // no drink waiting at the bar, and an unpaid dinner seat freed. A paid seat
+  // stays: it is not refunded, and can be passed to someone else.
+  await getPool().query(`DELETE FROM session_shares WHERE signup_id = $1::bigint AND session = $2::date`, [signupId, session]);
+  await getPool().query(
+    `DELETE FROM drink_orders d USING signups g
+      WHERE g.id = $1::bigint AND d.session = $2::date AND g.wechat IS NOT NULL AND lower(d.wechat) = lower(g.wechat)`,
+    [signupId, session],
+  );
+  await getPool().query(
+    `UPDATE dinner_orders SET status = 'cancelled' WHERE signup_id = $1::bigint AND session = $2::date AND status IN ('pending', 'waitlist')`,
     [signupId, session],
   );
 }
@@ -4369,7 +4396,7 @@ export async function setSessionShare(session: string, signupId: string, picked:
 export async function listSessionShares(session: string): Promise<{ name: string; topic: string | null }[]> {
   await ensureSchema();
   const result = await getPool().query<{ name: string; topic: string | null }>(
-    `SELECT g.name, coalesce(nullif(g.share_topic, ''), g.building) AS topic
+    `SELECT g.name, nullif(g.share_topic, '') AS topic
        FROM session_shares x JOIN signups g ON g.id = x.signup_id
       WHERE x.session = $1::date
       ORDER BY x.position`,
