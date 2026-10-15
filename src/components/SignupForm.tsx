@@ -115,6 +115,10 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   // Step 2's answer, read back from the uncontrolled radios: it decides which
   // questions steps 3 and 4 show. The form still reads itself with FormData.
   const [pickedPurpose, setPickedPurpose] = useState<string | null>(null);
+  // The date picked in step 4, so the opening-share question can follow it:
+  // asked for a Thursday, not for a Tuesday (where everyone demos anyway).
+  const [chosenSession, setChosenSession] = useState<string | null>(null);
+  const [shareChoice, setShareChoice] = useState<string | null>(null);
   // Learners (step 2 = "learn") are pointed at the paid small class first
   // (James 2026-10-06); "thursday" is their way to sign up for a morning anyway.
   const [learnChoice, setLearnChoice] = useState<"class" | "thursday">("class");
@@ -400,6 +404,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           wechat,
           building,
           demoIntent: data.get("demoIntent"),
+          shareTopic: data.get("shareTopic"),
           topic: data.get("topic"),
           firstSession: data.get("firstSession"),
           // getAll, not get: this is a checkbox group and `get` would silently
@@ -964,22 +969,6 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
               </div>
             )}
 
-            {pickedPurpose === "product" && (
-              /* Stored as yes / maybe / listen — signup-stats.ts and /admin
-                 count on those values. No default any more: "listen" used to
-                 be pre-ticked, and most answers were just that default. */
-              <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-                <legend className="label">{copy.fields.demoProduct}</legend>
-                <div className="choice-group choice-group--compact">
-                  {copy.fields.demoOptions.map((option) => (
-                    <label className="choice" key={option.value}>
-                      <input type="radio" name="demoIntent" value={option.value} />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            )}
 
             {pickedPurpose === "learn" && (
               /* "I build AI products" is left out: not something a beginner says. */
@@ -1028,8 +1017,9 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                 id={fieldId("session")}
                 name="firstSession"
                 ref={sessionRef}
-                onChange={() => {
+                onChange={(event) => {
                   sessionTouched.current = true;
+                  setChosenSession(event.target.value);
                 }}
                 // Builders: the first open Build Tuesday. Everyone else: the
                 // nearest Thursday, full or not — a full date says so in its
@@ -1055,6 +1045,36 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                 <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommended}</p>
               )}
             </div>
+
+            {/* Thursday opens with members sharing, not the organiser (2026-10-15).
+                Asked of everyone booking a Thursday, whatever they came for.
+                Stored as yes / maybe / listen in demo_intent — signup-stats.ts
+                and /admin count on those values. No default. */}
+            {(() => {
+              const picked = chosenSession ?? suggestedSession(pickedPurpose);
+              const thursday = picked && picked !== "none" && !sessions.find((session) => session.value === picked)?.tuesday;
+              if (!thursday) return null;
+              return (
+                <fieldset style={{ border: 0, padding: 0, margin: 0 }} className="stack-3">
+                  <legend className="label">{copy.fields.openingShare}</legend>
+                  <div className="choice-group choice-group--compact">
+                    {copy.fields.openingShareOptions.map((option) => (
+                      <label className="choice" key={option.value}>
+                        <input type="radio" name="demoIntent" value={option.value} onChange={() => setShareChoice(option.value)} />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {(shareChoice === "yes" || shareChoice === "maybe") && (
+                    <div>
+                      <label className="label" htmlFor={fieldId("shareTopic")}>{copy.fields.openingShareTopic}</label>
+                      <input className="field" id={fieldId("shareTopic")} name="shareTopic" maxLength={200} placeholder={copy.fields.openingShareTopicPlaceholder} />
+                    </div>
+                  )}
+                  <p className="field-hint">{copy.fields.openingShareHint}</p>
+                </fieldset>
+              );
+            })()}
 
             {/* The one field that says what someone actually wants from the morning,
                 and the one most often too vague to act on ("想了解了解"). The coach

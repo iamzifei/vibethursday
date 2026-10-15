@@ -5,7 +5,7 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
-import { getMemberById, getMySignup, getOrder, getSessionQuestions, signupCountsBySession } from "@/lib/db";
+import { getMemberById, getMySignup, getOrder, getSessionQuestions, listSessionShares, signupCountsBySession } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { SESSION_CAP } from "@/lib/capacity";
 import { questionsMode } from "@/lib/session-questions";
@@ -165,6 +165,9 @@ export default async function GoPage({ searchParams }: PageProps) {
   // never disagree with it. Found by its map link, not by position.
   const venue = c.hero.facts.find((fact) => fact.href?.includes("maps.google"));
   const shownDate = phase === "after" ? nextThursdays(1)[0] : session;
+  // Who opens the morning (2026-10-15): picked on /admin. Names and what they
+  // will share only. A failed read just leaves the card out.
+  const shares = phase === "after" ? [] : await listSessionShares(session).catch(() => []);
 
   return (
     <div lang={c.htmlLang}>
@@ -217,6 +220,19 @@ export default async function GoPage({ searchParams }: PageProps) {
                     </>
                   )}
                 </p>
+              )}
+              {shares.length > 0 && (
+                <div className="card stack-2">
+                  <h2 className="h3" style={{ margin: 0 }}>{t.sharesTitle}</h2>
+                  <ol className="stack-1" style={{ margin: 0, paddingLeft: "1.3em" }}>
+                    {shares.map((share) => (
+                      <li key={share.name}>
+                        <strong>{share.name}</strong>
+                        {share.topic && <span style={{ color: "var(--fg2)" }}> · {share.topic.slice(0, 60)}</span>}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               )}
               {phase !== "after" && member?.sessions.includes(session) && (
                 <p className="body-sm" style={{ color: "var(--accent)" }}>

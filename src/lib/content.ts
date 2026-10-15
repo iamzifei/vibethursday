@@ -459,6 +459,16 @@ export const copy = {
           { value: "listen", label: "这次先听" },
         ],
         demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，就在「本周主题」那一段。",
+        // 开场分享（2026-10-15）：周四开场由成员分享，不是主办人一个人讲。报周四的人都会被问到。
+        openingShare: "这周想在开场分享 5 分钟吗？",
+        openingShareOptions: [
+          { value: "yes", label: "想，我来分享" },
+          { value: "maybe", label: "可以，看情况" },
+          { value: "listen", label: "这次先听" },
+        ],
+        openingShareTopic: "分享什么？一句话就行",
+        openingShareTopicPlaceholder: "在做的产品、一个踩过的坑、一个好用的 AI 用法……",
+        openingShareHint: "每场开场请 2–3 位成员各讲 5 分钟，不用幻灯片，打开电脑或手机就能讲。选中的会在群里提前告诉你。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -1478,6 +1488,7 @@ export const copy = {
       titleAfter: "这一场结束了，谢谢来。",
       when: "10:30 开门 · 10:45 开始 · 12:00 结束",
       // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。地址不写死：场地可能换，群里发。
+      sharesTitle: "今天开场分享",
       tuesdayTitle: "今天：Build Tuesday",
       tuesdayWhen: "10:00 – 12:00 · Chatswood（地址见群公告）· 带上电脑和充电器",
       tuesdayCheckin: "到了点这里签到",
@@ -2167,6 +2178,15 @@ export const copy = {
           { value: "listen", label: "Just listening this time" },
         ],
         demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
+        openingShare: "Want to share something for 5 minutes at the start?",
+        openingShareOptions: [
+          { value: "yes", label: "Yes, I'll share" },
+          { value: "maybe", label: "Maybe" },
+          { value: "listen", label: "Just listening this time" },
+        ],
+        openingShareTopic: "What would you share? One line is enough",
+        openingShareTopicPlaceholder: "Something you're building, a mistake worth avoiding, an AI trick that works…",
+        openingShareHint: "Each Thursday opens with 2–3 members sharing for 5 minutes each. No slides needed. If you're picked, we'll tell you in the group beforehand.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",
@@ -2983,6 +3003,7 @@ export const copy = {
       titleBefore: "See you Thursday.",
       titleDay: "See you today.",
       titleAfter: "That one is done — thanks for coming.",
+      sharesTitle: "Opening shares today",
       tuesdayTitle: "Today: Build Tuesday",
       tuesdayWhen: "10:00 – 12:00 · Chatswood (address in the group) · bring your laptop and charger",
       tuesdayCheckin: "Here? Check in",

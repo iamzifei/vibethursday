@@ -686,6 +686,21 @@ export function ensureSchema(): Promise<void> {
       )
     `);
 
+    // ── Thursday's opening shares (2026-10-15) ──────────────────────
+    // What someone offered to share at the start, and the 2–3 the organiser
+    // picked for a morning. Picks are per session, so last week's do not
+    // carry over; `position` keeps the order they will speak in.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS share_topic text`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session_shares (
+        session     date NOT NULL,
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        position    int NOT NULL DEFAULT 0,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (session, signup_id)
+      )
+    `);
+
     // ── Build Tuesday's fee (2026-10-14, tuesday-fee.ts) ─────────────
     // One row per person per paid Tuesday: the reference they transfer
     // against, and whether it has arrived. "paid" is set by hand on /admin,
@@ -4264,6 +4279,70 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
        LEFT JOIN session_fees f ON f.signup_id = g.id AND f.session = $1::date
       WHERE $1::date = ANY(g.sessions)
       ORDER BY g.created_at`,
+    [session],
+  );
+  return result.rows;
+}
+
+/* =============================================================================
+   Thursday's opening shares (2026-10-15)
+============================================================================= */
+
+/** What someone offered to share; blank leaves an earlier answer in place. Only on their own row. */
+export async function setShareTopic(signupId: string, topic: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`UPDATE signups SET share_topic = $2 WHERE id = $1::bigint`, [signupId, topic]);
+}
+
+export type ShareCandidate = {
+  signup_id: string;
+  name: string;
+  wechat: string | null;
+  demo_intent: string | null;
+  share_topic: string | null;
+  building: string | null;
+  picked: boolean;
+};
+
+/** Everyone booked for a morning who offered to share (yes first, then maybe), with whether they are picked. */
+export async function listShareCandidates(session: string): Promise<ShareCandidate[]> {
+  await ensureSchema();
+  const result = await getPool().query<ShareCandidate>(
+    `SELECT g.id::text AS signup_id, g.name, g.wechat, g.demo_intent, g.share_topic, g.building,
+            EXISTS (SELECT 1 FROM session_shares x WHERE x.session = $1::date AND x.signup_id = g.id) AS picked
+       FROM signups g
+      WHERE $1::date = ANY(g.sessions)
+        AND (g.demo_intent IN ('yes', 'maybe')
+             OR EXISTS (SELECT 1 FROM session_shares x WHERE x.session = $1::date AND x.signup_id = g.id))
+      ORDER BY (g.demo_intent = 'yes') DESC, g.updated_at`,
+    [session],
+  );
+  return result.rows;
+}
+
+/** Picks or unpicks someone to share at the start of a morning; picks keep their order. */
+export async function setSessionShare(session: string, signupId: string, picked: boolean): Promise<void> {
+  await ensureSchema();
+  if (picked) {
+    await getPool().query(
+      `INSERT INTO session_shares (session, signup_id, position)
+       VALUES ($1::date, $2::bigint, (SELECT coalesce(max(position), 0) + 1 FROM session_shares WHERE session = $1::date))
+       ON CONFLICT (session, signup_id) DO NOTHING`,
+      [session, signupId],
+    );
+  } else {
+    await getPool().query(`DELETE FROM session_shares WHERE session = $1::date AND signup_id = $2::bigint`, [session, signupId]);
+  }
+}
+
+/** Who opens a morning, in order: name and what they will share. Public on the day page — no contact details. */
+export async function listSessionShares(session: string): Promise<{ name: string; topic: string | null }[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ name: string; topic: string | null }>(
+    `SELECT g.name, coalesce(nullif(g.share_topic, ''), g.building) AS topic
+       FROM session_shares x JOIN signups g ON g.id = x.signup_id
+      WHERE x.session = $1::date
+      ORDER BY x.position`,
     [session],
   );
   return result.rows;

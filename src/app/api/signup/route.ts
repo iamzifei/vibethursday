@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setSignupInterest } from "@/lib/db";
+import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest } from "@/lib/db";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { parseInterest } from "@/lib/signup-interest";
 import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
@@ -294,6 +294,17 @@ export async function POST(request: Request) {
       await setBizFocus(signupId, bizFocus);
     } catch (error) {
       console.error("[signup] saved, but the business focus did not", error);
+    }
+  }
+
+  // What they would share at the opening (2026-10-15), saved like the
+  // business focus: only an answer, only on their own row, never fatal.
+  const shareTopic = clean(body.shareTopic, 200);
+  if (shareTopic && profileUpdated && (demoIntent === "yes" || demoIntent === "maybe")) {
+    try {
+      await setShareTopic(signupId, shareTopic);
+    } catch (error) {
+      console.error("[signup] saved, but the share topic did not", error);
     }
   }
 

@@ -56,7 +56,9 @@ test("no published copy still promises the retired intros-and-demos format", () 
   const RETIRED = [
     /60 秒/,
     /[Ss]ixty seconds/,
-    /讲 5 分钟/,
+    // "讲 5 分钟" was retired here too, and reinstated on 2026-10-15 (James):
+    // Thursday now opens with 2–3 members sharing for five minutes each, the
+    // discussion held over to Q&A. The other old promises stay retired.
     /最多 4 位/,
     /four people max/i,
     /hard timer/i,

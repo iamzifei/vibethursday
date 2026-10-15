@@ -18,6 +18,7 @@ import {
   listCheckins,
   listCourseOrders,
   listTuesdayFeeDesk,
+  listShareCandidates,
   listFeedback,
   listLoginStats,
   listOrders,
@@ -121,6 +122,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listLoginStats().catch(() => []),
       listCourseOrders(COURSE.id).catch(() => []),
     ]);
+
+  // Thursday's opening shares (2026-10-15): the next Thursday's volunteers,
+  // to pick 2–3 from. Fails soft.
+  const shareSession = nextThursdays(1)[0];
+  const shareCandidates = await listShareCandidates(shareSession).catch(() => []);
 
   // Build Tuesday's fee (2026-10-14): today's Tuesday if it is a paid one, and
   // the paid Tuesdays still open for booking. Counting only fails soft.
@@ -1102,6 +1108,46 @@ export default async function AdminPage({ searchParams }: PageProps) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* Thursday's opening shares (2026-10-15): pick 2–3 of the people who
+          offered. The picks appear on /go for that morning, in this order. */}
+      <section className="stack-4" id="shares">
+        <div className="group-head">
+          <h2 className="h3">本周开场分享 · {formatSession(shareSession, "zh")}</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            想分享 {shareCandidates.filter((x) => x.demo_intent === "yes").length} · 看情况 {shareCandidates.filter((x) => x.demo_intent === "maybe").length} · 已选 {shareCandidates.filter((x) => x.picked).length}（建议 2–3 人）
+          </span>
+        </div>
+        {shareCandidates.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名分享。可以在群里点名老面孔。</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr><th scope="col">名字</th><th scope="col">微信号</th><th scope="col">意向</th><th scope="col">分享什么</th><th scope="col">操作</th></tr>
+              </thead>
+              <tbody>
+                {shareCandidates.map((x) => (
+                  <tr key={x.signup_id}>
+                    <td>{x.picked ? "✓ " : ""}{x.name}</td>
+                    <td className="mono">{x.wechat ?? "—"}</td>
+                    <td>{x.demo_intent === "yes" ? "想分享" : x.demo_intent === "maybe" ? "看情况" : "—"}</td>
+                    <td style={{ whiteSpace: "normal", minWidth: "16em" }}>{x.share_topic ?? x.building ?? "—"}</td>
+                    <td>
+                      <form method="post" action="/api/admin/share">
+                        <input type="hidden" name="session" value={shareSession} />
+                        <input type="hidden" name="signupId" value={x.signup_id} />
+                        <input type="hidden" name="pick" value={x.picked ? "0" : "1"} />
+                        <button className="linkish" type="submit">{x.picked ? "取消" : "选他开场"}</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Build Tuesday's fee (2026-10-14): who is booked, who has paid, who
