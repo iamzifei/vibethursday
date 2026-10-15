@@ -12,6 +12,7 @@ import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
 import { COURSE } from "@/lib/course";
+import { dinnerConfig } from "@/lib/dinner";
 import {
   countCheckins,
   listAllMembers,
@@ -20,6 +21,7 @@ import {
   listTuesdayFeeDesk,
   listShareCandidates,
   countVenuePledges,
+  listDinner,
   listFeedback,
   listLoginStats,
   listOrders,
@@ -130,6 +132,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const shareCandidates = await listShareCandidates(shareSession).catch(() => []);
   // Everyone orders one thing at the venue (2026-10-15): how that morning stands.
   const pledges = await countVenuePledges(shareSession).catch(() => null);
+  // The dinner after that Thursday (2026-10-15), when one is configured.
+  const dinner = dinnerConfig();
+  const dinnerSeats = dinner ? await listDinner(shareSession).catch(() => []) : [];
 
   // Build Tuesday's fee (2026-10-14): today's Tuesday if it is a paid one, and
   // the paid Tuesdays still open for booking. Counting only fails soft.
@@ -1112,6 +1117,53 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </table>
         </div>
       </section>
+
+      {/* The dinner after a Thursday (2026-10-15): who has a seat, who paid.
+          "Paid" is set here by hand once the transfer shows up. */}
+      {dinner && (
+        <section className="stack-4" id="dinner">
+          <div className="group-head">
+            <h2 className="h3">散场聚餐 · {formatSession(shareSession, "zh")} · {dinner.place}</h2>
+            <span className="body-sm" style={{ color: "var(--fg3)" }}>
+              已付 {dinnerSeats.filter((x) => x.status === "paid").length} · 待付 {dinnerSeats.filter((x) => x.status === "pending").length} · 候补 {dinnerSeats.filter((x) => x.status === "waitlist").length} · 上限 {dinner.cap}
+            </span>
+          </div>
+          {dinnerSeats.length === 0 ? (
+            <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人订聚餐。</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="table">
+                <thead><tr><th scope="col">备注编号</th><th scope="col">名字</th><th scope="col">微信号</th><th scope="col">菜式</th><th scope="col">状态</th><th scope="col">操作</th></tr></thead>
+                <tbody>
+                  {dinnerSeats.map((x) => (
+                    <tr key={x.id}>
+                      <td className="mono">{x.ref}</td>
+                      <td>{x.name}</td>
+                      <td className="mono">{x.wechat ?? "—"}</td>
+                      <td>{dinner.dishes.find((d) => d.id === x.dish)?.zh ?? x.dish}</td>
+                      <td>
+                        {{ pending: "待付", paid: `已付 ${x.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[x.status]}
+                        {x.status === "pending" && x.claimed_at && <strong style={{ color: "var(--accent)" }}> · 说已转账 {x.claimed_at}</strong>}
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                          {(["paid", "pending", "cancelled"] as const).filter((st) => st !== x.status).map((st) => (
+                            <form method="post" action="/api/admin/dinner" key={st}>
+                              <input type="hidden" name="id" value={x.id} />
+                              <input type="hidden" name="status" value={st} />
+                              <button className="linkish" type="submit">{{ paid: "标已付", pending: "改回待付", cancelled: "取消" }[st]}</button>
+                            </form>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Thursday's opening shares (2026-10-15): pick 2–3 of the people who
           offered. The picks appear on /go for that morning, in this order. */}

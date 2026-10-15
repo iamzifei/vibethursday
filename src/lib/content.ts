@@ -474,6 +474,10 @@ export const copy = {
         venuePledgePick: "选一样",
         venuePledgeFood: "到了点吃的（简餐）",
         venuePledgeHint: "免费参加。每人到场在店里点一份，这是我们和场地的约定。选了饮品的会提前交给吧台，到了报名字付钱。",
+        // 散场聚餐（2026-10-15）：可选、付费占座、统一价、几样菜式。
+        dinner: "散场后留下聚餐（{price} 澳元，含 GST，限 {cap} 席）",
+        dinnerDish: "选一个菜式",
+        dinnerHint: "{place}，{time}。每人先 1 分钟自我介绍，再每人问一个问题，保证每个人的时间一样。付款才算占座，不退款，来不了可以转给别人。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -648,6 +652,9 @@ export const copy = {
       feeMember: "你是共创会员，这一场免费。",
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
       feeDueCta: "去付款",
+      dinnerDue: "聚餐占座：去付款，付了才算占上。",
+      dinnerDueCta: "去付聚餐的钱",
+      dinnerWaitlist: "聚餐席位已满，你在候补名单上，有空位会微信通知你。",
       // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
@@ -2196,6 +2203,9 @@ export const copy = {
         venuePledgePick: "Pick one",
         venuePledgeFood: "Something to eat, ordered there",
         venuePledgeHint: "Free to attend. Everyone orders one thing from the venue; that is our arrangement with them. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
+        dinner: "Stay for dinner afterwards (A${price} incl. GST, {cap} seats)",
+        dinnerDish: "Pick a dish",
+        dinnerHint: "{place}, {time}. Everyone gets a one-minute introduction, then one question each, so everyone has the same time. A seat is held once paid; no refunds, but you can pass it to someone else.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",
@@ -2314,6 +2324,9 @@ export const copy = {
       feeMember: "You are a member, so this one is free.",
       feeDue: "One step left: transfer {amount} to confirm your place.",
       feeDueCta: "Pay now",
+      dinnerDue: "Dinner seat: pay to hold it.",
+      dinnerDueCta: "Pay for dinner",
+      dinnerWaitlist: "Dinner is full; you're on the waitlist and we'll message you if a seat opens.",
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
         { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },

@@ -17,6 +17,7 @@ import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
 import { formatSession, sameWeekSessions } from "@/lib/sessions";
 import { formatPrice, priceRange, VENUE_MENU } from "@/lib/menu";
+import type { DinnerOffer } from "@/lib/dinner";
 
 /** `tuesday`: a Build Tuesday rather than a Thursday (`SPECIAL_SESSIONS`). */
 type SessionOption = { value: string; label: string; full?: boolean; tuesday?: boolean };
@@ -25,6 +26,8 @@ type Props = {
   lang: Lang;
   copy: Copy["signup"];
   sessions: SessionOption[];
+  /** The dinner after a Thursday, when one is configured (dinner.ts). */
+  dinner?: DinnerOffer | null;
   /** Absent when Turnstile is not configured; the widget is then not rendered. */
   turnstileSiteKey: string | null;
   /** The follow-up-question helper's strings, or null when this deployment has no key for it. */
@@ -70,6 +73,8 @@ type Receipt = {
   classSignup: boolean;
   /** A paid Build Tuesday: free as a member, or the reference to pay against. */
   fee: { member: true } | { member: false; ref: string; amount: string } | null;
+  /** A dinner seat taken with this signup: pay against the reference, or waitlisted. */
+  dinner: { ref: string; waitlist: boolean } | null;
 };
 
 
@@ -96,7 +101,7 @@ const DRAFT_SKIP = new Set(["company", "turnstileToken"]);
  */
 const EXTRA_FIELDS = ["source", "email"];
 
-export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null, wechatBind = null }: Props) {
+export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteKey, coach, knownProfile = null, wechatLogin = null, wechatBind = null }: Props) {
   const [status, setStatus] = useState<Status>("idle");
   useEffect(() => {
     if (status === "done") doneRef.current?.focus();
@@ -120,6 +125,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
   // asked for a Thursday, not for a Tuesday (where everyone demos anyway).
   const [chosenSession, setChosenSession] = useState<string | null>(null);
   const [shareChoice, setShareChoice] = useState<string | null>(null);
+  const [dinnerWanted, setDinnerWanted] = useState(false);
   // Learners (step 2 = "learn") are pointed at the paid small class first
   // (James 2026-10-06); "thursday" is their way to sign up for a morning anyway.
   const [learnChoice, setLearnChoice] = useState<"class" | "thursday">("class");
@@ -407,6 +413,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           demoIntent: data.get("demoIntent"),
           shareTopic: data.get("shareTopic"),
           venuePledge: data.get("venuePledge"),
+          dinnerDish: data.get("dinner") === "1" ? data.get("dinnerDish") : null,
           topic: data.get("topic"),
           firstSession: data.get("firstSession"),
           // getAll, not get: this is a checkbox group and `get` would silently
@@ -498,6 +505,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
         builderRouted?: boolean;
         classSignup?: boolean;
         fee?: { member: boolean; ref?: string; status?: string; amount?: string };
+        dinner?: { ref?: string; status?: string };
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -522,6 +530,7 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
           : accepted?.fee && typeof accepted.fee.ref === "string" && accepted.fee.status === "pending"
             ? { member: false, ref: accepted.fee.ref, amount: String(accepted.fee.amount ?? "") }
             : null,
+        dinner: typeof accepted?.dinner?.ref === "string" ? { ref: accepted.dinner.ref, waitlist: accepted.dinner.status === "waitlist" } : null,
         // Formatted here, not looked up: on /tuesday the list only has Tuesdays.
         switched: Array.isArray(accepted?.switched)
           ? accepted.switched.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)).map((date) => formatSession(date, lang))
@@ -563,6 +572,14 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
             <a className="btn btn--primary btn--block" href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
               {copy.feeDueCta} →
             </a>
+          </div>
+        )}
+        {receipt?.dinner && (
+          <div className="stack-2">
+            <p style={{ margin: 0 }}><strong>{receipt.dinner.waitlist ? copy.dinnerWaitlist : copy.dinnerDue}</strong></p>
+            {!receipt.dinner.waitlist && (
+              <a className="btn btn--secondary btn--block" href={`/dinner/pay?ref=${receipt.dinner.ref}`}>{copy.dinnerDueCta} →</a>
+            )}
           </div>
         )}
         {receipt?.waitlisted && !receipt.builderRouted && <p>{copy.waitlistBody}</p>}
@@ -1096,6 +1113,28 @@ export function SignupForm({ lang, copy, sessions, turnstileSiteKey, coach, know
                     </select>
                     <p className="field-hint">{copy.fields.venuePledgeHint}</p>
                   </div>
+                  {/* The dinner after the morning (2026-10-15): optional, paid,
+                      a fixed number of seats. Only when one is configured. */}
+                  {dinner && (
+                    <div className="stack-2">
+                      <label className="choice" style={{ alignSelf: "start" }}>
+                        <input type="checkbox" name="dinner" value="1" checked={dinnerWanted} onChange={(event) => setDinnerWanted(event.target.checked)} />
+                        <span>{copy.fields.dinner.replace("{price}", String(dinner.price)).replace("{cap}", String(dinner.cap))}</span>
+                      </label>
+                      {dinnerWanted && (
+                        <div>
+                          <label className="label" htmlFor={fieldId("dinnerDish")}>{copy.fields.dinnerDish}</label>
+                          <select className="field" id={fieldId("dinnerDish")} name="dinnerDish" required defaultValue="">
+                            <option value="" disabled>{copy.fields.venuePledgePick}</option>
+                            {dinner.dishes.map((dish) => (
+                              <option key={dish.id} value={dish.id}>{lang === "en" ? dish.en : dish.zh}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      <p className="field-hint">{copy.fields.dinnerHint.replace("{place}", dinner.place).replace("{time}", dinner.time)}</p>
+                    </div>
+                  )}
                 </fieldset>
               );
             })()}

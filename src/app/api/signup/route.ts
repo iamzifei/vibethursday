@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setVenuePledge } from "@/lib/db";
+import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setVenuePledge, bookDinner } from "@/lib/db";
 import { VENUE_MENU } from "@/lib/menu";
+import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { priceOrder } from "@/lib/order";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { parseInterest } from "@/lib/signup-interest";
@@ -340,6 +341,21 @@ export async function POST(request: Request) {
     }
   }
 
+  // The dinner after a Thursday (2026-10-15): a seat for someone booked on
+  // the morning itself, with a dish from the configured list. Same gate as the
+  // fee: only on their own row, so a typed-in WeChat ID cannot take or see
+  // someone else's seat. Never fatal.
+  let dinner: { ref: string; status: string } | undefined;
+  const dinnerOffer = dinnerConfig();
+  const dishRaw = clean(body.dinnerDish, 20);
+  if (dinnerOffer && dishRaw && firstSession && !isSpecialSession(firstSession) && !waitlisted && profileUpdated && dinnerOffer.dishes.some((d) => d.id === dishRaw)) {
+    try {
+      dinner = await bookDinner({ session: firstSession, signupId, dish: dishRaw, ref: newDinnerRef(), cap: dinnerOffer.cap });
+    } catch (error) {
+      console.error("[signup] booked, but the dinner seat did not", error);
+    }
+  }
+
   // One morning a week (James 2026-10-05): signing up for a week's Tuesday
   // gives up that week's Thursday, booked or waitlisted, and the other way
   // round — so a place held "just in case" goes back to someone waiting for it.
@@ -444,7 +460,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee, dinner });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

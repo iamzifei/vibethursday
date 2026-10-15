@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SignupForm } from "@/components/SignupForm";
+import { dinnerConfig } from "@/lib/dinner";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { currentVersion } from "@/lib/changelog";
@@ -343,6 +344,7 @@ export default async function Page({ searchParams }: PageProps) {
               lang={lang}
               copy={c.signup}
               sessions={sessions}
+              dinner={dinnerConfig()}
               knownProfile={knownProfile}
               wechatBind={(() => {
                 const href = knownProfile && !knownProfile.wechatLinked ? wechatLoginHref("/#signup", LANG_PARAM[lang]) : null;

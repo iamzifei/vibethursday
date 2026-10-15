@@ -704,6 +704,25 @@ export function ensureSchema(): Promise<void> {
       )
     `);
 
+    // ── The dinner after a Thursday (2026-10-15, dinner.ts) ──────────
+    // One row per person per Thursday: the dish, the reference they pay
+    // against, and where the seat stands. pending and paid hold a seat;
+    // waitlist and cancelled do not. "paid" is set by hand on /admin.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS dinner_orders (
+        id          bigserial PRIMARY KEY,
+        session     date NOT NULL,
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        dish        text NOT NULL,
+        ref         text NOT NULL UNIQUE,
+        status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled', 'waitlist')),
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        claimed_at  timestamptz,
+        paid_at     timestamptz,
+        UNIQUE (session, signup_id)
+      )
+    `);
+
     // ── Build Tuesday's fee (2026-10-14, tuesday-fee.ts) ─────────────
     // One row per person per paid Tuesday: the reference they transfer
     // against, and whether it has arrived. "paid" is set by hand on /admin,
@@ -3313,6 +3332,14 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
         await client.query(`UPDATE members SET signup_id = $1::bigint WHERE signup_id = $2::bigint`, [keep, drop]);
       }
 
+      // Dinner seats: move, except a Thursday `keep` already has one for.
+      await client.query(
+        `UPDATE dinner_orders SET signup_id = $1::bigint
+          WHERE signup_id = $2::bigint
+            AND session NOT IN (SELECT session FROM dinner_orders WHERE signup_id = $1::bigint)`,
+        [keep, drop],
+      );
+
       // Tuesday fees: move, except a Tuesday `keep` already has one for. When
       // both have one, the settled one wins: `keep`'s pending fee gives way to
       // the other row's paid or waived one, rather than a payment being lost.
@@ -4385,4 +4412,103 @@ export async function countVenuePledges(session: string): Promise<{ drink: numbe
     [session],
   );
   return result.rows[0] ?? { drink: 0, food: 0, none: 0 };
+}
+
+/* =============================================================================
+   The dinner after a Thursday (2026-10-15, dinner.ts)
+============================================================================= */
+
+export type DinnerStatus = "pending" | "paid" | "cancelled" | "waitlist";
+
+/**
+ * Books (or re-books) a dinner seat. Signing up twice keeps the reference and
+ * updates the dish; a cancelled seat is reopened. Seats are counted under a
+ * transaction-scoped lock, so two people cannot both take the last one.
+ */
+export async function bookDinner(input: { session: string; signupId: string; dish: string; ref: string; cap: number }): Promise<{ ref: string; status: DinnerStatus }> {
+  await ensureSchema();
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`dinner:${input.session}`]);
+    const existing = await client.query<{ id: string; ref: string; status: DinnerStatus }>(
+      `SELECT id::text AS id, ref, status FROM dinner_orders WHERE session = $1::date AND signup_id = $2::bigint`,
+      [input.session, input.signupId],
+    );
+    const row = existing.rows[0];
+    if (row && row.status !== "cancelled") {
+      await client.query(`UPDATE dinner_orders SET dish = $2 WHERE id = $1::bigint`, [row.id, input.dish]);
+      await client.query("COMMIT");
+      return { ref: row.ref, status: row.status };
+    }
+    const taken = await client.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM dinner_orders WHERE session = $1::date AND status IN ('pending', 'paid')`,
+      [input.session],
+    );
+    const status: DinnerStatus = (taken.rows[0]?.n ?? 0) < input.cap ? "pending" : "waitlist";
+    const saved = await client.query<{ ref: string; status: DinnerStatus }>(
+      `INSERT INTO dinner_orders (session, signup_id, dish, ref, status) VALUES ($1::date, $2::bigint, $3, $4, $5)
+       ON CONFLICT (session, signup_id) DO UPDATE SET dish = EXCLUDED.dish, status = EXCLUDED.status,
+         created_at = now(), claimed_at = NULL, paid_at = NULL
+       RETURNING ref, status`,
+      [input.session, input.signupId, input.dish, input.ref, status],
+    );
+    await client.query("COMMIT");
+    return saved.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export type DinnerOrder = {
+  id: string;
+  ref: string;
+  session: string;
+  name: string;
+  wechat: string | null;
+  dish: string;
+  status: DinnerStatus;
+  claimed_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+};
+
+const DINNER_SELECT = `
+  SELECT d.id::text AS id, d.ref, to_char(d.session, 'YYYY-MM-DD') AS session, g.name, g.wechat, d.dish, d.status,
+         to_char(d.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
+         to_char(d.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
+         to_char(d.created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at
+    FROM dinner_orders d JOIN signups g ON g.id = d.signup_id`;
+
+export async function getDinnerByRef(ref: string): Promise<DinnerOrder | null> {
+  await ensureSchema();
+  const result = await getPool().query<DinnerOrder>(`${DINNER_SELECT} WHERE d.ref = $1`, [ref]);
+  return result.rows[0] ?? null;
+}
+
+/** "I've transferred": records when, for a pending seat only. Never marks anything paid. */
+export async function claimDinner(ref: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `UPDATE dinner_orders SET claimed_at = coalesce(claimed_at, now()) WHERE ref = $1 AND status = 'pending'`,
+    [ref],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function listDinner(session: string): Promise<DinnerOrder[]> {
+  await ensureSchema();
+  const result = await getPool().query<DinnerOrder>(`${DINNER_SELECT} WHERE d.session = $1::date ORDER BY d.created_at`, [session]);
+  return result.rows;
+}
+
+export async function setDinnerStatus(id: string, status: DinnerStatus): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE dinner_orders SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END WHERE id = $1::bigint`,
+    [id, status],
+  );
 }
