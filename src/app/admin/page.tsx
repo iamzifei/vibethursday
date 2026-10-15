@@ -19,6 +19,7 @@ import {
   listCourseOrders,
   listTuesdayFeeDesk,
   listShareCandidates,
+  countVenuePledges,
   listFeedback,
   listLoginStats,
   listOrders,
@@ -127,6 +128,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // to pick 2–3 from. Fails soft.
   const shareSession = nextThursdays(1)[0];
   const shareCandidates = await listShareCandidates(shareSession).catch(() => []);
+  // Everyone orders one thing at the venue (2026-10-15): how that morning stands.
+  const pledges = await countVenuePledges(shareSession).catch(() => null);
 
   // Build Tuesday's fee (2026-10-14): today's Tuesday if it is a paid one, and
   // the paid Tuesdays still open for booking. Counting only fails soft.
@@ -1119,6 +1122,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
             想分享 {shareCandidates.filter((x) => x.demo_intent === "yes").length} · 看情况 {shareCandidates.filter((x) => x.demo_intent === "maybe").length} · 已选 {shareCandidates.filter((x) => x.picked).length}（建议 2–3 人）
           </span>
         </div>
+        {pledges && (
+          <p className="body-sm">
+            到场点单：饮品 {pledges.drink}（已提前交给吧台）· 简餐 {pledges.food} · 没选 {pledges.none}
+            <span style={{ color: "var(--fg3)" }}>（「没选」多是规则上线前报名的人，开场提醒一句）</span>
+          </p>
+        )}
         {shareCandidates.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名分享。可以在群里点名老面孔。</p>
         ) : (

@@ -691,6 +691,9 @@ export function ensureSchema(): Promise<void> {
     // picked for a morning. Picks are per session, so last week's do not
     // carry over; `position` keeps the order they will speak in.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS share_topic text`);
+    // What they will order at the venue that morning (2026-10-15): a drink id
+    // from the menu, or "food". Keyed by session so next week's is separate.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS venue_pledges jsonb NOT NULL DEFAULT '{}'::jsonb`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS session_shares (
         session     date NOT NULL,
@@ -4346,4 +4349,40 @@ export async function listSessionShares(session: string): Promise<{ name: string
     [session],
   );
   return result.rows;
+}
+
+/* =============================================================================
+   Everyone orders one thing at the venue (2026-10-15)
+============================================================================= */
+
+/** Records what someone will order at a morning. Only on their own row. */
+export async function setVenuePledge(signupId: string, session: string, pledge: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE signups SET venue_pledges = venue_pledges || jsonb_build_object($2::text, $3::text) WHERE id = $1::bigint`,
+    [signupId, session, pledge],
+  );
+}
+
+/** The drink order this WeChat ID already has for a morning, so a second signup updates it instead of adding one. */
+export async function findOrderFor(session: string, wechat: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `SELECT id::text AS id FROM drink_orders WHERE session = $1::date AND lower(wechat) = lower($2) ORDER BY id LIMIT 1`,
+    [session, wechat],
+  );
+  return result.rows[0]?.id ?? null;
+}
+
+/** For a morning: how many booked people said drink, food, or nothing yet. */
+export async function countVenuePledges(session: string): Promise<{ drink: number; food: number; none: number }> {
+  await ensureSchema();
+  const result = await getPool().query<{ drink: number; food: number; none: number }>(
+    `SELECT count(*) FILTER (WHERE venue_pledges ->> ($1::date::text) IS NOT NULL AND venue_pledges ->> ($1::date::text) <> 'food')::int AS drink,
+            count(*) FILTER (WHERE venue_pledges ->> ($1::date::text) = 'food')::int AS food,
+            count(*) FILTER (WHERE venue_pledges ->> ($1::date::text) IS NULL)::int AS none
+       FROM signups WHERE $1::date = ANY(sessions)`,
+    [session],
+  );
+  return result.rows[0] ?? { drink: 0, food: 0, none: 0 };
 }

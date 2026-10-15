@@ -469,6 +469,11 @@ export const copy = {
         openingShareTopic: "分享什么？一句话就行",
         openingShareTopicPlaceholder: "在做的产品、一个踩过的坑、一个好用的 AI 用法……",
         openingShareHint: "每场开场请 2–3 位成员各讲 5 分钟，不用幻灯片，打开电脑或手机就能讲。选中的会在群里提前告诉你。",
+        // 到场每人一单（2026-10-15）：免费参加，但每人在店里点一份。
+        venuePledge: "到场你会点什么？",
+        venuePledgePick: "选一样",
+        venuePledgeFood: "到了点吃的（简餐）",
+        venuePledgeHint: "免费参加。每人到场在店里点一份，这是我们和场地的约定。选了饮品的会提前交给吧台，到了报名字付钱。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -2187,6 +2192,10 @@ export const copy = {
         openingShareTopic: "What would you share? One line is enough",
         openingShareTopicPlaceholder: "Something you're building, a mistake worth avoiding, an AI trick that works…",
         openingShareHint: "Each Thursday opens with 2–3 members sharing for 5 minutes each. No slides needed. If you're picked, we'll tell you in the group beforehand.",
+        venuePledge: "What will you order at the venue?",
+        venuePledgePick: "Pick one",
+        venuePledgeFood: "Something to eat, ordered there",
+        venuePledgeHint: "Free to attend. Everyone orders one thing from the venue; that is our arrangement with them. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",

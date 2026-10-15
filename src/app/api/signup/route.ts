@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest } from "@/lib/db";
+import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setVenuePledge } from "@/lib/db";
+import { VENUE_MENU } from "@/lib/menu";
+import { priceOrder } from "@/lib/order";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { parseInterest } from "@/lib/signup-interest";
 import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
@@ -305,6 +307,36 @@ export async function POST(request: Request) {
       await setShareTopic(signupId, shareTopic);
     } catch (error) {
       console.error("[signup] saved, but the share topic did not", error);
+    }
+  }
+
+  // Everyone orders one thing at the venue (2026-10-15): a Thursday booking
+  // carries a drink from the menu or "food". A drink is pre-ordered for the
+  // bar, updating this person's order for that morning if there is one. Only
+  // on their own row, never fatal.
+  const pledgeRaw = clean(body.venuePledge, 40);
+  if (firstSession && !isSpecialSession(firstSession) && profileUpdated && pledgeRaw) {
+    const priced = pledgeRaw === "food" ? null : priceOrder(VENUE_MENU, pledgeRaw, "small");
+    if (pledgeRaw === "food" || priced) {
+      try {
+        await setVenuePledge(signupId, firstSession, pledgeRaw);
+        if (priced && wechat) {
+          await saveOrder({
+            id: await findOrderFor(firstSession, wechat),
+            session: firstSession,
+            name,
+            wechat,
+            itemId: pledgeRaw,
+            itemLabel: priced.label,
+            size: priced.size,
+            priceCents: priced.cents,
+            note: null,
+            lang: clean(body.lang, 5) ?? "zh",
+          });
+        }
+      } catch (error) {
+        console.error("[signup] saved, but the venue order did not", error);
+      }
     }
   }
 
