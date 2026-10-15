@@ -311,14 +311,32 @@ export default async function Page({ searchParams }: PageProps) {
               {/* The split, said before the form rather than inside it: what
                   Thursday is, and where the other two kinds of people go.
                   Only while a Tuesday is open — otherwise it points nowhere. */}
-              {tuesdayOpen && (
-                <p className="body" style={{ maxWidth: "62ch" }}>
-                  {c.signup.hook}{" "}
-                  <a href={langHref("/tuesday", lang)}>
-                    {c.signup.hookTuesdayCta} →
-                  </a>
-                </p>
-              )}
+              {/* Thursday and Tuesday side by side (2026-10-15), so nobody has
+                  to guess which one is theirs or where Tuesday's form is. */}
+              <div className="compare" role="table" aria-label={`${c.signup.compare.thursday.name} / ${c.signup.compare.tuesday.name}`}>
+                <div className="compare__head" role="row">
+                  <span role="columnheader" />
+                  <span role="columnheader">{c.signup.compare.thursday.name}</span>
+                  <span role="columnheader">{c.signup.compare.tuesday.name}</span>
+                </div>
+                {c.signup.compare.rows.map((row, i) => (
+                  <div className="compare__row" role="row" key={row}>
+                    <span role="rowheader">{row}</span>
+                    <span role="cell">{c.signup.compare.thursday.cells[i]}</span>
+                    <span role="cell">{c.signup.compare.tuesday.cells[i]}</span>
+                  </div>
+                ))}
+                {tuesdayOpen && (
+                  <div className="compare__row compare__foot" role="row">
+                    <span role="cell" />
+                    <span role="cell" />
+                    <span role="cell">
+                      <a href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>{" "}
+                      <a href={langHref("/class", lang)}>{c.signup.compare.tuesday.member}</a>
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <SignupForm

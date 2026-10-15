@@ -392,7 +392,7 @@ textarea:focus-visible,
    Site nav
    =============================================================================
    Sticky, so the way back out of a page is always one tap away. Two renderings
-   of the same links live in the markup: an inline row above 920px, a panel
+   of the same links live in the markup: an inline row above 980px, a panel
    behind a button below it. The breakpoint is set by the English labels, which
    are the widest, plus the CTA and the language pill.
 ============================================================================= */
@@ -714,7 +714,7 @@ textarea:focus-visible,
 /* The compact CTA only exists where the wide row does not. */
 .nav .nav__cta--compact { display: none; }
 
-@media (max-width: 920px) {
+@media (max-width: 980px) {
   .nav__wide { display: none; }
   .nav__toggle { display: inline-flex; }
 
@@ -730,7 +730,7 @@ textarea:focus-visible,
 /* Above the breakpoint the panel is not just unused, it must be unreachable:
    a menu opened on a phone that is then rotated into the wide layout would
    otherwise stay hanging under the bar with no button left to close it. */
-@media (min-width: 921px) {
+@media (min-width: 981px) {
   .nav__panel { display: none; }
 }
 
@@ -4945,4 +4945,19 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   .tagger-said div { grid-template-columns: 1fr; gap: 0; }
   .tagger-folded__summary { display: none; }
   .tagger-folded__edit { margin-left: auto; }
+}
+
+/* Thursday vs Tuesday, above the signup form (2026-10-15). */
+.compare { border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; font-size: var(--text-sm); max-width: 880px; }
+.compare__head, .compare__row { display: grid; grid-template-columns: 7em 1fr 1fr; }
+.compare__head span, .compare__row span { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+.compare__head span { color: var(--fg1); font-weight: var(--weight-semibold); background: var(--bg-secondary); }
+.compare__head span:nth-child(3) { color: var(--accent); }
+.compare__row span:first-child { color: var(--fg3); }
+.compare__row span { color: var(--fg2); }
+.compare__row:last-child span { border-bottom: 0; }
+.compare__foot a { margin-right: var(--space-3); }
+@media (max-width: 560px) {
+  .compare__head, .compare__row { grid-template-columns: 4.5em 1fr 1fr; }
+  .compare__head span, .compare__row span { padding: var(--space-2) var(--space-2); }
 }

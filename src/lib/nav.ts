@@ -14,6 +14,9 @@ import { LANG_PARAM, type Lang } from "./lang.ts";
  */
 export const NAV_LINKS = [
   { href: "/#what", label: "about" },
+  // Build Tuesday, in the bar since 2026-10-15: people could not find how to
+  // sign up for it, or tell it apart from Thursday.
+  { href: "/tuesday", label: "tuesday" },
   { href: "/members", label: "members" },
   // Next to the wall on purpose. These two are the only things on this site
   // that get thicker over time — every other item describes what happens on a
@@ -30,14 +33,19 @@ export const NAV_LINKS = [
   // pixel Sydney you walk through. Next to them because it is made of them.
   { href: "/play", label: "play" },
   { href: "/sessions", label: "sessions" },
-  // The paid class, in the bar since 2026-10-12.
+  // The year-long membership (its first step is the class), in the bar since
+  // 2026-10-12; labelled "membership" since 2026-10-15.
   { href: "/class", label: "class" },
   // "流程" used to sit here and no longer does. It is an anchor a third of the
   // way down the home page, and anyone reading the home page reaches it by
   // scrolling; the bar's remaining slots are worth more to the four pages that
   // are not on the home page at all.
-  { href: "/support", label: "support" },
+  // "/support" left the bar on 2026-10-15 to make room for Tuesday; the home
+  // page footer still links it (SiteFooter's `support`).
 ] as const;
+
+/** Linked from the home page footer only, never the bar (see SiteFooter). */
+export const SUPPORT_LINK = { href: "/support", label: "support" } as const;
 
 /** The sign-up CTA, which is the bar's one accented item. */
 export const NAV_CTA = { href: "/#signup", label: "cta" } as const;

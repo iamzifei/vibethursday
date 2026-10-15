@@ -24,7 +24,7 @@ type Props = {
  * The bar every page opens with.
  *
  * Two renderings of the same links: an inline row on a wide screen, and a
- * panel behind a button below 920px. They are separate markup rather than one
+ * panel behind a button below 980px. They are separate markup rather than one
  * list restyled by a media query because the phone version needs full-width
  * rows with real touch targets, which is a different layout, not a narrower
  * one. Both are hidden from assistive technology when their breakpoint is not
@@ -121,7 +121,7 @@ export function SiteNav({
 
         {/* ★ The sign-up link, on phones, outside the menu.
             Until 2026-09-24 the only CTA in the bar lived in `.nav__wide`,
-            which is hidden below 920px — so on a phone, where nearly every
+            which is hidden below 980px — so on a phone, where nearly every
             visitor arrives from a group chat, the first screen of every page
             had no way to sign up without opening a menu first. Measured: on
             an iPhone SE the first sign-up button sat at y=945px on a 568px

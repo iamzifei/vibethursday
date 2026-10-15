@@ -40,7 +40,8 @@ export const copy = {
       works: "作品",
       play: "游戏",
       sessions: "场次",
-      class: "课程",
+      class: "会员",
+      tuesday: "周二",
       about: "这是什么",
       schedule: "流程",
       support: "开销",
@@ -607,6 +608,21 @@ export const copy = {
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
       hook: "周四是交流局。在做东西的，来周二 Build Tuesday；想有人带着学的，报完名可以登记收费小班。",
       hookTuesdayCta: "看看 Build Tuesday",
+      // Thursday and Tuesday side by side, above the form (2026-10-15): people
+      // could not tell them apart or find how to sign up for Tuesday.
+      compare: {
+        rows: ["给谁", "怎么进行", "人数", "费用"],
+        thursday: {
+          name: "周四 Vibe Thursday",
+          cells: ["做生意的、刚开始用 AI 的、想认识人的", "开场成员分享 + Q&A + 自由交流", "40 人", "免费参加，到场每人在店里点一份"],
+        },
+        tuesday: {
+          name: "周二 Build Tuesday",
+          cells: ["在做东西、能打开电脑给人看的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cta: "报周二",
+          member: "了解共创会员",
+        },
+      },
       // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
       tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人、打开电脑互相看做的东西。",
       tuesdayHintCta: "改报周二",
@@ -1637,7 +1653,7 @@ export const copy = {
       facts: [
         { label: "时间", value: "上午 10:00–12:00" },
         { label: "地点", value: "Chatswood 的一间小会议室，具体地址报名后在群里发" },
-        { label: "人数", value: "15 人，满了进候补（收到通知再来）" },
+        { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
         { label: "费用", value: "30 澳元 + GST，报名时转账；共创会员免费" },
       ],
       mapsUrl: "https://maps.google.com/?q=Chatswood+NSW",
@@ -1658,7 +1674,7 @@ export const copy = {
       thursdayNote: "周四照常办。同一周的周二和周四只能报一场，报了周二会自动退掉那周的周四。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
-      signupLede: "名额只有 15 个，报了来不了的话请在「查我的报名」里取消，把位子让出来。",
+      signupLede: "名额只有 12 个，先报名占座，再转账；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
       noSession: "这一场已经结束了。下一场定了日子会放在这里。",
     },
 
@@ -1781,7 +1797,8 @@ export const copy = {
       works: "Works",
       play: "Play",
       sessions: "Sessions",
-      class: "Class",
+      class: "Membership",
+      tuesday: "Tuesday",
       about: "What this is",
       schedule: "Run of show",
       support: "Costs",
@@ -2248,6 +2265,19 @@ export const copy = {
       sessionTimeSuffixTuesday: "10am · Build Tuesday",
       hook: "Thursday is for meeting people. If you build things, come to Build Tuesday; if you want to be walked through it, register interest in the paid small class after signing up.",
       hookTuesdayCta: "See Build Tuesday",
+      compare: {
+        rows: ["For", "How it runs", "Places", "Cost"],
+        thursday: {
+          name: "Thursday · Vibe Thursday",
+          cells: ["Business owners, people new to AI, anyone meeting people", "Member demos to open, then Q&A and open chat", "40", "Free to attend; everyone orders one thing from the venue"],
+        },
+        tuesday: {
+          name: "Tuesday · Build Tuesday",
+          cells: ["People who build things and can open a laptop to show them", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cta: "Sign up for Tuesday",
+          member: "About membership",
+        },
+      },
       tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",
       tuesdayHintCta: "Switch to Tuesday",
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has {n} places — if you build things, you can move to it:",
@@ -3110,7 +3140,7 @@ export const copy = {
       facts: [
         { label: "Time", value: "10:00am–12:00" },
         { label: "Where", value: "A small meeting room in Chatswood — the exact address goes to the group after you sign up" },
-        { label: "Places", value: "15, then a waitlist (come only once you are told there is room)" },
+        { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
         { label: "Cost", value: "A$30 + GST, paid by transfer when you sign up; members free" },
       ],
       mapsUrl: "https://maps.google.com/?q=Chatswood+NSW",
@@ -3131,7 +3161,7 @@ export const copy = {
       thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
-      signupLede: "There are only 15 places. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
+      signupLede: "There are only 12 places: sign up to hold one, then pay. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
       noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 

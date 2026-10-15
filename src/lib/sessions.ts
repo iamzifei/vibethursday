@@ -143,7 +143,8 @@ const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03", "2026-11-10", "
 export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
   { date: "2026-10-13", kind: "tuesday", endHour: 12, cap: 15 },
-  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: 12, cap: 15, fee: 30 })),
+  // Twelve from 20 October: the room seats about that many (James 2026-10-15).
+  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: 12, cap: 12, fee: 30 })),
 ];
 
 /** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays). */
