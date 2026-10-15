@@ -253,7 +253,7 @@ export const copy = {
         {
           date: "2026-09-17",
           title: "第七场",
-          note: "搬到 Chatswood 之后的第一场，玻璃房，头顶是藤，窗外是街。报名二十个，签到十五个，还有两个讲了整场却忘了签到的。这一场是三个分享接一场 Q&A：一个做 GEO 的团队讲 AI 搜索时代只剩三五个推荐位，长尾流量没有了；一个做 AI 创业的讲 FDE，讲怎么用几百到几千刀的小项目一点点换来客户的信任；一位研究者讲企业里几百个 agent 该怎么管，这件事眼下谁都没有答案。Q&A 的三个问题：没有技术背景的人怎么进 AI；老板自己都会用 AI 了，为什么还要付钱请人做；一门连数字化都还没做的线下生意，从哪一步开始。",
+          note: "搬到 Chatswood 之后的第一场，玻璃房，头顶是藤，窗外是街。报名二十个，到场十七个左右。这一场是三个分享接一场 Q&A：一个做 GEO 的团队讲 AI 搜索时代只剩三五个推荐位，长尾流量没有了；一个做 AI 创业的讲 FDE，讲怎么用几百到几千刀的小项目一点点换来客户的信任；一位研究者讲企业里几百个 agent 该怎么管，这件事眼下谁都没有答案。Q&A 的三个问题：没有技术背景的人怎么进 AI；老板自己都会用 AI 了，为什么还要付钱请人做；一门连数字化都还没做的线下生意，从哪一步开始。",
           photos: [
             { src: "/photos/session-07-1", alt: "玻璃房里的长桌，头顶挂着藤，桌上是电脑、菜单和咖啡", width: 1600, height: 900 },
             { src: "/photos/session-07-2", alt: "从长桌另一头看过去，一排人沿着木头长凳坐开，窗外是街", width: 1600, height: 900 },
@@ -273,7 +273,7 @@ export const copy = {
           // session from it.
           date: "2026-09-24",
           title: "第八场",
-          note: "主题是「AI + 获客」。签到二十个。两个分享接一场长 Q&A，最后一轮自我介绍：一位帮老板做建站和流程落地的，讲高客单的服务为什么只能靠长时间的沟通来接客，以及平台自带的 AI 投放为什么天然和广告主不站在一边；一位学生创业者讲面向个人、政府、企业三种客户，获客的打法差在哪，以及在一家机构里先找到那个愿意替你说话的人。Q&A 从 AI 投放该拿多大权限、小公司怎么从零起步做 GEO，一路聊到批量生成文章的风险、在社区里用 AI 写帖为什么会翻车、给政府做生意为什么要等那么久。最长的一段讨论从「复刻一个双边平台还行不行」开始，落在澳洲的技工身上：他们不缺客户，缺的是交付，活早就排满了。自我介绍里有一位，是当天早上问 ChatGPT「今天悉尼有什么 AI 活动」被推荐过来的。",
+          note: "主题是「AI + 获客」。两个分享接一场长 Q&A，最后一轮自我介绍：一位帮老板做建站和流程落地的，讲高客单的服务为什么只能靠长时间的沟通来接客，以及平台自带的 AI 投放为什么天然和广告主不站在一边；一位学生创业者讲面向个人、政府、企业三种客户，获客的打法差在哪，以及在一家机构里先找到那个愿意替你说话的人。Q&A 从 AI 投放该拿多大权限、小公司怎么从零起步做 GEO，一路聊到批量生成文章的风险、在社区里用 AI 写帖为什么会翻车、给政府做生意为什么要等那么久。最长的一段讨论从「复刻一个双边平台还行不行」开始，落在澳洲的技工身上：他们不缺客户，缺的是交付，活早就排满了。自我介绍里有一位，是当天早上问 ChatGPT「今天悉尼有什么 AI 活动」被推荐过来的。",
           photos: [
             { src: "/photos/session-08-1", alt: "玻璃房的全景，头顶是藤，长桌两边坐满了人，前景是一张圆木桌", width: 1600, height: 1200 },
             { src: "/photos/session-08-2", alt: "靠玻璃墙的长凳上坐了一排人，窗外是街和龙舌兰，前面的桌上放着一个背包", width: 1600, height: 900 },
@@ -1187,12 +1187,12 @@ export const copy = {
       // 不是报名数。早于签到功能的场次没有这个数，那句话里的数字仍然是口径。
       sessionN: "第 {n} 场",
       attended: "到场 {n} 人",
-      // 签到漏的人多的那几场（第九场起门口来不及签），按报名估算，前面带「约」。
-      estimated: "约 {n} 人到场（按报名估算 · 签到 {m} 人）",
+      // 公开只说大概到场多少人，不报签到数、不解释口径（2026-10-16）。
+      estimated: "约 {n} 人到场",
       checkedIn: "签到 {n} 人",
       tuesdaySession: "Build Tuesday · 周二动手局",
       extraSession: "加场",
-      attendedNote: "到场数来自当天现场签到，从 2026-09-10 起才有；签到漏得多的场次按报名人数估算（报名加候补，乘 0.85），前面带「约」。更早的场次看那句话。",
+      attendedNote: "",
       wallTitle: "那天来了谁",
       wallTitleToday: "今天来了谁",
       wallLede: "现场签到、并且同意上墙的人。有成员卡的显示卡片，没有的显示名字和在做什么。",
@@ -2021,7 +2021,7 @@ export const copy = {
         {
           date: "2026-09-17",
           title: "Session seven",
-          note: "First one since the move to Chatswood: a glass room, vines overhead, the street outside. 20 signed up, 15 checked in, plus two who talked for the whole morning and forgot to. Three talks and then a Q&A. A team doing GEO on what changes when AI search leaves only three to five recommendation slots and the long tail disappears; an AI startup founder on FDE, and on earning a client's trust one small project at a time, a few hundred to a few thousand dollars each; a researcher on how a company is supposed to manage a few hundred agents, which nobody has an answer to yet. The Q&A's three questions: how someone without a technical background gets into AI; why a boss who already uses AI would pay someone else to build with it; and where a bricks-and-mortar business that has not even gone digital should start.",
+          note: "First one since the move to Chatswood: a glass room, vines overhead, the street outside. 20 signed up and about 17 came. Three talks and then a Q&A. A team doing GEO on what changes when AI search leaves only three to five recommendation slots and the long tail disappears; an AI startup founder on FDE, and on earning a client's trust one small project at a time, a few hundred to a few thousand dollars each; a researcher on how a company is supposed to manage a few hundred agents, which nobody has an answer to yet. The Q&A's three questions: how someone without a technical background gets into AI; why a boss who already uses AI would pay someone else to build with it; and where a bricks-and-mortar business that has not even gone digital should start.",
           photos: [
             { src: "/photos/session-07-1", alt: "The long table in the glass room, vines overhead, laptops, menus and coffee on the table", width: 1600, height: 900 },
             { src: "/photos/session-07-2", alt: "From the far end of the long table, a row of people along the wooden bench, the street outside", width: 1600, height: 900 },
@@ -2034,7 +2034,7 @@ export const copy = {
         {
           date: "2026-09-24",
           title: "Session eight",
-          note: "The theme was AI and getting customers. 20 checked in. Two talks, a long Q&A, then a round of introductions. Someone who builds websites and workflows for business owners, on why a high-value service can only be won through long conversations, and why an ad platform's built-in AI is never quite on the advertiser's side; a student founder on how winning customers differs between individuals, government and companies, and on first finding the one person inside an organisation who will speak for you. The Q&A went from how much control to hand an AI that runs your ads, and how a small company starts on GEO from nothing, to the risks of mass-generating articles, why AI-written posts backfire in online communities, and why selling to government takes so long. The longest discussion began with whether cloning a two-sided marketplace still works, and ended up on Australian tradies: they are not short of customers, they are short of hands — their calendars are already full. One person in the introductions had asked ChatGPT that morning what AI events were on in Sydney, and been sent here.",
+          note: "The theme was AI and getting customers. Two talks, a long Q&A, then a round of introductions. Someone who builds websites and workflows for business owners, on why a high-value service can only be won through long conversations, and why an ad platform's built-in AI is never quite on the advertiser's side; a student founder on how winning customers differs between individuals, government and companies, and on first finding the one person inside an organisation who will speak for you. The Q&A went from how much control to hand an AI that runs your ads, and how a small company starts on GEO from nothing, to the risks of mass-generating articles, why AI-written posts backfire in online communities, and why selling to government takes so long. The longest discussion began with whether cloning a two-sided marketplace still works, and ended up on Australian tradies: they are not short of customers, they are short of hands — their calendars are already full. One person in the introductions had asked ChatGPT that morning what AI events were on in Sydney, and been sent here.",
           photos: [
             { src: "/photos/session-08-1", alt: "The whole glass room under the vines, people along both sides of the long table, a round wooden table in the foreground", width: 1600, height: 1200 },
             { src: "/photos/session-08-2", alt: "A row of people on the bench along the glass wall, the street and agaves outside, a backpack on the table in front", width: 1600, height: 900 },
@@ -2755,11 +2755,11 @@ export const copy = {
       backToWharf: "Go to the Wharf",
       sessionN: "Session {n}",
       attended: "{n} turned up",
-      estimated: "About {n} came (estimated from bookings · {m} checked in)",
+      estimated: "About {n} came",
       checkedIn: "{n} checked in",
       tuesdaySession: "Build Tuesday",
       extraSession: "Extra session",
-      attendedNote: "Turnout comes from checking in on the day, which started on 10 Sep 2026. Where many people skipped check-in, it is estimated from bookings (booked plus waitlisted, times 0.85) and marked \"about\". For earlier sessions, see the line under each one.",
+      attendedNote: "",
       wallTitle: "Who was there",
       wallTitleToday: "Who is here today",
       wallLede: "People who checked in on the day and agreed to be shown. A member card where there is one, otherwise a name and what they are building.",

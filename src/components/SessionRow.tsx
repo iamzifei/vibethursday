@@ -76,15 +76,13 @@ export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Prop
         </picture>
       )}
 
-      {/* The day's check-ins, or — where those fell short of the
-        room — the labelled estimate next to them. Older sessions
-        have no such record and show nothing here rather than a
-        zero that would read as "nobody came". */}
+      {/* Roughly how many came: the estimate where check-ins fell short,
+        otherwise the check-ins. Shown as one rounded-off figure, never
+        as a check-in count (2026-10-16). Older sessions have no record
+        and show nothing rather than a zero that reads as "nobody came". */}
       {row.attended !== null && (
         <p className="archive__attended mono">
-          {row.estimated !== null
-            ? a.estimated.replace("{n}", String(row.estimated)).replace("{m}", String(row.attended))
-            : a.attended.replace("{n}", String(row.attended))}
+          {a.estimated.replace("{n}", String(row.estimated ?? row.attended))}
         </p>
       )}
 

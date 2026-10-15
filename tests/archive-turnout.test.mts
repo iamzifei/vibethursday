@@ -45,9 +45,9 @@ test("every written-up session in the copy is a Thursday", () => {
   for (const session of copy.zh.gallery.sessions) assert.ok(isThursday(session.date), session.date);
 });
 
-test("the estimate is labelled as one in both languages", () => {
-  assert.match(copy.zh.archive.estimated, /约.*估算/);
-  assert.match(copy.en.archive.estimated, /About.*estimated/);
+test("turnout reads as a rough figure, with no check-in count beside it (2026-10-16)", () => {
+  assert.match(copy.zh.archive.estimated, /^约 \{n\} 人到场$/);
+  assert.match(copy.en.archive.estimated, /^About \{n\} came$/);
 });
 
 test("weekday helpers read the date as a calendar day, not a moment", () => {

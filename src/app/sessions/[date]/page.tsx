@@ -196,10 +196,6 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
               <p className="alert">{a.noCheckins}</p>
             ) : (
               <>
-                <p className="mono" style={{ color: "var(--fg3)" }}>
-                  {a.checkedIn.replace("{n}", String(attendees.total))}
-                </p>
-
                 {attendees.entries.length > 0 && (
                   <div className="mwall">
                     {attendees.entries.map((entry) => {
