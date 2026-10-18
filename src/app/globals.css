@@ -4961,3 +4961,21 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   .compare__head, .compare__row { grid-template-columns: 4.5em 1fr 1fr; }
   .compare__head span, .compare__row span { padding: var(--space-2) var(--space-2); }
 }
+
+/* Home hero: the one link to the paid class (until its date). A plain card
+   with a cyan edge, so it reads as a side door, not a second primary button. */
+.class-promo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-color: var(--spark);
+  background: var(--spark-subtle);
+  text-decoration: none;
+  max-width: 58ch;
+}
+.class-promo:hover { border-color: var(--fg1); }
+
+/* /class: the poster, full width of the column, tap to open full size. */
+.class-poster { display: block; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-subtle); }
+.class-poster img { display: block; width: 100%; height: auto; }

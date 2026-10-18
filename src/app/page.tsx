@@ -16,7 +16,8 @@ import { langHref } from "@/lib/nav";
 import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
 import { LANG_PARAM } from "@/lib/content";
-import { bookableSessions, formatSession, isSpecialSession } from "@/lib/sessions";
+import { bookableSessions, formatSession, isSpecialSession, sydneyToday } from "@/lib/sessions";
+import { COURSE } from "@/lib/course";
 
 
 type PageProps = {
@@ -123,6 +124,9 @@ export default async function Page({ searchParams }: PageProps) {
   } catch (error) {
     console.error("[home] the wharf block could not be loaded", error);
   }
+
+  // Shown until the class date has passed (Sydney calendar date).
+  const showClassPromo = sydneyToday().toISOString().slice(0, 10) <= COURSE.date;
 
   // The document is declared zh-CN in the layout, so the English view
   // re-declares its own language here for screen-reader pronunciation.
@@ -240,6 +244,17 @@ export default async function Page({ searchParams }: PageProps) {
                 </div>
               ))}
             </dl>
+
+            {/* The paid class, one quiet card under the facts until the day it
+                runs. Cyan, not lime: lime is the sign-up button's colour, and
+                the first screen's job is still the free Thursday. */}
+            {showClassPromo && (
+              <Link className="card class-promo rise rise-3" href={langHref("/class", lang)}>
+                <span className="eyebrow">{c.hero.classPromo.label}</span>
+                <span style={{ color: "var(--fg1)", fontWeight: 600 }}>{c.hero.classPromo.text}</span>
+                <span className="body-sm" style={{ color: "var(--spark)" }}>{c.hero.classPromo.cta}</span>
+              </Link>
+            )}
 
             <div className="stack-3 rise rise-4">
               {nextSession && (

@@ -185,11 +185,27 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </p>
                 </div>
 
+                {/* The same poster that goes out in the group and on Moments, so the
+                    page and the picture never say different things. Tap for the
+                    full-size file to save and forward. */}
+                <figure className="stack-2" style={{ margin: 0 }}>
+                  <a className="class-poster" href="/class/poster-2026-10-25.jpg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/class/poster-2026-10-25.webp"
+                      width={1080}
+                      height={1440}
+                      alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员"
+                    />
+                  </a>
+                  <figcaption className="hint">点开看大图，长按可以保存、转发给做生意的朋友。</figcaption>
+                </figure>
+
                 <div className="card card--accent stack-3">
                   <h2 className="h3">加入以后，这一年你有什么</h2>
                   <ul className="stack-3" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                    <li><strong>1　入会第一课：{COURSE.title}</strong><br />{COURSE.dateLabel}，4 小时实战，带着你的生意来，装好一个懂你生意的 AI 助理，写出一张能开工的需求单。课后一对一咨询。详情在下面</li>
-                    <li><strong>2　周二闭门研讨会，全年免费</strong><br />每周二上午，十来个人打开电脑讲自己在做的事：项目落地交流、现场咨询答疑、对接资源。不是会员单次 30 澳元 + GST</li>
+                    <li><strong>1　入会第一课：{COURSE.title}</strong><br />{COURSE.dateLabel}，4 小时实战，带着你的生意来，带走一个懂你生意的 AI 商业顾问：随身、专业，经营上的事什么都能问。课上给它资料夹（知识库）和岗位手册（技能），再写出一张能开工的需求单。课后一对一咨询。详情在下面</li>
+                    <li><strong>2　周二闭门研讨会，全年免费</strong><br />每周二上午，十来个人打开电脑讲自己在做的事：项目落地交流、现场咨询答疑、对接资源。不是会员单次 30 澳元 + GST。10 月 27 日第一场，带着课上的作业来展示</li>
                     <li><strong>3　共性需求，我们免费做出来</strong><br />会员的需求单我们都会看，很多人都有的刚需，挑出来做成能直接用的 AI 工具，并协助启动</li>
                     <li><strong>4　复杂需求，对接社群里靠谱的人</strong><br />做产品、做推广这类大活，优先介绍社群里做过、靠得住的人</li>
                     <li><strong>5　一年的圈子</strong><br />会员群和线下交流，和一群在把 AI 用进生意的人一起往前走</li>
@@ -201,11 +217,24 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </p>
                 </div>
 
+                {/* The bonus is written with its limits on purpose: a one-page site
+                    is cheap to make for everyone; an existing complex site is not. */}
+                <div className="card stack-3" style={{ borderColor: "var(--accent-muted)" }}>
+                  <h2 className="h3">前 15 名加送：帮你做一个一页式官网并上线</h2>
+                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
+                    <li>一页式官网：介绍你的生意、你的服务和联系方式，内容用课上整理出来的东西</li>
+                    <li>用你自己的域名（域名自己买，我们帮你接上）</li>
+                    <li>课后两周内上线</li>
+                    <li>已经有官网的，我们给你改进建议，不重做</li>
+                    <li>按转账到账的先后算前 15 名</li>
+                  </ul>
+                </div>
+
                 <div className="stack-2">
                   <span className="eyebrow">§ 入会第一课 · {COURSE.dateLabel}</span>
                   <h2>{COURSE.title}</h2>
                   <p className="body-lg">
-                    老板要的不是 AI，是用 AI 降本增效、获客成交。不讲空泛概念，带着你自己的生意来，4 小时边学边练，带走一个懂你生意的 AI 助理。
+                    老板要的不是 AI，是用 AI 降本增效、获客成交。不讲空泛概念，带着你自己的生意来，4 小时边学边练，带走一个懂你生意的 AI 商业顾问。
                   </p>
                 </div>
 
@@ -247,7 +276,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     <li><strong>9:00　AI 能干什么、不能干什么</strong><br />把 AI 能接的活分成四类：搬运、归类、生成、拍板，哪些今天就能交，哪些不能交。你先在卡片上写下自己生意里最头疼的一件事</li>
                     <li><strong>9:40　装好你的 AI 助理</strong><br />现场装在你的电脑和手机上，告诉它你做什么生意、客人是谁，再用那件头疼的事问它。带走：它回答你生意问题的截图</li>
                     <li><strong>10:40　茶歇</strong></li>
-                    <li><strong>11:00　写你的需求单</strong>（今天最重要的一段）<br />助理一格一格问你：哪件事、现在谁在做、每周花多久、做成什么样算好、用到哪些资料、值多少。带走：一张填好的需求单</li>
+                    <li><strong>11:00　写你的需求单</strong>（今天最重要的一段）<br />助理一格一格问你：哪件事、现在谁在做、每周花多久、做成什么样算好、用到哪些资料、值多少。再让它把需求单写成一份岗位手册（技能），存进去试跑一次。带走：一张填好的需求单和你的第一个技能</li>
                     <li><strong>12:00　交给 AI 之前，先对一遍</strong><br />两个真实的翻车案，和四条线：拍板的事不交、对客人的承诺你本人看过再发、客人隐私先遮掉、数字人名日期对原件</li>
                     <li><strong>12:20　下课以后</strong><br />约好一对一咨询，讲清楚彩蛋怎么挑、会员有哪些权益</li>
                     <li><strong>12:40　答疑、合影，13:00 结束</strong></li>
@@ -270,9 +299,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <h2 className="h3">你会得到</h2>
 
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>1　一个懂你生意的私人 AI 助理</h3>
+                    <h3 className="h3" style={{ fontSize: "1.15em" }}>1　一个懂你生意的 AI 商业顾问</h3>
                     <p style={{ margin: 0 }}>
-                      课上帮你装好，电脑和手机都能用。先告诉它你做什么生意、客人是谁、现在最头疼的事。
+                      课上帮你装好，电脑和手机都能用，相当于随身带着一个专业、了解你业务的商业顾问。课上给它两样东西：资料夹（知识库），比如你的产品、客户、流程；岗位手册（技能），比如回客户、写文案。这些只是例子，放什么由你的生意决定。
                     </p>
                     <p style={{ margin: 0 }}>
                       之后可以问它：这个月生意为什么差了？它不会马上给你一个答案，会先问你：是来的客人少了，每个客人买得少了，还是价格变了？一步步帮你找到原因。也可以问：我的客人主要从哪来？怎么让第一次来的客人信我？
@@ -318,7 +347,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <div className="card stack-3">
                   <h2 className="h3">599 买的是什么，送的 365 又是什么</h2>
                   <p style={{ margin: 0 }}>
-                    <strong>599 澳元 + GST</strong>：一年的 Vibe Thursday 共创会员。包括这一上午的课、课后 15 分钟一对一咨询、彩蛋的机会、全年周二闭门研讨会，和上面列的其他会员权益。
+                    <strong>599 澳元 + GST</strong>：一年的 Vibe Thursday 共创会员。包括这一上午的课、课后 15 分钟一对一咨询、彩蛋的机会、全年周二闭门研讨会，和上面列的其他会员权益。前 15 名另送一页式官网并上线。
                   </p>
                   <p style={{ margin: 0 }}>
                     <strong>另送一年 AI 创始人 IP 会员（价值 365 澳元）</strong>：这门课讲用 AI 理生意；会员讲用 AI 做自媒体、做内容获客，让更多人认识你。想用 AI 做内容、持续获客的，主要在会员里学。会员包括：

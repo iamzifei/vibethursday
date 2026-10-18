@@ -86,6 +86,13 @@ export const copy = {
       capacityFull: "下一场的 40 个座位已满，再报名会进候补——没报上的请优先选下一场",
       // 群公告里只放 /go。首屏也给它一个入口，从网站进来的人找得到同一个地方。
       goLink: "本周要做的事都在这里：vibethursday.com/go →",
+      // The paid class, linked from the first screen until its date has passed
+      // (see `COURSE` in course.ts). Thursdays stay free; this is a separate thing.
+      classPromo: {
+        label: "10/25 周日 · 精品小班",
+        text: "老板的 AI 第一课：带走一个懂你生意的 AI 商业顾问，加入 Vibe Thursday 共创会员",
+        cta: "看详情和海报 →",
+      },
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
       note: "12:00 之后自愿留下吃个午饭。赶着接娃或者要回去干活的，12 点直接走就行。",
@@ -1856,6 +1863,11 @@ export const copy = {
       capacityLeft: "{n} places left for the next one",
       capacityFull: "The next one's 40 seats are taken; signing up joins the waitlist — if you are not booked, please pick the following week",
       goLink: "Everything for this week is here: vibethursday.com/go →",
+      classPromo: {
+        label: "Sun 25 Oct · small class, taught in Chinese",
+        text: "AI 101 for business owners: leave with an AI business advisor that knows your business, and a year of Vibe Thursday membership",
+        cta: "Details →",
+      },
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
       note: "We carry on over lunch from noon. On school pickup, or need to get back to work? Leave at twelve.",
