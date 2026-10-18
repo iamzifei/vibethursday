@@ -445,19 +445,22 @@ export default async function Page({ searchParams }: PageProps) {
 
             {/* Two by two, not auto-fit: four cards in three columns left one on
                 its own row. Each card is a column with its buttons pushed to
-                the bottom, so buttons on the same row line up. */}
+                the bottom, so buttons on the same row line up.
+                The buttons are plain links, not <Link>: in WeChat's Android
+                browser a client-side navigation from here reportedly did
+                nothing (2026-10-18), and a full page load always works. */}
             <div className="grid-2">
               <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.membersTeaser.eyebrow}</span>
                 <h3 className="h3">{c.membersTeaser.title}</h3>
                 <p className="body-sm">{c.membersTeaser.lede}</p>
                 <div className="teaser__cta">
-                  <Link className="btn btn--primary" href={langHref("/members", lang)}>
+                  <a className="btn btn--primary" href={langHref("/members", lang)}>
                     {c.membersTeaser.cta}
-                  </Link>
-                  <Link className="btn btn--secondary" href={langHref("/claim", lang)}>
+                  </a>
+                  <a className="btn btn--secondary" href={langHref("/claim", lang)}>
                     {c.membersTeaser.ctaSecondary}
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -466,9 +469,9 @@ export default async function Page({ searchParams }: PageProps) {
                 <h3 className="h3">{c.wharfTeaser.title}</h3>
                 <p className="body-sm">{c.wharfTeaser.lede}</p>
                 <div className="teaser__cta">
-                  <Link className="btn btn--secondary" href={langHref("/wharf", lang)}>
+                  <a className="btn btn--secondary" href={langHref("/wharf", lang)}>
                     {c.wharfTeaser.cta}
-                  </Link>
+                  </a>
                   <span className="body-sm" style={{ color: "var(--fg3)" }}>
                     {thisWeekCount > 0
                       ? c.wharfTeaser.count.replace("{n}", String(thisWeekCount))
@@ -482,9 +485,9 @@ export default async function Page({ searchParams }: PageProps) {
                 <h3 className="h3">{c.worksTeaser.title}</h3>
                 <p className="body-sm">{c.worksTeaser.lede}</p>
                 <div className="teaser__cta">
-                  <Link className="btn btn--secondary" href={langHref("/works", lang)}>
+                  <a className="btn btn--secondary" href={langHref("/works", lang)}>
                     {c.worksTeaser.cta}
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -493,9 +496,9 @@ export default async function Page({ searchParams }: PageProps) {
                 <h3 className="h3">{c.playTeaser.title}</h3>
                 <p className="body-sm">{c.playTeaser.lede}</p>
                 <div className="teaser__cta">
-                  <Link className="btn btn--secondary" href={langHref("/play", lang)}>
+                  <a className="btn btn--secondary" href={langHref("/play", lang)}>
                     {c.playTeaser.cta}
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>
