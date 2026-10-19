@@ -482,9 +482,9 @@ export const copy = {
         venuePledgeFood: "到了点吃的（简餐）",
         venuePledgeHint: "免费参加，到场每人在店里点一份。选了饮品的会提前交给吧台，到了报名字付钱。",
         // 散场聚餐（2026-10-15）：可选、付费占座、统一价、几样菜式。
-        dinner: "散场后留下聚餐（{price} 澳元，含 GST，限 {cap} 席）",
+        dinner: "散场后留下聚餐（{price} 澳元含 GST，一道主菜 + 一杯咖啡，限 {cap} 席）",
         dinnerDish: "选一个菜式",
-        dinnerHint: "{place}，{time}。每人先 2 分钟自我介绍，再每人 5 分钟问答，保证每个人的时间一样。菜单在下拉里选。付了款才算占座，不退款，来不了可以转给别人。",
+        dinnerHint: "{place}，{time}。每人先 2 分钟自我介绍，再每人 5 分钟问答，保证每个人的时间一样。主菜在下拉里选，咖啡到场再点。付了款才算占座，不退款，来不了可以转给别人。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -2219,9 +2219,9 @@ export const copy = {
         venuePledgePick: "Pick one",
         venuePledgeFood: "Something to eat, ordered there",
         venuePledgeHint: "Free to attend; everyone orders one thing from the venue. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
-        dinner: "Stay for dinner afterwards (A${price} incl. GST, {cap} seats)",
+        dinner: "Stay for dinner afterwards (A${price} incl. GST: a main and a coffee, {cap} seats)",
         dinnerDish: "Pick a dish",
-        dinnerHint: "{place}, {time}. Everyone gets a two-minute introduction, then five minutes of Q&A each, so everyone has the same time. Pick a dish from the list. A seat is yours once paid; no refunds, but you can pass it to someone else.",
+        dinnerHint: "{place}, {time}. Everyone gets a two-minute introduction, then five minutes of Q&A each, so everyone has the same time. Pick a main from the list; order your coffee on the day. A seat is yours once paid; no refunds, but you can pass it to someone else.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",

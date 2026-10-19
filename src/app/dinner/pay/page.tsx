@@ -68,7 +68,7 @@ export default async function DinnerPayPage({ searchParams }: PageProps) {
                     {paid && <p className="body-lg">付款正在确认，过几秒刷新这一页就会显示「饭桌上见」。</p>}
                     {error && <p className="body-lg">付款页没打开，请再点一次；还不行就私信 James。</p>}
                     <div className="card card--accent stack-3">
-                      <p className="body-lg" style={{ margin: 0 }}>金额：<strong>{config.price} 澳元（含 GST）</strong> · 菜式：{dish}</p>
+                      <p className="body-lg" style={{ margin: 0 }}>金额：<strong>{config.price} 澳元（含 GST）</strong> · 一道主菜 + 一杯咖啡 · 主菜：{dish}</p>
                       {left !== null && (
                         <p className="body" style={{ margin: 0 }}>座位先为你保留，还剩约 <strong>{left} 分钟</strong>。付完才锁定，过时自动释放。</p>
                       )}
@@ -106,6 +106,8 @@ export default async function DinnerPayPage({ searchParams }: PageProps) {
                   地点：{config.place}
                   <br />
                   时间：{formatSession(seat.session, "zh")}，{config.time}
+                  <br />
+                  包含：一道主菜 + 一杯咖啡（咖啡到场再点）
                   <br />
                   流程：每人 2 分钟自我介绍，再每人 5 分钟问答，然后自由聊。
                 </p>
