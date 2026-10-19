@@ -50,4 +50,13 @@ export function tuesdayPaymentInfo(): string {
 }
 
 /** What the signup confirmation is told about paying for a Tuesday. */
-export type FeeReceipt = { member: true } | { member: false; ref: string; status: "pending" | "paid" | "waived"; amount: string };
+export type FeeReceipt =
+  | { member: true }
+  | {
+      member: false;
+      ref: string;
+      status: "pending" | "paid" | "waived";
+      amount: string;
+      /** Minutes the place is held unpaid (card payment on), or null for no deadline. */
+      hold: number | null;
+    };

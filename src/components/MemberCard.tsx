@@ -8,6 +8,11 @@ import { Avatar } from "@/components/Avatar";
 type MembersCopy = Copy["members"];
 
 /** English is a query param, so every internal link has to carry it along. */
+/** The badge on a paid 共创会员's card and page. */
+export function cocreatorLabel(lang: Lang): string {
+  return lang === "en" ? "Co-creator member" : lang === "zh-Hant" ? "共創會員" : "共创会员";
+}
+
 export function langSuffix(lang: Lang, hasQuery = false): string {
   const param = LANG_PARAM[lang];
   if (!param) return "";
@@ -146,6 +151,7 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
               {member.display_name}
             </Link>
           </h3>
+          {member.cocreator && <span className="chip chip--stage mcard__badge">{cocreatorLabel(lang)}</span>}
           {member.headline && <p className="mcard__headline">{member.headline}</p>}
         </div>
       </div>

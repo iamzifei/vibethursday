@@ -484,7 +484,7 @@ export const copy = {
         // 散场聚餐（2026-10-15）：可选、付费占座、统一价、几样菜式。
         dinner: "散场后留下聚餐（{price} 澳元，含 GST，限 {cap} 席）",
         dinnerDish: "选一个菜式",
-        dinnerHint: "{place}，{time}。每人先 1 分钟自我介绍，再每人问一个问题，保证每个人的时间一样。付款才算占座，不退款，来不了可以转给别人。",
+        dinnerHint: "{place}，{time}。每人先 2 分钟自我介绍，再每人 5 分钟问答，保证每个人的时间一样。菜单在下拉里选。付了款才算占座，不退款，来不了可以转给别人。",
         session: "打算参加哪一场？",
         // Appended to every option. The dropdown is what people actually
         // read when choosing, and a date alone lets someone who works
@@ -660,6 +660,9 @@ export const copy = {
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
       feeDueCta: "去付款",
       dinnerDue: "聚餐占座：去付款，付了才算占上。",
+      // 刷卡付款开启时（2026-10-19）：先给 {minutes} 分钟付款，过时自动释放。
+      feeDueHold: "最后一步：{minutes} 分钟内付款 {amount}，付完位子才锁定，过时自动释放给别人。",
+      dinnerDueHold: "聚餐座位先为你保留 {minutes} 分钟，付完才锁定，过时自动释放。",
       dinnerDueCta: "去付聚餐的钱",
       dinnerWaitlist: "聚餐席位已满，你在候补名单上，有空位会微信通知你。",
       dinnerSkipped: "这一场周四你在候补，聚餐要等报上之后再订。",
@@ -2218,7 +2221,7 @@ export const copy = {
         venuePledgeHint: "Free to attend; everyone orders one thing from the venue. A drink picked here goes to the bar ahead of time; give your name and pay when you arrive.",
         dinner: "Stay for dinner afterwards (A${price} incl. GST, {cap} seats)",
         dinnerDish: "Pick a dish",
-        dinnerHint: "{place}, {time}. Everyone gets a one-minute introduction, then one question each, so everyone has the same time. A seat is held once paid; no refunds, but you can pass it to someone else.",
+        dinnerHint: "{place}, {time}. Everyone gets a two-minute introduction, then five minutes of Q&A each, so everyone has the same time. Pick a dish from the list. A seat is yours once paid; no refunds, but you can pass it to someone else.",
         session: "Which session are you coming to?",
         sessionTimeSuffix: "10:30am",
         sessionFull: "full · waitlist only",
@@ -2338,6 +2341,8 @@ export const copy = {
       feeDue: "One step left: transfer {amount} to confirm your place.",
       feeDueCta: "Pay now",
       dinnerDue: "Dinner seat: pay to hold it.",
+      feeDueHold: "One step left: pay {amount} within {minutes} minutes. Your place is locked in once paid, and released to someone else if not.",
+      dinnerDueHold: "Your dinner seat is held for {minutes} minutes. It is locked in once paid, and released if not.",
       dinnerDueCta: "Pay for dinner",
       dinnerWaitlist: "Dinner is full; you're on the waitlist and we'll message you if a seat opens.",
       dinnerSkipped: "You're on Thursday's waitlist, so dinner can be booked once you have a place.",

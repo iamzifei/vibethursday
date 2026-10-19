@@ -135,6 +135,7 @@ test("boundedRequest with a stream that breaks part-way gives an empty body, not
 /** Every route handler that takes a body, and the method that takes it. */
 const ROUTES: [file: string, method: "POST" | "DELETE"][] = [
   ["src/app/api/admin/checkin/route.ts", "POST"],
+  ["src/app/api/stripe/webhook/route.ts", "POST"],
   ["src/app/api/admin/deck/route.ts", "POST"],
   ["src/app/api/admin/member/route.ts", "POST"],
   ["src/app/api/admin/merge/route.ts", "POST"],

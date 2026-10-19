@@ -5,6 +5,7 @@ import { VENUE_MENU } from "@/lib/menu";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { priceOrder } from "@/lib/order";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
+import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
 import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, builderToWaitlist, capFor, isBuilderPurpose } from "@/lib/capacity";
@@ -346,11 +347,14 @@ export async function POST(request: Request) {
   // fee: only on their own row, so a typed-in WeChat ID cannot take or see
   // someone else's seat. Never fatal.
   let dinner: { ref: string; status: string } | { skipped: "waitlisted" } | undefined;
+  // With card payment on (2026-10-19), a new unpaid place is only held for a
+  // while: pay within it and the place is yours, otherwise it is released.
+  const payHold = stripeEnabled() ? HOLD_MINUTES : null;
   const dinnerOffer = dinnerConfig();
   const dishRaw = clean(body.dinnerDish, 20);
   if (dinnerOffer && dishRaw && firstSession && !isSpecialSession(firstSession) && !waitlisted && profileUpdated && dinnerOffer.dishes.some((d) => d.id === dishRaw)) {
     try {
-      dinner = await bookDinner({ session: firstSession, signupId, dish: dishRaw, ref: newDinnerRef(), cap: dinnerOffer.cap });
+      dinner = await bookDinner({ session: firstSession, signupId, dish: dishRaw, ref: newDinnerRef(), cap: dinnerOffer.cap, holdMinutes: payHold });
     } catch (error) {
       console.error("[signup] booked, but the dinner seat did not", error);
     }
@@ -393,8 +397,9 @@ export async function POST(request: Request) {
         ? { member: true }
         : {
             member: false,
-            ...(({ ref, status }) => ({ ref, status }))(await getOrCreateSessionFee(firstSession, signupId, newFeeRef())),
+            ...(({ ref, status }) => ({ ref, status }))(await getOrCreateSessionFee(firstSession, signupId, newFeeRef(), payHold)),
             amount: `A$${feeToPay(feeFor(firstSession)!)}`,
+            hold: payHold,
           };
     } catch (error) {
       console.error("[signup] booked, but could not set up the Tuesday fee", error);
@@ -463,7 +468,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee, dinner });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee, dinner, payHold });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

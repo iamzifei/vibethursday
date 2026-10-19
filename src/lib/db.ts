@@ -740,6 +740,17 @@ export function ensureSchema(): Promise<void> {
         UNIQUE (session, signup_id)
       )
     `);
+
+    // ── Card payment for Tuesdays and dinners (2026-10-19, stripe-pay.ts) ──
+    // hold_until: when an unpaid place goes back on offer. NULL means no
+    // deadline — every row from the bank-transfer days, so nobody who signed
+    // up before card payment started can lose a place to it.
+    // stripe_session: the Checkout page opened for this row, reused while it
+    // is still open so one place can never be paid for twice.
+    await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
+    await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS stripe_session text`);
+    await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
+    await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -1019,6 +1030,7 @@ export async function sessionHeadcount(
   wechat: string | null,
 ): Promise<{ count: number; alreadyIn: boolean }> {
   await ensureSchema();
+  await releaseExpiredHolds();
 
   const result = await getPool().query<{ count: string; already: boolean }>(
     `SELECT count(*)::text AS count,
@@ -1038,6 +1050,7 @@ export async function sessionHeadcount(
 /** Signups per session, for marking full sessions on the form. Only dates that have any. */
 export async function signupCountsBySession(): Promise<Map<string, number>> {
   await ensureSchema();
+  await releaseExpiredHolds();
 
   const result = await getPool().query<{ session: string; count: string }>(
     `SELECT to_char(d, 'YYYY-MM-DD') AS session, count(*)::text AS count
@@ -1376,6 +1389,8 @@ export type Member = {
   tags: string[];
   hidden: boolean;
   published: boolean;
+  /** A paid 共创会员 (the year-long membership) — shown as a badge. */
+  cocreator: boolean;
   /** Every session this person signed up for, oldest first. */
   sessions: string[];
   /**
@@ -1410,6 +1425,14 @@ const MEMBER_COLUMNS = `
   g.topic,
   (m.avatar IS NOT NULL) AS has_avatar,
   m.avatar_version,
+  -- A 共创会员 (year-long membership): a paid class order within a year,
+  -- matched the same way as isMember. Shown as a badge on the card.
+  EXISTS (
+    SELECT 1 FROM course_orders o
+     WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+       AND (o.signup_id = g.id
+            OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+  ) AS cocreator,
   COALESCE(
     (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s) FROM unnest(g.sessions) AS s),
     '{}'
@@ -4226,20 +4249,154 @@ export async function isMember(signupId: string): Promise<boolean> {
   return result.rows[0]?.member ?? false;
 }
 
-/** The fee row for one person and one Tuesday, created on first ask. Signing up twice keeps the first reference. */
+/**
+ * The fee row for one person and one Tuesday, created on first ask. Signing up
+ * twice keeps the first reference.
+ *
+ * `holdMinutes` (signup only, and only while card payment is on) gives an
+ * unpaid place a deadline. Signing up again restarts a deadline that already
+ * exists — that is how someone whose hold lapsed gets a fresh one — but never
+ * adds one to a row that had none, so a bank-transfer booking stays safe.
+ */
 export async function getOrCreateSessionFee(
   session: string,
   signupId: string,
   ref: string,
+  holdMinutes: number | null = null,
 ): Promise<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }> {
   await ensureSchema();
   const result = await getPool().query<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }>(
-    `INSERT INTO session_fees (session, signup_id, ref) VALUES ($1::date, $2::bigint, $3)
-     ON CONFLICT (session, signup_id) DO UPDATE SET session = EXCLUDED.session
+    `INSERT INTO session_fees (session, signup_id, ref, hold_until)
+     VALUES ($1::date, $2::bigint, $3, CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(mins => $4::int) END)
+     ON CONFLICT (session, signup_id) DO UPDATE SET hold_until = CASE
+       WHEN session_fees.status = 'pending' AND session_fees.hold_until IS NOT NULL AND $4::int IS NOT NULL
+         THEN now() + make_interval(mins => $4::int)
+       ELSE session_fees.hold_until END
      RETURNING id::text AS id, ref, status, claimed_at IS NOT NULL AS claimed`,
-    [session, signupId, ref],
+    [session, signupId, ref, holdMinutes],
   );
   return result.rows[0];
+}
+
+/**
+ * Gives back every unpaid place whose hold has run out: the Tuesday comes off
+ * the person's sessions (the fee row stays, so their payment page can say what
+ * happened), and the dinner seat is cancelled. Rows with no hold are never
+ * touched. Called before anything counts places, so the counts are current
+ * without a background job.
+ */
+export async function releaseExpiredHolds(): Promise<void> {
+  await ensureSchema();
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    // The same lock markPaidByCard takes, so a payment settling at this very
+    // moment cannot be read as still pending and have its place removed.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('card-holds'))`);
+    // Someone who became a member after signing up (the class is paid by
+    // transfer and marked by hand, often later) owes nothing: never released.
+    await client.query(
+      `UPDATE signups g
+          SET sessions = array_remove(g.sessions, f.session),
+              venue_pledges = g.venue_pledges - (f.session::text),
+              updated_at = now()
+         FROM session_fees f
+        WHERE f.signup_id = g.id AND f.status = 'pending'
+          AND f.hold_until IS NOT NULL AND f.hold_until < now()
+          AND f.session = ANY(g.sessions)
+          AND NOT EXISTS (
+            SELECT 1 FROM course_orders o
+             WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+               AND (o.signup_id = g.id
+                    OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+          )`,
+    );
+    await client.query(
+      `UPDATE dinner_orders SET status = 'cancelled'
+        WHERE status = 'pending' AND hold_until IS NOT NULL AND hold_until < now()`,
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    // Never fatal: every caller is a read or a booking that must still work.
+    // The next call releases what this one could not.
+    console.error("[holds] could not release lapsed holds", error);
+  } finally {
+    client.release();
+  }
+}
+
+/** The Checkout page opened for a payment, and the hold stretched to outlast it. */
+export async function attachCheckout(kind: "tuesday" | "dinner", ref: string, stripeSession: string, holdMinutes: number): Promise<boolean> {
+  await ensureSchema();
+  const table = kind === "tuesday" ? "session_fees" : "dinner_orders";
+  // Only while the place is still theirs: a hold that lapsed while Stripe was
+  // being asked for the page has already been given away.
+  const result = await getPool().query(
+    `UPDATE ${table}
+        SET stripe_session = $2,
+            hold_until = CASE WHEN hold_until IS NULL THEN NULL
+                              ELSE greatest(hold_until, now() + make_interval(mins => $3::int)) END
+      WHERE ref = $1 AND status = 'pending' AND (hold_until IS NULL OR hold_until > now())`,
+    [ref, stripeSession, holdMinutes],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/**
+ * Settles a card payment: the row is paid and its hold cleared. A Tuesday
+ * whose hold had already lapsed is put back on the person's sessions — the
+ * money arrived, so the place is theirs, even if that makes one over the cap.
+ * Returns false when there was nothing to settle (already paid, or no row).
+ */
+export async function markPaidByCard(kind: "tuesday" | "dinner", ref: string): Promise<boolean> {
+  await ensureSchema();
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('card-holds'))`);
+    if (kind === "dinner") {
+      const result = await client.query(
+        `UPDATE dinner_orders SET status = 'paid', paid_at = now(), hold_until = NULL WHERE ref = $1 AND status <> 'paid'`,
+        [ref],
+      );
+      await client.query("COMMIT");
+      return (result.rowCount ?? 0) > 0;
+    }
+    const paid = await client.query<{ signup_id: string; session: string }>(
+      `UPDATE session_fees SET status = 'paid', paid_at = now(), hold_until = NULL
+        WHERE ref = $1 AND status <> 'paid'
+        RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session`,
+      [ref],
+    );
+    const row = paid.rows[0];
+    if (row) {
+      await client.query(
+        `UPDATE signups SET sessions = array_append(sessions, $2::date), updated_at = now()
+          WHERE id = $1::bigint AND NOT ($2::date = ANY(sessions))`,
+        [row.signup_id, row.session],
+      );
+    }
+    await client.query("COMMIT");
+    return Boolean(row);
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** A Checkout page Stripe let expire: its place is released now rather than at the hold's end. */
+export async function expireCheckout(kind: "tuesday" | "dinner", stripeSession: string): Promise<void> {
+  await ensureSchema();
+  const table = kind === "tuesday" ? "session_fees" : "dinner_orders";
+  await getPool().query(
+    `UPDATE ${table} SET hold_until = least(hold_until, now())
+      WHERE stripe_session = $1 AND status = 'pending' AND hold_until IS NOT NULL`,
+    [stripeSession],
+  );
+  await releaseExpiredHolds();
 }
 
 export type SessionFee = {
@@ -4252,12 +4409,19 @@ export type SessionFee = {
   claimed_at: string | null;
   paid_at: string | null;
   created_at: string;
-  /** Still down for that Tuesday — false once they cancelled. */
+  /** Still down for that Tuesday — false once they cancelled, or their hold ran out. */
   booked: boolean;
+  /** signup_id, for the card payment's metadata. */
+  signup_id: string;
+  /** When an unpaid place goes back on offer; null for no deadline. */
+  hold_until: Date | null;
+  /** The Checkout page last opened for it, if any. */
+  stripe_session: string | null;
 };
 
 const FEE_SELECT = `
   SELECT f.id::text AS id, f.ref, to_char(f.session, 'YYYY-MM-DD') AS session, f.status, g.name, g.wechat,
+         f.signup_id::text AS signup_id, f.hold_until, f.stripe_session,
          to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
          to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
          to_char(f.created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
@@ -4267,6 +4431,7 @@ const FEE_SELECT = `
 /** One fee by its payment reference, for the payment page. */
 export async function getSessionFeeByRef(ref: string): Promise<SessionFee | null> {
   await ensureSchema();
+  await releaseExpiredHolds();
   const result = await getPool().query<SessionFee>(`${FEE_SELECT} WHERE f.ref = $1`, [ref]);
   return result.rows[0] ?? null;
 }
@@ -4321,6 +4486,7 @@ export type TuesdayFeeRow = {
  */
 export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow[]> {
   await ensureSchema();
+  await releaseExpiredHolds();
   const result = await getPool().query<TuesdayFeeRow>(
     `SELECT g.id::text AS signup_id, g.name, g.wechat,
             EXISTS (
@@ -4452,8 +4618,10 @@ export type DinnerStatus = "pending" | "paid" | "cancelled" | "waitlist";
  * updates the dish; a cancelled seat is reopened. Seats are counted under a
  * transaction-scoped lock, so two people cannot both take the last one.
  */
-export async function bookDinner(input: { session: string; signupId: string; dish: string; ref: string; cap: number }): Promise<{ ref: string; status: DinnerStatus }> {
+export async function bookDinner(input: { session: string; signupId: string; dish: string; ref: string; cap: number; holdMinutes?: number | null }): Promise<{ ref: string; status: DinnerStatus }> {
   await ensureSchema();
+  await releaseExpiredHolds();
+  const hold = input.holdMinutes ?? null;
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");
@@ -4473,12 +4641,17 @@ export async function bookDinner(input: { session: string; signupId: string; dis
       [input.session],
     );
     const status: DinnerStatus = (taken.rows[0]?.n ?? 0) < input.cap ? "pending" : "waitlist";
+    // A seat (not a waitlist place) gets a deadline to pay while card payment
+    // is on; a reopened seat gets a fresh one and a fresh Checkout page.
     const saved = await client.query<{ ref: string; status: DinnerStatus }>(
-      `INSERT INTO dinner_orders (session, signup_id, dish, ref, status) VALUES ($1::date, $2::bigint, $3, $4, $5)
+      `INSERT INTO dinner_orders (session, signup_id, dish, ref, status, hold_until)
+       VALUES ($1::date, $2::bigint, $3, $4, $5,
+               CASE WHEN $6::int IS NULL OR $5 <> 'pending' THEN NULL ELSE now() + make_interval(mins => $6::int) END)
        ON CONFLICT (session, signup_id) DO UPDATE SET dish = EXCLUDED.dish, status = EXCLUDED.status,
-         created_at = now(), claimed_at = NULL, paid_at = NULL
+         created_at = now(), claimed_at = NULL, paid_at = NULL,
+         hold_until = EXCLUDED.hold_until
        RETURNING ref, status`,
-      [input.session, input.signupId, input.dish, input.ref, status],
+      [input.session, input.signupId, input.dish, input.ref, status, hold],
     );
     await client.query("COMMIT");
     return saved.rows[0];
@@ -4501,10 +4674,15 @@ export type DinnerOrder = {
   claimed_at: string | null;
   paid_at: string | null;
   created_at: string;
+  signup_id: string;
+  /** When an unpaid seat goes back on offer; null for no deadline. */
+  hold_until: Date | null;
+  stripe_session: string | null;
 };
 
 const DINNER_SELECT = `
   SELECT d.id::text AS id, d.ref, to_char(d.session, 'YYYY-MM-DD') AS session, g.name, g.wechat, d.dish, d.status,
+         d.signup_id::text AS signup_id, d.hold_until, d.stripe_session,
          to_char(d.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
          to_char(d.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
          to_char(d.created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at
@@ -4512,6 +4690,7 @@ const DINNER_SELECT = `
 
 export async function getDinnerByRef(ref: string): Promise<DinnerOrder | null> {
   await ensureSchema();
+  await releaseExpiredHolds();
   const result = await getPool().query<DinnerOrder>(`${DINNER_SELECT} WHERE d.ref = $1`, [ref]);
   return result.rows[0] ?? null;
 }
@@ -4528,6 +4707,7 @@ export async function claimDinner(ref: string): Promise<boolean> {
 
 export async function listDinner(session: string): Promise<DinnerOrder[]> {
   await ensureSchema();
+  await releaseExpiredHolds();
   const result = await getPool().query<DinnerOrder>(`${DINNER_SELECT} WHERE d.session = $1::date ORDER BY d.created_at`, [session]);
   return result.rows;
 }

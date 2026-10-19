@@ -75,6 +75,8 @@ type Receipt = {
   fee: { member: true } | { member: false; ref: string; amount: string } | null;
   /** A dinner seat taken with this signup: pay against the reference, or waitlisted. */
   dinner: { ref: string; waitlist: boolean } | { skipped: true } | null;
+  /** Minutes an unpaid place is held when paying by card; null for no deadline. */
+  payHold: number | null;
 };
 
 
@@ -506,6 +508,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         classSignup?: boolean;
         fee?: { member: boolean; ref?: string; status?: string; amount?: string };
         dinner?: { ref?: string; status?: string; skipped?: string };
+        payHold?: number | null;
       } | null;
       const sessionValue = String(data.get("firstSession") ?? "");
       const labelOf = (value: string) => sessions.find((option) => option.value === value)?.label ?? value;
@@ -525,6 +528,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         remembered: accepted?.remembered === true,
         builderRouted: accepted?.builderRouted === true,
         classSignup: accepted?.classSignup === true,
+        payHold: typeof accepted?.payHold === "number" ? accepted.payHold : null,
         fee: accepted?.fee?.member
           ? { member: true }
           : accepted?.fee && typeof accepted.fee.ref === "string" && accepted.fee.status === "pending"
@@ -569,7 +573,9 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         {receipt?.fee && !receipt.fee.member && (
           <div className="stack-3">
             <p style={{ margin: 0 }}>
-              <strong>{copy.feeDue.replace("{amount}", receipt.fee.amount)}</strong>
+              <strong>
+                {(receipt.payHold ? copy.feeDueHold.replace("{minutes}", String(receipt.payHold)) : copy.feeDue).replace("{amount}", receipt.fee.amount)}
+              </strong>
             </p>
             <a className="btn btn--primary btn--block" href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
               {copy.feeDueCta} →
@@ -579,7 +585,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         {receipt?.dinner && "skipped" in receipt.dinner && <p>{copy.dinnerSkipped}</p>}
         {receipt?.dinner && "ref" in receipt.dinner && (
           <div className="stack-2">
-            <p style={{ margin: 0 }}><strong>{receipt.dinner.waitlist ? copy.dinnerWaitlist : copy.dinnerDue}</strong></p>
+            <p style={{ margin: 0 }}><strong>{receipt.dinner.waitlist ? copy.dinnerWaitlist : receipt.payHold ? copy.dinnerDueHold.replace("{minutes}", String(receipt.payHold)) : copy.dinnerDue}</strong></p>
             {!receipt.dinner.waitlist && (
               <a className="btn btn--secondary btn--block" href={`/dinner/pay?ref=${receipt.dinner.ref}`}>{copy.dinnerDueCta} →</a>
             )}
@@ -1132,6 +1138,17 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                               <option key={dish.id} value={dish.id}>{lang === "en" ? dish.en : dish.zh}</option>
                             ))}
                           </select>
+                          {/* The menu, without the restaurant's prices: everyone pays the one price. */}
+                          {dinner.dishes.some((dish) => dish.desc) && (
+                            <ul className="field-hint" style={{ margin: "var(--space-2) 0 0", paddingLeft: "1.2em" }}>
+                              {dinner.dishes.map((dish) => (
+                                <li key={dish.id}>
+                                  <strong>{lang === "en" ? dish.en : dish.zh}</strong>
+                                  {(lang === "en" ? dish.descEn || dish.desc : dish.desc) && `：${lang === "en" ? dish.descEn || dish.desc : dish.desc}`}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       )}
                       <p className="field-hint">{copy.fields.dinnerHint.replace("{place}", dinner.place).replace("{time}", dinner.time)}</p>

@@ -4979,3 +4979,4 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 /* /class: the poster, full width of the column, tap to open full size. */
 .class-poster { display: block; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-subtle); }
 .class-poster img { display: block; width: 100%; height: auto; }
+.mcard__badge { margin-top: var(--space-1); width: fit-content; }

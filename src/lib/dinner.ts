@@ -24,8 +24,12 @@ export type DinnerConfig = {
   price: number;
   /** Seats before the waitlist starts. */
   cap: number;
-  /** The dishes to choose from. Ids are stored; never reuse one for a different dish. */
-  dishes: { id: string; zh: string; en: string }[];
+  /**
+   * The dishes to choose from. Ids are stored; never reuse one for a different
+   * dish. `desc` / `descEn` describe the dish, shown with the choices
+   * (2026-10-19). There is no per-dish price: the dinner has one price.
+   */
+  dishes: { id: string; zh: string; en: string; desc?: string; descEn?: string }[];
 };
 
 /** Reads DINNER_CONFIG, or null when the dinner is not on. Never throws. */
@@ -38,7 +42,13 @@ export function dinnerConfig(raw: string | undefined = process.env.DINNER_CONFIG
       : [];
     if (typeof c.place !== "string" || typeof c.time !== "string" || typeof c.price !== "number" || c.price <= 0 || dishes.length === 0) return null;
     const cap = typeof c.cap === "number" && c.cap > 0 ? Math.floor(c.cap) : 12;
-    return { place: c.place, time: c.time, price: c.price, cap, dishes: dishes.map((d) => ({ id: d.id, zh: d.zh, en: d.en || d.zh })) };
+    return { place: c.place, time: c.time, price: c.price, cap, dishes: dishes.map((d) => ({
+      id: d.id,
+      zh: d.zh,
+      en: d.en || d.zh,
+      ...(typeof d.desc === "string" && d.desc ? { desc: d.desc.slice(0, 200) } : {}),
+      ...(typeof d.descEn === "string" && d.descEn ? { descEn: d.descEn.slice(0, 200) } : {}),
+    })) };
   } catch {
     return null;
   }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { assetLabel, cardTopic, langSuffix, topicLabel } from "@/components/MemberCard";
+import { assetLabel, cardTopic, cocreatorLabel, langSuffix, topicLabel } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, resolveLang } from "@/lib/content";
@@ -94,6 +94,7 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
 
               <div className="stack-3">
                 <h1>{member.display_name}</h1>
+                {member.cocreator && <span className="chip chip--stage" style={{ alignSelf: "flex-start" }}>{cocreatorLabel(lang)}</span>}
                 {member.headline && (
                   <p className="body-lg" style={{ color: "var(--fg1)", fontWeight: 500 }}>
                     {member.headline}

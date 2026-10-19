@@ -6,12 +6,14 @@ import { getCopy } from "@/lib/content";
 import { getSessionFeeByRef } from "@/lib/db";
 import { feeFor, formatSession } from "@/lib/sessions";
 import { feeLabel, looksLikeFeeRef, payLabel, tuesdayPaymentInfo } from "@/lib/tuesday-fee";
+import { settleIfPaid } from "@/lib/card-pay";
+import { minutesLeft, stripeEnabled } from "@/lib/stripe-pay";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "周二付款 · Vibe Thursday", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ ref?: string; done?: string }> };
+type PageProps = { searchParams: Promise<{ ref?: string; done?: string; paid?: string; error?: string }> };
 
 /**
  * How to pay for a Build Tuesday (2026-10-14). Reached from the signup
@@ -23,9 +25,17 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const c = getCopy("zh");
   const ref = looksLikeFeeRef(params.ref) ? params.ref : null;
-  const fee = ref ? await getSessionFeeByRef(ref).catch(() => null) : null;
+  let fee = ref ? await getSessionFeeByRef(ref).catch(() => null) : null;
+  // Back from Stripe, or a page left open: settle it here rather than wait
+  // for the webhook, then read the row again.
+  if (ref && fee && (await settleIfPaid("tuesday", fee))) fee = await getSessionFeeByRef(ref).catch(() => null);
   const price = fee ? feeFor(fee.session) : null;
   const paymentInfo = tuesdayPaymentInfo();
+  const card = stripeEnabled();
+  // Card payment holds a place for a while (stripe-pay.ts); a lapsed one is
+  // already off their sessions, so `booked` is false and this says why.
+  const lapsed = Boolean(fee && fee.status === "pending" && !fee.booked && minutesLeft(fee.hold_until) === 0);
+  const left = fee && fee.status === "pending" && fee.booked ? minutesLeft(fee.hold_until) : null;
 
   return (
     <div lang={c.htmlLang}>
@@ -45,20 +55,66 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                 <div className="stack-3">
                   <span className="eyebrow">§ Build Tuesday · {formatSession(fee.session, "zh")}</span>
                   <h1>
-                    {!fee.booked && fee.status !== "paid"
+                    {lapsed
+                      ? "超时没付，位子已经释放"
+                      : !fee.booked && fee.status !== "paid"
                       ? "这一场不用付了"
                       : fee.status === "paid" || fee.status === "waived"
                       ? `${fee.name}，周二见！`
                       : fee.claimed_at
                         ? `${fee.name}，收到了`
-                        : "报上了，最后一步：转账"}
+                        : card
+                          ? "报上了，最后一步：付款"
+                          : "报上了，最后一步：转账"}
                   </h1>
                 </div>
 
-                {!fee.booked && fee.status !== "paid" ? (
+                {lapsed ? (
+                  <p className="body-lg">
+                    付款时间过了，位子已经让给别人。还想来的话，去 <Link href="/tuesday">周二报名页</Link> 重新报，有位子会再给你 30 分钟付款。
+                  </p>
+                ) : !fee.booked && fee.status !== "paid" ? (
                   <p className="body-lg">这一场的报名已经取消或改了，不用转账。想再报，去 <Link href="/tuesday">周二报名页</Link>。</p>
                 ) : fee.status === "paid" || fee.status === "waived" ? (
                   <p className="body-lg">已经收到了，不用再转。到了在门口扫码签到就行。</p>
+                ) : card && !fee.claimed_at ? (
+                  <>
+                    {params.paid && <p className="body-lg">付款正在确认，过几秒刷新这一页就会显示「已付」。</p>}
+                    {params.error && <p className="body-lg">付款页没打开，请再点一次；还不行就私信 James。</p>}
+                    <div className="card card--accent stack-3">
+                      <p className="body-lg" style={{ margin: 0 }}>
+                        金额：<strong>{payLabel(price)}</strong>
+                        <span className="hint"> · 标价 {feeLabel(price)}</span>
+                      </p>
+                      {left !== null && (
+                        <p className="body" style={{ margin: 0 }}>
+                          位子先为你保留，还剩约 <strong>{left} 分钟</strong>。付完才锁定，过时自动释放给别人。
+                        </p>
+                      )}
+                      <form method="post" action="/api/pay/checkout">
+                        <input type="hidden" name="ref" value={fee.ref} />
+                        <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>
+                          刷卡付款（支持 Apple Pay / Google Pay）
+                        </button>
+                      </form>
+                    </div>
+                    {/* Booked before card payment started: they were told to
+                        transfer, so that stays open to them. */}
+                    {fee.hold_until === null && paymentInfo && (
+                      <details>
+                        <summary className="body-sm">之前说好转账的，也可以继续转账</summary>
+                        <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+                          <p style={{ margin: 0 }}>
+                            转账金额：{payLabel(price)} · 转账备注：<strong className="mono">{fee.ref}</strong>
+                          </p>
+                          <pre className="body" style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{paymentInfo}</pre>
+                        </div>
+                      </details>
+                    )}
+                    <p className="body">
+                      共创会员周二免费，<a href="/class">了解会员</a>。
+                    </p>
+                  </>
                 ) : fee.claimed_at ? (
                   <div className="stack-3">
                     <div className="tick" aria-hidden="true">✓</div>
