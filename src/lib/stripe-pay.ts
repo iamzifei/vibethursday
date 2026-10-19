@@ -23,6 +23,13 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const HOLD_MINUTES = 30;
 
 /**
+ * How long a place given to someone off a Tuesday's waitlist is held for
+ * them to pay. Longer than a signup's hold: they hear about it from the
+ * organiser on WeChat, not on the page they are already looking at.
+ */
+export const PROMOTION_HOLD_MINUTES = 24 * 60;
+
+/**
  * Stripe will not let a Checkout page expire sooner than 30 minutes after it
  * is created. A hold is stretched to at least this long whenever a Checkout
  * page is opened, so a page can never still take money for a place that was

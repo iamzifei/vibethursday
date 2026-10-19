@@ -749,6 +749,10 @@ export function ensureSchema(): Promise<void> {
     // is still open so one place can never be paid for twice.
     await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
     await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS stripe_session text`);
+    // What this Tuesday takes the place of, given up only once it is paid
+    // (2026-10-19): the session someone moved from, and that week's Thursday.
+    // Until then they keep both, so an unpaid hold that lapses costs nothing.
+    await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS replaces date[] NOT NULL DEFAULT '{}'`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
   })().catch((error) => {
@@ -4263,17 +4267,21 @@ export async function getOrCreateSessionFee(
   signupId: string,
   ref: string,
   holdMinutes: number | null = null,
+  /** Sessions to give up once this one is paid (`replaces`); empty leaves what is there. */
+  replaces: string[] = [],
 ): Promise<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }> {
   await ensureSchema();
   const result = await getPool().query<{ id: string; ref: string; status: "pending" | "paid" | "waived"; claimed: boolean }>(
-    `INSERT INTO session_fees (session, signup_id, ref, hold_until)
-     VALUES ($1::date, $2::bigint, $3, CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(mins => $4::int) END)
+    `INSERT INTO session_fees (session, signup_id, ref, hold_until, replaces)
+     VALUES ($1::date, $2::bigint, $3, CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(mins => $4::int) END, $5::date[])
      ON CONFLICT (session, signup_id) DO UPDATE SET hold_until = CASE
        WHEN session_fees.status = 'pending' AND session_fees.hold_until IS NOT NULL AND $4::int IS NOT NULL
          THEN now() + make_interval(mins => $4::int)
-       ELSE session_fees.hold_until END
+       ELSE session_fees.hold_until END,
+       replaces = CASE WHEN session_fees.status = 'pending' AND cardinality($5::date[]) > 0
+         THEN $5::date[] ELSE session_fees.replaces END
      RETURNING id::text AS id, ref, status, claimed_at IS NOT NULL AS claimed`,
-    [session, signupId, ref, holdMinutes],
+    [session, signupId, ref, holdMinutes, replaces],
   );
   return result.rows[0];
 }
@@ -4363,10 +4371,11 @@ export async function markPaidByCard(kind: "tuesday" | "dinner", ref: string): P
       await client.query("COMMIT");
       return (result.rowCount ?? 0) > 0;
     }
-    const paid = await client.query<{ signup_id: string; session: string }>(
+    const paid = await client.query<{ signup_id: string; session: string; replaces: string[] }>(
       `UPDATE session_fees SET status = 'paid', paid_at = now(), hold_until = NULL
         WHERE ref = $1 AND status <> 'paid'
-        RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session`,
+        RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session,
+                  ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(replaces) AS d) AS replaces`,
       [ref],
     );
     const row = paid.rows[0];
@@ -4378,12 +4387,24 @@ export async function markPaidByCard(kind: "tuesday" | "dinner", ref: string): P
       );
     }
     await client.query("COMMIT");
+    if (row) await giveUpReplaced(row.signup_id, row.session, row.replaces);
     return Boolean(row);
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     client.release();
+  }
+}
+
+/**
+ * Once a Tuesday is paid, what it replaces is given up — the session they
+ * moved from and that week's Thursday — exactly as cancelling them on /my
+ * would. Never the paid Tuesday itself.
+ */
+async function giveUpReplaced(signupId: string, paidSession: string, replaces: string[]): Promise<void> {
+  for (const other of replaces) {
+    if (other !== paidSession) await cancelSession(signupId, other);
   }
 }
 
@@ -4417,11 +4438,14 @@ export type SessionFee = {
   hold_until: Date | null;
   /** The Checkout page last opened for it, if any. */
   stripe_session: string | null;
+  /** Sessions given up once it is paid. */
+  replaces: string[];
 };
 
 const FEE_SELECT = `
   SELECT f.id::text AS id, f.ref, to_char(f.session, 'YYYY-MM-DD') AS session, f.status, g.name, g.wechat,
          f.signup_id::text AS signup_id, f.hold_until, f.stripe_session,
+         ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(f.replaces) AS d) AS replaces,
          to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
          to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
          to_char(f.created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
@@ -4460,10 +4484,27 @@ export async function listSessionFees(sessions: string[]): Promise<SessionFee[]>
 /** Marks a fee paid, waived, or back to pending. */
 export async function setSessionFeeStatus(id: string, status: "pending" | "paid" | "waived"): Promise<void> {
   await ensureSchema();
-  await getPool().query(
-    `UPDATE session_fees SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END WHERE id = $1::bigint`,
+  // Settled by hand (a transfer, or waived): the place is theirs, so the hold
+  // goes, and what it replaces is given up as a card payment would.
+  const result = await getPool().query<{ signup_id: string; session: string; replaces: string[] }>(
+    `UPDATE session_fees SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END,
+            hold_until = CASE WHEN $2 = 'pending' THEN hold_until ELSE NULL END
+      WHERE id = $1::bigint
+      RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session,
+                ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(replaces) AS d) AS replaces`,
     [id, status],
   );
+  const row = result.rows[0];
+  if (row && status !== "pending") {
+    // Money arrived for a place whose hold had lapsed: it is theirs again.
+    // Waiving does not put back a Tuesday somebody had already left.
+    if (status === "paid") await getPool().query(
+      `UPDATE signups SET sessions = array_append(sessions, $2::date), updated_at = now()
+        WHERE id = $1::bigint AND NOT ($2::date = ANY(sessions))`,
+      [row.signup_id, row.session],
+    );
+    await giveUpReplaced(row.signup_id, row.session, row.replaces);
+  }
 }
 
 /** One person booked on a paid Tuesday, with where their fee stands — the organiser's door list. */

@@ -114,6 +114,27 @@ test(
       await m.releaseExpiredHolds();
       assert.equal(await booked(held, tuesday), true, "a paid place is never released");
 
+      // Moving onto a paid Tuesday keeps that week's Thursday until the Tuesday
+      // is paid: a lapsed hold leaves them on the Thursday, a payment gives it up.
+      const mover = await person(6, tuesday);
+      await pool.query(`UPDATE signups SET sessions = ARRAY[$2::date, $3::date] WHERE id = $1::bigint`, [mover, tuesday, thursday]);
+      const moveFee = await m.getOrCreateSessionFee(tuesday, mover, "TURRRR2", HOLD_MINUTES, [thursday]);
+      await expire("session_fees", moveFee.ref);
+      await m.releaseExpiredHolds();
+      assert.equal(await booked(mover, tuesday), false, "unpaid Tuesday released");
+      assert.equal(await booked(mover, thursday), true, "and the Thursday was never given up");
+      await m.markPaidByCard("tuesday", moveFee.ref);
+      assert.equal(await booked(mover, tuesday), true, "paid: the Tuesday is theirs");
+      assert.equal(await booked(mover, thursday), false, "and the Thursday it replaces is given up");
+
+      // Settled by hand: the same.
+      const byHand = await person(7, tuesday);
+      await pool.query(`UPDATE signups SET sessions = ARRAY[$2::date, $3::date] WHERE id = $1::bigint`, [byHand, tuesday, thursday]);
+      const handFee = await m.getOrCreateSessionFee(tuesday, byHand, "TUHAND2", HOLD_MINUTES, [thursday]);
+      await m.setSessionFeeStatus(handFee.id, "paid");
+      assert.equal(await booked(byHand, thursday), false);
+      assert.equal((await m.getSessionFeeByRef(handFee.ref))?.hold_until, null, "no hold left to lapse");
+
       // Dinner: a lapsed seat is cancelled and frees the cap for the next person.
       const a = await person(3, thursday);
       const b = await person(4, thursday);

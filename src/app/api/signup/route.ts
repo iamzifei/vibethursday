@@ -368,13 +368,32 @@ export async function POST(request: Request) {
   // round — so a place held "just in case" goes back to someone waiting for it.
   // Only on the person's own row, after the new signup is safely stored, and
   // never fatal: the worst case is one person down for both, as before.
+  //
+  // Except onto a paid Tuesday that has to be paid for first (2026-10-19):
+  // then that week's Thursday is kept until the payment lands, and given up
+  // by it (`replaces`), so an unpaid hold that lapses costs them nothing.
   let switched: string[] = [];
+  let replaces: string[] = [];
+  let member: boolean | null = null;
+  const paidTuesday = Boolean(firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null);
+  if (paidTuesday) {
+    try {
+      member = await isMember(signupId);
+    } catch (error) {
+      console.error("[signup] could not check membership", error);
+    }
+  }
+  const deferSwitch = paidTuesday && payHold !== null && member === false;
   if (firstSession && profileUpdated) {
     try {
       const mine = await getMySignup(signupId);
       if (mine) {
-        switched = sameWeekSessions(firstSession, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]);
-        for (const other of switched) await cancelSession(signupId, other);
+        const others = sameWeekSessions(firstSession, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]);
+        if (deferSwitch) replaces = others;
+        else {
+          switched = others;
+          for (const other of switched) await cancelSession(signupId, other);
+        }
       }
     } catch (error) {
       console.error("[signup] saved, but could not give up the other session that week", error);
@@ -393,14 +412,19 @@ export async function POST(request: Request) {
   // their name on the payment page, and whether they are a member.
   if (firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null) {
     try {
-      fee = (await isMember(signupId))
+      fee = (member ?? (await isMember(signupId)))
         ? { member: true }
         : {
             member: false,
-            ...(({ ref, status }) => ({ ref, status }))(await getOrCreateSessionFee(firstSession, signupId, newFeeRef(), payHold)),
+            ...(({ ref, status }) => ({ ref, status }))(await getOrCreateSessionFee(firstSession, signupId, newFeeRef(), payHold, replaces)),
             amount: `A$${feeToPay(feeFor(firstSession)!)}`,
             hold: payHold,
           };
+      // Already paid for (signing up again): nothing to wait for.
+      if (fee && !fee.member && fee.status !== "pending") {
+        for (const other of replaces) await cancelSession(signupId, other);
+        switched = replaces;
+      }
     } catch (error) {
       console.error("[signup] booked, but could not set up the Tuesday fee", error);
     }
