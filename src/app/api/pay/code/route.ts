@@ -4,7 +4,7 @@ import { compWithCode, getDinnerByRef, getSessionFeeByRef } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
-import { isFullDiscountCode, kindOfRef, stripeEnabled } from "@/lib/stripe-pay";
+import { expireCheckoutPage, isFullDiscountCode, kindOfRef, stripeEnabled } from "@/lib/stripe-pay";
 
 const MAX_BODY = 2 * 1024;
 
@@ -45,6 +45,8 @@ export async function POST(request: Request) {
       return NextResponse.redirect(back, 303);
     }
     await compWithCode(kind, ref);
+    // A Checkout page opened earlier must not still be able to take money.
+    if (row.stripe_session) await expireCheckoutPage(row.stripe_session).catch(() => {});
     console.log("[pay] settled with a promotion code", kind, ref);
   } catch (error) {
     console.error("[pay] could not check the code", error);
