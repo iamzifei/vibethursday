@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SessionCompare } from "@/components/SessionCompare";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -68,6 +69,14 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
               <span className="eyebrow">{t.eyebrow}</span>
               <h1>{t.title}</h1>
               <p className="body-lg">{t.lede}</p>
+            </div>
+
+            <div className="stack-4">
+              <h2 className="h3">{t.compareTitle}</h2>
+              <SessionCompare compare={c.signup.compare} />
+              <p className="body-sm">
+                {t.compareUnsure} <a href={langHref("/", lang)}>{t.thursdayLink} →</a>
+              </p>
             </div>
 
             <div className="stack-4">

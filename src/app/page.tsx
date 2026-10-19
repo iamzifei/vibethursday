@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
+import { SessionCompare } from "@/components/SessionCompare";
 import { SignupForm } from "@/components/SignupForm";
 import { dinnerConfig } from "@/lib/dinner";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -329,30 +330,17 @@ export default async function Page({ searchParams }: PageProps) {
                   Only while a Tuesday is open — otherwise it points nowhere. */}
               {/* Thursday and Tuesday side by side (2026-10-15), so nobody has
                   to guess which one is theirs or where Tuesday's form is. */}
-              <div className="compare" role="table" aria-label={`${c.signup.compare.thursday.name} / ${c.signup.compare.tuesday.name}`}>
-                <div className="compare__head" role="row">
-                  <span role="columnheader" />
-                  <span role="columnheader">{c.signup.compare.thursday.name}</span>
-                  <span role="columnheader">{c.signup.compare.tuesday.name}</span>
-                </div>
-                {c.signup.compare.rows.map((row, i) => (
-                  <div className="compare__row" role="row" key={row}>
-                    <span role="rowheader">{row}</span>
-                    <span role="cell">{c.signup.compare.thursday.cells[i]}</span>
-                    <span role="cell">{c.signup.compare.tuesday.cells[i]}</span>
-                  </div>
-                ))}
-                {tuesdayOpen && (
-                  <div className="compare__row compare__foot" role="row">
-                    <span role="cell" />
-                    <span role="cell" />
-                    <span role="cell">
+              <SessionCompare
+                compare={c.signup.compare}
+                foot={
+                  tuesdayOpen && (
+                    <>
                       <a href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>{" "}
                       <a href={langHref("/class", lang)}>{c.signup.compare.tuesday.member}</a>
-                    </span>
-                  </div>
-                )}
-              </div>
+                    </>
+                  )
+                }
+              />
             </div>
 
             <SignupForm

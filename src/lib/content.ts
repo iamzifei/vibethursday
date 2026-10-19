@@ -637,14 +637,14 @@ export const copy = {
       // Thursday and Tuesday side by side, above the form (2026-10-15): people
       // could not tell them apart or find how to sign up for Tuesday.
       compare: {
-        rows: ["给谁", "怎么进行", "人数", "费用"],
+        rows: ["时间地点", "给谁", "怎么进行", "人数", "费用"],
         thursday: {
           name: "周四 Vibe Thursday",
-          cells: ["做生意的、刚开始用 AI 的、想认识人的", "开场成员分享 + Q&A + 自由交流", "40 人", "免费参加，到场每人在店里点一份"],
+          cells: ["每周四 10:30–12:00 · Chatswood The Avenue", "做生意的、刚开始用 AI 的、想认识人的", "开场成员分享 + Q&A + 自由交流", "40 人", "免费参加，到场每人在店里点一份"],
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["在做东西、能打开电脑给人看的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "在做东西、能打开电脑给人看的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
           cta: "报周二",
           member: "了解共创会员",
         },
@@ -1708,6 +1708,9 @@ export const copy = {
         "带上电脑和充电器。没做完、很粗糙都没关系，卡住的地方最值得聊。",
         "James 现场做咨询和 Q&A；几个人卡在同一类问题上的，帮你们对接社群里能做的人。",
       ],
+      // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
+      compareTitle: "来周二还是周四？",
+      compareUnsure: "拿不准就先来周四：免费，人多，先认识大家；手上有东西想给人细看、想要具体反馈，再来周二。",
       thursdayNote: "周四照常办。同一周的周二和周四只能报一场，报了周二会自动退掉那周的周四。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
@@ -2333,14 +2336,14 @@ export const copy = {
       hook: "Thursday is for meeting people. If you build things, come to Build Tuesday; if you want to be walked through it, register interest in the paid small class after signing up.",
       hookTuesdayCta: "See Build Tuesday",
       compare: {
-        rows: ["For", "How it runs", "Places", "Cost"],
+        rows: ["When, where", "For", "How it runs", "Places", "Cost"],
         thursday: {
           name: "Thursday · Vibe Thursday",
-          cells: ["Business owners, people new to AI, anyone meeting people", "Member demos to open, then Q&A and open chat", "40", "Free to attend; everyone orders one thing from the venue"],
+          cells: ["Thursdays 10:30–12:00 · The Avenue, Chatswood", "Business owners, people new to AI, anyone meeting people", "Member demos to open, then Q&A and open chat", "40", "Free to attend; everyone orders one thing from the venue"],
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["People who build things and can open a laptop to show them", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "People who build things and can open a laptop to show them", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
           cta: "Sign up for Tuesday",
           member: "About membership",
         },
@@ -3234,6 +3237,8 @@ export const copy = {
         "Bring your laptop and charger. Unfinished and rough is fine — where you are stuck is the best part to talk about.",
         "James consults and takes questions on the spot; where several people are stuck on the same kind of problem, he introduces you to people in the community who can build it.",
       ],
+      compareTitle: "Tuesday or Thursday?",
+      compareUnsure: "Not sure? Start with Thursday: free, a bigger room, a good way to meet everyone. Come to Tuesday when you have something you want looked at closely and specific feedback on.",
       thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
