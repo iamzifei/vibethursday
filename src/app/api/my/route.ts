@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, bookDinner, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, isMember, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
 import { isBuilderPurpose } from "@/lib/capacity";
 import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
@@ -9,7 +9,8 @@ import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { bookableSessions, isSpecialSession, sameWeekSessions, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday } from "@/lib/sessions";
+import { newFeeRef } from "@/lib/tuesday-fee";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 
@@ -193,6 +194,14 @@ export async function POST(request: Request) {
       ? sameWeekSessions(to, [...after.sessions, ...after.waitlist.map((entry) => entry.session)])
       : [];
     for (const other of switched) await cancelSession(signupId, other);
+
+    // Onto a paid Tuesday (2026-10-19): the same rule as the signup form — the
+    // place is held for a while and is only theirs once paid. Members owe
+    // nothing. Straight to the payment page, so paying is the next step.
+    if (result === "booked" && feeFor(to) !== null && !(await isMember(signupId))) {
+      const fee = await getOrCreateSessionFee(to, signupId, newFeeRef(), stripeEnabled() ? HOLD_MINUTES : null);
+      if (fee.status === "pending") return NextResponse.redirect(new URL(`/tuesday/pay?ref=${fee.ref}`, origin), 303);
+    }
 
     return back({ t: token, done: result === "booked" ? "booked" : "waitlist", d: to, ...(switched.length ? { gave: switched.join(",") } : {}) });
   } catch (error) {
