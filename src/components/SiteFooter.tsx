@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { currentVersion } from "@/lib/changelog";
 import type { Copy, Lang } from "@/lib/content";
+import { CHAT_URL } from "@/lib/go";
 import { langHref, NAV_LINKS, SUPPORT_LINK } from "@/lib/nav";
 import { FOOTER_SLOGAN, SOURCE_URL } from "@/lib/site";
 
@@ -16,6 +17,12 @@ type Props = {
    * card, which is the same reason cards carry no donation marker.
    */
   support?: boolean;
+  /**
+   * Whether to show the link to book a paid one-to-one with James. On by
+   * default; the member wall turns it off for the same reason it has no
+   * /support link.
+   */
+  consult?: boolean;
 };
 
 /**
@@ -25,7 +32,7 @@ type Props = {
  * wall ended up one line behind the home page more than once. One component
  * means the venue line can only be wrong in one place.
  */
-export function SiteFooter({ lang, copy, support = false }: Props) {
+export function SiteFooter({ lang, copy, support = false, consult = true }: Props) {
   return (
     <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
       <div className="shell footer__bar">
@@ -54,6 +61,15 @@ export function SiteFooter({ lang, copy, support = false }: Props) {
             {/* `/go` is the link pinned in the group; the footer is where
                 somebody who came in another way finds the same page. */}
             <Link href={langHref("/go", lang)}>{copy.go.footerLink}</Link>
+
+            {/* Until 2026-10-19 the booking link only showed on /go after a
+                Thursday, so anyone wanting a one-to-one on any other day had
+                nowhere to find it. */}
+            {consult && (
+              <a href={CHAT_URL} rel="noopener noreferrer" target="_blank">
+                {copy.footer.consultLink}
+              </a>
+            )}
 
             {/* Down here rather than in the bar at the top. The nav is for the
                 five things somebody comes to this site to do; this is for the

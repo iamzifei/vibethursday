@@ -7,7 +7,7 @@ import { Celebration } from "@/components/Celebration";
 import { currentAccount } from "@/lib/account";
 import { getCopy } from "@/lib/content";
 import { COURSE, looksLikeCourseRef } from "@/lib/course";
-import { countPaidCourseOrders, getCourseOrderByRef, getSignupProfile } from "@/lib/db";
+import { getCourseOrderByRef, getSignupProfile } from "@/lib/db";
 import { wechatLoginHref } from "@/lib/login-link";
 
 // Who is asking changes the form, and a reference changes the whole page.
@@ -185,10 +185,6 @@ export default async function ClassPage({ searchParams }: PageProps) {
     }
   }
 
-  // Real scarcity only: the first 15 paid get the website, so the count is
-  // read from the paid orders. Unknown (database down) shows nothing.
-  const siteLeft = order ? null : await countPaidCourseOrders(COURSE.id).then((paid) => Math.max(0, 15 - paid)).catch(() => null);
-
   const loginHref = wechatLoginHref("/class", null);
   const error = params.err && Object.hasOwn(ERRORS, params.err) ? ERRORS[params.err] : null;
   const paymentInfo = process.env.COURSE_PAYMENT_INFO?.replace(/\\n/g, "\n").trim() ?? "";
@@ -304,7 +300,8 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       <li><Icon name="laptop" />全程中文 · 不用懂技术 · 带笔记本电脑</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名入会</a>
-                    {siteLeft !== null && <p className="vip-offer__left">前 15 名送一页式官网 · 还剩 <strong>{siteLeft}</strong> 个</p>}
+                    {/* No count of places left: it would tell anyone how many have paid (James 2026-10-19). */}
+                    <p className="vip-offer__left">前 15 名送一页式官网</p>
                   </div>
                   {/* The same poster that goes out in the group and on Moments. */}
                   <figure className="vip-poster">
@@ -404,7 +401,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
                   <p className="vip-note">周二按单次价、一年来 10 次算；IP 会员按它自己的售价；其余不另标价。社群收益用在社群活动和对大家的激励上。</p>
                   <div className="vip-bonus">
-                    <p className="vip-bonus__title">★ 前 15 名加送：一页式官网并上线{siteLeft !== null ? `（还剩 ${siteLeft} 个）` : ""}</p>
+                    <p className="vip-bonus__title">★ 前 15 名加送：一页式官网并上线</p>
                     <p>介绍你的生意、服务和联系方式，用你自己的域名（域名你买，我们接上），课后两周内上线。已经有官网的，给改进建议，不重做。按转账到账先后算。</p>
                   </div>
                   <details className="vip-more">
@@ -456,7 +453,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
 
                 {/* Phones: the price and the way in, always one tap away. */}
                 <a className="vip-sticky" href="#class-signup">
-                  <span>{COURSE.priceLabel}{siteLeft !== null ? ` · 送官网还剩 ${siteLeft} 个` : ""}</span>
+                  <span>{COURSE.priceLabel} · 前 15 名送官网</span>
                   <strong>报名入会</strong>
                 </a>
 

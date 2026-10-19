@@ -234,7 +234,7 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
         </section>
       </main>
 
-      <SiteFooter lang={lang} copy={c} />
+      <SiteFooter lang={lang} copy={c} consult={false} />
     </div>
   );
 }

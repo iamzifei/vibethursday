@@ -900,6 +900,7 @@ export const copy = {
       tagline: "每周四见。",
       location: "Chatswood The Avenue · 每周四 10:30 开门，10:45 开始",
       supportLink: "这个活动的开销",
+      consultLink: "约 James 一对一咨询",
       // The label on the GitHub mark. It is never shown — the mark carries the
       // link — but it is what a screen reader announces, so it is translated
       // even though the slogan beside it is not.
@@ -2581,6 +2582,7 @@ export const copy = {
       tagline: "See you Thursday.",
       location: "The Avenue, Chatswood · Thursdays, doors 10:30am, starts 10:45am",
       supportLink: "What this costs",
+      consultLink: "Book a one-to-one with James",
       sourceLink: "This site's source on GitHub",
     },
 

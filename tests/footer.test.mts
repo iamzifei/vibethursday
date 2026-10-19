@@ -63,3 +63,19 @@ test("the source link points at the public repository over https", () => {
   // clicks their own footer.
   assert.equal(SOURCE_URL, "https://github.com/iamzifei/vibethursday");
 });
+
+test("every language labels the one-to-one booking link", () => {
+  // Shown in every footer except the member wall's; an empty label would
+  // leave a link with no text.
+  for (const lang of LANGS) {
+    assert.ok(
+      getCopy(lang).footer.consultLink.trim().length > 0,
+      `${lang} is missing a label for the booking link`,
+    );
+  }
+});
+
+test("the booking link points at James's consultation page", async () => {
+  const { CHAT_URL } = await import("../src/lib/go.ts");
+  assert.equal(CHAT_URL, "https://cal.com/jamesgong/ai-business-consultation");
+});
