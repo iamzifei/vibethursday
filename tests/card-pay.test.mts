@@ -125,6 +125,10 @@ test(
       assert.equal((await m.bookDinner({ session: thursday, signupId: b, dish: "x", ref: "DNBBBB2", cap: 1, holdMinutes: HOLD_MINUTES })).status, "pending", "the lapsed seat went back on offer");
       assert.equal((await m.getDinnerByRef(seat.ref))?.status, "cancelled");
 
+      // /my reads one person's seat for one Thursday.
+      assert.equal((await m.getDinnerFor(thursday, b))?.ref, "DNBBBB2");
+      assert.equal(await m.getDinnerFor(thursday, held), null);
+
       // A page opened after the place was given away is refused.
       assert.equal(await m.attachCheckout("dinner", seat.ref, "cs_late", CHECKOUT_HOLD_MINUTES), false);
 

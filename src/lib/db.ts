@@ -4705,6 +4705,14 @@ export async function claimDinner(ref: string): Promise<boolean> {
   return (result.rowCount ?? 0) > 0;
 }
 
+/** Someone's dinner seat for one Thursday, for /my. Null when they have none. */
+export async function getDinnerFor(session: string, signupId: string): Promise<DinnerOrder | null> {
+  await ensureSchema();
+  await releaseExpiredHolds();
+  const result = await getPool().query<DinnerOrder>(`${DINNER_SELECT} WHERE d.session = $1::date AND d.signup_id = $2::bigint`, [session, signupId]);
+  return result.rows[0] ?? null;
+}
+
 export async function listDinner(session: string): Promise<DinnerOrder[]> {
   await ensureSchema();
   await releaseExpiredHolds();

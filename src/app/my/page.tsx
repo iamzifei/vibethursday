@@ -8,10 +8,11 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
-import { getMySignup, getOrCreateSessionFee, isMember, type MySignup } from "@/lib/db";
+import { getDinnerFor, getMySignup, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup } from "@/lib/db";
+import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
-import { bookableSessions, feeFor, formatSession, sessionName, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, formatSession, isSpecialSession, sessionName, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -182,9 +183,15 @@ export default async function MyPage({ searchParams }: PageProps) {
   // the signup form. A failed lookup leaves the row without the line.
   const fees = new Map<string, { member: true } | { member: false; ref: string; status: string; claimed: boolean }>();
   const paidTuesdays = upcoming.filter((entry) => entry.position === null && feeFor(entry.session) !== null);
+  // A paid 共创会员 gets a badge here and owes nothing for Tuesdays.
+  let member = false;
+  try {
+    member = await isMember(mine.id);
+  } catch (error) {
+    console.error("[my] could not check membership", error);
+  }
   if (paidTuesdays.length > 0) {
     try {
-      const member = await isMember(mine.id);
       for (const entry of paidTuesdays) {
         if (member) {
           fees.set(entry.session, { member: true });
@@ -199,12 +206,28 @@ export default async function MyPage({ searchParams }: PageProps) {
   }
   const choices = bookableSessions(6).filter((session) => !held.has(session));
 
+  // The dinner after each Thursday they hold a place on (2026-10-19): what
+  // they already have, or a form to add it. Only when a dinner is configured.
+  const dinner = dinnerConfig();
+  const dinners = new Map<string, DinnerOrder | null>();
+  if (dinner) {
+    for (const entry of upcoming) {
+      if (entry.position !== null || isSpecialSession(entry.session)) continue;
+      try {
+        dinners.set(entry.session, await getDinnerFor(entry.session, mine.id));
+      } catch (error) {
+        console.error("[my] could not read the dinner seat", error);
+      }
+    }
+  }
+
   // Only well-formed dates from the address bar; anything else is ignored.
   const gaveDates = (params.gave ?? "").split(",").filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)).slice(0, 2);
   const doneText =
     params.done && params.d
       ? params.done === "cancel" ? fill(t.doneCancel, { date: formatSession(params.d, lang) })
       : params.done === "booked" ? fill(t.doneBooked, { date: formatSession(params.d, lang) })
+      : params.done === "dinnerWait" ? fill(t.doneDinnerWaitlist, { date: formatSession(params.d, lang) })
       : params.done === "waitlist"
         ? fill(t.doneWaitlist, {
             date: formatSession(params.d, lang),
@@ -233,6 +256,7 @@ export default async function MyPage({ searchParams }: PageProps) {
       <div className="stack-4">
         <p className="body-lg" style={{ margin: 0 }}>
           {fill(t.hello, { name: mine.name })}
+          {member && <> <span className="chip chip--stage">{t.memberBadge}</span></>}
         </p>
 
         {upcoming.length === 0 ? (
@@ -259,6 +283,35 @@ export default async function MyPage({ searchParams }: PageProps) {
                       {fill(t.feeDue, { amount: `A$${feeToPay(feeFor(entry.session)!)}` })} ·{" "}
                       <a href={`/tuesday/pay?ref=${fee.ref}`}>{t.feePay} →</a>
                     </p>
+                  );
+                })()}
+
+                {dinner && dinners.has(entry.session) && (() => {
+                  const seat = dinners.get(entry.session);
+                  const dishName = (id: string) => dinner.dishes.find((d) => d.id === id)?.[lang === "en" ? "en" : "zh"] ?? id;
+                  if (seat && seat.status === "paid") return <p className="field-hint">{fill(t.dinnerPaid, { dish: dishName(seat.dish) })}</p>;
+                  if (seat && seat.status === "waitlist") return <p className="field-hint">{t.dinnerWaitlisted}</p>;
+                  if (seat && seat.status === "pending") {
+                    return (
+                      <p className="body-sm" style={{ margin: 0 }}>
+                        {t.dinnerPending} · <a href={`/dinner/pay?ref=${seat.ref}`}>{t.feePay} →</a>
+                      </p>
+                    );
+                  }
+                  return (
+                    <form method="post" action="/api/my" className="stack-2 card" style={{ padding: "var(--space-3) var(--space-4)" }}>
+                      {hidden}
+                      <input type="hidden" name="action" value="dinner" />
+                      <input type="hidden" name="from" value={entry.session} />
+                      <label className="label" htmlFor={`my-dinner-${entry.session}`}>{fill(t.dinnerAddTitle, { price: dinner.price })}</label>
+                      <select className="field" id={`my-dinner-${entry.session}`} name="dish" required defaultValue="">
+                        <option value="" disabled>{t.dinnerAddPick}</option>
+                        {dinner.dishes.map((dish) => (
+                          <option key={dish.id} value={dish.id}>{lang === "en" ? dish.en : dish.zh}</option>
+                        ))}
+                      </select>
+                      <button className="btn btn--primary" type="submit">{t.dinnerAddCta}</button>
+                    </form>
                   );
                 })()}
 

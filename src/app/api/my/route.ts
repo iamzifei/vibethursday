@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, bookDinner, cancelSession, findMySignup, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
 import { isBuilderPurpose } from "@/lib/capacity";
 import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
@@ -9,7 +9,9 @@ import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { bookableSessions, sameWeekSessions, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, isSpecialSession, sameWeekSessions, sydneyToday } from "@/lib/sessions";
+import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
+import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -129,7 +131,7 @@ export async function POST(request: Request) {
     return response;
   }
 
-  if (action !== "cancel" && action !== "move") return back({});
+  if (action !== "cancel" && action !== "move" && action !== "dinner") return back({});
 
   const token = clean(form?.get("t"), 200);
   const signupId = verifyMyToken(token);
@@ -150,6 +152,20 @@ export async function POST(request: Request) {
 
     // Only something this person actually holds, and not in the past.
     if (from && (!holds(from) || !canChangeSession(from, today))) return back({ t: token, err: "failed" });
+
+    // Add the dinner to a Thursday already booked (2026-10-19): the same seat
+    // and hold rules as ticking it on the signup form. Only for a Thursday
+    // this person holds a place on, not its waitlist.
+    if (action === "dinner") {
+      const offer = dinnerConfig();
+      const dish = clean(form?.get("dish"), 20);
+      if (!offer || !from || !mine.sessions.includes(from) || isSpecialSession(from) || !dish || !offer.dishes.some((d) => d.id === dish)) {
+        return back({ t: token, err: "failed" });
+      }
+      const seat = await bookDinner({ session: from, signupId, dish, ref: newDinnerRef(), cap: offer.cap, holdMinutes: stripeEnabled() ? HOLD_MINUTES : null });
+      if (seat.status === "waitlist") return back({ t: token, done: "dinnerWait", d: from });
+      return NextResponse.redirect(new URL(`/dinner/pay?ref=${seat.ref}`, origin), 303);
+    }
 
     if (action === "cancel") {
       if (!from) return back({ t: token, err: "failed" });
