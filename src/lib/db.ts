@@ -2996,6 +2996,13 @@ export async function claimCourseTransfer(ref: string): Promise<boolean> {
 }
 
 /** Every order for a class, newest first, for /admin. */
+/** How many orders for a class are paid — for "places left" on /class. */
+export async function countPaidCourseOrders(course: string): Promise<number> {
+  await ensureSchema();
+  const result = await getPool().query<{ n: number }>(`SELECT count(*)::int AS n FROM course_orders WHERE course = $1 AND status = 'paid'`, [course]);
+  return result.rows[0]?.n ?? 0;
+}
+
 export async function listCourseOrders(course: string): Promise<CourseOrder[]> {
   await ensureSchema();
   const result = await getPool().query<CourseOrder>(
