@@ -630,7 +630,7 @@ export const copy = {
       errorPurpose: "选一下「你更像哪一类」，一个就行。",
       // Build Tuesday（2026-10-04）：周四人太多，在做东西的人分去周二。
       // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
-      sessionTimeSuffixTuesday: "10:00 · Build Tuesday",
+      sessionTimeSuffixTuesday: "10:30 · Build Tuesday",
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
       hook: "周四是交流局。在做东西的，来周二 Build Tuesday；想有人带着学的，报完名可以登记收费小班。",
       hookTuesdayCta: "看看 Build Tuesday",
@@ -1513,7 +1513,7 @@ export const copy = {
       // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。地址不写死：场地可能换，群里发。
       sharesTitle: "今天开场分享",
       tuesdayTitle: "今天：Build Tuesday",
-      tuesdayWhen: "10:00 – 12:00 · Chatswood Lemon Grove 三楼 56 号铺（Westfield 正门对面）· 带上电脑和充电器",
+      tuesdayWhen: "10:30 – 12:00 · Chatswood Lemon Grove 三楼 56 号铺（Westfield 正门对面）· 带上电脑和充电器",
       tuesdayCheckin: "到了点这里签到",
       tuesdayCheckinLater: "10 点起这里会出现签到链接。",
       tuesdayNotSignedUp: "还没报名？现在报也来得及：",
@@ -1685,7 +1685,7 @@ export const copy = {
       lede: "周四的人越来越多，在做东西的人想细看、细聊，在一屋子人里很难。所以单开一个周二上午：小房间，十来个人，不上台，不讲课。",
       factsTitle: "时间和地点",
       facts: [
-        { label: "时间", value: "上午 10:00–12:00" },
+        { label: "时间", value: "上午 10:30–12:00" },
         { label: "地点", value: "Chatswood Lemon Grove 三楼 56 号铺（427–441 Victoria Ave），Westfield 正门对面。火车站出来走到主街，约 100 米，泰椰奶花旁边的大门进，扶梯上 3 楼" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
         { label: "费用", value: "30 澳元 + GST，报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
@@ -2329,7 +2329,7 @@ export const copy = {
       errorNeedContact: "Leave at least one way to reach you — email or WeChat.",
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
       errorPurpose: "Pick which sounds most like you — just one.",
-      sessionTimeSuffixTuesday: "10am · Build Tuesday",
+      sessionTimeSuffixTuesday: "10:30am · Build Tuesday",
       hook: "Thursday is for meeting people. If you build things, come to Build Tuesday; if you want to be walked through it, register interest in the paid small class after signing up.",
       hookTuesdayCta: "See Build Tuesday",
       compare: {
@@ -3058,7 +3058,7 @@ export const copy = {
       titleAfter: "That one is done — thanks for coming.",
       sharesTitle: "Opening shares today",
       tuesdayTitle: "Today: Build Tuesday",
-      tuesdayWhen: "10:00 – 12:00 · Lemon Grove, Level 3, Shop 56, Chatswood (opposite Westfield) · bring your laptop and charger",
+      tuesdayWhen: "10:30 – 12:00 · Lemon Grove, Level 3, Shop 56, Chatswood (opposite Westfield) · bring your laptop and charger",
       tuesdayCheckin: "Here? Check in",
       tuesdayCheckinLater: "The check-in link appears here from 10am.",
       tuesdayNotSignedUp: "Not signed up? There is still time: ",
@@ -3212,7 +3212,7 @@ export const copy = {
       lede: "Thursday keeps getting bigger, and looking closely at someone's work is hard in a room that full. So people who build things get a Tuesday morning of their own: a small room, about a dozen people, no stage, no talk.",
       factsTitle: "When and where",
       facts: [
-        { label: "Time", value: "10:00am–12:00" },
+        { label: "Time", value: "10:30am–12:00" },
         { label: "Where", value: "Lemon Grove, Level 3, Shop 56, 427–441 Victoria Ave, Chatswood — opposite the main entrance of Westfield. From the station, walk along the mall about 100 m to the entrance next to the bubble tea shop, then take the escalator to level 3" },
         { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
         { label: "Cost", value: "A$30 + GST, paid by card within 30 minutes of signing up, which locks in your place; members free" },
