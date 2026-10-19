@@ -14,14 +14,14 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "聚餐付款 · Vibe Thursday", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ ref?: string; paid?: string; error?: string }> };
+type PageProps = { searchParams: Promise<{ ref?: string; paid?: string; error?: string; code?: string }> };
 
 /**
  * How to pay for a dinner seat (2026-10-15): amount, reference, bank details
  * (the same account as Tuesday's fee), "I've transferred". Chinese only.
  */
 export default async function DinnerPayPage({ searchParams }: PageProps) {
-  const { ref: raw, paid, error } = await searchParams;
+  const { ref: raw, paid, error, code } = await searchParams;
   const c = getCopy("zh");
   const ref = looksLikeDinnerRef(raw) ? raw : null;
   let seat = ref ? await getDinnerByRef(ref).catch(() => null) : null;
@@ -67,6 +67,7 @@ export default async function DinnerPayPage({ searchParams }: PageProps) {
                   <>
                     {paid && <p className="body-lg">付款正在确认，过几秒刷新这一页就会显示「饭桌上见」。</p>}
                     {error && <p className="body-lg">付款页没打开，请再点一次；还不行就私信 James。</p>}
+                    {code && <p className="alert" role="alert">{code === "rate" ? "试得太频繁了，过一会儿再试。" : "这个优惠码用不了。"}</p>}
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>金额：<strong>{config.price} 澳元（含 GST）</strong> · 一道主菜 + 一杯咖啡 · 主菜：{dish}</p>
                       {left !== null && (
@@ -77,6 +78,14 @@ export default async function DinnerPayPage({ searchParams }: PageProps) {
                         <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>刷卡付款（支持 Apple Pay / Google Pay）</button>
                       </form>
                     </div>
+                    <details>
+                      <summary className="body-sm">有优惠码？</summary>
+                      <form method="post" action="/api/pay/code" className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+                        <input type="hidden" name="ref" value={seat.ref} />
+                        <input className="field" name="code" required maxLength={40} autoCapitalize="characters" autoComplete="off" aria-label="优惠码" />
+                        <button className="btn btn--secondary" type="submit">用优惠码</button>
+                      </form>
+                    </details>
                     <p className="body">不退款，来不了可以把座位转给别人，私信 James 改名字就行。</p>
                   </>
                 ) : seat.claimed_at ? (

@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "周二付款 · Vibe Thursday", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ ref?: string; done?: string; paid?: string; error?: string }> };
+type PageProps = { searchParams: Promise<{ ref?: string; done?: string; paid?: string; error?: string; code?: string }> };
 
 /**
  * How to pay for a Build Tuesday (2026-10-14). Reached from the signup
@@ -81,6 +81,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                   <>
                     {params.paid && <p className="body-lg">付款正在确认，过几秒刷新这一页就会显示「已付」。</p>}
                     {params.error && <p className="body-lg">付款页没打开，请再点一次；还不行就私信 James。</p>}
+                    {params.code && <p className="alert" role="alert">{params.code === "rate" ? "试得太频繁了，过一会儿再试。" : "这个优惠码用不了。"}</p>}
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>
                         金额：<strong>{payLabel(price)}</strong>
@@ -103,6 +104,14 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                         </button>
                       </form>
                     </div>
+                    <details>
+                      <summary className="body-sm">有优惠码？</summary>
+                      <form method="post" action="/api/pay/code" className="stack-2" style={{ marginTop: "var(--space-3)" }}>
+                        <input type="hidden" name="ref" value={fee.ref} />
+                        <input className="field" name="code" required maxLength={40} autoCapitalize="characters" autoComplete="off" aria-label="优惠码" />
+                        <button className="btn btn--secondary" type="submit">用优惠码</button>
+                      </form>
+                    </details>
                     {/* Booked before card payment started: they were told to
                         transfer, so that stays open to them. */}
                     {fee.hold_until === null && paymentInfo && (

@@ -9,7 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 
-import { CHECKOUT_HOLD_MINUTES, CHECKOUT_MINUTES, HOLD_MINUTES, kindOfRef, minutesLeft, stripeEnabled, toCents, verifyStripeSignature } from "../src/lib/stripe-pay.ts";
+import { CHECKOUT_HOLD_MINUTES, CHECKOUT_MINUTES, checkoutSettled, HOLD_MINUTES, kindOfRef, minutesLeft, stripeEnabled, toCents, verifyStripeSignature } from "../src/lib/stripe-pay.ts";
 import { dinnerConfig } from "../src/lib/dinner.ts";
 
 const SECRET = "whsec_test";
@@ -41,6 +41,13 @@ test("references, amounts and holds", () => {
   assert.equal(HOLD_MINUTES, 30);
   assert.equal(stripeEnabled({}), false, "off without a key: pages fall back to bank transfer");
   assert.equal(stripeEnabled({ STRIPE_SECRET_KEY: "sk_test_x" }), true);
+});
+
+test("a Checkout page settles when paid, or when a 100% code brought it to zero", () => {
+  assert.equal(checkoutSettled("paid"), true);
+  assert.equal(checkoutSettled("no_payment_required"), true);
+  assert.equal(checkoutSettled("unpaid"), false);
+  assert.equal(checkoutSettled(undefined), false);
 });
 
 test("the dinner menu carries descriptions, never prices", () => {

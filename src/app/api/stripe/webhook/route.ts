@@ -1,6 +1,6 @@
 import { expireCheckout, markPaidByCard } from "@/lib/db";
 import { bodyTooLarge, boundedRequest } from "@/lib/rate-limit";
-import { verifyStripeSignature, type CheckoutSession, type PayKind } from "@/lib/stripe-pay";
+import { checkoutSettled, verifyStripeSignature, type CheckoutSession, type PayKind } from "@/lib/stripe-pay";
 
 const MAX_BODY = 512 * 1024;
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   if (!session || (kind !== "tuesday" && kind !== "dinner") || !ref) return new Response("ignored");
 
   try {
-    if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && session.payment_status === "paid") {
+    if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && checkoutSettled(session.payment_status)) {
       await markPaidByCard(kind, ref);
     } else if (event.type === "checkout.session.expired") {
       await expireCheckout(kind, session.id);

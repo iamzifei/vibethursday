@@ -4408,6 +4408,27 @@ async function giveUpReplaced(signupId: string, paidSession: string, replaces: s
   }
 }
 
+/**
+ * A place settled with a 100%-off code (2026-10-19): a Tuesday is waived, a
+ * dinner seat marked paid; the hold goes and what the Tuesday replaces is
+ * given up, as a payment would. Only a pending row. Returns false otherwise.
+ */
+export async function compWithCode(kind: "tuesday" | "dinner", ref: string): Promise<boolean> {
+  await ensureSchema();
+  if (kind === "dinner") {
+    const result = await getPool().query(
+      `UPDATE dinner_orders SET status = 'paid', paid_at = now(), hold_until = NULL WHERE ref = $1 AND status = 'pending'`,
+      [ref],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+  const result = await getPool().query<{ id: string }>(`SELECT id::text AS id FROM session_fees WHERE ref = $1 AND status = 'pending'`, [ref]);
+  const id = result.rows[0]?.id;
+  if (!id) return false;
+  await setSessionFeeStatus(id, "waived");
+  return true;
+}
+
 /** A Checkout page Stripe let expire: its place is released now rather than at the hold's end. */
 export async function expireCheckout(kind: "tuesday" | "dinner", stripeSession: string): Promise<void> {
   await ensureSchema();

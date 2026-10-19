@@ -158,6 +158,28 @@ export async function createCheckout(input: {
   return (await stripeRequest("checkout/sessions", { method: "POST", form, idempotencyKey: input.idempotencyKey })) as CheckoutSession;
 }
 
+/** Whether a Checkout page has settled: paid, or brought to zero by a promotion code. */
+export function checkoutSettled(paymentStatus: string | undefined): boolean {
+  return paymentStatus === "paid" || paymentStatus === "no_payment_required";
+}
+
+/**
+ * Whether `code` is an active 100%-off promotion code on the Stripe account
+ * (2026-10-19). Stripe refuses a Checkout page whose total is zero, so a free
+ * place is settled on this site instead — but the code itself is created,
+ * limited and switched off in Stripe, which stays the one place to manage it.
+ */
+export async function isFullDiscountCode(code: string): Promise<boolean> {
+  const data = (await stripeRequest(`promotion_codes?active=true&limit=1&code=${encodeURIComponent(code)}`, { method: "GET" })) as {
+    data?: { active: boolean; expires_at: number | null; max_redemptions: number | null; times_redeemed: number; coupon?: { percent_off: number | null; valid: boolean }; promotion?: { coupon?: { percent_off: number | null; valid: boolean } | string } }[];
+  };
+  const promo = data.data?.[0];
+  if (!promo || !promo.active) return false;
+  if (promo.expires_at && promo.expires_at * 1000 < Date.now()) return false;
+  const coupon = promo.coupon ?? (typeof promo.promotion?.coupon === "object" ? promo.promotion.coupon : undefined);
+  return Boolean(coupon && coupon.valid && coupon.percent_off === 100);
+}
+
 /** Closes a Checkout page so it can no longer take money. */
 export async function expireCheckoutPage(id: string): Promise<void> {
   await stripeRequest(`checkout/sessions/${encodeURIComponent(id)}/expire`, { method: "POST", form: new URLSearchParams() });

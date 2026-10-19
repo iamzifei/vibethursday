@@ -1,7 +1,7 @@
 import { attachCheckout, getDinnerByRef, getSessionFeeByRef, markPaidByCard, type DinnerOrder, type SessionFee } from "./db";
 import { dinnerConfig } from "./dinner";
 import { feeFor, formatSession } from "./sessions";
-import { CHECKOUT_HOLD_MINUTES, createCheckout, expireCheckoutPage, getCheckout, stripeEnabled, type PayKind } from "./stripe-pay";
+import { CHECKOUT_HOLD_MINUTES, checkoutSettled, createCheckout, expireCheckoutPage, getCheckout, stripeEnabled, type PayKind } from "./stripe-pay";
 import { feeToPay } from "./tuesday-fee";
 
 /**
@@ -30,7 +30,7 @@ export async function settleIfPaid(kind: PayKind, row: { ref: string; status: st
   if (!stripeEnabled() || row.status === "paid" || !row.stripe_session) return false;
   try {
     const checkout = await getCheckout(row.stripe_session);
-    if (checkout.payment_status !== "paid") return false;
+    if (!checkoutSettled(checkout.payment_status)) return false;
     return await markPaidByCard(kind, row.ref);
   } catch (error) {
     console.error("[pay] could not check the Checkout page", error);
@@ -50,7 +50,7 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
 
   if (row.stripe_session) {
     const existing = await getCheckout(row.stripe_session);
-    if (existing.payment_status === "paid") {
+    if (checkoutSettled(existing.payment_status)) {
       await markPaidByCard(kind, ref);
       return back;
     }
