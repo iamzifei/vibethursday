@@ -99,6 +99,13 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                   {t.mapsLabel} ↗
                 </a>
               </p>
+              <figure className="stack-2" style={{ margin: 0, maxWidth: "420px" }}>
+                <a className="class-poster" href="/tuesday/directions.jpg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/tuesday/directions.webp" width={874} height={1284} alt={t.directionsAlt} loading="lazy" />
+                </a>
+                <figcaption className="hint">{t.directionsCaption}</figcaption>
+              </figure>
             </div>
 
             <div className="stack-4">

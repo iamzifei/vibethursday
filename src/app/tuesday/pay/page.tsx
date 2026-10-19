@@ -176,7 +176,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                 <p className="body">
                   时间：{formatSession(fee.session, "zh")}上午 10:00–12:00
                   <br />
-                  地点：Chatswood，具体地址报名后在群里发
+                  地点：Chatswood Lemon Grove 三楼 56 号铺（427–441 Victoria Ave，Westfield 正门对面），火车站出来走主街约 100 米，泰椰奶花旁边大门进，扶梯上 3 楼 · <Link href="/tuesday">看路线图</Link>
                 </p>
               </>
             )}
