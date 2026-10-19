@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type React from "react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
@@ -51,6 +52,84 @@ const INDUSTRY_OPTIONS = [
   { value: "other", label: "其他" },
 ];
 
+type IconName = "advisor" | "list" | "laptop" | "tool" | "handshake" | "people" | "globe" | "gift" | "calendar" | "pin";
+
+/** What a member gets, one card each. `hot` marks the headline benefit. */
+const FEATURES: { icon: IconName; title: string; body: string; hot?: boolean }[] = [
+  {
+    icon: "advisor",
+    title: "一个懂你生意的 AI 商业顾问",
+    body: "10/25 课上装好，电脑手机都能用。给它资料夹（知识库）和岗位手册（技能），比如产品、客户、回客户的话术；经营上的事随时问它。",
+    hot: true,
+  },
+  {
+    icon: "list",
+    title: "一张能开工的需求单 + 一对一",
+    body: "把「帮我弄个 AI」变成能交给人做的任务。课后线上一对一 15 分钟，只有你和我，需提前预约。",
+  },
+  {
+    icon: "laptop",
+    title: "每周二研讨会，全年免费",
+    body: "十来个人打开电脑看项目、答疑、对接资源。非会员单次 30 澳元 + GST。10/27 首场，带课上的作业来展示。",
+  },
+  {
+    icon: "tool",
+    title: "共性刚需，我们免费做",
+    body: "从大家的需求单里挑出刚需，做成能直接用的 AI 工具并教会你。需求单写得越清楚越容易被挑中，以实际评估为准。",
+  },
+  {
+    icon: "handshake",
+    title: "复杂需求，对接靠谱的人",
+    body: "做产品、做推广这类大活，优先介绍社群里做过、靠得住的人。",
+  },
+  {
+    icon: "people",
+    title: "一年的会员群和圈子",
+    body: "案例和工具分享，随时提问，认识各行各业在把 AI 用进生意的人。",
+  },
+];
+
+/** The class morning, one line each. */
+const OUTLINE: { time: string; title: string; body?: string }[] = [
+  { time: "9:00", title: "AI 能干什么、不能干什么", body: "分清今天就能交给 AI 的活，写下你生意里最头疼的一件事" },
+  { time: "9:40", title: "装好你的 AI 商业顾问", body: "装在你的电脑和手机上，告诉它你的生意，用那件事问它" },
+  { time: "10:40", title: "茶歇" },
+  { time: "11:00", title: "写你的需求单，做出第一个技能", body: "顾问一格一格问你，答完就是需求单；再写成岗位手册，存进去试跑一次" },
+  { time: "12:00", title: "交给 AI 之前，先对一遍", body: "拍板的事不交、对客人的承诺本人看过、隐私先遮掉、数字对原件" },
+  { time: "12:20", title: "下课以后", body: "约好一对一，讲清楚刚需怎么挑、会员权益怎么用" },
+  { time: "12:40", title: "答疑、合影，13:00 结束" },
+];
+
+const FAQ: { q: string; a: string }[] = [
+  { q: "599 包含什么？", a: "一年的 Vibe Thursday 共创会员：10/25 这一上午的课、课后一对一、刚需免费做的机会、全年周二研讨会和会员群。前 15 名另送一页式官网并上线，另送一年 AI 创始人 IP 会员。" },
+  { q: "我完全不懂 AI，能跟上吗？", a: "能。每一步都跟着做，卡住了举手，我们过来帮你。" },
+  { q: "要准备什么？", a: "建议带笔记本电脑，充好电，手机也带上；没有电脑用手机也能跟。想好你生意里最头疼的一件事，想拿来练的聊天截图或单据可以带上，客人的姓名电话先遮掉。" },
+  { q: "我主要想用 AI 做内容、获客，管用吗？", a: "课上可以把「做内容」写成需求单，用顾问把选题、文案理清楚。系统地讲自媒体获客，在送你的 IP 会员公开课里，两个正好接上。" },
+  { q: "我生意上的事，会被别人听到吗？", a: "课上的练习在你自己的设备上做。具体的生意问题留到一对一里说，只有你和我。" },
+  { q: "用中文上课吗？", a: "是，全程中文。" },
+];
+
+/** Line icons for the feature cards, drawn in currentColor. */
+function Icon({ name }: { name: IconName }) {
+  const paths: Record<IconName, React.ReactNode> = {
+    advisor: <><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z" /><path d="M9.5 20.5h5" /></>,
+    list: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
+    laptop: <><rect x="4" y="5" width="16" height="11" rx="1.5" /><path d="M2 19h20" /></>,
+    tool: <path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z" />,
+    handshake: <><path d="M3 11l4-4 4 2 3-2 4 1 3 3" /><path d="M7 13l3 3 2-1 2 2 3-3" /></>,
+    people: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><circle cx="17" cy="9" r="2.5" /><path d="M16 14.5a5 5 0 0 1 5 5" /></>,
+    globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></>,
+    gift: <><rect x="4" y="9" width="16" height="11" rx="1" /><path d="M2 9h20M12 9v11M12 9c-2-4-6-4-6-1s6 1 6 1zM12 9c2-4 6-4 6-1s-6 1-6 1z" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
+    pin: <><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z" /><circle cx="12" cy="10" r="2" /></>,
+  };
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
+}
+
 /**
  * The paid class (`course.ts`): what it is, a short form, and — once signed
  * up — how to pay. Chinese only: the class is taught in Chinese.
@@ -88,7 +167,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
       <SiteHeader lang="zh" copy={c} path="/class" />
       <main id="main">
         <section className="section">
-          <div className="shell stack-8" style={{ maxWidth: "680px", fontSize: "1.1rem" }}>
+          <div className="shell stack-8" style={{ maxWidth: order ? "680px" : "1040px", fontSize: "1.1rem" }}>
             {order ? (
               // ── Signed up: how to pay ─────────────────────────────────
               <div className="stack-6">
@@ -175,205 +254,146 @@ export default async function ClassPage({ searchParams }: PageProps) {
               </div>
             ) : (
               // ── Not signed up yet ─────────────────────────────────────
+              // Laid out like a product page (2026-10-19): one line of what it
+              // is, the offer as an equation, then features as cards. Detail
+              // that only some people want sits in <details> rather than in
+              // the scroll.
               <>
-                {/* The membership first (2026-10-14), the class as its first step. */}
-                <div className="stack-4">
-                  <span className="eyebrow">§ Vibe Thursday 共创会员 · 一年</span>
-                  <h1>Vibe Thursday 共创会员</h1>
-                  <p className="body-lg">
-                    一年时间，和悉尼一群用 AI 做生意、做产品的人在一起，把 AI 真正落地到你的生意里。从 {COURSE.dateLabel}的「{COURSE.title}」开始。
-                  </p>
+                <div className="vip-hero">
+                  <div className="stack-4">
+                    <span className="eyebrow">§ Vibe Thursday 共创会员 · 一年</span>
+                    <h1>看懂 AI 商机，让生意更进一步</h1>
+                    <p className="body-lg">
+                      悉尼华人生意人的 AI 落地圈子。从 {COURSE.dateLabel}的「{COURSE.title}」开始，带走一个懂你生意的 AI 商业顾问。
+                    </p>
+                    <p className="vip-eq">
+                      <strong>{COURSE.priceLabel}</strong>
+                      <span aria-hidden="true">＝</span>
+                      <span>一堂 4 小时实战课</span>
+                      <span aria-hidden="true">＋</span>
+                      <span>一年共创会员</span>
+                    </p>
+                    <ul className="vip-facts">
+                      <li><Icon name="calendar" />10/25 周日 9:00–13:00</li>
+                      <li><Icon name="pin" />St Leonards</li>
+                      <li><Icon name="laptop" />不用懂技术，带笔记本电脑</li>
+                    </ul>
+                    <a className="btn btn--primary" href="#class-signup" style={{ alignSelf: "flex-start" }}>报名入会 ↓</a>
+                  </div>
+                  {/* The same poster that goes out in the group and on Moments, so the
+                      page and the picture never say different things. */}
+                  <figure className="stack-2" style={{ margin: 0 }}>
+                    <a className="class-poster" href="/class/poster-2026-10-25.jpg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/class/poster-2026-10-25.webp"
+                        width={1080}
+                        height={1440}
+                        alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员"
+                      />
+                    </a>
+                    <figcaption className="hint">点开看大图，长按保存、转发给做生意的朋友。</figcaption>
+                  </figure>
                 </div>
 
-                {/* The same poster that goes out in the group and on Moments, so the
-                    page and the picture never say different things. Tap for the
-                    full-size file to save and forward. */}
-                <figure className="stack-2" style={{ margin: 0 }}>
-                  <a className="class-poster" href="/class/poster-2026-10-25.jpg">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/class/poster-2026-10-25.webp"
-                      width={1080}
-                      height={1440}
-                      alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员"
-                    />
-                  </a>
-                  <figcaption className="hint">点开看大图，长按可以保存、转发给做生意的朋友。</figcaption>
-                </figure>
-
-                <div className="card card--accent stack-3">
-                  <h2 className="h3">加入以后，这一年你有什么</h2>
-                  <ul className="stack-3" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                    <li><strong>1　入会第一课：{COURSE.title}</strong><br />{COURSE.dateLabel}，4 小时实战，带着你的生意来，带走一个懂你生意的 AI 商业顾问：随身、专业，经营上的事什么都能问。课上给它资料夹（知识库）和岗位手册（技能），再写出一张能开工的需求单。课后一对一咨询。详情在下面</li>
-                    <li><strong>2　周二闭门研讨会，全年免费</strong><br />每周二上午，十来个人打开电脑讲自己在做的事：项目落地交流、现场咨询答疑、对接资源。不是会员单次 30 澳元 + GST。10 月 27 日第一场，带着课上的作业来展示</li>
-                    <li><strong>3　共性需求，我们免费做出来</strong><br />会员的需求单我们都会看，很多人都有的刚需，挑出来做成能直接用的 AI 工具，并协助启动</li>
-                    <li><strong>4　复杂需求，对接社群里靠谱的人</strong><br />做产品、做推广这类大活，优先介绍社群里做过、靠得住的人</li>
-                    <li><strong>5　一年的圈子</strong><br />会员群和线下交流，和一群在把 AI 用进生意的人一起往前走</li>
-                    <li><strong>6　另送一年 AI 创始人 IP 会员</strong>（价值 365 澳元）<br />用 AI 做自媒体、做内容获客，详情在下面</li>
-                  </ul>
-                  <p style={{ margin: 0 }}>社群产生的收益，会用在社群活动和对大家的激励上。</p>
-                  <p className="body-lg" style={{ margin: 0 }}>
-                    <strong>入会：{COURSE.priceLabel}，一年</strong>　<a href="#class-signup">去报名 ↓</a>
-                  </p>
+                <div className="stack-4">
+                  <h2>加入以后，你会得到</h2>
+                  <div className="feature-grid">
+                    {FEATURES.map((feature) => (
+                      <article className={feature.hot ? "feature feature--hot" : "feature"} key={feature.title}>
+                        <span className="feature__icon"><Icon name={feature.icon} /></span>
+                        <h3 className="feature__title">{feature.title}</h3>
+                        <p className="feature__body">{feature.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                  <p className="hint" style={{ margin: 0 }}>社群产生的收益，用在社群活动和对大家的激励上。</p>
                 </div>
 
                 {/* The bonus is written with its limits on purpose: a one-page site
                     is cheap to make for everyone; an existing complex site is not. */}
-                <div className="card stack-3" style={{ borderColor: "var(--accent-muted)" }}>
-                  <h2 className="h3">前 15 名加送：帮你做一个一页式官网并上线</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>一页式官网：介绍你的生意、你的服务和联系方式，内容用课上整理出来的东西</li>
-                    <li>用你自己的域名（域名自己买，我们帮你接上）</li>
-                    <li>课后两周内上线</li>
-                    <li>已经有官网的，我们给你改进建议，不重做</li>
-                    <li>按转账到账的先后算前 15 名</li>
-                  </ul>
-                </div>
-
-                <div className="stack-2">
-                  <span className="eyebrow">§ 入会第一课 · {COURSE.dateLabel}</span>
-                  <h2>{COURSE.title}</h2>
-                  <p className="body-lg">
-                    老板要的不是 AI，是用 AI 降本增效、获客成交。不讲空泛概念，带着你自己的生意来，4 小时边学边练，带走一个懂你生意的 AI 商业顾问。
-                  </p>
-                </div>
-
-                <div className="card card--accent stack-3">
-                  <h2 className="h3">先看这门课适不适合你</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li><strong>适合谁</strong>：自己做生意的老板和创业者，房产、贷款、建筑装修、餐饮、门店、电商外贸、教育咨询都行。听过 AI、可能也用过，但生意还是老样子</li>
-                    <li><strong>要什么基础</strong>：会用微信、会打字就够了。不用懂技术，不写代码</li>
-                    <li><strong>解决什么问题</strong>：你生意里那件最费时间的事（回客人消息、写文案、整理资料、找客人），AI 到底能接多少、怎么接、接到什么程度算好</li>
-                    <li><strong>不太适合谁</strong>：已经自己在做 AI 产品、写代码的朋友。这门课偏入门，周四局更适合你</li>
-                  </ul>
-                </div>
-
-                <div className="card stack-3">
-                  <h2 className="h3">周四局的老板们报名时，问得最多的是这几件事</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>AI 到底怎么和我的生意结合起来？</li>
-                    <li>每天的杂事，能不能交给 AI，让我从小事里脱身？</li>
-                    <li>客人从哪来？生意刚起步，怎么让客人相信我们？</li>
-                    <li>能不能有一个 AI 客服，帮我回客人消息？</li>
-                  </ul>
-                  <p style={{ margin: 0 }}>这门课就是冲着这些问题来的。</p>
-                </div>
-
-                <div className="card stack-3">
-                  <h2 className="h3">举个例子：一位做装修的老板，这一上午做了什么</h2>
-                  <p className="hint" style={{ margin: 0 }}>课上用的示范，不是真实客户。你带来的会是你自己的事。</p>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li><strong>原来怎么做</strong>：客人在微信、小红书私信里问。白天在工地顾不上，晚上一条条回。「大概多少钱一平」「多久能完工」「有没有做过类似的」，这几句每天要回好几遍</li>
-                    <li><strong>卡在哪</strong>：回慢了，客人转头就去问别家。想过请人帮着回，可新人不懂行，报错价更麻烦</li>
-                    <li><strong>课上做成什么</strong>：一张需求单。要交给 AI 的事是回新客人的第一轮咨询；做到常见问题当天有回复、说法跟他本人一致就算好；要用的资料是价格区间、做过的案例和常见问答；具体报价、工期承诺和折扣必须他拍板，AI 只起草，不替他发</li>
-                    <li><strong>回去用在哪</strong>：把常见问答和价格区间交给助理，客人的问题贴进去，它出草稿，他看一眼再发（客人的电话、地址不用贴）。想做成客人一来消息就自动回，拿着这张需求单去找人做，可以直接开工。写得清楚的，还有机会被挑中，我们免费做出来</li>
-                  </ul>
-                </div>
-
-                <div className="card stack-3">
-                  <h2 className="h3">课程大纲：这四个小时，你亲手做什么</h2>
-                  <ul className="stack-3" style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
-                    <li><strong>9:00　AI 能干什么、不能干什么</strong><br />把 AI 能接的活分成四类：搬运、归类、生成、拍板，哪些今天就能交，哪些不能交。你先在卡片上写下自己生意里最头疼的一件事</li>
-                    <li><strong>9:40　装好你的 AI 助理</strong><br />现场装在你的电脑和手机上，告诉它你做什么生意、客人是谁，再用那件头疼的事问它。带走：它回答你生意问题的截图</li>
-                    <li><strong>10:40　茶歇</strong></li>
-                    <li><strong>11:00　写你的需求单</strong>（今天最重要的一段）<br />助理一格一格问你：哪件事、现在谁在做、每周花多久、做成什么样算好、用到哪些资料、值多少。再让它把需求单写成一份岗位手册（技能），存进去试跑一次。带走：一张填好的需求单和你的第一个技能</li>
-                    <li><strong>12:00　交给 AI 之前，先对一遍</strong><br />两个真实的翻车案，和四条线：拍板的事不交、对客人的承诺你本人看过再发、客人隐私先遮掉、数字人名日期对原件</li>
-                    <li><strong>12:20　下课以后</strong><br />约好一对一咨询，讲清楚彩蛋怎么挑、会员有哪些权益</li>
-                    <li><strong>12:40　答疑、合影，13:00 结束</strong></li>
-                  </ul>
-                </div>
-
-                <div className="card card--accent stack-3">
-                  <h2 className="h3">这门课和别的 AI 课有什么不一样</h2>
-                  <p style={{ margin: 0 }}>
-                    很多 AI 课是带你看 AI 能做什么、教你在对话框里打字。当场看着挺惊艳，回到店里，生意还是老样子。
-                  </p>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li><strong>从你的生意出发</strong>：带着你自己的事来，走的时候手上是一张能开工的需求单，不是一堆功能演示</li>
-                    <li><strong>不是听完就散</strong>：课后有一对一专属咨询，大家的刚需我们挑出来免费做出来</li>
-                    <li><strong>讲课的人自己用 AI 拿到了结果</strong>：零员工，一个人运营数十款面向海外市场的软件产品，用 AI 把软件生意做到了七位数年营收；开发、上线、获客到客服，大部分交给 AI 去跑。每周还和悉尼各行各业的老板聊 AI 怎么落地。是自己做生意的人来讲，不是只会讲工具的导师</li>
-                  </ul>
+                <div className="grid-2">
+                  <article className="feature feature--hot">
+                    <span className="feature__icon"><Icon name="globe" /></span>
+                    <h3 className="feature__title">★ 前 15 名加送：一页式官网并上线</h3>
+                    <p className="feature__body">
+                      一页介绍你的生意、服务和联系方式，用你自己的域名（域名你买，我们帮你接上），课后两周内上线。已经有官网的，给你改进建议，不重做。按转账到账先后算。
+                    </p>
+                  </article>
+                  <article className="feature">
+                    <span className="feature__icon"><Icon name="gift" /></span>
+                    <h3 className="feature__title">另送：一年 AI 创始人 IP 会员（价值 365 澳元）</h3>
+                    <p className="feature__body">学用 AI 做自媒体、做内容获客，让更多人认识你。</p>
+                    <details>
+                      <summary className="body-sm">包括什么</summary>
+                      <ul className="body-sm" style={{ margin: "var(--space-2) 0 0", paddingLeft: "1.2em" }}>
+                        <li>全年不少于 6 场线下公开课：用 AI 做自媒体内容、获客</li>
+                        <li>会员专属线下活动和聚会；周四局会员专属留位</li>
+                        <li>一年会员群：AI 资讯和答疑；知识星球资料库</li>
+                        <li>会员专属 AI 智能体，一年使用权</li>
+                      </ul>
+                    </details>
+                  </article>
                 </div>
 
                 <div className="stack-4">
-                  <h2 className="h3">你会得到</h2>
-
-                  <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>1　一个懂你生意的 AI 商业顾问</h3>
-                    <p style={{ margin: 0 }}>
-                      课上帮你装好，电脑和手机都能用，相当于随身带着一个专业、了解你业务的商业顾问。课上给它两样东西：资料夹（知识库），比如你的产品、客户、流程；岗位手册（技能），比如回客户、写文案。这些只是例子，放什么由你的生意决定。
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      之后可以问它：这个月生意为什么差了？它不会马上给你一个答案，会先问你：是来的客人少了，每个客人买得少了，还是价格变了？一步步帮你找到原因。也可以问：我的客人主要从哪来？怎么让第一次来的客人信我？
-                    </p>
+                  <div className="stack-2">
+                    <span className="eyebrow">§ 入会第一课 · {COURSE.dateLabel}</span>
+                    <h2>{COURSE.title}</h2>
+                    <p className="body-lg">不讲空泛概念，带着你自己的生意来，4 小时边学边练。每一段都动手，走的时候东西在你手上。</p>
                   </div>
+                  <ol className="timeline">
+                    {OUTLINE.map((step) => (
+                      <li key={step.time}>
+                        <span className="timeline__time mono">{step.time}</span>
+                        <div>
+                          <strong>{step.title}</strong>
+                          {step.body && <p className="body-sm" style={{ margin: 0 }}>{step.body}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                  <details className="card">
+                    <summary><strong>举个例子：一位做装修的老板，这一上午做了什么</strong></summary>
+                    <ul className="stack-2" style={{ margin: "var(--space-3) 0 0", paddingLeft: "1.3em" }}>
+                      <li><strong>原来</strong>：客人在微信、小红书里问「多少钱一平」「多久完工」，白天在工地顾不上，晚上一条条回，回慢了客人就去问别家</li>
+                      <li><strong>课上做成</strong>：一张需求单。交给 AI 的是回新客人的第一轮咨询；资料是价格区间、案例和常见问答；报价、工期和折扣必须他拍板，AI 只起草</li>
+                      <li><strong>回去以后</strong>：客人问题贴给助理，它出草稿，他看一眼再发。想做成自动回复，拿着需求单去找人做，可以直接开工</li>
+                    </ul>
+                    <p className="hint" style={{ margin: "var(--space-2) 0 0" }}>课上用的示范，不是真实客户。</p>
+                  </details>
+                </div>
 
+                <div className="grid-2">
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>2　一张需求单：把生意问题变成 AI 能接的任务</h3>
-                    <p style={{ margin: 0 }}>
-                      很多老板说「帮我弄个 AI」。这句话谁都没法开工，因为不知道要做什么。
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      课上你挑一件最想交给 AI 的事：回客人消息、写营销文案、把产品和报价整理成 AI 能查的资料、日常重复的杂事，都行。助理会一格一格问你：这件事现在谁在做？每周花多少时间？做成什么样算好？答完，就是一张需求单。以后不管找谁做 AI，都用得上。
-                    </p>
+                    <h3 className="h3">适合你，如果</h3>
+                    <ul className="checklist">
+                      <li>自己做生意：房产、贷款、装修、餐饮、门店、电商外贸、教育咨询都行</li>
+                      <li>听过 AI、可能也用过，但生意还是老样子</li>
+                      <li>会用微信、会打字就够了，不写代码</li>
+                    </ul>
                   </div>
-
                   <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>3　限时一对一专属咨询（每人 15 分钟）</h3>
+                    <h3 className="h3">主讲 James</h3>
                     <p style={{ margin: 0 }}>
-                      课后在线上，只有你和我。带着你的需求单，和用助理时卡住的地方来。你的生意、你的数据，别人听不到。
+                      零员工，一个人运营数十款面向海外市场的软件产品，用 AI 把软件生意做到了七位数年营收。悉尼每周四 AI 聚会 Vibe Thursday 主办人，每周和各行业老板聊 AI 怎么落地。
                     </p>
-                    <p style={{ margin: 0 }}>需要提前预约，没约的不安排。</p>
-                  </div>
-
-                  <div className="card stack-2">
-                    <h3 className="h3" style={{ fontSize: "1.15em" }}>4　彩蛋：你的刚需，我们免费做出来</h3>
-                    <p style={{ margin: 0 }}>
-                      课后我们会看每一张需求单，从中挑出大家的刚需，免费做成你生意里能直接用的 AI 工具，比如自动回客人消息的客服助手、帮你整理资料的小工具。做好交到你手上，教会你怎么用。
-                    </p>
-                    <p className="hint" style={{ margin: 0 }}>需求单写得越清楚，越容易被挑中。具体以实际评估为准。</p>
+                    <p className="hint" style={{ margin: 0 }}>已经自己在写代码、做 AI 产品的朋友，这门课偏入门，周二研讨会更适合你。</p>
                   </div>
                 </div>
 
-                <div className="card stack-3">
-                  <h2 className="h3">要准备什么</h2>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>建议带上笔记本电脑，充好电；手机也带上</li>
-                    <li>想好你生意里最头疼的一件事</li>
-                    <li>想拿来练的客人聊天截图或单据可以带上，客人的姓名和电话先遮掉</li>
-                  </ul>
-                </div>
-
-                <div className="card stack-3">
-                  <h2 className="h3">599 买的是什么，送的 365 又是什么</h2>
-                  <p style={{ margin: 0 }}>
-                    <strong>599 澳元 + GST</strong>：一年的 Vibe Thursday 共创会员。包括这一上午的课、课后 15 分钟一对一咨询、彩蛋的机会、全年周二闭门研讨会，和上面列的其他会员权益。前 15 名另送一页式官网并上线。
-                  </p>
-                  <p style={{ margin: 0 }}>
-                    <strong>另送一年 AI 创始人 IP 会员（价值 365 澳元）</strong>：这门课讲用 AI 理生意；会员讲用 AI 做自媒体、做内容获客，让更多人认识你。想用 AI 做内容、持续获客的，主要在会员里学。会员包括：
-                  </p>
-                  <ul className="stack-2" style={{ margin: 0, paddingLeft: "1.3em", listStyle: "disc" }}>
-                    <li>全年不少于 6 场线下公开课，讲怎么用 AI 做自媒体内容、获客</li>
-                    <li>会员专属线下活动和聚会</li>
-                    <li>周四局会员专属留位</li>
-                    <li>一年会员群：AI 资讯和答疑</li>
-                    <li>知识星球资料库，一直在更新</li>
-                    <li>会员专属 AI 智能体，一年使用权</li>
-                  </ul>
-                </div>
-
-                <div className="card stack-3">
+                <div className="stack-3">
                   <h2 className="h3">常见问题</h2>
-                  <div className="stack-3">
-                    <p style={{ margin: 0 }}><strong>我完全不懂 AI，能跟上吗？</strong><br />能。每一步都跟着做，卡住了举手，我们过来帮你。</p>
-                    <p style={{ margin: 0 }}><strong>我主要想用 AI 做内容、获客，这门课管用吗？</strong><br />课上你可以把「做内容」这件事写成需求单，用助理把选题、文案这一步理清楚。系统地讲用 AI 做自媒体获客，是送你的一年会员里的公开课。两个加起来正好接上。</p>
-                    <p style={{ margin: 0 }}><strong>要带电脑吗？</strong><br />建议带上笔记本电脑，课上操作更方便。实在没有，用手机也能跟。</p>
-                    <p style={{ margin: 0 }}><strong>用中文上课吗？</strong><br />是，全程中文。</p>
-                    <p style={{ margin: 0 }}><strong>我生意上的事，会被其他人听到吗？</strong><br />课上的练习在你自己的手机上做。具体的生意问题，留到一对一咨询里说，只有你和我。</p>
-                  </div>
+                  {FAQ.map((item) => (
+                    <details className="faq" key={item.q}>
+                      <summary>{item.q}</summary>
+                      <p style={{ margin: "var(--space-2) 0 0" }}>{item.a}</p>
+                    </details>
+                  ))}
                 </div>
 
-                <h2 className="h3" id="class-signup">报名入会</h2>
+                <div className="card card--accent stack-6 vip-signup">
+                <h2 id="class-signup">报名入会</h2>
                 <p className="body-lg">
                   第一课：{COURSE.dateLabel}，{COURSE.timeLabel}
                   <br />
@@ -456,6 +476,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     </button>
                   </div>
                 </form>
+                </div>
               </>
             )}
           </div>
