@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type React from "react";
-import { Fragment } from "react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
@@ -126,6 +125,17 @@ const FAQ: { q: string; a: string }[] = [
   { q: "用中文上课吗？", a: "是，全程中文。" },
 ];
 
+/** Every section opens the same way: a number, the heading, and at most one line. */
+function SectionHead({ n, title, lead }: { n: string; title: string; lead?: string }) {
+  return (
+    <div className="vip-head">
+      <span className="vip-head__n mono">{n}</span>
+      <h2>{title}</h2>
+      {lead && <p className="vip-lead">{lead}</p>}
+    </div>
+  );
+}
+
 /** Line icons for the feature cards, drawn in currentColor. */
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -188,7 +198,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
       <SiteHeader lang="zh" copy={c} path="/class" />
       <main id="main">
         <section className="section">
-          <div className="shell stack-8" style={{ maxWidth: order ? "680px" : "1040px", fontSize: "1.1rem" }}>
+          <div className="shell stack-8" style={{ maxWidth: "640px", fontSize: "1.05rem" }}>
             {order ? (
               // ── Signed up: how to pay ─────────────────────────────────
               <div className="stack-6">
@@ -275,207 +285,180 @@ export default async function ClassPage({ searchParams }: PageProps) {
               </div>
             ) : (
               // ── Not signed up yet ─────────────────────────────────────
-              // A product page for an anxious business owner (2026-10-19):
-              // worry → result → proof → value → act. Detail only some people
-              // want stays folded.
+              // Phone first (2026-10-19 redesign): one narrow column, every
+              // section the same shape — number, heading, one line, content —
+              // with the same space between them. No cards inside cards.
               <>
-                <div className="vip-hero">
-                  <div className="stack-4">
-                    <span className="eyebrow">§ 老板的 AI 第一课 · {COURSE.dateLabel}</span>
-                    <h1>AI 天天在变，<br />你的生意还在原地？</h1>
-                    <p className="body-lg">
-                      不用懂技术。带着你自己的生意来，4 小时后带走一个<strong>懂你生意的 AI 商业顾问</strong>；再加一年，和悉尼一群生意人一起把 AI 用进生意里。
-                    </p>
-                    <p className="vip-eq">
-                      <strong>{COURSE.priceLabel}</strong>
-                      <span aria-hidden="true">＝</span>
-                      <span>4 小时实战课</span>
-                      <span aria-hidden="true">＋</span>
-                      <span>一年共创会员</span>
-                    </p>
-                    <ul className="vip-facts">
-                      <li><Icon name="calendar" />10/25 周日 9:00–13:00</li>
+                <header className="vip-hero">
+                  <span className="eyebrow">§ 老板的 AI 第一课 · {COURSE.dateLabel}</span>
+                  <h1>AI 天天在变，<br />你的生意还在原地？</h1>
+                  <p className="vip-lead">
+                    不用懂技术。带着你自己的生意来，4 小时后带走一个懂你生意的 AI 商业顾问；再加一年，和悉尼一群生意人一起把 AI 用进生意里。
+                  </p>
+                  <div className="vip-offer">
+                    <p className="vip-offer__price">{COURSE.priceLabel}</p>
+                    <p className="vip-offer__eq">＝ 4 小时实战课 ＋ 一年共创会员</p>
+                    <ul className="vip-offer__facts">
+                      <li><Icon name="calendar" />10/25（周日）9:00–13:00</li>
                       <li><Icon name="pin" />St Leonards</li>
-                      <li><Icon name="laptop" />全程中文 · 带笔记本电脑</li>
+                      <li><Icon name="laptop" />全程中文 · 不用懂技术 · 带笔记本电脑</li>
                     </ul>
-                    <div className="vip-cta">
-                      <a className="btn btn--primary" href="#class-signup">报名入会 ↓</a>
-                      {siteLeft !== null && <span className="vip-scarcity">前 15 名送官网 · 还剩 <strong>{siteLeft}</strong> 个</span>}
-                    </div>
+                    <a className="btn btn--primary btn--block" href="#class-signup">报名入会</a>
+                    {siteLeft !== null && <p className="vip-offer__left">前 15 名送一页式官网 · 还剩 <strong>{siteLeft}</strong> 个</p>}
                   </div>
-                  <figure className="vip-photo" style={{ margin: 0 }}>
-                    <picture>
-                      <source type="image/avif" srcSet="/photos/session-05-4-800.avif" />
-                      <img src="/photos/session-05-4-800.jpg" width={800} height={450} alt="周四 AI 聚会现场：一屋子生意人围着桌子聊 AI" />
-                    </picture>
-                    <figcaption className="hint">每周四的 Vibe Thursday，40 人左右的一屋子生意人。</figcaption>
+                  {/* The same poster that goes out in the group and on Moments. */}
+                  <figure className="vip-poster">
+                    <a className="class-poster" href="/class/poster-2026-10-25.jpg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/class/poster-2026-10-25.webp" width={1080} height={1440} alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员" />
+                    </a>
+                    <figcaption>点开看大图，长按保存、转发给做生意的朋友</figcaption>
                   </figure>
-                </div>
+                </header>
 
-                {/* 1 · Name the worry. */}
-                <section className="stack-4">
-                  <h2>你是不是也这样？</h2>
-                  <ul className="vip-pains">
+                <section className="vip-section">
+                  <SectionHead n="01" title="你是不是也这样？" />
+                  <ul className="vip-list">
                     {PAINS.map((pain) => <li key={pain}>{pain}</li>)}
                   </ul>
-                  <div className="vip-quotes" aria-label="周四局上大家挂出来的问题">
-                    <span className="hint">周四局上，老板们挂出来的问题：</span>
-                    {BOARD_QUOTES.map((quote) => <span className="vip-quote" key={quote}>「{quote}」</span>)}
-                  </div>
-                  <p className="body-lg" style={{ margin: 0 }}>
-                    问题不在你不够努力，而是没人带着你，从<strong>你自己的生意</strong>出发走一遍。
-                  </p>
-                </section>
-
-                {/* 2 · Show the result. */}
-                <section className="vip-split">
-                  <div className="stack-4">
-                    <h2>4 小时后，你手上多了一个随身商业顾问</h2>
-                    <p className="body-lg" style={{ margin: 0 }}>
-                      课上把它装在你的电脑和手机上，给它资料夹（知识库）和岗位手册（技能），比如你的产品、客户、回客户的话术。之后经营上的事，随时问它。
-                    </p>
-                    <div className="vip-ba">
-                      <div className="vip-ba__head">以前</div>
-                      <div className="vip-ba__head vip-ba__head--after">上完课</div>
-                      {BEFORE_AFTER.map(([before, after]) => (
-                        <Fragment key={before}>
-                          <div className="vip-ba__cell">{before}</div>
-                          <div className="vip-ba__cell vip-ba__cell--after">{after}</div>
-                        </Fragment>
-                      ))}
+                  <div className="vip-quotes">
+                    <p className="vip-note">往期周四局上，老板们挂出来的问题：</p>
+                    <div className="vip-chips">
+                      {BOARD_QUOTES.map((quote) => <span key={quote}>{quote}</span>)}
                     </div>
                   </div>
+                  <p className="vip-punch">问题不在你不够努力，而是没人带着你，从<strong>你自己的生意</strong>出发走一遍。</p>
+                </section>
+
+                <section className="vip-section">
+                  <SectionHead n="02" title="4 小时后，你多了一个随身商业顾问" lead="课上装在你的电脑和手机上，给它你的产品、客户和流程。经营上的事，随时问它。" />
                   {/* An illustration of the advisor, not a screenshot of a real chat. */}
                   <div className="vip-chat" aria-label="示意：老板和 AI 商业顾问的对话">
-                    <span className="hint">示意</span>
                     <p className="vip-chat__me">这个月生意差了，怎么回事？</p>
                     <p className="vip-chat__ai">先分三件事看：是来的客人少了，每个客人买得少了，还是价格变了？把这个月和上个月的单数发我，我们一项一项对。</p>
                     <p className="vip-chat__me">客人少了。</p>
-                    <p className="vip-chat__ai">那先看客人从哪来：按你资料夹里的渠道，小红书上周发了 1 条，之前每周 3 条。要不要我按你的岗位手册，先写这周的 3 条？</p>
+                    <p className="vip-chat__ai">那先看客人从哪来。按你的资料，小红书上周只发了 1 条，之前每周 3 条。要不要我按你的话术，先写这周的 3 条？</p>
+                    <span className="vip-chat__tag">示意</span>
                   </div>
-                </section>
-
-                {/* 3 · Everything included. */}
-                <section className="stack-4">
-                  <h2>入会一年，你得到的全部</h2>
-                  <div className="feature-grid">
-                    {FEATURES.map((feature) => (
-                      <article className={feature.hot ? "feature feature--hot" : "feature"} key={feature.title}>
-                        <span className="feature__icon"><Icon name={feature.icon} /></span>
-                        <h3 className="feature__title">{feature.title}</h3>
-                        <p className="feature__body">{feature.body}</p>
-                      </article>
+                  <ul className="vip-ba">
+                    {BEFORE_AFTER.map(([before, after]) => (
+                      <li key={before}>
+                        <span className="vip-ba__before">{before}</span>
+                        <span className="vip-ba__after">{after}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </section>
 
-                {/* 4 · Proof: real rooms, real numbers, a real teacher. */}
-                <section className="stack-4">
-                  <h2>不是新开的网课，是每周都在的线下圈子</h2>
-                  <ul className="vip-stats">
-                    <li><strong>11</strong><span>场周四聚会已办（截至 10 月）</span></li>
-                    <li><strong>274</strong><span>人报过名</span></li>
-                    <li><strong>40–70</strong><span>人每场到场</span></li>
+                <section className="vip-section">
+                  <SectionHead n="03" title="入会一年，你得到的全部" />
+                  <ul className="vip-features">
+                    {FEATURES.map((feature) => (
+                      <li key={feature.title} className={feature.hot ? "is-hot" : undefined}>
+                        <span className="vip-features__icon"><Icon name={feature.icon} /></span>
+                        <div>
+                          <h3>{feature.title}</h3>
+                          <p>{feature.body}</p>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
+                </section>
+
+                <section className="vip-section">
+                  <SectionHead n="04" title="不是新开的网课，是每周都在的线下圈子" />
+                  <dl className="vip-stats">
+                    <div><dt>已办周四聚会</dt><dd>11 场</dd></div>
+                    <div><dt>报过名</dt><dd>274 人</dd></div>
+                    <div><dt>每场到场</dt><dd>40–70 人</dd></div>
+                  </dl>
                   <div className="vip-photos">
-                    {PROOF_PHOTOS.map((name) => (
+                    {PROOF_PHOTOS.slice(0, 2).map((name) => (
                       <picture key={name}>
                         <source type="image/avif" srcSet={`/photos/${name}-800.avif`} />
                         <img src={`/photos/${name}-800.jpg`} width={800} height={450} alt="往期周四聚会现场" loading="lazy" />
                       </picture>
                     ))}
                   </div>
-                  <div className="card stack-2">
-                    <h3 className="h3">主讲 James</h3>
-                    <p style={{ margin: 0 }}>
-                      零员工，一个人运营数十款面向海外市场的软件产品，<strong>用 AI 把软件生意做到了七位数年营收</strong>。悉尼每周四 AI 聚会 Vibe Thursday 主办人，每周和各行业老板聊 AI 怎么落地。
-                    </p>
-                    <p className="hint" style={{ margin: 0 }}>是自己做生意、用 AI 拿到结果的人来讲，不是只会讲工具的导师。</p>
+                  <p className="vip-note">截至 10 月；照片里的脸都遮过了。</p>
+                  <div className="vip-speaker">
+                    <p className="vip-speaker__label">主讲</p>
+                    <p className="vip-speaker__name">James</p>
+                    <p>零员工，一个人运营数十款面向海外市场的软件产品，用 AI 把软件生意做到了七位数年营收。悉尼每周四 AI 聚会 Vibe Thursday 主办人，每周和各行业老板聊 AI 怎么落地。</p>
                   </div>
                 </section>
 
-                {/* 5 · Weigh the price against things with real prices. */}
-                <section className="stack-4">
-                  <h2>算一笔账</h2>
-                  <div className="vip-value">
+                <section className="vip-section">
+                  <SectionHead n="05" title="算一笔账" lead="只有两项有单独的标价，光这两项就超过入会价。" />
+                  <ul className="vip-value">
                     {VALUE_ROWS.map((row) => (
-                      <div className="vip-value__row" key={row.item}>
+                      <li key={row.item}>
                         <span>{row.item}</span>
-                        <span className={row.price === "包含" ? "vip-value__inc" : "vip-value__price"}>{row.price}</span>
-                      </div>
+                        <span className={row.price === "包含" ? "is-inc" : "is-price"}>{row.price}</span>
+                      </li>
                     ))}
-                    <div className="vip-value__total">
-                      <span>光有标价的两项，按单价算就是 695 澳元</span>
-                      <span>入会 <strong>{COURSE.priceLabel}</strong></span>
-                    </div>
+                  </ul>
+                  <div className="vip-total">
+                    <p>有标价的两项合计 <strong>695 澳元</strong></p>
+                    <p>入会 <strong className="is-accent">{COURSE.priceLabel}</strong></p>
                   </div>
-                  <p className="hint" style={{ margin: 0 }}>周二按单次价、一年来 10 次算；IP 会员按它自己的售价。其余各项不另标价。社群产生的收益，用在社群活动和对大家的激励上。</p>
-                  <div className="grid-2">
-                    <article className="feature feature--hot">
-                      <span className="feature__icon"><Icon name="globe" /></span>
-                      <h3 className="feature__title">★ 前 15 名加送：一页式官网并上线{siteLeft !== null ? `（还剩 ${siteLeft} 个）` : ""}</h3>
-                      <p className="feature__body">介绍你的生意、服务和联系方式，用你自己的域名（域名你买，我们接上），课后两周内上线。已经有官网的，给改进建议，不重做。按转账到账先后算。</p>
-                    </article>
-                    <article className="feature">
-                      <span className="feature__icon"><Icon name="gift" /></span>
-                      <h3 className="feature__title">另送：一年 AI 创始人 IP 会员</h3>
-                      <p className="feature__body">学用 AI 做自媒体、做内容获客。</p>
-                      <details>
-                        <summary className="body-sm">包括什么</summary>
-                        <ul className="body-sm" style={{ margin: "var(--space-2) 0 0", paddingLeft: "1.2em" }}>
-                          <li>全年不少于 6 场线下公开课：用 AI 做自媒体内容、获客</li>
-                          <li>会员专属线下活动和聚会；周四局会员专属留位</li>
-                          <li>一年会员群：AI 资讯和答疑；知识星球资料库</li>
-                          <li>会员专属 AI 智能体，一年使用权</li>
-                        </ul>
-                      </details>
-                    </article>
+                  <p className="vip-note">周二按单次价、一年来 10 次算；IP 会员按它自己的售价；其余不另标价。社群收益用在社群活动和对大家的激励上。</p>
+                  <div className="vip-bonus">
+                    <p className="vip-bonus__title">★ 前 15 名加送：一页式官网并上线{siteLeft !== null ? `（还剩 ${siteLeft} 个）` : ""}</p>
+                    <p>介绍你的生意、服务和联系方式，用你自己的域名（域名你买，我们接上），课后两周内上线。已经有官网的，给改进建议，不重做。按转账到账先后算。</p>
                   </div>
-                  <a className="btn btn--primary" href="#class-signup" style={{ alignSelf: "flex-start" }}>报名入会 ↓</a>
+                  <details className="vip-more">
+                    <summary>另送的 AI 创始人 IP 会员包括什么</summary>
+                    <ul>
+                      <li>全年不少于 6 场线下公开课：用 AI 做自媒体内容、获客</li>
+                      <li>会员专属线下活动和聚会；周四局会员专属留位</li>
+                      <li>一年会员群：AI 资讯和答疑；知识星球资料库</li>
+                      <li>会员专属 AI 智能体，一年使用权</li>
+                    </ul>
+                  </details>
                 </section>
 
-                {/* 6 · The morning itself, and the rest of the questions. */}
-                <section className="stack-4">
-                  <h2>10/25 这一上午怎么过</h2>
-                  <ol className="timeline">
+                <section className="vip-section">
+                  <SectionHead n="06" title="10/25 这一上午怎么过" />
+                  <ol className="vip-timeline">
                     {OUTLINE.map((step) => (
                       <li key={step.time}>
-                        <span className="timeline__time mono">{step.time}</span>
+                        <span className="mono">{step.time}</span>
                         <div>
                           <strong>{step.title}</strong>
-                          {step.body && <p className="body-sm" style={{ margin: 0 }}>{step.body}</p>}
+                          {step.body && <p>{step.body}</p>}
                         </div>
                       </li>
                     ))}
                   </ol>
-                  <details className="card">
-                    <summary><strong>举个例子：一位做装修的老板，这一上午做了什么</strong></summary>
-                    <ul className="stack-2" style={{ margin: "var(--space-3) 0 0", paddingLeft: "1.3em" }}>
+                  <details className="vip-more">
+                    <summary>举个例子：一位做装修的老板，这一上午做了什么</summary>
+                    <ul>
                       <li><strong>原来</strong>：客人在微信、小红书里问「多少钱一平」「多久完工」，白天在工地顾不上，晚上一条条回，回慢了客人就去问别家</li>
                       <li><strong>课上做成</strong>：一张需求单。交给 AI 的是回新客人的第一轮咨询；资料是价格区间、案例和常见问答；报价、工期和折扣必须他拍板，AI 只起草</li>
                       <li><strong>回去以后</strong>：客人问题贴给顾问，它出草稿，他看一眼再发。想做成自动回复，拿着需求单去找人做，可以直接开工</li>
                     </ul>
-                    <p className="hint" style={{ margin: "var(--space-2) 0 0" }}>课上用的示范，不是真实客户。</p>
+                    <p className="vip-note">课上用的示范，不是真实客户。</p>
                   </details>
                 </section>
 
-                <section className="stack-3">
-                  <h2 className="h3">常见问题</h2>
-                  {FAQ.map((item) => (
-                    <details className="faq" key={item.q}>
-                      <summary>{item.q}</summary>
-                      <p style={{ margin: "var(--space-2) 0 0" }}>{item.a}</p>
-                    </details>
-                  ))}
+                <section className="vip-section">
+                  <SectionHead n="07" title="常见问题" />
+                  <div className="vip-faq">
+                    {FAQ.map((item) => (
+                      <details key={item.q}>
+                        <summary>{item.q}</summary>
+                        <p>{item.a}</p>
+                      </details>
+                    ))}
+                  </div>
                 </section>
 
-                <figure className="stack-2" style={{ margin: 0, maxWidth: "360px" }}>
-                  <a className="class-poster" href="/class/poster-2026-10-25.jpg">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/class/poster-2026-10-25.webp" width={1080} height={1440} loading="lazy" alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员" />
-                  </a>
-                  <figcaption className="hint">海报：点开看大图，长按保存、转发给做生意的朋友。</figcaption>
-                </figure>
+                {/* Phones: the price and the way in, always one tap away. */}
+                <a className="vip-sticky" href="#class-signup">
+                  <span>{COURSE.priceLabel}{siteLeft !== null ? ` · 送官网还剩 ${siteLeft} 个` : ""}</span>
+                  <strong>报名入会</strong>
+                </a>
 
                 <div className="card card--accent stack-6 vip-signup">
                 <h2 id="class-signup">报名入会</h2>
