@@ -307,9 +307,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   </div>
                   {/* The same poster that goes out in the group and on Moments. */}
                   <figure className="vip-poster">
-                    <a className="class-poster" href="/class/poster-2026-10-25.jpg">
+                    <a className="class-poster" href="/class/poster-member.jpg">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/class/poster-2026-10-25.webp" width={1080} height={1440} alt="Vibe Thursday 共创会员海报：599 澳元 = 10/25 一堂 4 小时实战课 + 一年共创会员" />
+                      <img src="/class/poster-member.webp" width={1080} height={1619} alt="疯狂星期四共创会员海报：599 澳元，一年在线社群、4 小时实战课、全年超 30 次周二 Workshop、好想法免费搭建，加赠 AI自媒体+IP实战课" />
                     </a>
                     <figcaption>点开看大图，长按保存、转发给做生意的朋友</figcaption>
                   </figure>
