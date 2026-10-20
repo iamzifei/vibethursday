@@ -80,23 +80,14 @@ test("★ one morning a week: a Tuesday and that week's Thursday are the same we
   assert.deepEqual(sameWeekSessions("2026-10-12", ["2026-10-11", "2026-10-18"]), ["2026-10-18"]);
 });
 
-test("★ builders get only the Thursday waitlist when that week's Tuesday has room", async () => {
-  const { builderToWaitlist, isBuilderPurpose } = await import("../src/lib/capacity.ts");
-  const base = { purpose: "product", session: "2026-10-08", isTuesday: false, alreadyIn: false, sameWeekTuesdayOpen: true };
-  assert.equal(isBuilderPurpose("product"), true);
-  assert.equal(isBuilderPurpose("tech"), true);
-  assert.equal(isBuilderPurpose("biz"), false);
-  assert.equal(isBuilderPurpose("learn"), false);
-  assert.equal(builderToWaitlist(base), true);
-  assert.equal(builderToWaitlist({ ...base, purpose: "tech" }), true);
-  // Business owners and newcomers are who Thursday is for.
-  assert.equal(builderToWaitlist({ ...base, purpose: "biz" }), false);
-  assert.equal(builderToWaitlist({ ...base, purpose: "learn" }), false);
-  assert.equal(builderToWaitlist({ ...base, purpose: null }), false);
-  // No open Tuesday that week: nowhere else to go, so Thursday as usual.
-  assert.equal(builderToWaitlist({ ...base, sameWeekTuesdayOpen: false }), false);
-  // Nobody already holding a place is demoted.
-  assert.equal(builderToWaitlist({ ...base, alreadyIn: true }), false);
-  // The Tuesday itself is never affected.
-  assert.equal(builderToWaitlist({ ...base, isTuesday: true }), false);
+test("★ builders who pick a Thursday get it while it has room (James 2026-10-21)", async () => {
+  const capacity = await import("../src/lib/capacity.ts");
+  // The purpose-based routing to the waitlist is gone: only the cap decides.
+  assert.equal("builderToWaitlist" in capacity, false);
+  assert.equal(capacity.admission(14, false, 40), "booked");
+  assert.equal(capacity.admission(40, false, 40), "waitlist");
+  const { readFileSync } = await import("node:fs");
+  for (const file of ["src/app/api/signup/route.ts", "src/app/api/my/route.ts"]) {
+    assert.doesNotMatch(readFileSync(new URL(`../${file}`, import.meta.url), "utf8"), /BuilderPurpose|waitlistOnly/, file);
+  }
 });

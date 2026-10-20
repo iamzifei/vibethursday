@@ -398,8 +398,7 @@ export const copy = {
           { value: "tech", label: "找机会：工作、项目、合作" },
         ],
         steps: ["你是谁", "你更像哪一类？", "关于你（选填）", "哪一场？"],
-        recommended: "做东西的朋友请报周二 Build Tuesday：十来个人打开电脑互相看。周四留给做生意和刚开始学的朋友，你报周四只能进候补。",
-        builderThursday: "做东西的只能候补",
+        recommended: "做东西的朋友更推荐周二 Build Tuesday：十来个人打开电脑互相看。周四有空位也欢迎来。",
         bizFocus: "最想让 AI 帮你哪一块？",
         bizFocusOptions: [
           { value: "leads", label: "找客户、获客" },
@@ -608,8 +607,6 @@ export const copy = {
       successRecapEmail: "邮箱",
       successRecapHint: "换手机认领名片时，照这里原样填。",
       successSwitched: "同一周只能报一场：{date} 已经帮你退掉了，位子让给了别人。",
-      builderWaitlist: "周四优先留给做生意和刚开始学 AI 的朋友，所以你先在周四的候补里，有空位会通知你。做东西的朋友更推荐来周二：",
-      builderWaitlistCta: "改到周二",
       // The highest-intent screen on the site, and claiming a card needs exactly
       // the signup that was just created. Anywhere else this ask is a chore.
       successClaimBody: "顺手认领成员名片：已经预填好，当天还能当桌牌用。",
@@ -2165,8 +2162,7 @@ export const copy = {
           { value: "tech", label: "Looking for opportunities: work, projects, partners" },
         ],
         steps: ["You", "Which sounds most like you?", "About you (optional)", "Which morning?"],
-        recommended: "Building things? Please come on Build Tuesday — a dozen people, laptops open. Thursday is kept for business owners and newcomers, so a builder signing up for Thursday goes on its waitlist.",
-        builderThursday: "builders: waitlist only",
+        recommended: "Building things? Build Tuesday is the better fit — a dozen people, laptops open. Thursday is welcome too while it has places.",
         bizFocus: "What would you most like AI to help with?",
         bizFocusOptions: [
           { value: "leads", label: "Finding customers" },
@@ -2320,8 +2316,6 @@ export const copy = {
       successRecapEmail: "Email",
       successRecapHint: "Claiming your card on another device? Type these exactly as shown.",
       successSwitched: "One morning per week: we have given up {date} for you, so someone else can have the place.",
-      builderWaitlist: "Thursday is kept first for business owners and newcomers, so you are on Thursday's waitlist and will hear if a place opens. For builders, Tuesday is the better fit: ",
-      builderWaitlistCta: "Move to Tuesday",
       successClaimBody: "Claim your member card while you're here — it's prefilled, and doubles as your name badge on the day.",
       successClaimCta: "Claim my card",
       successSupportBody: "Separately: I cover the venue myself — ",

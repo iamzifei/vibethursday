@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, isMember, findSignupIdByOpenid, getMySignup, latestPurpose, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
-import { isBuilderPurpose } from "@/lib/capacity";
-import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
+import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, isMember, findSignupIdByOpenid, getMySignup, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
@@ -179,10 +177,6 @@ export async function POST(request: Request) {
     // that is not a session.
     if (!to || !bookableSessions(6).includes(to) || to === from) return back({ t: token, err: "failed" });
 
-    // A builder moving onto a Thursday whose week has an open Build Tuesday
-    // gets that Thursday's waitlist, as on the signup form (James 2026-10-06).
-    const waitlistOnly = isBuilderPurpose(await latestPurpose(signupId)) && (await sameWeekTuesdayOpen(to));
-
     // Onto a paid Tuesday, not a member, card payment on (2026-10-19): the
     // place is only theirs once paid, so nothing they hold is given up yet.
     // The Tuesday is added alongside, held for a while, and what it replaces
@@ -191,7 +185,7 @@ export async function POST(request: Request) {
     // them exactly where they were.
     if (feeFor(to) !== null && stripeEnabled() && !(await isMember(signupId))) {
       const before = [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)];
-      const result = await moveSessionFor(signupId, null, to, waitlistOnly);
+      const result = await moveSessionFor(signupId, null, to);
       if (result !== "booked") return back({ t: token, done: "waitlist", d: to });
       const replaces = [...new Set([...(from ? [from] : []), ...sameWeekSessions(to, before)])];
       const fee = await getOrCreateSessionFee(to, signupId, newFeeRef(), HOLD_MINUTES, replaces);
@@ -202,7 +196,7 @@ export async function POST(request: Request) {
     }
 
     // Cancel and add in one transaction: never "old Thursday gone, new one not taken".
-    const result = await moveSessionFor(signupId, from, to, waitlistOnly);
+    const result = await moveSessionFor(signupId, from, to);
 
     // One morning a week, as on the signup form: taking a week's Tuesday gives
     // up that week's Thursday (booked or waitlisted), and the other way round.

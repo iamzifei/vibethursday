@@ -8,12 +8,11 @@ import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
 import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
-import { admission, builderToWaitlist, capFor, isBuilderPurpose } from "@/lib/capacity";
+import { admission, capFor } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { parseBizFocus, parseSignupProfile } from "@/lib/signup-profile";
-import { sameWeekTuesdayOpen } from "@/lib/builder-routing";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { readOpenidToken } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE } from "@/lib/wechat-gate";
@@ -219,23 +218,14 @@ export async function POST(request: Request) {
   // (`capacity.ts`). Someone already booked keeps their place. Walk-ins at the
   // door never come through here, so the cap never turns anybody away there.
   let waitlisted = false;
-  // Set when a builder asked for a Thursday and got its waitlist because that
-  // week's Build Tuesday has room (`builderToWaitlist`), so the confirmation
-  // can say why instead of "it is full".
-  let builderRouted = false;
 
   if (firstSession) {
     try {
       const { count, alreadyIn } = await sessionHeadcount(firstSession, email, wechat);
+      // Builders who pick a Thursday get it like anyone else while it has
+      // room (James 2026-10-21); until then they were only waitlisted
+      // whenever that week's Build Tuesday had places.
       waitlisted = admission(count, alreadyIn, capFor(firstSession)) === "waitlist";
-
-      if (!waitlisted && isBuilderPurpose(purpose) && !isSpecialSession(firstSession)) {
-        const open = await sameWeekTuesdayOpen(firstSession);
-        if (builderToWaitlist({ purpose, session: firstSession, isTuesday: false, alreadyIn, sameWeekTuesdayOpen: open })) {
-          waitlisted = true;
-          builderRouted = true;
-        }
-      }
     } catch (error) {
       // Counting failed: book them. A signup lost to a counting error is worse
       // than one person over a soft cap.
@@ -492,7 +482,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, builderRouted, classSignup: classSignup && profileUpdated, fee, dinner, payHold });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, classSignup: classSignup && profileUpdated, fee, dinner, payHold });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

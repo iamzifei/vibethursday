@@ -3604,8 +3604,6 @@ export async function moveSessionFor(
   signupId: string,
   from: string | null,
   to: string,
-  /** A builder moving onto a Thursday whose week has an open Build Tuesday (`builderToWaitlist`). */
-  waitlistOnly = false,
 ): Promise<"booked" | "waitlist"> {
   await ensureSchema();
 
@@ -3635,9 +3633,8 @@ export async function moveSessionFor(
         [to, signupId],
       );
       const already = counted.rows[0]?.already ?? false;
-      // Someone already holding the place keeps it; otherwise a builder sent
-      // to Tuesday gets the Thursday's waitlist however much room it has.
-      const result = waitlistOnly && !already ? "waitlist" : admission(Number(counted.rows[0]?.count ?? 0), already, capFor(to));
+      // Someone already holding the place keeps it.
+      const result = admission(Number(counted.rows[0]?.count ?? 0), already, capFor(to));
 
       await client.query(
         result === "booked"

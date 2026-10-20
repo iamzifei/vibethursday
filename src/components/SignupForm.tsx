@@ -15,7 +15,7 @@ import {
 import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
-import { formatSession, sameWeekSessions } from "@/lib/sessions";
+import { formatSession } from "@/lib/sessions";
 import { formatPrice, priceRange, VENUE_MENU } from "@/lib/menu";
 import type { DinnerOffer } from "@/lib/dinner";
 
@@ -67,8 +67,6 @@ type Receipt = {
   remembered: boolean;
   /** Same-week sessions given up by this signup (one morning a week). */
   switched: string[];
-  /** A builder put on Thursday's waitlist because that week's Tuesday has room. */
-  builderRouted: boolean;
   /** Registered for the small class from the form (learners' step 4). */
   classSignup: boolean;
   /** A paid Build Tuesday: free as a member, or the reference to pay against. */
@@ -504,7 +502,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         tuesday?: { session: string; left: number };
         remembered?: boolean;
         switched?: string[];
-        builderRouted?: boolean;
         classSignup?: boolean;
         fee?: { member: boolean; ref?: string; status?: string; amount?: string };
         dinner?: { ref?: string; status?: string; skipped?: string };
@@ -526,7 +523,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             ? { label: labelOf(accepted.tuesday.session), left: accepted.tuesday.left }
             : null,
         remembered: accepted?.remembered === true,
-        builderRouted: accepted?.builderRouted === true,
         classSignup: accepted?.classSignup === true,
         payHold: typeof accepted?.payHold === "number" ? accepted.payHold : null,
         fee: accepted?.fee?.member
@@ -591,20 +587,14 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             )}
           </div>
         )}
-        {receipt?.waitlisted && !receipt.builderRouted && <p>{copy.waitlistBody}</p>}
-        {receipt?.builderRouted && (
-          <p>
-            {copy.builderWaitlist}{" "}
-            <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.builderWaitlistCta} →</a>
-          </p>
-        )}
+        {receipt?.waitlisted && <p>{copy.waitlistBody}</p>}
         {/* One morning a week: say plainly what this signup gave up. */}
         {receipt && receipt.switched.length > 0 && (
           <p>{copy.successSwitched.replace("{date}", receipt.switched.join("、"))}</p>
         )}
         {/* The overflow Build Tuesday exists to take: Thursday is full, the
             Tuesday is not. A link, not a booking — /my moves them in one tap. */}
-        {receipt?.tuesday && !receipt.builderRouted && (
+        {receipt?.tuesday && (
           <p>
             {copy.tuesdayOverflow
               .replace("{date}", receipt.tuesday.label.split(" · ")[0])
@@ -744,13 +734,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
       if (tuesday) return tuesday.value;
     }
     return defaultSession;
-  }
-
-  /** Whether this Thursday is waitlist-only for a builder: its week has an open Build Tuesday. */
-  function builderWaitlistOnly(purpose: string | null, session: SessionOption): boolean {
-    if ((purpose !== "product" && purpose !== "tech") || session.tuesday) return false;
-    const openTuesdays = sessions.filter((other) => other.tuesday && !other.full).map((other) => other.value);
-    return sameWeekSessions(session.value, openTuesdays).length > 0;
   }
 
   /** The session list in the order this kind of person should see it. */
@@ -1058,9 +1041,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                 {orderedSessions(pickedPurpose).map((session) => (
                   <option key={session.value} value={session.value}>
                     {session.label}
-                    {/* Said before they pick it, not after: a builder's Thursday
-                        is waitlist-only when that week's Tuesday has room. */}
-                    {builderWaitlistOnly(pickedPurpose, session) ? ` · ${copy.fields.builderThursday}` : ""}
                   </option>
                 ))}
                 {/* "none" is not a date, so the route's whitelist turns it into
