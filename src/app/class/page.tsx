@@ -81,25 +81,27 @@ const BEFORE_AFTER: [string, string][] = [
 const FEATURES: { icon: IconName; title: string; body: string; hot?: boolean }[] = [
   { icon: "advisor", title: "懂你生意的 AI 商业顾问", body: "课上装在你的电脑和手机上，喂给它你的产品、客户和流程。经营上的事随时问它。", hot: true },
   { icon: "list", title: "一张能开工的需求单 + 一对一", body: "把最头疼的一件事写成 AI 能接的任务。课后线上一对一 15 分钟，只有你和我。" },
-  { icon: "laptop", title: "每周二研讨会，全年免费", body: "十来个人打开电脑看项目、答疑、对接资源。10/27 首场，带课上的作业来展示。" },
-  { icon: "tool", title: "共性刚需，我们免费做", body: "从大家的需求单里挑出刚需，做成能直接用的 AI 工具，交到你手上。" },
+  { icon: "laptop", title: "全年超 30 次周二 Workshop，免费", body: "十来个人打开电脑看项目、拆解真实案例、对接资源。10/27 首场，带课上的作业来展示。" },
+  { icon: "tool", title: "好想法，我们免费搭建，利益共享", body: "从大家的需求单里筛出有潜力的项目，团队协助免费搭建和验证；项目产生收益时，和相关贡献者共享成果。" },
   { icon: "handshake", title: "复杂需求，对接靠谱的人", body: "做产品、做推广这类大活，优先介绍社群里做过、靠得住的人。" },
-  { icon: "people", title: "一年的生意人圈子", body: "会员群里案例和工具分享，随时提问，认识各行各业在用 AI 的老板。" },
+  { icon: "people", title: "12 个月在线社群", body: "每周行业洞察与案例分享，专属社群随时提问，和澳洲各行业老板互助合作。" },
 ];
 
 /**
- * The value table. Only things with a real price carry a number: Tuesday's
- * single price as listed on /tuesday, and the IP membership's own price.
- * Nothing here is an invented "worth".
+ * The value table, item for item the same as the membership poster
+ * (2026-10-21), so the page and the poster never tell two stories.
+ * `value` is in AUD; rows without one are included but not priced.
+ * VALUE_TOTAL is the sum of the priced rows.
  */
-const VALUE_ROWS: { item: string; price: string }[] = [
-  { item: "4 小时实战课 + 懂你生意的 AI 商业顾问", price: "包含" },
-  { item: "课后一对一咨询 15 分钟", price: "包含" },
-  { item: "每周二研讨会，一年", price: "单次 30 澳元 + GST，来 10 次 = 330 澳元" },
-  { item: "AI 创始人 IP 会员，一年", price: "单买 365 澳元" },
+const VALUE_ROWS: { item: string; price: string; value?: number }[] = [
+  { item: "12 个月在线社群：每周行业洞察与案例分享", price: "价值超 300 澳元", value: 300 },
+  { item: "4 小时实战课：手把手教你从智能体到官网搭建，含课后一对一 15 分钟", price: "价值 599 澳元", value: 599 },
+  { item: "全年超 30 次周二 Workshop（单次 30 澳元 + GST）", price: "价值超 900 澳元", value: 900 },
+  { item: "加赠：AI 创始人 IP 会员，一年", price: "价值 365 澳元", value: 365 },
+  { item: "好想法免费搭建，项目收益与贡献者共享", price: "包含" },
   { item: "前 15 名：一页式官网并上线", price: "包含" },
-  { item: "共性刚需免费做 · 会员群 · 资源对接", price: "包含" },
 ];
+const VALUE_TOTAL = VALUE_ROWS.reduce((sum, row) => sum + (row.value ?? 0), 0);
 
 /** Past Thursdays, faces already covered. */
 const PROOF_PHOTOS = ["session-03-3", "session-04-5", "session-07-2"];
@@ -117,7 +119,7 @@ const OUTLINE: { time: string; title: string; body?: string }[] = [
 
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "适合自己做生意的老板和创业者：房产、贷款、装修、餐饮、门店、电商外贸、教育咨询都行。会用微信、会打字就够了。已经在写代码、做 AI 产品的朋友，这门课偏入门，周二研讨会更适合你。" },
-  { q: "599 包含什么？", a: "一年的 Vibe Thursday 共创会员：10/25 这一上午的课、课后一对一、刚需免费做的机会、全年周二研讨会和会员群。前 15 名另送一页式官网并上线，另送一年 AI 创始人 IP 会员。" },
+  { q: "599 包含什么？", a: "一年的 Vibe Thursday 共创会员：10/25 这一上午的课、课后一对一、12 个月在线社群、全年超 30 次周二 Workshop、好想法免费搭建并共享收益。前 15 名另送一页式官网并上线，另送一年 AI 创始人 IP 会员。" },
   { q: "我完全不懂 AI，能跟上吗？", a: "能。每一步都跟着做，卡住了举手，我们过来帮你。" },
   { q: "要准备什么？", a: "建议带笔记本电脑，充好电，手机也带上；没有电脑用手机也能跟。想好你生意里最头疼的一件事，想拿来练的聊天截图或单据可以带上，客人的姓名电话先遮掉。" },
   { q: "我主要想用 AI 做内容、获客，管用吗？", a: "课上可以把「做内容」写成需求单，用顾问把选题、文案理清楚。系统地讲自媒体获客，在送你的 IP 会员公开课里，两个正好接上。" },
@@ -386,7 +388,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="05" title="算一笔账" lead="只有两项有单独的标价，光这两项就超过入会价。" />
+                  <SectionHead n="05" title="算一笔账" lead="四项有价值的加起来，是入会价的三倍多。" />
                   <ul className="vip-value">
                     {VALUE_ROWS.map((row) => (
                       <li key={row.item}>
@@ -396,10 +398,10 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     ))}
                   </ul>
                   <div className="vip-total">
-                    <p>有标价的两项合计 <strong>695 澳元</strong></p>
+                    <p>总价值超 <strong>{VALUE_TOTAL.toLocaleString("en-AU")} 澳元</strong></p>
                     <p>入会 <strong className="is-accent">{COURSE.priceLabel}</strong></p>
                   </div>
-                  <p className="vip-note">周二按单次价、一年来 10 次算；IP 会员按它自己的售价；其余不另标价。社群收益用在社群活动和对大家的激励上。</p>
+                  <p className="vip-note">以上价格均另加 GST。不入会的话，周二 Workshop 每次 30 澳元 + GST。</p>
                   <div className="vip-bonus">
                     <p className="vip-bonus__title">★ 前 15 名加送：一页式官网并上线</p>
                     <p>介绍你的生意、服务和联系方式，用你自己的域名（域名你买，我们接上），课后两周内上线。已经有官网的，给改进建议，不重做。按转账到账先后算。</p>
