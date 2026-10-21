@@ -5086,3 +5086,22 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vip-sticky:hover { color: var(--bg-primary); }
 @media (min-width: 720px) { .vip-sticky { display: none; } }
 @media (max-width: 719px) { body:has(.vip-sticky) footer { padding-bottom: 96px; } }
+
+/* ── Venue screen (/screen, 2026-10-22): landscape TV first, stacks on a phone ── */
+.screen { min-height: 100dvh; display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-8); align-items: center; padding: var(--space-8) clamp(16px, 5vw, 80px); }
+.screen__intro { display: flex; flex-direction: column; gap: var(--space-4); }
+.screen__intro h1 { margin: 0; font-size: clamp(2rem, 4.2vw, 4rem); line-height: 1.15; }
+.screen__lead { margin: 0; font-size: clamp(1.05rem, 1.6vw, 1.5rem); color: var(--fg2); }
+.screen__schedule { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.screen__schedule li { display: grid; grid-template-columns: 5.5ch 1fr; gap: var(--space-4); align-items: baseline; font-size: clamp(1rem, 1.5vw, 1.4rem); }
+.screen__schedule strong { display: block; }
+.screen__schedule p { margin: 0; color: var(--fg3); font-size: 0.85em; }
+.screen__codes { display: flex; flex-direction: column; gap: var(--space-6); align-items: center; }
+.screen__codes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
+.screen__codes figcaption { color: var(--fg3); font-size: clamp(0.9rem, 1.2vw, 1.1rem); }
+.screen__codes figcaption strong { display: block; color: var(--fg1); font-size: 1.35em; }
+.screen__qr { width: min(26vw, 34vh); }
+@media (max-width: 760px) {
+  .screen { grid-template-columns: 1fr; }
+  .screen__qr { width: min(70vw, 280px); }
+}
