@@ -15,4 +15,18 @@ export const SCREEN_SCHEDULE: { time: string; title: string; note: string }[] = 
 export const SCREEN_LINKS = {
   signup: "/#signup",
   dinner: "/my",
+  member: "/vip",
 } as const;
+
+/** The membership slide: the same items, values and price as /vip. */
+export const SCREEN_MEMBER = {
+  price: "599 澳元 + GST",
+  firstClass: "第一堂课：本周日 10 月 25 日 9:00–13:00 · St Leonards",
+  points: [
+    "4 小时实战课：手把手从智能体到官网搭建",
+    "12 个月在线社群，每周行业洞察与案例分享",
+    "全年超 30 次周二 Workshop，会员免费",
+    "部分好想法免费搭建，收益共享",
+    "加赠 AI自媒体+IP实战课；前 15 名送一页式官网",
+  ],
+};
