@@ -19,21 +19,22 @@ test("which side of the session we are on", () => {
   assert.equal(goPhase({ date: "2026-10-01", past: true }, "2026-10-04"), "after");
 });
 
-test("before a session: sign up, check my signup, order, card, the member wall, the Wharf", () => {
+test("before a session: sign up, check my signup, card, the member wall, the Wharf", () => {
   // "mySignup" added 2026-09-28: "how do I know I'm signed up?" was the most
   // asked question in the group that week, and /go is the one link people have.
-  assert.deepEqual(goItems("before", ANON), ["signup", "mySignup", "order", "card", "members", "wharf"]);
+  // No ordering ahead since 2026-10-23: people order at the counter.
+  assert.deepEqual(goItems("before", ANON), ["signup", "mySignup", "card", "members", "wharf"]);
 });
 
 test("signing up drops out only when we know, and ordering turns into 'my order'", () => {
-  assert.deepEqual(goItems("before", { ...ANON, signedUp: true }), ["mySignup", "order", "card", "members", "wharf"]);
+  assert.deepEqual(goItems("before", { ...ANON, signedUp: true }), ["mySignup", "card", "members", "wharf"]);
   // Known not signed up, or unknown: still offered.
   assert.deepEqual(goItems("before", { ...ANON, signedUp: false })[0], "signup");
   assert.deepEqual(goItems("before", { ...ANON, hasOrder: true }), ["signup", "mySignup", "myOrder", "card", "members", "wharf"]);
 });
 
-test("on the day before ten: a check-in reminder, the drink, my badge, who is here", () => {
-  assert.deepEqual(goItems("day", ANON), ["checkin", "order", "badge", "members"]);
+test("on the day before ten: a check-in reminder, my badge, who is here", () => {
+  assert.deepEqual(goItems("day", ANON), ["checkin", "badge", "members"]);
   assert.deepEqual(goItems("day", { ...ANON, hasOrder: true }), ["checkin", "myOrder", "badge", "members"]);
 });
 

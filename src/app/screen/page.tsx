@@ -17,18 +17,14 @@ function qrSvg(url: string): Promise<string> {
 /**
  * The venue screen (2026-10-22), two slides that take turns on the TV
  * (CSS only, `.screen__slide`; on a phone they simply stack): this morning
- * with codes to sign up and add the dinner, then the membership with its
- * poster and a code to /vip. Public, unlike /admin/door: nothing
+ * with a code to sign up, then the membership with its poster and a code to
+ * /vip. Only those two codes (James 2026-10-23). Public, unlike /admin/door: nothing
  * here is not already on the home page, and the check-in code stays on the
  * door tablet, where only the people in the room can scan it.
  */
 export default async function ScreenPage() {
   const origin = await requestOrigin();
-  const [signupQr, dinnerQr, memberQr] = await Promise.all([
-    qrSvg(`${origin}${SCREEN_LINKS.signup}`),
-    qrSvg(`${origin}${SCREEN_LINKS.dinner}`),
-    qrSvg(`${origin}${SCREEN_LINKS.member}`),
-  ]);
+  const [signupQr, memberQr] = await Promise.all([qrSvg(`${origin}${SCREEN_LINKS.signup}`), qrSvg(`${origin}${SCREEN_LINKS.member}`)]);
   const today = formatSession(deskSession(), "zh");
 
   return (
@@ -56,10 +52,6 @@ export default async function ScreenPage() {
           {/* Built by this app from a URL this app composed; nothing from the request. */}
           <div className="door-qr screen__qr" aria-label="报名二维码" dangerouslySetInnerHTML={{ __html: signupQr }} />
           <figcaption><strong>扫码报名</strong>每周四免费 · 下周也能报</figcaption>
-        </figure>
-        <figure>
-          <div className="door-qr screen__qr" aria-label="加订聚餐二维码" dangerouslySetInnerHTML={{ __html: dinnerQr }} />
-          <figcaption><strong>加订散场聚餐</strong>40 澳元含 GST · 一道主菜 + 一杯咖啡 · 限 12 席</figcaption>
         </figure>
       </section>
       </div>

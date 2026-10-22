@@ -16,7 +16,6 @@ import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
 import { formatSession } from "@/lib/sessions";
-import { formatPrice, priceRange, VENUE_MENU } from "@/lib/menu";
 import type { DinnerOffer } from "@/lib/dinner";
 
 /** `tuesday`: a Build Tuesday rather than a Thursday (`SPECIAL_SESSIONS`). */
@@ -1080,27 +1079,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                     </div>
                   )}
                   <p className="field-hint">{copy.fields.openingShareHint}</p>
-                  {/* Everyone orders one thing at the venue (2026-10-15). A drink
-                      chosen here is pre-ordered for the bar; food is ordered there. */}
-                  <div>
-                    <label className="label" htmlFor={fieldId("venuePledge")}>{copy.fields.venuePledge}</label>
-                    <select className="field" id={fieldId("venuePledge")} name="venuePledge" required defaultValue="">
-                      <option value="" disabled>{copy.fields.venuePledgePick}</option>
-                      <option value="food">{copy.fields.venuePledgeFood}</option>
-                      {VENUE_MENU.categories.map((category) => (
-                        <optgroup key={category.id} label={lang === "en" ? category.en : category.zh}>
-                          {VENUE_MENU.items
-                            .filter((item) => item.category === category.id)
-                            .map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {lang === "en" ? item.name : `${item.zh} ${item.name}`} · {typeof item.price === "number" ? formatPrice(item.price) : priceRange(item.price)}
-                              </option>
-                            ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                    <p className="field-hint">{copy.fields.venuePledgeHint}</p>
-                  </div>
                   {/* The dinner after the morning (2026-10-15): optional, paid,
                       a fixed number of seats. Only when one is configured. */}
                   {dinner && (

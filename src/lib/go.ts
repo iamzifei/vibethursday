@@ -76,12 +76,14 @@ export type GoItem =
  * anonymous visitor always sees it.
  */
 export function goItems(phase: GoPhase, state: GoState): GoItem[] {
-  const drink: GoItem = state.hasOrder ? "myOrder" : "order";
+  // Ordering ahead is off (James 2026-10-23): almost everyone orders and pays
+  // at the counter. An order already placed is still shown as "my order".
+  const drink: GoItem[] = state.hasOrder ? ["myOrder"] : [];
 
   if (phase === "before") {
     // "mySignup" always follows: most people here arrived from the group asking
     // whether their signup went through, or needing to move it (2026-09-28).
-    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), "mySignup", drink, "card", "members", "wharf"];
+    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), "mySignup", ...drink, "card", "members", "wharf"];
   }
 
   if (phase === "day") {
@@ -93,7 +95,7 @@ export function goItems(phase: GoPhase, state: GoState): GoItem[] {
       // 1 October nobody had left any by the evening (James 2026-10-01).
       return ["checkin", ...(state.hasOrder ? (["myOrder"] as GoItem[]) : []), "badge", "members", "feedback"];
     }
-    return ["checkin", drink, "badge", "members"];
+    return ["checkin", ...drink, "badge", "members"];
   }
 
   // From noon the session looks back, but anyone who forgot to tap should

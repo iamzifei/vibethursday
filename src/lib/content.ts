@@ -141,7 +141,7 @@ export const copy = {
         {
           time: "10:30–10:45",
           title: "开门 · 取饮品 · 签到",
-          note: "喝的可以提前在 vibethursday.com/go 点好，到了跟吧台报名字、付钱就能取；没点的进门先点——中途有人来问单会打断正在说话的人。到了打开 vibethursday.com/go 签到。场地 10:30 才开门，不用来更早。",
+          note: "进门先在吧台点单、付钱——中途有人来问单会打断正在说话的人。到了打开 vibethursday.com/go 签到。场地 10:30 才开门，不用来更早。",
         },
         {
           time: "10:45–11:00",
@@ -1931,7 +1931,7 @@ export const copy = {
         {
           time: "10:30–10:45am",
           title: "Doors · pick up your drink · check in",
-          note: "Order ahead at vibethursday.com/go and just give your name and pay at the counter; otherwise order on your way in — a waiter taking orders mid-session cuts across whoever is talking. Check in at vibethursday.com/go when you arrive. The venue does not open before 10:30.",
+          note: "Order and pay at the counter on your way in — a waiter taking orders mid-session cuts across whoever is talking. Check in at vibethursday.com/go when you arrive. The venue does not open before 10:30.",
         },
         {
           time: "10:45–11:00am",
