@@ -20,7 +20,6 @@ export const SCREEN_LINKS = {
 /** The membership slide: the same items, values and price as /vip. */
 export const SCREEN_MEMBER = {
   price: "599 澳元 + GST",
-  firstClass: "第一堂课：本周日 10 月 25 日 9:00–13:00 · St Leonards",
   points: [
     "4 小时实战课：手把手从智能体到官网搭建",
     "12 个月在线社群，每周行业洞察与案例分享",

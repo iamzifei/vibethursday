@@ -3,7 +3,6 @@ import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
 import { requestOrigin } from "@/lib/request-origin";
 import { SCREEN_LINKS, SCREEN_MEMBER, SCREEN_SCHEDULE } from "@/lib/screen";
-import { deskSession, formatSession } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,21 +17,21 @@ function qrSvg(url: string): Promise<string> {
  * The venue screen (2026-10-22), two slides that take turns on the TV
  * (CSS only, `.screen__slide`; on a phone they simply stack): this morning
  * with a code to sign up, then the membership with its poster and a code to
- * /vip. Only those two codes (James 2026-10-23). Public, unlike /admin/door: nothing
+ * /vip. Only those two codes, and no dates, so the same
+ * screen serves every week (James 2026-10-23). Public, unlike /admin/door: nothing
  * here is not already on the home page, and the check-in code stays on the
  * door tablet, where only the people in the room can scan it.
  */
 export default async function ScreenPage() {
   const origin = await requestOrigin();
   const [signupQr, memberQr] = await Promise.all([qrSvg(`${origin}${SCREEN_LINKS.signup}`), qrSvg(`${origin}${SCREEN_LINKS.member}`)]);
-  const today = formatSession(deskSession(), "zh");
 
   return (
     <main className="screen">
       <KeepAwake />
       <div className="screen__slide screen__slide--a">
       <section className="screen__intro">
-        <p className="eyebrow">§ Vibe Thursday · 疯狂星期四 · {today}</p>
+        <p className="eyebrow">§ Vibe Thursday · 疯狂星期四</p>
         <h1>一群用 AI 做事的人，<br />每周四聚一次。</h1>
         <p className="screen__lead">这不是课，没有系统教学。手上有东西就打开给大家看，做了一半也行；卡住了，现场问。</p>
         <ol className="screen__schedule">
@@ -65,7 +64,6 @@ export default async function ScreenPage() {
           <ul className="screen__points">
             {SCREEN_MEMBER.points.map((point) => <li key={point}>{point}</li>)}
           </ul>
-          <p className="screen__lead">{SCREEN_MEMBER.firstClass}</p>
         </section>
         <figure className="screen__codes">
           <div className="door-qr screen__qr" aria-label="会员介绍二维码" dangerouslySetInnerHTML={{ __html: memberQr }} />
