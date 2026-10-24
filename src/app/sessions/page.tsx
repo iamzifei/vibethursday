@@ -76,7 +76,6 @@ export default async function SessionsPage({ searchParams }: PageProps) {
 
   const stats = [
     { label: a.totals.sessions, value: totals.sessions, unit: a.totals.sessionsUnit },
-    { label: a.totals.signups, value: totals.signups, unit: a.totals.signupsUnit },
     { label: a.totals.cards, value: totals.cards, unit: a.totals.cardsUnit },
     { label: a.totals.questions, value: totals.questions, unit: a.totals.questionsUnit },
   ];
@@ -97,7 +96,9 @@ export default async function SessionsPage({ searchParams }: PageProps) {
             </div>
 
             {/* The running totals. Every one of them counts something that is
-                already public, and every one is labelled as what it counts. */}
+                already public, and every one is labelled as what it counts.
+                No signup count: the site shows no number of people signed up
+                (James 2026-10-24). */}
             <div className="stack-3">
               <dl className="totals">
                 {stats.map((stat) => (

@@ -1175,7 +1175,7 @@ export const copy = {
       // ⚠️ 这一句不是免责声明，是口径。报名和到场是两个可以差出好几个人的数，
       // 而这个站只量得到前一个——第四场就出现过没报名直接来、且是全场最受欢迎
       // 展示者的情况。每一场真实的到场人数写在那一场自己的那句话里。
-      totalsNote: "「报过名」不是到场。每一场实际来了多少人，写在那一场下面那句话里。",
+      totalsNote: "每一场实际来了多少人，写在那一场下面那句话里。",
       questionsLabel: "那天挂在码头上的问题",
       // 一场十几条问题，四场排下来页面就长得没人往下翻了。前三条摊开，其余折起来。
       moreQuestions: "还有 {n} 条",
@@ -2769,7 +2769,7 @@ export const copy = {
         questionsUnit: "",
       },
       totalsNote:
-        "«Have signed up» is not attendance. How many actually turned up to a session is in the line under that session.",
+        "How many actually turned up to a session is in the line under that session.",
       questionsLabel: "On the Wharf that week",
       moreQuestions: "{n} more",
       morePhotos: "{n} more photos from that morning",
