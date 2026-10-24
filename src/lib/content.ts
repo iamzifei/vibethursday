@@ -82,7 +82,6 @@ export const copy = {
         },
       ],
       nextPrefix: "下一场 ",
-      capacityLeft: "下一场还剩 {n} 个位子",
       capacityFull: "下一场的 40 个座位已满，再报名会进候补——没报上的请优先选下一场",
       // 群公告里只放 /go。首屏也给它一个入口，从网站进来的人找得到同一个地方。
       goLink: "本周要做的事都在这里：vibethursday.com/go →",
@@ -650,7 +649,7 @@ export const copy = {
       tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人、打开电脑互相看做的东西。",
       tuesdayHintCta: "改报周二",
       // 周四进了候补、周二还有位子时，成功页上出现。
-      tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有 {n} 个位子，在做东西的话可以改到那天：",
+      tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有位子，在做东西的话可以改到那天：",
       tuesdayOverflowCta: "去改到周二",
       // A paid Build Tuesday (2026-10-14): the one step left after booking.
       feeMember: "你是共创会员，这一场免费。",
@@ -1876,7 +1875,6 @@ export const copy = {
         },
       ],
       nextPrefix: "Next · ",
-      capacityLeft: "{n} places left for the next one",
       capacityFull: "The next one's 40 seats are taken; signing up joins the waitlist — if you are not booked, please pick the following week",
       goLink: "Everything for this week is here: vibethursday.com/go →",
       classPromo: {
@@ -2345,7 +2343,7 @@ export const copy = {
       },
       tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",
       tuesdayHintCta: "Switch to Tuesday",
-      tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has {n} places — if you build things, you can move to it:",
+      tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
       feeMember: "You are a member, so this one is free.",
       feeDue: "One step left: transfer {amount} to confirm your place.",

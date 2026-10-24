@@ -595,9 +595,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             Tuesday is not. A link, not a booking — /my moves them in one tap. */}
         {receipt?.tuesday && (
           <p>
-            {copy.tuesdayOverflow
-              .replace("{date}", receipt.tuesday.label.split(" · ")[0])
-              .replace("{n}", String(receipt.tuesday.left))}{" "}
+            {copy.tuesdayOverflow.replace("{date}", receipt.tuesday.label.split(" · ")[0])}{" "}
             <a href={LANG_PARAM[lang] ? `/my?lang=${LANG_PARAM[lang]}` : "/my"}>{copy.tuesdayOverflowCta} →</a>
           </p>
         )}

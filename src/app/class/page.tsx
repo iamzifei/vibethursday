@@ -368,7 +368,6 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <SectionHead n="04" title="不是新开的网课，是每周都在的线下圈子" />
                   <dl className="vip-stats">
                     <div><dt>已办周四聚会</dt><dd>11 场</dd></div>
-                    <div><dt>报过名</dt><dd>274 人</dd></div>
                     <div><dt>每场到场</dt><dd>40–70 人</dd></div>
                   </dl>
                   <div className="vip-photos">

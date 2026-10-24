@@ -5039,7 +5039,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vip-features li.is-hot h3 { color: var(--accent); }
 .vip-features p { margin: 0; color: var(--fg2); font-size: 0.95rem; line-height: 1.6; }
 
-.vip-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.vip-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
 .vip-stats div { display: flex; flex-direction: column-reverse; gap: var(--space-1); }
 .vip-stats dt { color: var(--fg3); font-size: 0.8rem; }
 .vip-stats dd { margin: 0; color: var(--accent); font-size: 1.4rem; font-weight: 700; white-space: nowrap; }

@@ -85,9 +85,9 @@ export default async function Page({ searchParams }: PageProps) {
   // below are all about the weekly meetup, never the Tuesday.
   const nextSession = sessions.find((session) => !session.tuesday);
   const tuesdayOpen = sessions.some((session) => session.tuesday);
-  // Places left on the next session, only when it is worth saying (≤ 10).
-  const nextLeft = nextSession ? SESSION_CAP - (counts.get(nextSession.value) ?? 0) : null;
-  const nextSeats = nextLeft !== null && nextLeft <= 10 ? Math.max(0, nextLeft) : null;
+  // Whether the next session is full. No count of places left or of people
+  // signed up is shown anywhere on the site (James 2026-10-24).
+  const nextFull = nextSession ? (counts.get(nextSession.value) ?? 0) >= SESSION_CAP : false;
 
   /**
    * The three questions in the Wharf block.
@@ -272,11 +272,10 @@ export default async function Page({ searchParams }: PageProps) {
                 </Link>
               )}
 
-              {/* Scarcity only: the count is shown once ten or fewer places are
-                  left, or when it is full. A roomy session needs no number. */}
-              {nextSession && nextSeats !== null && (
-                <p className="body-sm" style={{ margin: 0, color: nextSeats === 0 ? "var(--warning)" : "var(--accent)" }}>
-                  {nextSeats === 0 ? c.hero.capacityFull : c.hero.capacityLeft.replace("{n}", String(nextSeats))}
+              {/* Only "full", never a number (James 2026-10-24). */}
+              {nextSession && nextFull && (
+                <p className="body-sm" style={{ margin: 0, color: "var(--warning)" }}>
+                  {c.hero.capacityFull}
                 </p>
               )}
 
