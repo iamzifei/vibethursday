@@ -65,11 +65,11 @@ export const PROFILE_FIELDS: readonly KitField[] = [
 
 export const PACK_FIELDS: readonly KitField[] = [
   { name: "industry", label: "你这一行", placeholder: "比如：装修、留学、贷款", type: "line", max: 100, required: true },
-  { name: "e1", label: "老经验 1", hint: "客人怎么挑、什么时候最忙、最常卡在哪一步、同行在做什么", type: "text", max: 600, required: true },
-  { name: "e2", label: "老经验 2", type: "text", max: 600 },
-  { name: "e3", label: "老经验 3", type: "text", max: 600 },
-  { name: "e4", label: "老经验 4", type: "text", max: 600 },
-  { name: "e5", label: "老经验 5", type: "text", max: 600 },
+  { name: "e1", label: "行业经验 1", hint: "客人怎么挑、什么时候最忙、最常卡在哪一步、同行在做什么", type: "text", max: 600, required: true },
+  { name: "e2", label: "行业经验 2", type: "text", max: 600 },
+  { name: "e3", label: "行业经验 3", type: "text", max: 600 },
+  { name: "e4", label: "行业经验 4", type: "text", max: 600 },
+  { name: "e5", label: "行业经验 5", type: "text", max: 600 },
   { name: "rule", label: "一条最新规定", hint: "从官方网站拷原文，不要凭记忆写", type: "text", max: 2000 },
   { name: "ruleSource", label: "规定的出处（网址）", type: "line", max: 300 },
   { name: "ruleDate", label: "规定的日期", placeholder: "比如：2026-10-24 查的", type: "line", max: 60 },
@@ -112,11 +112,11 @@ export function profileMarkdown(values: KitValues, today: string): string {
 export function packMarkdown(values: KitValues, today: string): string {
   const get = (name: string) => (values[name] ?? "").trim();
   const industry = get("industry") || "我的行业";
-  const lines = [`【行业知识包：${industry}】（整理日期：${today}。经验部分是我自己的行业经验；规定部分以官方最新原文为准）`, ""];
+  const lines = [`【行业知识包：${industry}】（整理日期：${today}。经验部分是我自己的行业经验和洞见；规定部分以官方最新原文为准）`, ""];
 
   const experience = ["e1", "e2", "e3", "e4", "e5"].map(get).filter(Boolean);
   if (experience.length) {
-    lines.push("一、这一行的老经验");
+    lines.push("一、这一行的行业经验");
     experience.forEach((item, index) => lines.push(`${index + 1}. ${indentContinuation(item)}`));
     lines.push("");
   }

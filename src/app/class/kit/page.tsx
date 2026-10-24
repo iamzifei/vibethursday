@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const STEPS = [
   { href: "/class/card", n: "1", title: "三行卡片", when: "开场", what: "你做什么生意、最头疼的一件事。交给 James，现场挑几张念。" },
   { href: "/class/profile", n: "2", title: "业务档案 13 格", when: "动手环节", what: "填完生成一个文件，拖进 AI 平台。不会传到我们这里。" },
-  { href: "/class/pack", n: "3", title: "行业知识包", when: "动手环节", what: "五条老经验 + 一条最新规定。生成文件，拖进平台。不会传到我们这里。" },
+  { href: "/class/pack", n: "3", title: "行业知识包", when: "动手环节", what: "五条行业经验 + 一条最新规定。生成文件，拖进平台。不会传到我们这里。" },
   { href: "/class/spec", n: "4", title: "交需求说明书", when: "第五段", what: "把平台帮你梳理的说明书贴进来，交给 James。" },
 ];
 
