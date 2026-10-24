@@ -755,6 +755,24 @@ export function ensureSchema(): Promise<void> {
     await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS replaces date[] NOT NULL DEFAULT '{}'`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
+
+    // ── The class workbook (2026-10-24, class-kit.ts) ──────────────────
+    // What people hand in on the day of the paid class: the three-line card
+    // and the spec they wrote. `payload` is exactly the known fields of that
+    // form (parseKitSubmission). The business profile and industry pack are
+    // never sent here, so there is no kind for them.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS course_kit (
+        id          bigserial PRIMARY KEY,
+        course      text NOT NULL,
+        kind        text NOT NULL CHECK (kind IN ('card', 'spec')),
+        payload     jsonb NOT NULL,
+        name        text,
+        wechat      text,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS course_kit_course_idx ON course_kit (course, kind)`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -4792,4 +4810,44 @@ export async function setDinnerStatus(id: string, status: DinnerStatus): Promise
     `UPDATE dinner_orders SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END WHERE id = $1::bigint`,
     [id, status],
   );
+}
+
+export type CourseKitInput = {
+  course: string;
+  kind: "card" | "spec";
+  payload: Record<string, string>;
+  name: string | null;
+  wechat: string | null;
+};
+
+/** One handed-in card or spec from the class workbook (`/api/class-kit`). */
+export async function saveCourseKit(input: CourseKitInput): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `INSERT INTO course_kit (course, kind, payload, name, wechat) VALUES ($1, $2, $3::jsonb, $4, $5)`,
+    [input.course, input.kind, JSON.stringify(input.payload), input.name, input.wechat],
+  );
+}
+
+export type CourseKitRecord = {
+  id: string;
+  kind: string;
+  payload: Record<string, string>;
+  name: string | null;
+  wechat: string | null;
+  created_at: string;
+};
+
+/** Everything handed in for one class, newest first, for the organiser's export. */
+export async function listCourseKit(course: string): Promise<CourseKitRecord[]> {
+  await ensureSchema();
+  const result = await getPool().query<CourseKitRecord>(
+    `SELECT id::text AS id, kind, payload, name, wechat,
+            to_char(created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD HH24:MI') AS created_at
+       FROM course_kit
+      WHERE course = $1
+      ORDER BY created_at DESC, id DESC`,
+    [course],
+  );
+  return result.rows;
 }

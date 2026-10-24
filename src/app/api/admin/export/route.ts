@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { tooMany } from "@/lib/rate-limit";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
-import { listCheckins, listFeedback, listOrders, listSignups } from "@/lib/db";
+import { listCheckins, listCourseKit, listFeedback, listOrders, listSignups } from "@/lib/db";
+import { KIT_EXPORT_FIELDS } from "@/lib/class-kit";
+import { COURSE } from "@/lib/course";
 
 import { CHECKIN_COLUMNS, csvCell, ORDER_COLUMNS } from "@/lib/csv";
 import { isSessionDate } from "@/lib/checkin";
@@ -99,6 +101,19 @@ export async function GET(request: Request) {
           lines: await listCheckins(session).then((rows) => [
             CHECKIN_COLUMNS.join(","),
             ...rows.map((row) => CHECKIN_COLUMNS.map((column) => csvCell(row[column])).join(",")),
+          ]),
+        }
+      : what === "class-kit"
+      ? {
+          // The class workbook: cards and specs handed in on the day (class-kit.ts).
+          name: `class-kit-${COURSE.id}`,
+          lines: await listCourseKit(COURSE.id).then((rows) => [
+            ["kind", "name", "wechat", "created_at", ...KIT_EXPORT_FIELDS].join(","),
+            ...rows.map((row) =>
+              [row.kind, row.name, row.wechat, row.created_at, ...KIT_EXPORT_FIELDS.map((field) => row.payload?.[field] ?? null)]
+                .map((value) => csvCell(value))
+                .join(","),
+            ),
           ]),
         }
       : what === "feedback"

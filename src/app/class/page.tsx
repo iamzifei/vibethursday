@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type React from "react";
+import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
@@ -259,7 +260,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                         <pre className="body" style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{paymentInfo}</pre>
                       ) : (
                         <p className="body" style={{ margin: 0 }}>
-                          转账信息请私信 James 获取（<a href="/#contact">微信二维码</a>）。
+                          转账信息请私信 James 获取（<Link href="/#contact">微信二维码</Link>）。
                         </p>
                       )}
                     </div>
@@ -270,7 +271,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       </button>
                     </form>
                     <p className="body">
-                      转完点上面的按钮，再把截图发给 James 的微信（<a href="/#contact">James 的微信二维码在这里</a>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
+                      转完点上面的按钮，再把截图发给 James 的微信（<Link href="/#contact">James 的微信二维码在这里</Link>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
                     </p>
                   </>
                 )}

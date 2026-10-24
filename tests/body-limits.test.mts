@@ -146,6 +146,7 @@ const ROUTES: [file: string, method: "POST" | "DELETE"][] = [
   ["src/app/api/admin/wechat/route.ts", "POST"],
   ["src/app/api/admin/wharf/route.ts", "POST"],
   ["src/app/api/checkin/route.ts", "POST"],
+  ["src/app/api/class-kit/route.ts", "POST"],
   ["src/app/api/claim/route.ts", "POST"],
   ["src/app/api/deck/route.ts", "POST"],
   ["src/app/api/deck/[code]/route.ts", "POST"],

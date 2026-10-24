@@ -39,6 +39,10 @@ export default function robots(): MetadataRoute.Robots {
         // the visitor their own order and signup, so neither belongs in an index.
         "/order$", "/order?", "/order/",
         "/go$", "/go?", "/go/",
+        // The class workbook (class-kit.ts): forms used in the room on the day,
+        // nothing for a stranger. Only the pages *under* /class — the signup
+        // page itself sets its own noindex and must stay fetchable for that.
+        "/class/",
         "/api/",
       ],
     },
