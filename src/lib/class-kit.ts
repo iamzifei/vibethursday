@@ -41,15 +41,15 @@ export type SubmittedKind = (typeof SUBMITTED_KINDS)[number];
 export const AREAS = ["运营", "客服", "获客", "内容"] as const;
 
 export const CARD_FIELDS: readonly KitField[] = [
-  { name: "biz", label: "你做什么生意", hint: "一句话", placeholder: "比如：在 Hurstville 做贷款，客人主要是华人家庭", type: "line", max: 200, required: true },
-  { name: "pain", label: "现在最头疼的一件事", hint: "写一件具体的、能看见的事，不写「想多赚钱」", placeholder: "比如：每天回家长消息回到晚上十点", type: "text", max: 500, required: true },
+  { name: "biz", label: "你做什么生意", hint: "一句话", placeholder: "比如：Hurstville 做贷款", type: "line", max: 200, required: true },
+  { name: "pain", label: "现在最头疼的一件事", hint: "写一件具体的、能看见的事，不写「想多赚钱」", placeholder: "比如：回家长消息回到晚上十点", type: "text", max: 500, required: true },
   { name: "area", label: "这件事属于哪一类", type: "choice", options: AREAS, max: 10 },
 ];
 
 /** The 13 boxes, worded as in the sample profile shown in class. */
 export const PROFILE_FIELDS: readonly KitField[] = [
-  { name: "p1", label: "1 一句话生意", placeholder: "在哪一带、做什么、主要做哪几样", type: "line", max: 300, required: true },
-  { name: "p2", label: "2 地址 / 服务区域", placeholder: "比如：Eastwood，服务 Ryde、Epping；线下上门", type: "line", max: 300 },
+  { name: "p1", label: "1 一句话生意", placeholder: "在哪一带、做什么", type: "line", max: 300, required: true },
+  { name: "p2", label: "2 地址 / 服务区域", placeholder: "比如：Eastwood 及周边", type: "line", max: 300 },
   { name: "p3", label: "3 主要服务与价格", hint: "写价格区间，写清含不含 GST", type: "text", max: 1500 },
   { name: "p4", label: "4 典型客人", placeholder: "多大年纪、什么情况下来找你", type: "text", max: 800 },
   { name: "p5", label: "5 客人从哪来", placeholder: "小红书、朋友介绍、Google……大概各占多少", type: "text", max: 800 },
@@ -64,7 +64,7 @@ export const PROFILE_FIELDS: readonly KitField[] = [
 ];
 
 export const PACK_FIELDS: readonly KitField[] = [
-  { name: "industry", label: "你这一行", placeholder: "比如：悉尼住宅装修、留学中介、贷款", type: "line", max: 100, required: true },
+  { name: "industry", label: "你这一行", placeholder: "比如：装修、留学、贷款", type: "line", max: 100, required: true },
   { name: "e1", label: "老经验 1", hint: "客人怎么挑、什么时候最忙、最常卡在哪一步、同行在做什么", type: "text", max: 600, required: true },
   { name: "e2", label: "老经验 2", type: "text", max: 600 },
   { name: "e3", label: "老经验 3", type: "text", max: 600 },

@@ -49,6 +49,7 @@ export function ClassKitForm({ kind, submit }: { kind: KitKind; submit?: boolean
   const [mounted, setMounted] = useState(false);
   const [inWeChat, setInWeChat] = useState(false);
   const [copyHint, setCopyHint] = useState(false);
+  const [touch, setTouch] = useState(false);
 
   // Read back what this browser saved. In an effect, not in the initial
   // state, so the server render and the first client render agree.
@@ -57,6 +58,9 @@ export function ClassKitForm({ kind, submit }: { kind: KitKind; submit?: boolean
     setMounted(true);
     // WeChat's in-app browser cannot save files, so there the copy button leads.
     setInWeChat(/MicroMessenger/i.test(navigator.userAgent));
+    // On a phone the file would land in the phone's downloads, nowhere near the
+    // laptop the platform is open on: copy leads there, download is second.
+    setTouch(window.matchMedia("(pointer: coarse)").matches);
     try {
       const saved: unknown = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
       if (saved && typeof saved === "object" && !Array.isArray(saved)) {
@@ -115,6 +119,12 @@ export function ClassKitForm({ kind, submit }: { kind: KitKind; submit?: boolean
     URL.revokeObjectURL(url);
   };
 
+  const downloadButton = (variant: string) => (
+    <button className={`btn ${variant} btn--block`} type="button" onClick={download}>
+      下载 {fileName}（电脑上用：下载后拖进平台）
+    </button>
+  );
+
   const send = async () => {
     setState("sending");
     setError("");
@@ -145,7 +155,7 @@ export function ClassKitForm({ kind, submit }: { kind: KitKind; submit?: boolean
         return field.type === "choice" ? (
           <fieldset className="stack-3" key={field.name}>
             <legend className="label">{field.label}</legend>
-            <div className="choice-group">
+            <div className="choice-group choice-group--compact">
               {(field.options ?? []).map((option) => (
                 <label className="choice" key={option}>
                   <input type="radio" name={id} value={option} checked={value === option} onChange={() => update(field.name, option)} />
@@ -195,14 +205,11 @@ export function ClassKitForm({ kind, submit }: { kind: KitKind; submit?: boolean
           </label>
           <textarea className="field mono" id={`kit-preview-${kind}`} value={text} readOnly rows={Math.min(16, text.split("\n").length + 1)} />
           <div className="stack-3">
-            {fileName && (
-              <button className="btn btn--primary btn--block" type="button" onClick={download}>
-                下载 {fileName}（电脑上用：下载后拖进平台）
-              </button>
-            )}
-            <button className={`btn ${fileName ? "btn--secondary" : "btn--primary"} btn--block`} type="button" onClick={copy}>
-              {copied ? "已复制 ✓" : fileName ? "复制全文（手机上用：粘贴到平台的「新建笔记」）" : FILE_NAMES[kind] ? "复制全文，粘贴到平台的「新建笔记」" : "复制这几行"}
+            {fileName && !touch && downloadButton("btn--primary")}
+            <button className={`btn ${(fileName && !touch) || submit ? "btn--secondary" : "btn--primary"} btn--block`} type="button" onClick={copy}>
+              {copied ? "已复制 ✓" : FILE_NAMES[kind] ? "复制全文，粘贴到平台的「新建笔记」" : "复制这几行"}
             </button>
+            {fileName && touch && downloadButton("btn--secondary")}
             {copyHint && <p className="field-hint">没能自动复制：上面的文字已经选中，长按它选「复制」。</p>}
             {inWeChat && FILE_NAMES[kind] && <p className="field-hint">微信里下载不了文件。要文件的话，点右上角「…」用浏览器打开，或者在电脑上打开这一页。</p>}
           </div>

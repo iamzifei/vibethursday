@@ -26,9 +26,13 @@ export function ClassKitShell({ step, title, lede, children }: { step: string; t
               <div className="body-lg">{lede}</div>
             </div>
             {children}
-            <p className="field-hint">
-              <Link href="/class/kit">← 回到课堂工作本</Link>
-            </p>
+            {/* A full-width button, not a text link: on a phone it is the way back
+                between steps, and a 15px-tall link is hard to hit. Not on the list itself. */}
+            {step !== "课堂工作本" && (
+              <Link href="/class/kit" className="btn btn--secondary btn--block">
+                ← 回到课堂工作本
+              </Link>
+            )}
           </div>
         </section>
       </main>
