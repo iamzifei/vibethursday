@@ -640,7 +640,7 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "在做东西、能打开电脑给人看的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "有东西能打开给人看的，或想做智能体、网站、小工具的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
           cta: "报周二",
           member: "了解共创会员",
         },
@@ -1696,7 +1696,9 @@ export const copy = {
       who: [
         "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。",
         "判断标准就一条：你能打开电脑，给别人看你做的东西，哪怕只做了一半。",
-        "只想来看看、或者想了解 AI 能帮生意做什么的，更适合周四。",
+        // 2026-10-26 James 定：有具体需求的人也欢迎，拿他们的需求当现场案例演示。
+        "还没开始做、但有具体需求的也欢迎：想做一个智能体、一个网站，或者预约、报价、客户管理这类小工具。带着需求来，现场拿它当案例做给你看。",
+        "只想随便看看、还没想好要做什么的，更适合周四。",
       ],
       formatTitle: "怎么进行",
       format: [
@@ -2336,7 +2338,7 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "People who build things and can open a laptop to show them", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "People with something to show, or with an agent, website or tool they want built", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
           cta: "Sign up for Tuesday",
           member: "About membership",
         },
@@ -3222,7 +3224,8 @@ export const copy = {
       who: [
         "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not.",
         "One test: you can open your laptop and show someone what you made, even if it is half done.",
-        "If you mostly want to look around, or to see what AI could do for a business, Thursday will suit you better.",
+        "Not building yet but have something specific in mind? Also welcome: an agent, a website, or a small tool for bookings, quotes or customers. Bring the need and it becomes the live example.",
+        "If you mostly want to look around and have nothing particular in mind yet, Thursday will suit you better.",
       ],
       formatTitle: "How it runs",
       format: [
