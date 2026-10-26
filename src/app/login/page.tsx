@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { WechatQrLogin } from "@/components/WechatQrLogin";
 import { WeChatMark } from "@/components/WeChatMark";
 import { getCopy, resolveLang } from "@/lib/content";
@@ -11,7 +12,8 @@ import { findSignupIdByOpenid, getSignupProfile, qrLoginPin, qrLoginStatus } fro
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { langHref } from "@/lib/nav";
 import { looksLikeQrToken, qrPinChoices, readOpenidToken, wechatConfigured } from "@/lib/wechat-auth";
-import { isWeChatBrowser, safeNext, WX_OPENID_COOKIE } from "@/lib/wechat-gate";
+import { siteUrl } from "@/lib/site";
+import { isPhoneBrowser, isWeChatBrowser, safeNext, WX_OPENID_COOKIE } from "@/lib/wechat-gate";
 
 // Every answer depends on this browser's cookies.
 export const dynamic = "force-dynamic";
@@ -51,7 +53,9 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const qr = looksLikeQrToken(params.qr) ? params.qr : null;
 
   const store = await cookies();
-  const inWeChat = isWeChatBrowser((await headers()).get("user-agent"));
+  const userAgent = (await headers()).get("user-agent");
+  const inWeChat = isWeChatBrowser(userAgent);
+  const onPhone = isPhoneBrowser(userAgent);
   const openid = readOpenidToken(store.get(WX_OPENID_COOKIE)?.value);
   const rememberedId = readRememberToken(store.get(REMEMBER_COOKIE)?.value);
 
@@ -260,6 +264,26 @@ export default async function LoginPage({ searchParams }: PageProps) {
       <div className="stack-8">
         {firstTime}
         {linkForm}
+      </div>
+    );
+  } else if (onPhone) {
+    // A phone outside WeChat: it cannot scan its own screen, and a web page
+    // cannot start WeChat's login here (2026-10-27, James on an iPhone). Hand
+    // over a link to this page to open in WeChat, where the login is silent.
+    const wechatLink = `${siteUrl()}/login?${new URLSearchParams({ ...(next !== "/" ? { next } : {}), ...(params.lang ? { lang: params.lang } : {}) }).toString()}`.replace(/\?$/, "");
+    body = (
+      <div className="stack-6">
+        <div className="card card--accent stack-4">
+          <h2 className="h3">{t.phoneTitle}</h2>
+          <p className="body" style={{ margin: 0 }}>{t.phoneBody}</p>
+          <CopyLinkButton url={wechatLink} label={t.phoneCopy} copiedLabel={t.phoneCopied} failedLabel={t.phoneCopyFailed} />
+        </div>
+        <p className="body-sm">
+          {t.firstTimeTitle} <a href={langHref(next === "/" ? "/#signup" : next, lang)}>{t.firstTimeCta} →</a>
+        </p>
+        <p className="body-sm">
+          {t.orMy}<Link href={langHref("/my", lang)}>{t.orMyLink}</Link>
+        </p>
       </div>
     );
   } else {

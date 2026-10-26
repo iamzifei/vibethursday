@@ -17,7 +17,7 @@ import {
   readNonceToken,
   readOpenidToken,
 } from "../src/lib/wechat-auth.ts";
-import { isWeChatBrowser, safeNext, shouldStartWechatLogin, type GateInput } from "../src/lib/wechat-gate.ts";
+import { isPhoneBrowser, isWeChatBrowser, safeNext, shouldStartWechatLogin, type GateInput } from "../src/lib/wechat-gate.ts";
 
 const KEY = "test-key";
 const OPENID = "oAbCdEfGhIjKlMnOpQrStUvWxYz1";
@@ -33,6 +33,23 @@ test("WeChat's browser is recognised; WeChat Work and Safari are not", () => {
   assert.equal(isWeChatBrowser(WXWORK), false, "a service account's login does not work in WeChat Work");
   assert.equal(isWeChatBrowser(SAFARI), false);
   assert.equal(isWeChatBrowser(null), false);
+});
+
+// A phone outside WeChat cannot scan its own screen, so /login tells it to open
+// the page in WeChat instead of showing the computer's QR code (2026-10-27).
+const IPHONE_CHROME =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1";
+const ANDROID_CHROME =
+  "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36";
+const MAC_CHROME =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+
+test("phones are recognised; computers are not", () => {
+  assert.equal(isPhoneBrowser(SAFARI), true);
+  assert.equal(isPhoneBrowser(IPHONE_CHROME), true);
+  assert.equal(isPhoneBrowser(ANDROID_CHROME), true);
+  assert.equal(isPhoneBrowser(MAC_CHROME), false);
+  assert.equal(isPhoneBrowser(null), false);
 });
 
 const base: GateInput = {

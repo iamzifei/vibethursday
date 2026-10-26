@@ -44,6 +44,19 @@ export function isWeChatBrowser(userAgent: string | null | undefined): boolean {
 }
 
 /**
+ * A phone's browser (2026-10-27). On a phone outside WeChat, /login cannot use
+ * the scan-a-code flow — the phone would have to scan its own screen — and a
+ * web page there has no way to start WeChat's login at all: WeChat only offers
+ * it inside its own browser. So the page asks them to open it in WeChat.
+ * iPads report a Mac user agent and count as computers, which is fine: the
+ * code on their screen can be scanned by a phone.
+ */
+export function isPhoneBrowser(userAgent: string | null | undefined): boolean {
+  if (!userAgent) return false;
+  return /iPhone|iPod|Android|Mobile/i.test(userAgent);
+}
+
+/**
  * The pages where knowing who someone is changes what they see: the signup
  * forms, their own signup, the day-of page, check-in, their badge, /login and
  * the paid class (/class, so a recognised person need not retype). Kept to

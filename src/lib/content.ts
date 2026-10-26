@@ -1656,6 +1656,12 @@ export const copy = {
       qrDoneBody: "可以回到电脑了。",
       needWechatTitle: "请用手机微信扫码",
       needWechatBody: "这个二维码要在微信里打开才能确认登录。",
+      // 手机浏览器（不在微信里）：没法调起微信登录，引导到微信里打开（2026-10-27）。
+      phoneTitle: "在微信里打开，就能直接登录",
+      phoneBody: "手机浏览器里没法用微信登录，这是微信那边的限制。复制下面的链接，发到微信里（比如发给「文件传输助手」），在微信里点开，会自动认出你。",
+      phoneCopy: "复制链接",
+      phoneCopied: "已复制，去微信里粘贴打开",
+      phoneCopyFailed: "没复制成功，长按上面的链接手动复制",
       orMy: "也可以用名字和微信号查：",
       orMyLink: "查我的报名",
       errors: {
@@ -3187,6 +3193,11 @@ export const copy = {
       qrDoneBody: "You can go back to it now.",
       needWechatTitle: "Scan with WeChat on your phone",
       needWechatBody: "This code has to be opened inside WeChat to confirm the login.",
+      phoneTitle: "Open this in WeChat to log in",
+      phoneBody: "A phone browser can't log in with WeChat — WeChat only allows it inside its own app. Copy the link below, send it to yourself in WeChat (e.g. to File Transfer), and open it there: you'll be recognised automatically.",
+      phoneCopy: "Copy link",
+      phoneCopied: "Copied — paste it into WeChat and open it",
+      phoneCopyFailed: "Couldn't copy — long-press the link above to copy it",
       orMy: "Or look yourself up by name and WeChat ID: ",
       orMyLink: "My signup",
       errors: {
