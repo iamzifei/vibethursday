@@ -8,8 +8,10 @@ const nextConfig: NextConfig = {
   // option would be silently ignored while still emitting a warning on boot.
 
   // `pg` opens raw TCP sockets, so it has to run as a real Node module rather
-  // than be traced into the server bundle.
-  serverExternalPackages: ["pg"],
+  // than be traced into the server bundle. The two Alibaba Cloud SDKs (recorded
+  // lessons) likewise: ali-oss's HTTP client has optional requires the bundler
+  // cannot resolve, and fails the build if traced.
+  serverExternalPackages: ["pg", "ali-oss", "@alicloud/pop-core"],
 
   /**
    * Dev server only: let a phone or another laptop on the same Wi-Fi load the
@@ -66,12 +68,15 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy-Report-Only",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-              "style-src 'self' 'unsafe-inline'",
+              // g.alicdn.com: the lesson video player (/learn), loaded from Alibaba's CDN.
+              "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://g.alicdn.com",
+              "style-src 'self' 'unsafe-inline' https://g.alicdn.com",
               // data: for the QR codes the poster and badge draw from an inline SVG.
               "img-src 'self' data: blob: https://challenges.cloudflare.com",
               "font-src 'self'",
-              "connect-src 'self' https://challenges.cloudflare.com https://*.challenges.cloudflare.com",
+              // The lesson player fetches and streams from Alibaba Cloud on the video domain set up there.
+              "media-src 'self' blob: https:",
+              "connect-src 'self' https://challenges.cloudflare.com https://*.challenges.cloudflare.com https:",
               "frame-src https://challenges.cloudflare.com",
               // The PDF renderer on the projector page runs a same-origin worker.
               "worker-src 'self' blob:",
