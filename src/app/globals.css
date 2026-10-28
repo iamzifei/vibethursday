@@ -5116,3 +5116,112 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   .screen__poster { height: auto; width: 100%; }
   .screen__qr { width: min(70vw, 280px); }
 }
+
+/* =============================================================================
+   /guide — the community guide (2026-10-28)
+   =============================================================================
+   Read on a phone, from a link in the group chat, by people who will give it
+   about a minute. So: a few big statements, the rest small, and nothing that
+   needs a second read. The eight principles are the page; the sections above
+   them are the "what happens" a newcomer needs first.
+============================================================================= */
+
+.guide__hero {
+  /* One faint lime bloom behind the title — the only decoration on the page. */
+  background: radial-gradient(60% 70% at 15% 0%, var(--accent-subtle), transparent 70%);
+}
+
+.guide__title {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(3rem, 15vw, 5.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: var(--tracking-editorial);
+}
+
+.guide__lede { max-width: 32em; }
+
+/* Section labels: small and quiet, so the content under them carries the weight. */
+.guide__kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--fg3);
+}
+.guide__kicker::before {
+  content: "";
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+  flex: none;
+}
+
+/* The morning in three steps: a column on a phone, a row once there is room. */
+.guide__day {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.guide__day li { display: flex; gap: var(--space-4); align-items: flex-start; }
+.guide__day strong { color: var(--fg1); font-size: var(--text-lg); }
+.guide__step {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: var(--weight-bold);
+}
+@media (min-width: 720px) {
+  .guide__day { grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+  .guide__day li { flex-direction: column; }
+}
+
+/* Four ways in: two across even on a small phone, each one a picture and a line. */
+.guide__ways {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: var(--space-3);
+}
+.guide__ways li { display: flex; flex-direction: column; gap: var(--space-2); }
+.guide__ways strong { color: var(--fg1); font-size: var(--text-lg); }
+.guide__icon { color: var(--accent); width: 40px; height: 40px; }
+
+/* The eight principles: big number, big line, one small sentence. */
+.guide__principles { list-style: none; margin: 0; padding: 0; }
+.guide__principles li {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  gap: var(--space-3);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  /* Clear the sticky bar when someone arrives on /guide#p3. */
+  scroll-margin-top: 76px;
+}
+.guide__principles li:target { background: var(--accent-subtle); }
+.guide__num {
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  color: var(--accent);
+}
+.guide__head {
+  font-size: clamp(1.375rem, 5.2vw, 2rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-tight);
+}
+
+.guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }

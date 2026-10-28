@@ -44,6 +44,13 @@ export const NAV_LINKS = [
   // page footer still links it (SiteFooter's `support`).
 ] as const;
 
+/**
+ * The community guide (2026-10-28). In every footer rather than the bar: it is
+ * reached mostly from links pasted in the group chat, and the bar's slots are
+ * already full.
+ */
+export const GUIDE_LINK = { href: "/guide", label: "guide" } as const;
+
 /** Linked from the home page footer only, never the bar (see SiteFooter). */
 export const SUPPORT_LINK = { href: "/support", label: "support" } as const;
 

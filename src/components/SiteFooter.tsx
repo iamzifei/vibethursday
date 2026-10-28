@@ -3,7 +3,7 @@ import Link from "next/link";
 import { currentVersion } from "@/lib/changelog";
 import type { Copy, Lang } from "@/lib/content";
 import { CHAT_URL } from "@/lib/go";
-import { langHref, NAV_LINKS, SUPPORT_LINK } from "@/lib/nav";
+import { GUIDE_LINK, langHref, NAV_LINKS, SUPPORT_LINK } from "@/lib/nav";
 import { FOOTER_SLOGAN, SOURCE_URL } from "@/lib/site";
 
 type Props = {
@@ -52,7 +52,7 @@ export function SiteFooter({ lang, copy, support = false, consult = true }: Prop
               footer must not be the thing that quietly puts one under every
               card on it. */}
           <nav className="footer__map" aria-label={copy.nav.siteMap}>
-            {[...NAV_LINKS, ...(support ? [SUPPORT_LINK] : [])].map((link) => (
+            {[...NAV_LINKS, GUIDE_LINK, ...(support ? [SUPPORT_LINK] : [])].map((link) => (
               <Link key={link.href} href={langHref(link.href, lang)}>
                 {copy.nav[link.label]}
               </Link>
