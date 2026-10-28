@@ -16,15 +16,19 @@ function qrSvg(url: string): Promise<string> {
 /**
  * The venue screen (2026-10-22), two slides that take turns on the TV
  * (CSS only, `.screen__slide`; on a phone they simply stack): this morning
- * with a code to sign up, then the membership with its poster and a code to
- * /vip. Only those two codes, and no dates, so the same
- * screen serves every week (James 2026-10-23). Public, unlike /admin/door: nothing
- * here is not already on the home page, and the check-in code stays on the
- * door tablet, where only the people in the room can scan it.
+ * with a code to check in (/go) beside the code to sign up, then the
+ * membership with its poster and a code to /vip. No dates, so the same
+ * screen serves every week (James 2026-10-23). The check-in code leads to /go,
+ * not to the door tablet's own code: /go only offers checking in during the
+ * session window (`checkinLinkOpen`), so showing it here opens nothing new.
  */
 export default async function ScreenPage() {
   const origin = await requestOrigin();
-  const [signupQr, memberQr] = await Promise.all([qrSvg(`${origin}${SCREEN_LINKS.signup}`), qrSvg(`${origin}${SCREEN_LINKS.member}`)]);
+  const [checkinQr, signupQr, memberQr] = await Promise.all([
+    qrSvg(`${origin}${SCREEN_LINKS.checkin}`),
+    qrSvg(`${origin}${SCREEN_LINKS.signup}`),
+    qrSvg(`${origin}${SCREEN_LINKS.member}`),
+  ]);
 
   return (
     <main className="screen">
@@ -46,9 +50,13 @@ export default async function ScreenPage() {
           ))}
         </ol>
       </section>
-      <section className="screen__codes">
+      <section className="screen__codes screen__codes--pair">
+        {/* Built by this app from URLs this app composed; nothing from the request. */}
         <figure>
-          {/* Built by this app from a URL this app composed; nothing from the request. */}
+          <div className="door-qr screen__qr" aria-label="签到二维码" dangerouslySetInnerHTML={{ __html: checkinQr }} />
+          <figcaption><strong>扫码签到</strong>到了先签到 · vibethursday.com/go</figcaption>
+        </figure>
+        <figure>
           <div className="door-qr screen__qr" aria-label="报名二维码" dangerouslySetInnerHTML={{ __html: signupQr }} />
           <figcaption><strong>扫码报名</strong>每周四免费 · 下周也能报</figcaption>
         </figure>

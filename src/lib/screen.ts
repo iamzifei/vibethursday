@@ -11,8 +11,9 @@ export const SCREEN_SCHEDULE: { time: string; title: string; note: string }[] = 
   { time: "12:00", title: "结束", note: "想接着聊的可以留下吃午饭，现场点单" },
 ];
 
-/** Where the two codes on the screen lead, relative to the site's origin. */
+/** Where the codes on the screen lead, relative to the site's origin. */
 export const SCREEN_LINKS = {
+  checkin: "/go",
   signup: "/#signup",
   member: "/vip",
 } as const;

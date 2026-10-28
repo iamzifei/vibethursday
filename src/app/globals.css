@@ -5109,12 +5109,16 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .screen__codes figcaption { color: var(--fg3); font-size: clamp(0.9rem, 1.2vw, 1.1rem); text-align: center; }
 .screen__codes figcaption strong { display: block; color: var(--fg1); font-size: 1.35em; }
 .screen__qr { width: min(26vw, 34vh); }
+/* Slide a carries two codes (check in, sign up): side by side, a little smaller. */
+.screen__codes--pair { flex-direction: row; align-items: flex-start; }
+.screen__codes--pair .screen__qr { width: min(17vw, 36vh); }
 /* A phone: no turning, the two slides one after the other. */
 @media (max-width: 760px) {
   .screen { overflow: visible; }
   .screen__slide { position: static; animation: none; grid-template-columns: 1fr; }
   .screen__poster { height: auto; width: 100%; }
-  .screen__qr { width: min(70vw, 280px); }
+  .screen__qr, .screen__codes--pair .screen__qr { width: min(70vw, 280px); }
+  .screen__codes--pair { flex-direction: column; align-items: center; }
 }
 
 /* =============================================================================
