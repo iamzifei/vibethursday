@@ -47,7 +47,7 @@ export const GUIDE_COPY = {
       { id: "p5", head: "能帮就举手。", text: "你随口一句，可能帮别人省下一个下午。" },
       { id: "p6", head: "台上不卖东西。", text: "讲做法，不打广告，不拉人报课。" },
       { id: "p7", head: "听到的留在屋里。", text: "别人讲到的客户名字、生意数字，不往外传。" },
-      { id: "p8", head: "做了事的人，我们记得。", text: "每周五在群里点名谢谢上台和帮忙的朋友；周二的小范围研讨，也先请他们。" },
+      { id: "p8", head: "做了事的人，我们记得。", text: "每周五在群里点名谢谢上台和帮忙的朋友；周二的小范围研讨，也先请他们。分享多、帮忙多的朋友，还会被请进一个小圈子。" },
     ],
 
     closeTitle: "想上台讲 5 分钟？",
@@ -91,7 +91,7 @@ export const GUIDE_COPY = {
       { id: "p5", head: "If you can help, put your hand up.", text: "One line from you might save someone an afternoon." },
       { id: "p6", head: "No selling from the front.", text: "Share how you did it. No ads, no course pitches." },
       { id: "p7", head: "What's said in the room stays there.", text: "Client names and business numbers you hear don't leave with you." },
-      { id: "p8", head: "We remember who pitched in.", text: "Every Friday we thank the people who shared and helped, by name, in the group. They're also first to be asked to the small Tuesday sessions." },
+      { id: "p8", head: "We remember who pitched in.", text: "Every Friday we thank the people who shared and helped, by name, in the group. They're also first to be asked to the small Tuesday sessions, and the ones who share and help most get invited into a smaller circle." },
     ],
 
     closeTitle: "Want five minutes at the front?",
