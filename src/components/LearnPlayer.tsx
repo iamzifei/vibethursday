@@ -67,6 +67,8 @@ type Props = {
   chapters?: Chapter[];
   /** Start here on the first play, from a shared `?t=` link. */
   startAt?: number | null;
+  /** Kept on chapter links, so a copied link opens in the same language. */
+  lang?: "en" | null;
   messages: { coming: string; error: string; chapters: string };
 };
 
@@ -77,7 +79,10 @@ function chapterAt(chapters: Chapter[], seconds: number): number {
   return index;
 }
 
-export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, messages }: Props) {
+export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, lang = null, messages }: Props) {
+  // The effect below reads chapters for the progress-bar markers; keying it on
+  // their content rebuilds the player when the organiser edits them.
+  const chaptersKey = JSON.stringify(chapters);
   const elementId = `player-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const playerRef = useRef<AliplayerInstance | null>(null);
   // A jump asked for before the video was ready, or the shared `?t=` time.
@@ -150,9 +155,9 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
       playerRef.current?.dispose();
       playerRef.current = null;
     };
-    // Chapters come from the server and only change with the lesson.
+    // `chapters` is a fresh array on every render; chaptersKey is its content.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson, elementId]);
+  }, [lesson, elementId, chaptersKey]);
 
   return (
     <div className="stack-3">
@@ -188,7 +193,7 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
             <li key={chapter.startS}>
               {/* A real link, so a chapter can be copied and shared; clicking jumps in place. */}
               <a
-                href={`?t=${chapter.startS}`}
+                href={`?${lang === "en" ? "lang=en&" : ""}t=${chapter.startS}`}
                 aria-current={i === current ? "true" : undefined}
                 onClick={(event) => {
                   event.preventDefault();

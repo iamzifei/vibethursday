@@ -184,6 +184,9 @@ export async function POST(request: Request) {
       case "invite-kick": {
         const inviteId = id(form?.get("id"));
         if (!inviteId || form?.get("confirm") !== "on") return back("err-confirm", "#invites");
+        // A leaked link: close the link first, so nobody new gets in through it
+        // while (or after) the people already in are turned away.
+        await revokeInvite(inviteId);
         return back(`kicked-${await revokeInviteLearners(inviteId)}`, "#invites");
       }
 

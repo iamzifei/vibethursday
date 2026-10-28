@@ -77,6 +77,7 @@ export default async function LessonPage({ params, searchParams }: PageProps) {
         lesson={lesson.slug}
         watermark={learner.name || learner.email || `#${learner.id}`}
         chapters={chapters}
+        lang={lang === "en" ? "en" : null}
         startAt={startAt !== null && (!lesson.durationS || startAt < lesson.durationS) ? startAt : null}
         messages={{ coming: t.videoComing, error: t.videoError, chapters: t.chapters }}
       />

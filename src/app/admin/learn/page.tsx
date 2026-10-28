@@ -54,7 +54,7 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
   const result = r?.startsWith("added-")
     ? `已放行 ${r.slice(6)} 个邮箱。`
     : r?.startsWith("kicked-")
-      ? `已关闭 ${r.slice(7)} 位通过这条链接加入的学员。`
+      ? `链接已作废，并关闭了 ${r.slice(7)} 位通过它加入的学员。`
       : r
         ? RESULTS[r]
         : null;
@@ -273,7 +273,7 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
                       <input type="checkbox" name="confirm" /> 确认
                     </label>
                     <button className="btn btn--secondary" type="submit">
-                      关闭通过这条链接加入的 {count} 人
+                      作废链接并关闭通过它加入的 {count} 人
                     </button>
                   </form>
                 )}

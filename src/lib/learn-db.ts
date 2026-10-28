@@ -268,17 +268,24 @@ export async function revokeInviteLearners(id: string): Promise<number> {
  */
 export async function redeemInvite(token: string, learnerId: string, name: string): Promise<boolean> {
   const rows = await q<{ id: string }>(
-    `WITH taken AS (
+    // The learner row is locked first (FOR UPDATE): a double submit then waits,
+    // re-reads the row as approved, and drops out before it touches the
+    // invite. Without the lock both could take a place and only one would be
+    // let in, wasting the other.
+    `WITH learner AS (
+       SELECT id FROM learners WHERE id = $2 AND status = 'pending' FOR UPDATE
+     ),
+     taken AS (
        UPDATE learn_invites SET uses = uses + 1
        WHERE token = $1
          AND revoked_at IS NULL
          AND (expires_at IS NULL OR expires_at > now())
          AND (max_uses IS NULL OR uses < max_uses)
-         AND EXISTS (SELECT 1 FROM learners WHERE id = $2 AND status = 'pending')
+         AND EXISTS (SELECT 1 FROM learner)
        RETURNING id
      )
      UPDATE learners SET status = 'approved', approved_at = now(), name = $3, invite_id = (SELECT id FROM taken)
-     WHERE id = $2 AND status = 'pending' AND EXISTS (SELECT 1 FROM taken)
+     WHERE id IN (SELECT id FROM learner) AND EXISTS (SELECT 1 FROM taken)
      RETURNING id::text`,
     [token, learnerId, name],
   );
