@@ -3,8 +3,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { ossConfigured, vodConfigured } from "@/lib/aliyun";
-import { listLearners, listLessonFiles, listLessons, listRecentComments } from "@/lib/learn-db";
-import { formatDuration, parseChapters } from "@/lib/learn";
+import { listInvites, listLearners, listLessonFiles, listLessons, listRecentComments } from "@/lib/learn-db";
+import { formatDuration, INVITE_DAYS_DEFAULT, INVITE_USES_DEFAULT, inviteUsable, parseChapters } from "@/lib/learn";
+import { requestOrigin } from "@/lib/request-origin";
 import { mailConfigured } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,9 @@ const RESULTS: Record<string, string> = {
   "err-oss": "资料存储还没配置好。",
   "err-learner": "学员信息不对。",
   "err-comment": "留言内容不能为空。",
+  "err-invite": "邀请链接的名称不能为空，天数和人数要是正整数。",
+  "invite-created": "邀请链接已生成，在下面复制。",
+  "invite-revoked": "这条邀请链接已作废，之前通过它加入的人不受影响。",
   "err-server": "出错了，看一下服务器日志。",
 };
 
@@ -47,9 +51,23 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
   }
 
   const { r } = await searchParams;
-  const result = r?.startsWith("added-") ? `已放行 ${r.slice(6)} 个邮箱。` : r ? RESULTS[r] : null;
+  const result = r?.startsWith("added-")
+    ? `已放行 ${r.slice(6)} 个邮箱。`
+    : r?.startsWith("kicked-")
+      ? `已关闭 ${r.slice(7)} 位通过这条链接加入的学员。`
+      : r
+        ? RESULTS[r]
+        : null;
 
-  const [lessons, learners, comments] = await Promise.all([listLessons(true), listLearners(), listRecentComments(100)]);
+  const [lessons, learners, comments, invites] = await Promise.all([
+    listLessons(true),
+    listLearners(),
+    listRecentComments(100),
+    listInvites(),
+  ]);
+  const origin = await requestOrigin();
+  const inviteLabel = new Map(invites.map((i) => [i.id, i.label]));
+  const joinedBy = (inviteId: string) => learners.filter((l) => l.inviteId === inviteId).length;
   const files = new Map(await Promise.all(lessons.map(async (l) => [l.id, await listLessonFiles(l.id)] as const)));
   const pending = learners.filter((l) => l.status === "pending");
 
@@ -197,6 +215,74 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
         ))}
       </section>
 
+      {/* ── Invite links ── */}
+      <section className="stack-4" id="invites" aria-labelledby="invites-title">
+        <h2 className="h3" id="invites-title">
+          邀请链接（发到学员群里，点开登录、填名字就能直接看，不用你审批）
+        </h2>
+
+        <form className="card stack-2" method="post" action="/api/admin/learn">
+          <input type="hidden" name="action" value="invite-create" />
+          <label className="label">
+            名称（只有你看得到，比如「10 月 AI 第一课 学员群」）
+            <input className="field" name="label" required maxLength={60} />
+          </label>
+          <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+            <label className="label">
+              有效天数（留空 = 不过期）
+              <input className="field" name="days" type="number" min={1} max={365} defaultValue={INVITE_DAYS_DEFAULT} />
+            </label>
+            <label className="label">
+              最多几人（留空 = 不限，建议设成群人数加一点）
+              <input className="field" name="maxUses" type="number" min={1} max={10000} defaultValue={INVITE_USES_DEFAULT} />
+            </label>
+          </div>
+          <button className="btn btn--primary" type="submit" style={{ alignSelf: "flex-start" }}>
+            生成邀请链接
+          </button>
+        </form>
+
+        {invites.map((invite) => {
+          const live = inviteUsable(invite);
+          const count = joinedBy(invite.id);
+          return (
+            <div key={invite.id} className="card stack-2">
+              <p className="body-sm">
+                <strong>{invite.label}</strong> · {live ? "可用" : invite.revokedAt ? "已作废" : "已失效"} · 已加入 {invite.uses}
+                {invite.maxUses !== null ? ` / ${invite.maxUses}` : ""} 人
+                {invite.expiresAt ? ` · ${new Date(invite.expiresAt).toLocaleString("zh-CN", { timeZone: "Australia/Sydney" })}（悉尼时间）到期` : " · 不过期"}
+              </p>
+              {live && (
+                <input className="field" readOnly value={`${origin}/learn/join/${invite.token}`} aria-label="邀请链接，全选复制" />
+              )}
+              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                {!invite.revokedAt && (
+                  <form method="post" action="/api/admin/learn">
+                    <input type="hidden" name="action" value="invite-revoke" />
+                    <input type="hidden" name="id" value={invite.id} />
+                    <button className="btn btn--secondary" type="submit">
+                      作废链接
+                    </button>
+                  </form>
+                )}
+                {count > 0 && (
+                  <form method="post" action="/api/admin/learn" style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                    <input type="hidden" name="action" value="invite-kick" />
+                    <input type="hidden" name="id" value={invite.id} />
+                    <label className="choice">
+                      <input type="checkbox" name="confirm" /> 确认
+                    </label>
+                    <button className="btn btn--secondary" type="submit">
+                      关闭通过这条链接加入的 {count} 人
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
       {/* ── Learners ── */}
       <section className="stack-4" id="learners" aria-labelledby="learners-title">
         <h2 className="h3" id="learners-title">
@@ -238,7 +324,10 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
                     </form>
                     {learner.note && <div>{learner.note}</div>}
                   </td>
-                  <td style={{ padding: "0.5rem" }}>{learner.email ?? (learner.openid ? "微信" : "—")}</td>
+                  <td style={{ padding: "0.5rem" }}>
+                    {learner.email ?? (learner.openid ? "微信" : "—")}
+                    {learner.inviteId && <div>链接：{inviteLabel.get(learner.inviteId) ?? "—"}</div>}
+                  </td>
                   <td style={{ padding: "0.5rem" }}>{STATUS_LABEL[learner.status]}</td>
                   <td style={{ padding: "0.5rem 0" }}>
                     {(["approved", "revoked", "pending"] as const)

@@ -48,6 +48,24 @@ export function ensureLearnSchema(): Promise<void> {
       )
     `);
 
+    // Invite links (2026-10-28): one URL to share in a group chat. Whoever
+    // opens it signs in as themselves and is let in without waiting, and is
+    // tagged with the invite so a leaked link's joiners can be found again.
+    // The token is kept as is so the organiser can copy the link again later.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS learn_invites (
+        id          bigserial PRIMARY KEY,
+        token       text NOT NULL UNIQUE,
+        label       text NOT NULL,
+        max_uses    integer,
+        uses        integer NOT NULL DEFAULT 0,
+        expires_at  timestamptz,
+        revoked_at  timestamptz,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`ALTER TABLE learners ADD COLUMN IF NOT EXISTS invite_id bigint REFERENCES learn_invites(id) ON DELETE SET NULL`);
+
     // Chapters (2026-10-28): the organiser's "time title" lines, kept as typed
     // and parsed on the way out (parseChapters), so a typo never blocks a save.
     await pool.query(`ALTER TABLE lessons ADD COLUMN IF NOT EXISTS chapters text`);
@@ -114,9 +132,11 @@ export type Learner = {
   status: LearnerStatus;
   createdAt: string;
   lastSeenAt: string | null;
+  /** The invite link they joined through, if any. */
+  inviteId: string | null;
 };
 
-const LEARNER_COLUMNS = `id::text, openid, email, name, note, status, created_at AS "createdAt", last_seen_at AS "lastSeenAt"`;
+const LEARNER_COLUMNS = `id::text, openid, email, name, note, status, created_at AS "createdAt", last_seen_at AS "lastSeenAt", invite_id::text AS "inviteId"`;
 
 export async function findLearner(id: string): Promise<Learner | null> {
   return (await q<Learner>(`SELECT ${LEARNER_COLUMNS} FROM learners WHERE id = $1`, [id]))[0] ?? null;
@@ -191,6 +211,78 @@ export async function listLearners(): Promise<Learner[]> {
      ORDER BY (status = 'pending') DESC, COALESCE(last_seen_at, created_at) DESC
      LIMIT 1000`,
   );
+}
+
+/* ── Invite links ────────────────────────────────────────────────────── */
+
+export type Invite = {
+  id: string;
+  token: string;
+  label: string;
+  maxUses: number | null;
+  uses: number;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+};
+
+const INVITE_COLUMNS = `id::text, token, label, max_uses AS "maxUses", uses, expires_at AS "expiresAt", revoked_at AS "revokedAt", created_at AS "createdAt"`;
+
+export async function createInvite(token: string, label: string, maxUses: number | null, days: number | null): Promise<string> {
+  const rows = await q<{ id: string }>(
+    `INSERT INTO learn_invites (token, label, max_uses, expires_at)
+     VALUES ($1, $2, $3, CASE WHEN $4::int IS NULL THEN NULL ELSE now() + make_interval(days => $4::int) END)
+     RETURNING id::text`,
+    [token, label, maxUses, days],
+  );
+  return rows[0].id;
+}
+
+export async function findInvite(token: string): Promise<Invite | null> {
+  return (await q<Invite>(`SELECT ${INVITE_COLUMNS} FROM learn_invites WHERE token = $1`, [token]))[0] ?? null;
+}
+
+export async function listInvites(): Promise<Invite[]> {
+  return q<Invite>(`SELECT ${INVITE_COLUMNS} FROM learn_invites ORDER BY created_at DESC LIMIT 200`);
+}
+
+export async function revokeInvite(id: string): Promise<void> {
+  await q(`UPDATE learn_invites SET revoked_at = COALESCE(revoked_at, now()) WHERE id = $1`, [id]);
+}
+
+/** Revokes everyone who is still approved through this invite. Returns how many. */
+export async function revokeInviteLearners(id: string): Promise<number> {
+  const rows = await q<{ id: string }>(
+    `UPDATE learners SET status = 'revoked' WHERE invite_id = $1 AND status = 'approved' RETURNING id::text`,
+    [id],
+  );
+  return rows.length;
+}
+
+/**
+ * Lets a waiting learner in through an invite, in one statement: the place is
+ * taken only if the invite is still good AND the learner is still waiting, so
+ * two people racing for the last place cannot both get in, and a revoked
+ * learner cannot use a link to undo their revocation. Returns false when
+ * nothing changed.
+ */
+export async function redeemInvite(token: string, learnerId: string, name: string): Promise<boolean> {
+  const rows = await q<{ id: string }>(
+    `WITH taken AS (
+       UPDATE learn_invites SET uses = uses + 1
+       WHERE token = $1
+         AND revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > now())
+         AND (max_uses IS NULL OR uses < max_uses)
+         AND EXISTS (SELECT 1 FROM learners WHERE id = $2 AND status = 'pending')
+       RETURNING id
+     )
+     UPDATE learners SET status = 'approved', approved_at = now(), name = $3, invite_id = (SELECT id FROM taken)
+     WHERE id = $2 AND status = 'pending' AND EXISTS (SELECT 1 FROM taken)
+     RETURNING id::text`,
+    [token, learnerId, name],
+  );
+  return rows.length > 0;
 }
 
 /* ── Lessons ─────────────────────────────────────────────────────────── */

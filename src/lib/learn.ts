@@ -1,5 +1,5 @@
 // Relative imports only: the tests load this through Node's type stripper.
-import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 // Kept apart so the browser can use it without pulling in node:crypto.
 export { formatDuration } from "./learn-time.ts";
 export type { Chapter } from "./learn-time.ts";
@@ -243,3 +243,38 @@ export function parseChapters(text: string | null | undefined, durationS?: numbe
   }
   return chapters.sort((a, b) => a.startS - b.startS).slice(0, CHAPTERS_MAX);
 }
+
+/* ── Invite links (2026-10-28) ───────────────────────────────────────── */
+
+/**
+ * An invite link lets the organiser share one URL in a group chat instead of
+ * approving people one by one. Whoever opens it still signs in as themselves
+ * (WeChat or email) and gives a name, so the watermark and comments still say
+ * who they are, and one person can still be revoked alone. The link itself can
+ * expire, run out of places, or be revoked if it leaks.
+ */
+export function newInviteToken(): string {
+  return randomBytes(16).toString("base64url");
+}
+
+export function looksLikeInviteToken(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{22}$/.test(value);
+}
+
+export type InviteLimits = {
+  revokedAt: string | null;
+  expiresAt: string | null;
+  uses: number;
+  maxUses: number | null;
+};
+
+/** Whether one more person may join through this invite right now. */
+export function inviteUsable(invite: InviteLimits | null | undefined, now: Date = new Date()): boolean {
+  if (!invite || invite.revokedAt) return false;
+  if (invite.expiresAt && new Date(invite.expiresAt).getTime() <= now.getTime()) return false;
+  if (invite.maxUses !== null && invite.uses >= invite.maxUses) return false;
+  return true;
+}
+
+export const INVITE_DAYS_DEFAULT = 7;
+export const INVITE_USES_DEFAULT = 100;

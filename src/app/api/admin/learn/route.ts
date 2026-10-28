@@ -6,10 +6,13 @@ import { deleteHandout, ossConfigured, putHandout, videoInfo, vodConfigured } fr
 import {
   addComment,
   addLessonFile,
+  createInvite,
   deleteLesson,
   deleteLessonFile,
   getLesson,
   preapproveEmail,
+  revokeInvite,
+  revokeInviteLearners,
   saveLesson,
   setCommentHidden,
   setLearnerName,
@@ -26,6 +29,7 @@ import {
   looksLikeLessonSlug,
   looksLikeVideoId,
   NAME_MAX,
+  newInviteToken,
   normaliseEmail,
 } from "@/lib/learn";
 import { boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -152,6 +156,35 @@ export async function POST(request: Request) {
           added += 1;
         }
         return back(`added-${added}`, "#learners");
+      }
+
+      case "invite-create": {
+        const label = cleanText(form?.get("label"), 60);
+        // Blank means no limit; anything else must be a positive whole number.
+        const whole = (name: string, max: number): number | null | undefined => {
+          const raw = String(form?.get(name) ?? "").trim();
+          if (!raw) return null;
+          const n = Number(raw);
+          return Number.isInteger(n) && n >= 1 && n <= max ? n : undefined;
+        };
+        const days = whole("days", 365);
+        const maxUses = whole("maxUses", 10000);
+        if (!label || days === undefined || maxUses === undefined) return back("err-invite", "#invites");
+        await createInvite(newInviteToken(), label, maxUses, days);
+        return back("invite-created", "#invites");
+      }
+
+      case "invite-revoke": {
+        const inviteId = id(form?.get("id"));
+        if (!inviteId) return back("err-invite", "#invites");
+        await revokeInvite(inviteId);
+        return back("invite-revoked", "#invites");
+      }
+
+      case "invite-kick": {
+        const inviteId = id(form?.get("id"));
+        if (!inviteId || form?.get("confirm") !== "on") return back("err-confirm", "#invites");
+        return back(`kicked-${await revokeInviteLearners(inviteId)}`, "#invites");
       }
 
       case "comment-hide":

@@ -13,6 +13,9 @@ import {
   downloadName,
   emailCodeMatches,
   formatDuration,
+  inviteUsable,
+  looksLikeInviteToken,
+  newInviteToken,
   CHAPTERS_MAX,
   parseChapters,
   parseTimestamp,
@@ -174,4 +177,26 @@ test("chapters: titles are cleaned and capped, and the list is bounded", () => {
   assert.equal(one.title.length, 80);
   const many = Array.from({ length: CHAPTERS_MAX + 20 }, (_, i) => `${i}:00 c${i}`).join("\n");
   assert.equal(parseChapters(many).length, CHAPTERS_MAX);
+});
+
+test("invite tokens: 22 url-safe characters, fresh every time", () => {
+  const a = newInviteToken();
+  const b = newInviteToken();
+  assert.match(a, /^[A-Za-z0-9_-]{22}$/);
+  assert.notEqual(a, b);
+  assert.equal(looksLikeInviteToken(a), true);
+  assert.equal(looksLikeInviteToken("short"), false);
+  assert.equal(looksLikeInviteToken(`${a}/x`), false);
+  assert.equal(looksLikeInviteToken(undefined), false);
+});
+
+test("an invite works until it is revoked, expires or runs out of places", () => {
+  const now = new Date("2026-10-28T10:00:00Z");
+  const open = { revokedAt: null, expiresAt: "2026-11-04T10:00:00Z", uses: 3, maxUses: 50 };
+  assert.equal(inviteUsable(open, now), true);
+  assert.equal(inviteUsable({ ...open, expiresAt: null, maxUses: null }, now), true);
+  assert.equal(inviteUsable({ ...open, revokedAt: "2026-10-27T00:00:00Z" }, now), false);
+  assert.equal(inviteUsable({ ...open, expiresAt: "2026-10-28T09:59:59Z" }, now), false);
+  assert.equal(inviteUsable({ ...open, uses: 50 }, now), false);
+  assert.equal(inviteUsable(null, now), false);
 });
