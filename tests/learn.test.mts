@@ -13,6 +13,9 @@ import {
   downloadName,
   emailCodeMatches,
   formatDuration,
+  CHAPTERS_MAX,
+  parseChapters,
+  parseTimestamp,
   handoutKey,
   hashEmailCode,
   LEARN_TTL_SECONDS,
@@ -122,4 +125,53 @@ test("only a waiting learner can introduce themselves (an approved name is fixed
   assert.equal(canIntroduceSelf("pending"), true);
   assert.equal(canIntroduceSelf("approved"), false);
   assert.equal(canIntroduceSelf("revoked"), false);
+});
+
+test("timestamps: seconds, m:ss and h:mm:ss; nothing else", () => {
+  assert.equal(parseTimestamp("90"), 90);
+  assert.equal(parseTimestamp("1:30"), 90);
+  assert.equal(parseTimestamp("01:02:03"), 3723);
+  assert.equal(parseTimestamp("0:00"), 0);
+  assert.equal(parseTimestamp("1:75"), null); // seconds over 59
+  assert.equal(parseTimestamp("1:2"), null); // seconds need two digits
+  assert.equal(parseTimestamp("-5"), null);
+  assert.equal(parseTimestamp("abc"), null);
+  assert.equal(parseTimestamp(""), null);
+  assert.equal(parseTimestamp(undefined), null);
+});
+
+test("chapters: one 'time title' per line, sorted, bad lines skipped", () => {
+  const text = [
+    "0:00 开场",
+    "  4:46 - 申请 API Key",
+    "1:02:05 | 收尾",
+    "18:41 – 微信服务号配置",
+    "这一行没有时间",
+    "5:00",                 // no title
+    "4:46 重复的时间",       // same time as an earlier line
+    "• 10:00 用符号开头",
+  ].join("\n");
+  assert.deepEqual(parseChapters(text), [
+    { startS: 0, title: "开场" },
+    { startS: 286, title: "申请 API Key" },
+    { startS: 600, title: "用符号开头" },
+    { startS: 1121, title: "微信服务号配置" },
+    { startS: 3725, title: "收尾" },
+  ]);
+});
+
+test("chapters: past the end of the video are dropped once the length is known", () => {
+  assert.deepEqual(parseChapters("0:00 a\n2:00 b\n9:00 c", 300), [
+    { startS: 0, title: "a" },
+    { startS: 120, title: "b" },
+  ]);
+  assert.deepEqual(parseChapters(null), []);
+  assert.deepEqual(parseChapters(""), []);
+});
+
+test("chapters: titles are cleaned and capped, and the list is bounded", () => {
+  const [one] = parseChapters(`1:00 ${"长".repeat(200)}\u200B`);
+  assert.equal(one.title.length, 80);
+  const many = Array.from({ length: CHAPTERS_MAX + 20 }, (_, i) => `${i}:00 c${i}`).join("\n");
+  assert.equal(parseChapters(many).length, CHAPTERS_MAX);
 });

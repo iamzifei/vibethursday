@@ -1,5 +1,9 @@
 // Relative imports only: the tests load this through Node's type stripper.
 import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto";
+// Kept apart so the browser can use it without pulling in node:crypto.
+export { formatDuration } from "./learn-time.ts";
+export type { Chapter } from "./learn-time.ts";
+import type { Chapter } from "./learn-time.ts";
 
 /**
  * Recorded lessons (/learn, 2026-10-28): the rules, with no database and no
@@ -187,13 +191,55 @@ export function shortHash(bytes: Uint8Array): string {
 
 /* ── Time ────────────────────────────────────────────────────────────── */
 
-/** Seconds as h:mm:ss or m:ss, for a lesson's length. */
-export function formatDuration(seconds: number | null | undefined): string | null {
-  if (!seconds || !Number.isFinite(seconds) || seconds <= 0) return null;
-  const total = Math.round(seconds);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  const mm = h ? String(m).padStart(2, "0") : String(m);
-  return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
+
+/* ── Chapters (2026-10-28) ───────────────────────────────────────────── */
+
+export const CHAPTERS_MAX = 100;
+export const CHAPTER_TITLE_MAX = 80;
+/** The raw chapter list as the organiser types it, one line per chapter. */
+export const CHAPTERS_TEXT_MAX = 8000;
+
+// "90", "1:30", "01:02:03". Minutes may run past 59 when there is no hour
+// part ("75:10"), the way people write long recordings.
+const TIMESTAMP = /^(?:(\d{1,2}):([0-5]\d)|(\d{1,3})):([0-5]\d)$|^(\d{1,5})$/;
+
+/**
+ * Reads a time in the video, as written in a chapter line or in a `?t=` link.
+ * Returns whole seconds, or null for anything that is not a time.
+ */
+export function parseTimestamp(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+  const match = TIMESTAMP.exec(value.trim());
+  if (!match) return null;
+  const [, h, hm, m, s, plain] = match;
+  if (plain !== undefined) return Number(plain);
+  if (h !== undefined) return Number(h) * 3600 + Number(hm) * 60 + Number(s);
+  return Number(m) * 60 + Number(s);
+}
+
+// One chapter per line: an optional bullet, the time, an optional separator
+// ("-", "–", "|", ":"), then the title. "4:46 - 申请 API Key".
+const CHAPTER_LINE = /^(?:[-•*·]\s*)?((?:\d{1,2}:)?\d{1,3}:\d{2})\s*(?:[-–—|:：]\s*)?(.*)$/;
+
+/**
+ * Turns the organiser's chapter text into a sorted list. Lines without a time
+ * or a title are skipped, as are repeats of a time already listed and, once
+ * the video's length is known, times past its end. Never throws: a typo costs
+ * one chapter, not the page.
+ */
+export function parseChapters(text: string | null | undefined, durationS?: number | null): Chapter[] {
+  if (!text) return [];
+  const seen = new Set<number>();
+  const chapters: Chapter[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = CHAPTER_LINE.exec(line.trim());
+    if (!match) continue;
+    const startS = parseTimestamp(match[1]);
+    const title = cleanText(match[2], CHAPTER_TITLE_MAX);
+    if (startS === null || !title || seen.has(startS)) continue;
+    if (durationS && startS >= durationS) continue;
+    seen.add(startS);
+    chapters.push({ startS, title });
+  }
+  return chapters.sort((a, b) => a.startS - b.startS).slice(0, CHAPTERS_MAX);
 }

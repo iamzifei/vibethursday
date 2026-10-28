@@ -60,6 +60,7 @@ export const LEARN_COPY = {
       someone: "学员",
       videoComing: "视频还在处理中，稍后再来。",
       videoError: "视频加载失败，刷新页面再试一次。",
+      chapters: "章节",
     },
   },
   en: {
@@ -112,6 +113,7 @@ export const LEARN_COPY = {
       someone: "Member",
       videoComing: "The video is still processing. Check back soon.",
       videoError: "The video did not load. Refresh to try again.",
+      chapters: "Chapters",
     },
   },
 } as const;

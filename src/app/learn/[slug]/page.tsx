@@ -3,13 +3,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LearnPlayer } from "@/components/LearnPlayer";
 import { getLessonBySlug, listComments, listLessonFiles, type LessonComment } from "@/lib/learn-db";
-import { canAccessLessons, looksLikeLessonSlug } from "@/lib/learn";
+import { canAccessLessons, looksLikeLessonSlug, parseChapters, parseTimestamp } from "@/lib/learn";
 import { learnLang, LEARN_COPY } from "@/lib/learn-copy";
 import { currentLearner } from "@/lib/learn-session";
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string; reply?: string }> };
+type PageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string; reply?: string; t?: string }> };
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   // The lesson title is not put in the metadata: the page is for members only.
@@ -36,6 +36,10 @@ export default async function LessonPage({ params, searchParams }: PageProps) {
 
   const lesson = await getLessonBySlug(slug);
   if (!lesson?.published) notFound();
+
+  const chapters = parseChapters(lesson.chapters, lesson.durationS);
+  // `?t=286` or `?t=4:46`: a shared link to a moment in the video.
+  const startAt = parseTimestamp(query.t);
 
   const [files, comments] = await Promise.all([listLessonFiles(lesson.id), listComments(lesson.id, false)]);
   const roots = comments.filter((c) => !c.parentId);
@@ -72,7 +76,9 @@ export default async function LessonPage({ params, searchParams }: PageProps) {
       <LearnPlayer
         lesson={lesson.slug}
         watermark={learner.name || learner.email || `#${learner.id}`}
-        messages={{ coming: t.videoComing, error: t.videoError }}
+        chapters={chapters}
+        startAt={startAt !== null && (!lesson.durationS || startAt < lesson.durationS) ? startAt : null}
+        messages={{ coming: t.videoComing, error: t.videoError, chapters: t.chapters }}
       />
 
       {lesson.summary && <p className="body-lg" style={{ whiteSpace: "pre-line" }}>{lesson.summary}</p>}

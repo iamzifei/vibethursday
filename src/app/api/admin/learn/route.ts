@@ -16,6 +16,7 @@ import {
   setLearnerStatus,
 } from "@/lib/learn-db";
 import {
+  CHAPTERS_TEXT_MAX,
   cleanText,
   COMMENT_MAX,
   handoutKey,
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
           slug,
           title,
           summary: cleanText(form?.get("summary"), 2000),
+          chapters: cleanText(form?.get("chapters"), CHAPTERS_TEXT_MAX),
           position: Number.parseInt(String(form?.get("position") ?? "0"), 10) || 0,
           videoId,
           durationS,

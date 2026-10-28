@@ -48,6 +48,10 @@ export function ensureLearnSchema(): Promise<void> {
       )
     `);
 
+    // Chapters (2026-10-28): the organiser's "time title" lines, kept as typed
+    // and parsed on the way out (parseChapters), so a typo never blocks a save.
+    await pool.query(`ALTER TABLE lessons ADD COLUMN IF NOT EXISTS chapters text`);
+
     // Handouts live in object storage; this is only where to find them.
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lesson_files (
@@ -196,13 +200,15 @@ export type Lesson = {
   slug: string;
   title: string;
   summary: string | null;
+  /** Raw chapter text, one "time title" per line; read it with parseChapters. */
+  chapters: string | null;
   position: number;
   videoId: string | null;
   durationS: number | null;
   published: boolean;
 };
 
-const LESSON_COLUMNS = `id::text, slug, title, summary, position, video_id AS "videoId", duration_s AS "durationS", published`;
+const LESSON_COLUMNS = `id::text, slug, title, summary, chapters, position, video_id AS "videoId", duration_s AS "durationS", published`;
 
 export async function listLessons(includeDrafts: boolean): Promise<Lesson[]> {
   return q<Lesson>(
@@ -222,18 +228,18 @@ export type LessonInput = Omit<Lesson, "id">;
 
 /** Creates a lesson, or updates the one with `id`. Returns its id. */
 export async function saveLesson(id: string | null, input: LessonInput): Promise<string> {
-  const values = [input.slug, input.title, input.summary, input.position, input.videoId, input.durationS, input.published];
+  const values = [input.slug, input.title, input.summary, input.position, input.videoId, input.durationS, input.published, input.chapters];
   if (id) {
     await q(
-      `UPDATE lessons SET slug = $2, title = $3, summary = $4, position = $5, video_id = $6, duration_s = $7, published = $8, updated_at = now()
+      `UPDATE lessons SET slug = $2, title = $3, summary = $4, position = $5, video_id = $6, duration_s = $7, published = $8, chapters = $9, updated_at = now()
        WHERE id = $1`,
       [id, ...values],
     );
     return id;
   }
   const rows = await q<{ id: string }>(
-    `INSERT INTO lessons (slug, title, summary, position, video_id, duration_s, published)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id::text`,
+    `INSERT INTO lessons (slug, title, summary, position, video_id, duration_s, published, chapters)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id::text`,
     values,
   );
   return rows[0].id;

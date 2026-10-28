@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { ossConfigured, vodConfigured } from "@/lib/aliyun";
 import { listLearners, listLessonFiles, listLessons, listRecentComments } from "@/lib/learn-db";
-import { formatDuration } from "@/lib/learn";
+import { formatDuration, parseChapters } from "@/lib/learn";
 import { mailConfigured } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
@@ -127,6 +127,20 @@ export default async function AdminLearnPage({ searchParams }: PageProps) {
               <label className="label">
                 简介（选填）
                 <textarea className="field" name="summary" maxLength={2000} defaultValue={lesson?.summary ?? ""} />
+              </label>
+              <label className="label">
+                章节（选填，一行一个：时间 标题，如「4:46 申请 API Key」或「1:02:05 收尾」）
+                <textarea
+                  className="field"
+                  name="chapters"
+                  rows={6}
+                  maxLength={8000}
+                  placeholder={"0:00 开场\n4:46 申请 API Key\n18:41 配置微信服务号"}
+                  defaultValue={lesson?.chapters ?? ""}
+                />
+                {lesson?.chapters && (
+                  <span className="field-hint">已识别 {parseChapters(lesson.chapters, lesson.durationS).length} 个章节；没有时间或标题的行、超出视频长度的时间会被跳过</span>
+                )}
               </label>
               <label className="label">
                 排序（数字小的在前）
