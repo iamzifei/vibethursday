@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
+import { currentAccount } from "@/lib/account";
+import { getSignupProfile } from "@/lib/db";
 import { learnLang, LEARN_COPY } from "@/lib/learn-copy";
 import { currentLearner } from "@/lib/learn-session";
 import { mailConfigured } from "@/lib/mail";
@@ -55,6 +57,11 @@ export default async function LearnLoginPage({ searchParams }: PageProps) {
         })
       : null;
 
+  // Someone the main site remembers only by name and contact (a weak proof)
+  // is not let into lessons on that alone; say so, by the name they gave.
+  const account = await currentAccount();
+  const knownName = account ? ((await getSignupProfile(account.signupId).catch(() => null))?.name ?? null) : null;
+
   const emailOn = mailConfigured();
   const codeStep = params.step === "code";
   const error = params.err ? t.errors[params.err] : null;
@@ -69,6 +76,7 @@ export default async function LearnLoginPage({ searchParams }: PageProps) {
         </div>
 
         {error && <p className="alert alert--error">{error}</p>}
+        {knownName && !error && <p className="alert alert--success">{t.knownAs(knownName)}</p>}
 
         {wechatOn && inWeChat && (
           <a className="btn btn--wechat btn--block" href={startHref}>

@@ -213,6 +213,19 @@ export async function listLearners(): Promise<Learner[]> {
   );
 }
 
+/* ── The main site's signups (2026-10-29) ─────────────────────────────── */
+
+/**
+ * The signup on the main site with this email, if any. Used after an email
+ * code proves the address, so the main site remembers the same person too.
+ */
+export async function signupIdForEmail(email: string): Promise<string | null> {
+  // Signup emails are typed, never checked: if more than one signup claims this
+  // address, there is no telling which is the person who proved it, so none.
+  const rows = await q<{ id: string }>(`SELECT id::text FROM signups WHERE lower(email) = lower($1) LIMIT 2`, [email]);
+  return rows.length === 1 ? rows[0].id : null;
+}
+
 /* ── Invite links ────────────────────────────────────────────────────── */
 
 export type Invite = {

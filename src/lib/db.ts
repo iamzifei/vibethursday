@@ -1239,16 +1239,16 @@ export async function approveQrLogin(token: string, signupId: string, openid: st
  * The computer collecting its login: approved → used in one statement, so the
  * same code can never log in two browsers, however fast they ask.
  */
-export async function takeQrLogin(token: string): Promise<{ signupId: string } | null> {
+export async function takeQrLogin(token: string): Promise<{ signupId: string; openid: string | null } | null> {
   await ensureSchema();
-  const result = await getPool().query<{ signup_id: string }>(
+  const result = await getPool().query<{ signup_id: string; openid: string | null }>(
     `UPDATE wechat_qr_logins SET status = 'used'
       WHERE token = $1 AND status = 'approved' AND created_at >= now() - interval '${QR_LOGIN_TTL}'
-      RETURNING signup_id::text AS signup_id`,
+      RETURNING signup_id::text AS signup_id, openid`,
     [token],
   );
   const row = result.rows[0];
-  return row ? { signupId: row.signup_id } : null;
+  return row ? { signupId: row.signup_id, openid: row.openid } : null;
 }
 
 /** The kind of person this signup said it was most recently (step 2 of the form), or null. */
