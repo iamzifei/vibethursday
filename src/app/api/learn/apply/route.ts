@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { setLearnerIntro } from "@/lib/learn-db";
-import { cleanText, NAME_MAX, NOTE_MAX } from "@/lib/learn";
+import { canIntroduceSelf, cleanText, NAME_MAX, NOTE_MAX } from "@/lib/learn";
 import { currentLearner } from "@/lib/learn-session";
 import { boundedRequest, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
@@ -28,6 +28,6 @@ export async function POST(request: Request) {
 
   const learner = await currentLearner();
   const name = cleanText(form?.get("name"), NAME_MAX);
-  if (learner && name) await setLearnerIntro(learner.id, name, cleanText(form?.get("note"), NOTE_MAX));
+  if (learner && canIntroduceSelf(learner.status) && name) await setLearnerIntro(learner.id, name, cleanText(form?.get("note"), NOTE_MAX));
   return NextResponse.redirect(new URL(`/learn${lang}`, origin), 303);
 }

@@ -8,6 +8,7 @@ import { test } from "node:test";
 
 import {
   canAccessLessons,
+  canIntroduceSelf,
   cleanText,
   downloadName,
   emailCodeMatches,
@@ -88,6 +89,11 @@ test("typed text is trimmed, cut, and stripped of control characters", () => {
   assert.equal(cleanText("a\u0000b\u0007c", 10), "abc");
   assert.equal(cleanText("line one\nline two", 40), "line one\nline two");
   assert.equal(cleanText(null, 10), null);
+  // Invisible format characters: a name made only of them would blank the
+  // watermark, and bidi overrides can disguise one name as another.
+  assert.equal(cleanText("\u200B", 10), null);
+  assert.equal(cleanText("\u2066\u202Eab\u2069", 10), "ab");
+  assert.equal(cleanText("a\uFEFFb", 10), "ab");
 });
 
 test("lesson slugs and video ids", () => {
@@ -110,4 +116,10 @@ test("durations read like a video player's", () => {
   assert.equal(formatDuration(3725), "1:02:05");
   assert.equal(formatDuration(0), null);
   assert.equal(formatDuration(null), null);
+});
+
+test("only a waiting learner can introduce themselves (an approved name is fixed)", () => {
+  assert.equal(canIntroduceSelf("pending"), true);
+  assert.equal(canIntroduceSelf("approved"), false);
+  assert.equal(canIntroduceSelf("revoked"), false);
 });

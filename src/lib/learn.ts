@@ -115,10 +115,22 @@ export function looksLikeEmailCode(value: unknown): value is string {
 /* ── What people type ────────────────────────────────────────────────── */
 
 /** Trimmed text, cut to a length, or null when nothing is left. */
+/**
+ * Only a waiting learner may say who they are. Once approved, the name is the
+ * organiser's to change: it is the watermark on the video and the label on
+ * every comment, so the learner must not be able to swap it for someone else's.
+ */
+export function canIntroduceSelf(status: LearnerStatus): boolean {
+  return status === "pending";
+}
+
 export function cleanText(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
-  // Control characters other than line breaks have no business in a comment.
-  const text = value.replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim();
+  // Control characters other than line breaks have no business in a comment,
+  // and neither do invisible format characters (\p{Cf}: zero-width spaces,
+  // bidi overrides). A name made only of those would blank the watermark, and
+  // overrides can make one name look like another's.
+  const text = value.replace(/[\u0000-\u0009\u000b-\u001f\u007f]|\p{Cf}/gu, "").trim();
   return text ? text.slice(0, maxLength) : null;
 }
 
