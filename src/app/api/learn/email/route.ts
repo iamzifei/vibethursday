@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { checkEmailCode, learnerForEmail, storeEmailCode } from "@/lib/learn-db";
+import { checkEmailCode, learnerForEmail, signupIdForEmail, storeEmailCode } from "@/lib/learn-db";
+import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import {
   EMAIL_CODE_TTL_MS,
   hashEmailCode,
@@ -96,5 +97,17 @@ export async function POST(request: Request) {
   const response = NextResponse.redirect(new URL(next, origin), 303);
   response.cookies.set(LEARN_COOKIE, learnerToken(learner.id), { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: LEARN_TTL_SECONDS });
   response.cookies.set(EMAIL_COOKIE, "", { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 0 });
+
+  // One sign-in for the whole site (2026-10-29): the code proved this address,
+  // which is a stronger proof than the main site's own remember cookie asks
+  // for, so if it belongs to a signup the main site recognises them too.
+  try {
+    const signupId = await signupIdForEmail(email);
+    if (signupId && !readRememberToken((await cookies()).get(REMEMBER_COOKIE)?.value)) {
+      response.cookies.set(REMEMBER_COOKIE, rememberToken(signupId), rememberCookieOptions(secure));
+    }
+  } catch (error) {
+    console.error("[learn/email] could not remember the signup", error);
+  }
   return response;
 }

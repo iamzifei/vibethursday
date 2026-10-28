@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
 import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, isMember, findSignupIdByOpenid, getMySignup, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { LEARN_COOKIE } from "@/lib/learn";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
@@ -127,6 +128,8 @@ export async function POST(request: Request) {
     response.cookies.set(REMEMBER_COOKIE, "", { ...rememberCookieOptions(secure), maxAge: 0 });
     response.cookies.set(WX_OPENID_COOKIE, "", wechatCookieOptions(secure, 0));
     response.cookies.set(WX_TRIED_COOKIE, "1", wechatCookieOptions(secure, WX_TRIED_MAX_AGE_S));
+    // And /learn, which is the same sign-in since 2026-10-29.
+    response.cookies.set(LEARN_COOKIE, "", { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 0 });
     return response;
   }
 
