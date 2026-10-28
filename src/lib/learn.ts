@@ -1,0 +1,280 @@
+// Relative imports only: the tests load this through Node's type stripper.
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+// Kept apart so the browser can use it without pulling in node:crypto.
+export { formatDuration } from "./learn-time.ts";
+export type { Chapter } from "./learn-time.ts";
+import type { Chapter } from "./learn-time.ts";
+
+/**
+ * Recorded lessons (/learn, 2026-10-28): the rules, with no database and no
+ * network, so every one of them is tested on its own.
+ *
+ * Who may watch is a list the organiser keeps, not a purchase. Anyone can sign
+ * in — with WeChat, or with a code sent to their email — and is then either on
+ * the list or waiting for the organiser to let them in.
+ *
+ * A "learner" is deliberately separate from a Thursday signup: people on the
+ * list may never have been to a Thursday, and many are in China.
+ */
+
+/* ── Who may do what ─────────────────────────────────────────────────── */
+
+export const LEARNER_STATUSES = ["pending", "approved", "revoked"] as const;
+export type LearnerStatus = (typeof LEARNER_STATUSES)[number];
+
+export function isLearnerStatus(value: unknown): value is LearnerStatus {
+  return typeof value === "string" && (LEARNER_STATUSES as readonly string[]).includes(value);
+}
+
+/**
+ * The one access rule. Watching, downloading a handout, reading and writing
+ * comments: all of it needs an approved learner. Pending and revoked people
+ * see only a page that says so; nobody signed in sees only the sign-in page.
+ */
+export function canAccessLessons(learner: { status: LearnerStatus } | null | undefined): boolean {
+  return learner?.status === "approved";
+}
+
+/* ── The learner cookie ──────────────────────────────────────────────── */
+
+export const LEARN_COOKIE = "vt_learn";
+
+/** Six months, like the member card cookie. */
+export const LEARN_TTL_SECONDS = 180 * 24 * 60 * 60;
+
+/** Same key as every other signed cookie here, under its own label. */
+function secret(): string {
+  const key = process.env.MEMBER_SECRET || process.env.ADMIN_TOKEN;
+  if (!key) throw new Error("Neither MEMBER_SECRET nor ADMIN_TOKEN is set; lesson sign-in is disabled");
+  return key;
+}
+
+function sign(payload: string, key: string): string {
+  return createHmac("sha256", key).update(`vt.learn.v1:${payload}`).digest("base64url");
+}
+
+function sameString(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** `<learnerId>.<expiry seconds>.<signature>` */
+export function learnerToken(learnerId: string, now: number = Date.now(), key: string = secret()): string {
+  const payload = `${learnerId}.${Math.floor(now / 1000) + LEARN_TTL_SECONDS}`;
+  return `${payload}.${sign(payload, key)}`;
+}
+
+/** The learner id a cookie vouches for, or null if it is forged, malformed or expired. */
+export function readLearnerToken(token: string | null | undefined, now: number = Date.now(), key: string = secret()): string | null {
+  if (!token || token.length > 200) return null;
+  const match = /^(\d{1,18})\.(\d{9,12})\.([A-Za-z0-9_-]{43})$/.exec(token);
+  if (!match) return null;
+  const [, id, expiry, signature] = match;
+  if (!sameString(sign(`${id}.${expiry}`, key), signature)) return null;
+  return Number(expiry) * 1000 > now ? id : null;
+}
+
+/* ── Email codes ─────────────────────────────────────────────────────── */
+
+/** Ten minutes to type it in. */
+export const EMAIL_CODE_TTL_MS = 10 * 60 * 1000;
+
+/** Wrong guesses allowed on one code before it is dead. */
+export const EMAIL_CODE_MAX_ATTEMPTS = 5;
+
+/** One code per address per minute, so the send button cannot be used to flood an inbox. */
+export const EMAIL_CODE_RESEND_MS = 60 * 1000;
+
+/** Six digits, leading zeros kept. */
+export function newEmailCode(): string {
+  return String(randomInt(0, 1_000_000)).padStart(6, "0");
+}
+
+/**
+ * What is stored instead of the code. Keyed to the address, so a stolen table
+ * row cannot be replayed for another email, and keyed to the server secret, so
+ * the million possible codes cannot be hashed offline.
+ */
+export function hashEmailCode(email: string, code: string, key: string = secret()): string {
+  return createHmac("sha256", key).update(`vt.learn.code.v1:${email}:${code}`).digest("base64url");
+}
+
+export function emailCodeMatches(email: string, code: string, storedHash: string, key: string = secret()): boolean {
+  return sameString(hashEmailCode(email, code, key), storedHash);
+}
+
+/** Trimmed and lower-cased, or null if it is not plausibly an address. */
+export function normaliseEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  if (email.length > 254) return null;
+  return /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[a-z]{2,}$/.test(email) ? email : null;
+}
+
+export function looksLikeEmailCode(value: unknown): value is string {
+  return typeof value === "string" && /^\d{6}$/.test(value);
+}
+
+/* ── What people type ────────────────────────────────────────────────── */
+
+/** Trimmed text, cut to a length, or null when nothing is left. */
+/**
+ * Only a waiting learner may say who they are. Once approved, the name is the
+ * organiser's to change: it is the watermark on the video and the label on
+ * every comment, so the learner must not be able to swap it for someone else's.
+ */
+export function canIntroduceSelf(status: LearnerStatus): boolean {
+  return status === "pending";
+}
+
+export function cleanText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") return null;
+  // Control characters other than line breaks have no business in a comment,
+  // and neither do invisible format characters (\p{Cf}: zero-width spaces,
+  // bidi overrides). A name made only of those would blank the watermark, and
+  // overrides can make one name look like another's.
+  const text = value.replace(/[\u0000-\u0009\u000b-\u001f\u007f]|\p{Cf}/gu, "").trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+export const COMMENT_MAX = 2000;
+export const NAME_MAX = 40;
+export const NOTE_MAX = 200;
+
+/** URL part of a lesson: lower-case letters, digits and single hyphens. */
+export function looksLikeLessonSlug(value: unknown): value is string {
+  return typeof value === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length <= 60;
+}
+
+/** A VOD video id as the console shows it: 32 hex characters. */
+export function looksLikeVideoId(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{32}$/.test(value);
+}
+
+/* ── Handouts ────────────────────────────────────────────────────────── */
+
+/** Largest handout the admin page accepts. A lesson's PDF is a few MB. */
+export const HANDOUT_MAX_BYTES = 50 * 1024 * 1024;
+
+/** Types a handout may be. Anything else is refused at upload. */
+export const HANDOUT_TYPES: Record<string, string> = {
+  "application/pdf": "pdf",
+  "application/zip": "zip",
+  "text/markdown": "md",
+  "text/plain": "txt",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+};
+
+/**
+ * Where a handout is stored. Random, so the object name says nothing about
+ * the lesson or the file, and cannot be guessed from either.
+ */
+export function handoutKey(lessonId: string, random: string, ext: string): string {
+  return `learn/${lessonId}/${random}.${ext}`;
+}
+
+/**
+ * The name the browser saves a handout as: the title the organiser gave it,
+ * minus anything a file system would choke on.
+ */
+export function downloadName(title: string, ext: string): string {
+  const base = title.replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "handout";
+  return `${base}.${ext}`;
+}
+
+/** A content hash for an uploaded file, shown in the admin list to spot duplicates. */
+export function shortHash(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex").slice(0, 12);
+}
+
+/* ── Time ────────────────────────────────────────────────────────────── */
+
+
+/* ── Chapters (2026-10-28) ───────────────────────────────────────────── */
+
+export const CHAPTERS_MAX = 100;
+export const CHAPTER_TITLE_MAX = 80;
+/** The raw chapter list as the organiser types it, one line per chapter. */
+export const CHAPTERS_TEXT_MAX = 8000;
+
+// "90", "1:30", "01:02:03". Minutes may run past 59 when there is no hour
+// part ("75:10"), the way people write long recordings.
+const TIMESTAMP = /^(?:(\d{1,2}):([0-5]\d)|(\d{1,3})):([0-5]\d)$|^(\d{1,5})$/;
+
+/**
+ * Reads a time in the video, as written in a chapter line or in a `?t=` link.
+ * Returns whole seconds, or null for anything that is not a time.
+ */
+export function parseTimestamp(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+  const match = TIMESTAMP.exec(value.trim());
+  if (!match) return null;
+  const [, h, hm, m, s, plain] = match;
+  if (plain !== undefined) return Number(plain);
+  if (h !== undefined) return Number(h) * 3600 + Number(hm) * 60 + Number(s);
+  return Number(m) * 60 + Number(s);
+}
+
+// One chapter per line: an optional bullet, the time, an optional separator
+// ("-", "–", "|", ":"), then the title. "4:46 - 申请 API Key".
+const CHAPTER_LINE = /^(?:[-•*·]\s*)?((?:\d{1,2}:)?\d{1,3}:\d{2})\s*(?:[-–—|:：]\s*)?(.*)$/;
+
+/**
+ * Turns the organiser's chapter text into a sorted list. Lines without a time
+ * or a title are skipped, as are repeats of a time already listed and, once
+ * the video's length is known, times past its end. Never throws: a typo costs
+ * one chapter, not the page.
+ */
+export function parseChapters(text: string | null | undefined, durationS?: number | null): Chapter[] {
+  if (!text) return [];
+  const seen = new Set<number>();
+  const chapters: Chapter[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = CHAPTER_LINE.exec(line.trim());
+    if (!match) continue;
+    const startS = parseTimestamp(match[1]);
+    const title = cleanText(match[2], CHAPTER_TITLE_MAX);
+    if (startS === null || !title || seen.has(startS)) continue;
+    if (durationS && startS >= durationS) continue;
+    seen.add(startS);
+    chapters.push({ startS, title });
+  }
+  return chapters.sort((a, b) => a.startS - b.startS).slice(0, CHAPTERS_MAX);
+}
+
+/* ── Invite links (2026-10-28) ───────────────────────────────────────── */
+
+/**
+ * An invite link lets the organiser share one URL in a group chat instead of
+ * approving people one by one. Whoever opens it still signs in as themselves
+ * (WeChat or email) and gives a name, so the watermark and comments still say
+ * who they are, and one person can still be revoked alone. The link itself can
+ * expire, run out of places, or be revoked if it leaks.
+ */
+export function newInviteToken(): string {
+  return randomBytes(16).toString("base64url");
+}
+
+export function looksLikeInviteToken(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{22}$/.test(value);
+}
+
+export type InviteLimits = {
+  revokedAt: string | null;
+  expiresAt: string | null;
+  uses: number;
+  maxUses: number | null;
+};
+
+/** Whether one more person may join through this invite right now. */
+export function inviteUsable(invite: InviteLimits | null | undefined, now: Date = new Date()): boolean {
+  if (!invite || invite.revokedAt) return false;
+  if (invite.expiresAt && new Date(invite.expiresAt).getTime() <= now.getTime()) return false;
+  if (invite.maxUses !== null && invite.uses >= invite.maxUses) return false;
+  return true;
+}
+
+export const INVITE_DAYS_DEFAULT = 7;
+export const INVITE_USES_DEFAULT = 100;

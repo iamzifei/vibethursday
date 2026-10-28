@@ -1,0 +1,202 @@
+/**
+ * Recorded lessons (2026-10-28): who may watch, the learner cookie, email
+ * codes, and what people are allowed to type. All pure.
+ */
+
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+import {
+  canAccessLessons,
+  canIntroduceSelf,
+  cleanText,
+  downloadName,
+  emailCodeMatches,
+  formatDuration,
+  inviteUsable,
+  looksLikeInviteToken,
+  newInviteToken,
+  CHAPTERS_MAX,
+  parseChapters,
+  parseTimestamp,
+  handoutKey,
+  hashEmailCode,
+  LEARN_TTL_SECONDS,
+  learnerToken,
+  looksLikeEmailCode,
+  looksLikeLessonSlug,
+  looksLikeVideoId,
+  newEmailCode,
+  normaliseEmail,
+  readLearnerToken,
+} from "../src/lib/learn.ts";
+
+const KEY = "test-key-not-a-secret";
+
+test("★ only an approved learner may access lessons", () => {
+  assert.equal(canAccessLessons({ status: "approved" }), true);
+  assert.equal(canAccessLessons({ status: "pending" }), false);
+  assert.equal(canAccessLessons({ status: "revoked" }), false);
+  assert.equal(canAccessLessons(null), false);
+  assert.equal(canAccessLessons(undefined), false);
+});
+
+test("★ a learner cookie round-trips, and nothing else reads as one", () => {
+  const now = 1_800_000_000_000;
+  const token = learnerToken("42", now, KEY);
+  assert.equal(readLearnerToken(token, now, KEY), "42");
+
+  // Another key, another id under the same signature, a trimmed signature.
+  assert.equal(readLearnerToken(token, now, "other-key"), null);
+  assert.equal(readLearnerToken(token.replace(/^42\./, "43."), now, KEY), null);
+  assert.equal(readLearnerToken(token.slice(0, -1), now, KEY), null);
+  assert.equal(readLearnerToken("", now, KEY), null);
+  assert.equal(readLearnerToken(undefined, now, KEY), null);
+  assert.equal(readLearnerToken("not.a.token", now, KEY), null);
+});
+
+test("★ a learner cookie stops working when it expires", () => {
+  const now = 1_800_000_000_000;
+  const token = learnerToken("7", now, KEY);
+  assert.equal(readLearnerToken(token, now + (LEARN_TTL_SECONDS - 60) * 1000, KEY), "7");
+  assert.equal(readLearnerToken(token, now + (LEARN_TTL_SECONDS + 1) * 1000, KEY), null);
+});
+
+test("★ an email code only matches its own address", () => {
+  const hash = hashEmailCode("a@example.com", "123456", KEY);
+  assert.equal(emailCodeMatches("a@example.com", "123456", hash, KEY), true);
+  assert.equal(emailCodeMatches("a@example.com", "123457", hash, KEY), false);
+  assert.equal(emailCodeMatches("b@example.com", "123456", hash, KEY), false);
+  assert.equal(emailCodeMatches("a@example.com", "123456", hash, "other-key"), false);
+  // Never the code itself.
+  assert.ok(!hash.includes("123456"));
+});
+
+test("new codes are six digits", () => {
+  for (let i = 0; i < 200; i += 1) assert.match(newEmailCode(), /^\d{6}$/);
+  assert.equal(looksLikeEmailCode("012345"), true);
+  assert.equal(looksLikeEmailCode("12345"), false);
+  assert.equal(looksLikeEmailCode("12345a"), false);
+});
+
+test("emails are normalised, and junk is refused", () => {
+  assert.equal(normaliseEmail("  Me@Example.COM "), "me@example.com");
+  assert.equal(normaliseEmail("me@example"), null);
+  assert.equal(normaliseEmail("me example@x.com"), null);
+  assert.equal(normaliseEmail("a<b>@x.com"), null);
+  assert.equal(normaliseEmail(42), null);
+  assert.equal(normaliseEmail(`${"a".repeat(250)}@x.com`), null);
+});
+
+test("typed text is trimmed, cut, and stripped of control characters", () => {
+  assert.equal(cleanText("  hi  ", 10), "hi");
+  assert.equal(cleanText("   ", 10), null);
+  assert.equal(cleanText("abcdef", 3), "abc");
+  assert.equal(cleanText("a\u0000b\u0007c", 10), "abc");
+  assert.equal(cleanText("line one\nline two", 40), "line one\nline two");
+  assert.equal(cleanText(null, 10), null);
+  // Invisible format characters: a name made only of them would blank the
+  // watermark, and bidi overrides can disguise one name as another.
+  assert.equal(cleanText("\u200B", 10), null);
+  assert.equal(cleanText("\u2066\u202Eab\u2069", 10), "ab");
+  assert.equal(cleanText("a\uFEFFb", 10), "ab");
+});
+
+test("lesson slugs and video ids", () => {
+  assert.equal(looksLikeLessonSlug("lesson-01"), true);
+  assert.equal(looksLikeLessonSlug("Lesson-01"), false);
+  assert.equal(looksLikeLessonSlug("lesson--01"), false);
+  assert.equal(looksLikeLessonSlug("../etc"), false);
+  assert.equal(looksLikeVideoId("0123456789abcdef0123456789abcdef"), true);
+  assert.equal(looksLikeVideoId("0123456789abcdef"), false);
+});
+
+test("handout names never escape their folder or break a file system", () => {
+  assert.equal(handoutKey("3", "abc", "pdf"), "learn/3/abc.pdf");
+  assert.equal(downloadName("第 1 课 / 教案: 草稿?", "pdf"), "第 1 课 教案 草稿.pdf");
+  assert.equal(downloadName("   ", "pdf"), "handout.pdf");
+});
+
+test("durations read like a video player's", () => {
+  assert.equal(formatDuration(65), "1:05");
+  assert.equal(formatDuration(3725), "1:02:05");
+  assert.equal(formatDuration(0), null);
+  assert.equal(formatDuration(null), null);
+});
+
+test("only a waiting learner can introduce themselves (an approved name is fixed)", () => {
+  assert.equal(canIntroduceSelf("pending"), true);
+  assert.equal(canIntroduceSelf("approved"), false);
+  assert.equal(canIntroduceSelf("revoked"), false);
+});
+
+test("timestamps: seconds, m:ss and h:mm:ss; nothing else", () => {
+  assert.equal(parseTimestamp("90"), 90);
+  assert.equal(parseTimestamp("1:30"), 90);
+  assert.equal(parseTimestamp("01:02:03"), 3723);
+  assert.equal(parseTimestamp("0:00"), 0);
+  assert.equal(parseTimestamp("1:75"), null); // seconds over 59
+  assert.equal(parseTimestamp("1:2"), null); // seconds need two digits
+  assert.equal(parseTimestamp("-5"), null);
+  assert.equal(parseTimestamp("abc"), null);
+  assert.equal(parseTimestamp(""), null);
+  assert.equal(parseTimestamp(undefined), null);
+});
+
+test("chapters: one 'time title' per line, sorted, bad lines skipped", () => {
+  const text = [
+    "0:00 开场",
+    "  4:46 - 申请 API Key",
+    "1:02:05 | 收尾",
+    "18:41 – 微信服务号配置",
+    "这一行没有时间",
+    "5:00",                 // no title
+    "4:46 重复的时间",       // same time as an earlier line
+    "• 10:00 用符号开头",
+  ].join("\n");
+  assert.deepEqual(parseChapters(text), [
+    { startS: 0, title: "开场" },
+    { startS: 286, title: "申请 API Key" },
+    { startS: 600, title: "用符号开头" },
+    { startS: 1121, title: "微信服务号配置" },
+    { startS: 3725, title: "收尾" },
+  ]);
+});
+
+test("chapters: past the end of the video are dropped once the length is known", () => {
+  assert.deepEqual(parseChapters("0:00 a\n2:00 b\n9:00 c", 300), [
+    { startS: 0, title: "a" },
+    { startS: 120, title: "b" },
+  ]);
+  assert.deepEqual(parseChapters(null), []);
+  assert.deepEqual(parseChapters(""), []);
+});
+
+test("chapters: titles are cleaned and capped, and the list is bounded", () => {
+  const [one] = parseChapters(`1:00 ${"长".repeat(200)}\u200B`);
+  assert.equal(one.title.length, 80);
+  const many = Array.from({ length: CHAPTERS_MAX + 20 }, (_, i) => `${i}:00 c${i}`).join("\n");
+  assert.equal(parseChapters(many).length, CHAPTERS_MAX);
+});
+
+test("invite tokens: 22 url-safe characters, fresh every time", () => {
+  const a = newInviteToken();
+  const b = newInviteToken();
+  assert.match(a, /^[A-Za-z0-9_-]{22}$/);
+  assert.notEqual(a, b);
+  assert.equal(looksLikeInviteToken(a), true);
+  assert.equal(looksLikeInviteToken("short"), false);
+  assert.equal(looksLikeInviteToken(`${a}/x`), false);
+  assert.equal(looksLikeInviteToken(undefined), false);
+});
+
+test("an invite works until it is revoked, expires or runs out of places", () => {
+  const now = new Date("2026-10-28T10:00:00Z");
+  const open = { revokedAt: null, expiresAt: "2026-11-04T10:00:00Z", uses: 3, maxUses: 50 };
+  assert.equal(inviteUsable(open, now), true);
+  assert.equal(inviteUsable({ ...open, expiresAt: null, maxUses: null }, now), true);
+  assert.equal(inviteUsable({ ...open, revokedAt: "2026-10-27T00:00:00Z" }, now), false);
+  assert.equal(inviteUsable({ ...open, expiresAt: "2026-10-28T09:59:59Z" }, now), false);
+  assert.equal(inviteUsable({ ...open, uses: 50 }, now), false);
+  assert.equal(inviteUsable(null, now), false);
+});
