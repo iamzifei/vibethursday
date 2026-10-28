@@ -85,28 +85,60 @@ function Waiting({ learner, lang }: { learner: Learner; lang: LearnLang }) {
     );
   }
 
+  const form = (
+    <form className="stack-3" method="post" action="/api/learn/apply">
+      {lang === "en" && <input type="hidden" name="lang" value="en" />}
+      <label className="label" htmlFor="learn-name">
+        {t.pending.name}
+      </label>
+      <input className="field" id="learn-name" name="name" required maxLength={40} defaultValue={learner.name ?? ""} autoComplete="name" />
+      <label className="label" htmlFor="learn-note">
+        {t.pending.note}
+      </label>
+      <input className="field" id="learn-note" name="note" maxLength={200} defaultValue={learner.note ?? ""} />
+      <button className="btn btn--primary btn--block" type="submit">
+        {t.pending.submit}
+      </button>
+    </form>
+  );
+
+  // Already said who they are: what happens next comes first, and the form
+  // folds away. Before 2026-10-29 the same form came back looking untouched,
+  // which read as "the button did nothing".
+  if (learner.name) {
+    return (
+      <main id="main" className="shell section">
+        <div className="card stack-6" style={{ maxWidth: 520, margin: "0 auto" }}>
+          <div className="stack-3">
+            <span className="eyebrow">{t.eyebrow}</span>
+            <h1 className="h2">{t.pending.sentTitle}</h1>
+            <p className="alert alert--success">
+              {t.pending.sentAs}
+              <strong>{learner.name}</strong>
+            </p>
+            <p className="body-sm">{t.pending.sentLead}</p>
+          </div>
+          <a className="btn btn--primary btn--block" href={`/learn${lang === "en" ? "?lang=en" : ""}`}>
+            {t.pending.refresh}
+          </a>
+          <details className="disclosure">
+            <summary>{t.pending.edit}</summary>
+            <div className="disclosure__body">{form}</div>
+          </details>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main id="main" className="shell section">
       <div className="card stack-6" style={{ maxWidth: 520, margin: "0 auto" }}>
         <div className="stack-3">
           <span className="eyebrow">{t.eyebrow}</span>
           <h1 className="h2">{t.pending.title}</h1>
-          <p className="body-sm">{learner.name ? t.pending.done : t.pending.lead}</p>
+          <p className="body-sm">{t.pending.lead}</p>
         </div>
-        <form className="stack-3" method="post" action="/api/learn/apply">
-          {lang === "en" && <input type="hidden" name="lang" value="en" />}
-          <label className="label" htmlFor="learn-name">
-            {t.pending.name}
-          </label>
-          <input className="field" id="learn-name" name="name" required maxLength={40} defaultValue={learner.name ?? ""} autoComplete="name" />
-          <label className="label" htmlFor="learn-note">
-            {t.pending.note}
-          </label>
-          <input className="field" id="learn-note" name="note" maxLength={200} defaultValue={learner.note ?? ""} />
-          <button className="btn btn--primary btn--block" type="submit">
-            {t.pending.submit}
-          </button>
-        </form>
+        {form}
       </div>
     </main>
   );
