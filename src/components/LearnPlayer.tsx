@@ -14,7 +14,10 @@ import { useEffect, useId, useRef, useState } from "react";
  * recording, but it does say whose account a leaked recording came from.
  */
 
-const PLAYER_VERSION = "2.28.4";
+// Pinned below 2.28: from 2.28.0 the player refuses to play without a paid
+// licence and covers the picture with a "License params are required" banner.
+// 2.27.1 plays privately encrypted streams the same way.
+const PLAYER_VERSION = "2.27.1";
 const PLAYER_BASE = `https://g.alicdn.com/apsara-media-box/imp-web-player/${PLAYER_VERSION}`;
 
 type AliplayerInstance = { dispose: () => void; on: (event: string, handler: () => void) => void };
