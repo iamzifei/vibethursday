@@ -5186,7 +5186,8 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   .guide__day li { flex-direction: column; }
 }
 
-/* Four ways in: two across even on a small phone, each one a picture and a line. */
+/* Four ways in: two across from about 340px wide, one column below that.
+   Tighter padding than a plain .card so a narrow column still holds a line. */
 .guide__ways {
   list-style: none;
   margin: 0;
@@ -5195,7 +5196,7 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: var(--space-3);
 }
-.guide__ways li { display: flex; flex-direction: column; gap: var(--space-2); }
+.guide__ways li { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
 .guide__ways strong { color: var(--fg1); font-size: var(--text-lg); }
 .guide__icon { color: var(--accent); width: 40px; height: 40px; }
 
@@ -5210,7 +5211,12 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
   /* Clear the sticky bar when someone arrives on /guide#p3. */
   scroll-margin-top: 76px;
 }
-.guide__principles li:target { background: var(--accent-subtle); }
+.guide__principles li:target {
+  background: var(--accent-subtle);
+  margin-inline: calc(-1 * var(--space-3));
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-md);
+}
 .guide__num {
   font-size: clamp(1.5rem, 6vw, 2.25rem);
   font-weight: var(--weight-bold);

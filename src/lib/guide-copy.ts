@@ -40,7 +40,7 @@ export const GUIDE_COPY = {
 
     principlesTitle: "八条约定",
     principles: [
-      { id: "p1", head: "周四永远免费。", text: "不卖票，随来随走。" },
+      { id: "p1", head: "周四永远免费。", text: "不卖票，随来随走。到了在店里点一份喝的或吃的，这是我们和场地的约定。" },
       { id: "p2", head: "不懂也欢迎。", text: "谁都有过第一次打开 AI、不知道该问什么的时候。这里没有傻问题。" },
       { id: "p3", head: "讲真做过的。", text: "做成了讲结果，没做成讲卡在哪。少用术语，屋里有程序员，也有开店的老板。" },
       { id: "p4", head: "需求说出口，才有人接。", text: "说得越具体，越容易遇到对的人。" },
@@ -84,7 +84,7 @@ export const GUIDE_COPY = {
 
     principlesTitle: "Eight things we ask",
     principles: [
-      { id: "p1", head: "Thursdays are always free.", text: "No tickets. Come and go as you like." },
+      { id: "p1", head: "Thursdays are always free.", text: "No tickets. Come and go as you like. Order one thing from the venue when you arrive: that's our deal with them." },
       { id: "p2", head: "Beginners welcome.", text: "Everyone once opened an AI app with no idea what to type. There are no silly questions here." },
       { id: "p3", head: "Talk about what you actually did.", text: "If it worked, show the result. If it didn't, show where it got stuck. Go easy on jargon: the room has developers and shop owners." },
       { id: "p4", head: "Say what you need.", text: "The more specific you are, the likelier you meet the right person." },
