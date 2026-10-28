@@ -87,14 +87,21 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
   const playerRef = useRef<AliplayerInstance | null>(null);
   // A jump asked for before the video was ready, or the shared `?t=` time.
   const pendingSeek = useRef<number | null>(startAt);
+  // Set once the player can take a seek. Before that, Aliplayer silently
+  // drops seek() and play(), so a chapter clicked while the video is still
+  // loading is kept here and carried out when it is ready (2026-10-29: in
+  // production a click in the first seconds did nothing at all).
+  const readyRef = useRef(false);
+  const playWhenReady = useRef(false);
   const [state, setState] = useState<"loading" | "ready" | "coming" | "error">("loading");
   const [current, setCurrent] = useState(-1);
 
   /** Jumps to a time and plays from there; waits for the player if it is still loading. */
   const jumpTo = useCallback((seconds: number) => {
     const player = playerRef.current;
-    if (!player) {
+    if (!player || !readyRef.current) {
       pendingSeek.current = seconds;
+      playWhenReady.current = true;
       return;
     }
     player.seek(seconds);
@@ -130,6 +137,16 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
           preload: true,
           // Ticks on the progress bar at each chapter.
           progressMarkers: chapters.map((c) => ({ offset: c.startS, isCustomized: false, text: c.title })),
+        }, () => {
+          // The player's own "ready": a chapter clicked while it loaded is played now.
+          readyRef.current = true;
+          const player = playerRef.current;
+          if (!player || !playWhenReady.current || pendingSeek.current === null) return;
+          playWhenReady.current = false;
+          const seconds = pendingSeek.current;
+          pendingSeek.current = null;
+          player.seek(seconds);
+          player.play();
         });
         const player = playerRef.current;
         player.on("error", () => setState("error"));
@@ -154,6 +171,7 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
       cancelled = true;
       playerRef.current?.dispose();
       playerRef.current = null;
+      readyRef.current = false;
     };
     // `chapters` is a fresh array on every render; chaptersKey is its content.
     // eslint-disable-next-line react-hooks/exhaustive-deps
