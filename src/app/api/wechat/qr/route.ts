@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 import QRCode from "qrcode";
 import { createQrLogin, qrLoginStatus, recordLogin, takeQrLogin } from "@/lib/db";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
-import { learnerForOpenid } from "@/lib/learn-db";
-import { LEARN_COOKIE, LEARN_TTL_SECONDS, learnerToken } from "@/lib/learn";
+import { findLearnerByOpenid } from "@/lib/learn-db";
+import { LEARN_COOKIE, LEARN_TTL_SECONDS, learnerToken, readLearnerToken } from "@/lib/learn";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import {
@@ -92,10 +92,14 @@ export async function GET(request: Request) {
     // The same scan signs this computer in to /learn (2026-10-29): the phone
     // that approved it is the learner's WeChat. Only the learner cookie, which
     // names a learner and can approve nothing, so the review's point above holds.
-    if (login.openid) {
+    // Only someone who already uses /learn (no new rows: a main-site login must
+    // not fill the approval queue), and never over a /learn login this
+    // computer already has, which may be a different, approved account.
+    const hasLearnLogin = Boolean(readLearnerToken((await cookies()).get(LEARN_COOKIE)?.value));
+    if (login.openid && !hasLearnLogin) {
       try {
-        const learner = await learnerForOpenid(login.openid);
-        response.cookies.set(LEARN_COOKIE, learnerToken(learner.id), { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: LEARN_TTL_SECONDS });
+        const learner = await findLearnerByOpenid(login.openid);
+        if (learner) response.cookies.set(LEARN_COOKIE, learnerToken(learner.id), { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: LEARN_TTL_SECONDS });
       } catch (error) {
         console.error("[wechat/qr] could not sign in to /learn", error);
       }

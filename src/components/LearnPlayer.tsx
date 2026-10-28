@@ -28,7 +28,7 @@ type AliplayerInstance = {
   play: () => void;
   getCurrentTime: () => number;
 };
-type AliplayerFactory = (options: Record<string, unknown>, ready?: () => void) => AliplayerInstance;
+type AliplayerFactory = (options: Record<string, unknown>, ready?: (player: AliplayerInstance) => void) => AliplayerInstance;
 
 declare global {
   interface Window {
@@ -137,10 +137,12 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
           preload: true,
           // Ticks on the progress bar at each chapter.
           progressMarkers: chapters.map((c) => ({ offset: c.startS, isCustomized: false, text: c.title })),
-        }, () => {
-          // The player's own "ready": a chapter clicked while it loaded is played now.
+        }, (ready: AliplayerInstance) => {
+          // The player's own "ready": a chapter clicked while it loaded is played
+          // now. Uses the instance handed in, which may arrive before the
+          // constructor has returned and playerRef is set.
           readyRef.current = true;
-          const player = playerRef.current;
+          const player = ready ?? playerRef.current;
           if (!player || !playWhenReady.current || pendingSeek.current === null) return;
           playWhenReady.current = false;
           const seconds = pendingSeek.current;
@@ -156,6 +158,7 @@ export function LearnPlayer({ lesson, watermark, chapters = [], startAt = null, 
           if (pendingSeek.current === null) return;
           const seconds = pendingSeek.current;
           pendingSeek.current = null;
+          playWhenReady.current = false;
           player.seek(seconds);
         });
         if (chapters.length > 0) {
