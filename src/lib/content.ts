@@ -403,6 +403,8 @@ export const copy = {
         ],
         steps: ["你是谁", "你更像哪一类？", "关于你（选填）", "哪一场？"],
         recommended: "做东西的朋友更推荐周二 Build Tuesday：十来个人，带着需求或项目来，一起拆清楚。周四有空位也欢迎来。",
+        // 2026-11-01：周二的案例一就是老板的需求。默认仍是周四（免费入口），只提示一句。
+        recommendedBiz: "有一件具体的事，想请几个做过的人当场帮你拆？可以改报周二 Build Tuesday。",
         bizFocus: "最想让 AI 帮你哪一块？",
         bizFocusOptions: [
           { value: "leads", label: "找客户、获客" },
@@ -447,6 +449,22 @@ export const copy = {
         industryHint: "选填，选最接近的一个。",
         topic: "这周最想聊什么、或者最想问什么",
         topicPlaceholder: "想找会 iOS 的合伙人 / 想搞懂 R&D 税务抵免怎么申报 / 想看看别人的 AI 工作流",
+        // 2026-11-01：做生意的人问「需求一句话」，答案直接进需求台账、周四现场念。
+        topicBiz: "生意里最想让 AI 帮你做哪件事？",
+        topicBizPlaceholder: "比如：每天回客人微信要两小时 / 每月花 800 刀请人写小红书，效果一般",
+        topicBizHint: "顺手写一句现在怎么做、花多少时间或钱，最容易遇到能接的人。",
+        // 2026-11-01：报周二时问这次带什么来，好提前排两个案例。存储值 need/project/help 不能改。
+        tuesdayBring: "这次来周二，你带什么？",
+        tuesdayBringOptions: [
+          { value: "need", label: "带一个需求：想让 AI 帮我做件事" },
+          { value: "project", label: "带一个项目：做了一半，想听意见" },
+          { value: "help", label: "来帮忙拆：听听别人的，给点意见" },
+        ],
+        tuesdayBringHint: "每场排一到两个案例，带需求或项目来的，可能会被请上来讲 10 分钟，提前私信你。",
+        tuesdayNeedTopic: "什么需求？一句话",
+        tuesdayNeedPlaceholder: "现在怎么做、花多少时间或钱、想要什么结果",
+        tuesdayProjectTopic: "什么项目？一句话",
+        tuesdayProjectPlaceholder: "做了什么、卡在哪、想听什么意见",
         // 这里刻意不再以「完全选填」开头。前 49 份报名里只有 3 个人填了这栏，
         // 而它是唯一能提前知道大家想要什么的入口——先说清楚它有什么用，
         // 退路留在最后一句。
@@ -468,7 +486,7 @@ export const copy = {
           { value: "maybe", label: "做了一半" },
           { value: "listen", label: "这次先听" },
         ],
-        demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，就在「本周主题」那一段。",
+        demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，报名时选开场分享就行。",
         // 开场分享（2026-10-15）：周四开场由成员分享，不是主办人一个人讲。报周四的人都会被问到。
         openingShare: "这周想在开场分享 5 分钟吗？",
         openingShareOptions: [
@@ -514,7 +532,7 @@ export const copy = {
         //
         // 标题写清楚里面装的是什么，而不是「更多选项」：看不见里面有什么的折叠
         // 区没人会去点开，这是折叠这个做法最常见的失败方式。
-        extras: "更多选填：邮箱、来源、其他时间、成员墙",
+        extras: "更多选填：邮箱、来源、成员墙",
         // 两栏关于 AI 用量的问题，都是选填，也都是给我看的、不是给填表的人看的：
         // 用来判断这屋子的技术密度，以及海外/国内模型各占多少。
         //
@@ -591,12 +609,14 @@ export const copy = {
       successNoSession: "这次没选场次，已经登记上了，有合适的场会通知你。",
       // 刚开始学的人：第 ④ 步先推收费小班（James 2026-10-06），也能改报周四。
       classStep: "接下来怎么学？",
-      classCardTitle: "想有人带着一步步学？",
-      classCardBody: "收费小班：人少、投屏，一步步带你做，一次只讲一件事。价格和首期定了，先通知登记的人；登记不收钱、不占位子。",
-      classSubmit: "报名小班课",
+      // 2026-11-01：收费课已定（/class 的 AI+IP 实战课），卡片直接给课和链接。
+      classCardTitle: "想有人带着学？",
+      classCardBody: "11 月 15 日（周日）澳洲 AI+IP 实战课：学点 AI，做点内容，让生意多些机会。365 澳元 + GST，含一年复训。",
+      classCardCta: "看课程安排、报名 →",
+      classSubmit: "先登记，有新课先通知我",
       thursdayInstead: "我还是想先来周四看看 →",
       classInstead: "← 还是报名小班课",
-      classDone: "小班课登记好了。价格和首期定下来，我会先私信你。",
+      classDone: "登记好了。11/15 的课程安排和报名在 vibethursday.com/class，有新课我也会先私信你。",
       successBody: "地址在 vibethursday.com/go，当周的提醒在微信群里发。留了微信号的话，我会拉你进群。",
       // The Chinese form makes email optional, and most leave it blank — telling
       // them to watch their inbox sends them looking for something never sent.
@@ -633,7 +653,7 @@ export const copy = {
       // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
       sessionTimeSuffixTuesday: "10:30 · Build Tuesday",
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
-      hook: "周四是交流局。在做东西的，来周二 Build Tuesday；想有人带着学的，报完名可以登记收费小班。",
+      hook: "周四是交流局。有具体需求或在做东西的，来周二 Build Tuesday；想有人带着学的，看看我们的收费课程。",
       hookTuesdayCta: "看看 Build Tuesday",
       // Thursday and Tuesday side by side, above the form (2026-10-15): people
       // could not tell them apart or find how to sign up for Tuesday.
@@ -677,7 +697,7 @@ export const copy = {
       ],
       interestThanks: "记下了，谢谢。",
       // 点了「小班」：先把预期说清楚，之后私信过去才不突兀（2026-10-05）。
-      interestThanksClass: "记下了。小班是收费的，价格和首期定下来，我会先私信你。",
+      interestThanksClass: "记下了。课程是收费的，安排和报名在 vibethursday.com/class，有新课我会先私信你。",
       errorEmail: "这个邮箱地址看起来不太对。",
     },
 
@@ -2176,6 +2196,7 @@ export const copy = {
         ],
         steps: ["You", "Which sounds most like you?", "About you (optional)", "Which morning?"],
         recommended: "Building things? Build Tuesday is the better fit — about a dozen people working through real needs and projects together. Thursday is welcome too while it has places.",
+        recommendedBiz: "Got one specific thing you want a few people who have done it to work through with you? You can switch to Build Tuesday.",
         bizFocus: "What would you most like AI to help with?",
         bizFocusOptions: [
           { value: "leads", label: "Finding customers" },
@@ -2217,6 +2238,20 @@ export const copy = {
         industryHint: "Optional — pick the closest one.",
         topic: "What do you most want to talk about, or ask, this week",
         topicPlaceholder: "An iOS cofounder / how the R&D tax offset actually gets claimed / how other people's AI workflows look",
+        topicBiz: "What is the one thing in your business you most want AI to do?",
+        topicBizPlaceholder: "e.g. replying to customers on WeChat takes two hours a day / I pay $800 a month for social posts that don't land",
+        topicBizHint: "Add how it is done now and what it costs in time or money — that is what gets you to someone who can take it on.",
+        tuesdayBring: "What are you bringing to this Tuesday?",
+        tuesdayBringOptions: [
+          { value: "need", label: "A need: something I want AI to do" },
+          { value: "project", label: "A project: half done, want opinions" },
+          { value: "help", label: "Help: listen and give my view" },
+        ],
+        tuesdayBringHint: "Each session works through one or two cases; if you bring a need or a project you may be asked to take ten minutes, and you'll hear beforehand.",
+        tuesdayNeedTopic: "What is the need, in a sentence?",
+        tuesdayNeedPlaceholder: "How it is done now, what it costs in time or money, what result you want",
+        tuesdayProjectTopic: "What is the project, in a sentence?",
+        tuesdayProjectPlaceholder: "What you built, where you are stuck, what you want an opinion on",
         topicHint: "The more specific, the more likely someone picks it up on the day.",
         publishCard: "Put this on the member wall",
         publishCardHint: "Your name, what you are working on and this week's topic go on the member wall. Email and WeChat ID are never shown, and you can take it down any time.",
@@ -2230,7 +2265,7 @@ export const copy = {
           { value: "maybe", label: "Half built" },
           { value: "listen", label: "Just listening this time" },
         ],
-        demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, it goes in the week's topic slot.",
+        demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, pick the opening share when you sign up.",
         openingShare: "Want to share something for 5 minutes at the start?",
         openingShareOptions: [
           { value: "yes", label: "Yes, I'll share" },
@@ -2259,7 +2294,7 @@ export const copy = {
         ],
         // See the Chinese block above for why these three are folded away, and
         // why the spend question asks about money rather than about tokens.
-        extras: "More, optional: email, how you heard, other times, the member wall",
+        extras: "More, optional: email, how you heard, the member wall",
         aiModels: "Which AI models do you mostly use?",
         aiModelsHint: "Optional — pick any.",
         aiModelGroups: [
@@ -2315,11 +2350,12 @@ export const copy = {
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       classStep: "How would you like to learn?",
       classCardTitle: "Want someone to walk you through it?",
-      classCardBody: "A paid small class: a few people, a shared screen, one thing at a time, done step by step. Once the price and first date are set, the people registered hear first. Registering is free and holds no place.",
-      classSubmit: "Register for the small class",
+      classCardBody: "Sunday 15 November, the AI + personal brand class (taught in Chinese): learn some AI, make some content, bring your business more chances. A$365 + GST, with a year of refresher sessions.",
+      classCardCta: "See the day and sign up →",
+      classSubmit: "Register, and tell me about new classes first",
       thursdayInstead: "I'd rather come on a Thursday first →",
       classInstead: "← Register for the small class instead",
-      classDone: "You're registered for the small class. Once the price and first date are set, I'll message you first.",
+      classDone: "You're registered. The 15 November class and its signup are at vibethursday.com/class; I'll message you first about new ones.",
       successBody: "The address is on vibethursday.com/go, and reminders go out in the WeChat group. If you left a WeChat ID I will add you to it.",
       successBodyNoEmail: "I will add you to the WeChat group with the ID you left; the address and reminders go out there.",
       successMy: "To change or cancel, open vibethursday.com/my.",
@@ -2341,7 +2377,7 @@ export const copy = {
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
       errorPurpose: "Pick which sounds most like you — just one.",
       sessionTimeSuffixTuesday: "10:30am · Build Tuesday",
-      hook: "Thursday is for meeting people. If you build things, come to Build Tuesday; if you want to be walked through it, register interest in the paid small class after signing up.",
+      hook: "Thursday is for meeting people. If you have a specific need or build things, come to Build Tuesday; if you want to be walked through it, have a look at our paid classes.",
       hookTuesdayCta: "See Build Tuesday",
       compare: {
         rows: ["When, where", "For", "How it runs", "Places", "Cost"],
@@ -2375,7 +2411,7 @@ export const copy = {
         { value: "none", label: "Neither — Thursday is enough" },
       ],
       interestThanks: "Noted — thanks.",
-      interestThanksClass: "Noted. The class is paid — once the price and first date are set, I'll message you first.",
+      interestThanksClass: "Noted. The classes are paid — the current one and its signup are at vibethursday.com/class, and I'll message you first about new ones.",
       errorEmail: "That email address does not look right.",
     },
 

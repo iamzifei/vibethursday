@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setVenuePledge, bookDinner } from "@/lib/db";
+import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, setVenuePledge, bookDinner } from "@/lib/db";
 import { VENUE_MENU } from "@/lib/menu";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { priceOrder } from "@/lib/order";
@@ -28,6 +28,9 @@ const MAX_BODY = 64 * 1024;
 export const dynamic = "force-dynamic";
 
 const DEMO_INTENTS = new Set(["yes", "maybe", "listen"]);
+
+/** What someone brings to a Build Tuesday (2026-11-01). Kept in step with `copy.fields.tuesdayBringOptions`. */
+const TUESDAY_BRING = new Set(["need", "project", "help"]);
 
 /** Other times someone could make. Kept in step with `copy.fields.availabilityOptions`. */
 const AVAILABILITY = new Set(["weekday_evening", "weekend_day", "weekend_evening"]);
@@ -299,6 +302,17 @@ export async function POST(request: Request) {
       await setShareTopic(signupId, shareTopic);
     } catch (error) {
       console.error("[signup] saved, but the share topic did not", error);
+    }
+  }
+
+  // What they bring to a Build Tuesday (2026-11-01), so the morning's one or
+  // two cases can be lined up: need / project / help. Never fatal.
+  const bringRaw = clean(body.tuesdayBring, 20);
+  if (firstSession && isSpecialSession(firstSession) && profileUpdated && bringRaw && TUESDAY_BRING.has(bringRaw)) {
+    try {
+      await setTuesdayBring(signupId, firstSession, bringRaw);
+    } catch (error) {
+      console.error("[signup] saved, but what they bring to Tuesday did not", error);
     }
   }
 

@@ -1237,6 +1237,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                       <thead>
                         <tr>
                           <th scope="col">名字</th>
+                          <th scope="col">带什么来</th>
                           <th scope="col">微信号</th>
                           <th scope="col">备注编号</th>
                           <th scope="col">状态</th>
@@ -1247,6 +1248,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
                         {rows.map((row) => (
                           <tr key={row.signup_id}>
                             <td>{row.name}</td>
+                            {/* 2026-11-01: lines up the morning's one or two cases. */}
+                            <td>
+                              {{ need: "需求", project: "项目", help: "来帮忙" }[row.bring ?? ""] ?? "—"}
+                              {(row.bring === "need" || row.bring === "project") && row.topic && <span className="body-sm" style={{ color: "var(--fg3)" }}>：{row.topic}</span>}
+                            </td>
                             <td className="mono">{row.wechat ?? "—"}</td>
                             <td className="mono">{row.ref ?? "—"}</td>
                             <td>

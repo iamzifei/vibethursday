@@ -124,6 +124,9 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
   // asked for a Thursday, not for a Tuesday (where everyone demos anyway).
   const [chosenSession, setChosenSession] = useState<string | null>(null);
   const [shareChoice, setShareChoice] = useState<string | null>(null);
+  // What someone brings to a Build Tuesday (2026-11-01): need / project / help.
+  // Changes what the one-sentence box below asks for.
+  const [bringChoice, setBringChoice] = useState<string | null>(null);
   const [dinnerWanted, setDinnerWanted] = useState(false);
   // Learners (step 2 = "learn") are pointed at the paid small class first
   // (James 2026-10-06); "thursday" is their way to sign up for a morning anyway.
@@ -411,6 +414,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
           building,
           demoIntent: data.get("demoIntent"),
           shareTopic: data.get("shareTopic"),
+          tuesdayBring: data.get("tuesdayBring"),
           venuePledge: data.get("venuePledge"),
           dinnerDish: data.get("dinner") === "1" ? data.get("dinnerDish") : null,
           topic: data.get("topic"),
@@ -1010,6 +1014,8 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                 <input type="hidden" name="interest" value="class" />
                 <h3 className="h3" style={{ margin: 0 }}>{copy.classCardTitle}</h3>
                 <p className="body" style={{ margin: 0 }}>{copy.classCardBody}</p>
+                {/* The class page is Chinese only, like the class itself. */}
+                <a className="body" href="/class">{copy.classCardCta}</a>
                 <button type="button" className="link-button" style={{ alignSelf: "start" }} onClick={() => setLearnChoice("thursday")}>
                   {copy.thursdayInstead}
                 </button>
@@ -1048,6 +1054,11 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                   the option: on a phone the closed select shows one line. */}
               {(pickedPurpose === "product" || pickedPurpose === "tech") && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
                 <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommended}</p>
+              )}
+              {/* A business owner with one concrete thing is Tuesday's first case
+                  (2026-11-01). Thursday stays the default: it is the free way in. */}
+              {pickedPurpose === "biz" && sessions.some((session) => !session.tuesday) && sessions.some((session) => session.tuesday && !session.full) && (
+                <p className="field-hint" style={{ color: "var(--fg1)" }}>{copy.fields.recommendedBiz}</p>
               )}
             </div>
 
@@ -1114,23 +1125,64 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
               );
             })()}
 
+            {/* Build Tuesday (2026-11-01): what they bring, so the one or two
+                cases can be lined up before the morning. Stored per session as
+                need / project / help. */}
+            {(() => {
+              const picked = chosenSession ?? suggestedSession(pickedPurpose);
+              const tuesday = Boolean(picked && sessions.find((session) => session.value === picked)?.tuesday);
+              if (!tuesday) return null;
+              return (
+                <fieldset style={{ border: 0, padding: 0, margin: 0 }} className="stack-3">
+                  <legend className="label">{copy.fields.tuesdayBring}</legend>
+                  <div className="choice-group choice-group--compact">
+                    {copy.fields.tuesdayBringOptions.map((option) => (
+                      <label className="choice" key={option.value}>
+                        <input type="radio" name="tuesdayBring" value={option.value} required onChange={() => setBringChoice(option.value)} />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="field-hint">{copy.fields.tuesdayBringHint}</p>
+                </fieldset>
+              );
+            })()}
+
             {/* The one field that says what someone actually wants from the morning,
                 and the one most often too vague to act on ("想了解了解"). The coach
                 below asks one follow-up question; it never rewrites the sentence and
                 never stands between anyone and the submit button. */}
             <div>
-              <label className="label" htmlFor={fieldId("topic")}>
-                {copy.fields.topic}
-              </label>
-              <textarea
-                className="field"
-                id={fieldId("topic")}
-                name="topic"
-                rows={2}
-                ref={topicRef}
-                placeholder={copy.fields.topicPlaceholder}
-              />
-              <p className="field-hint">{copy.fields.topicHint}</p>
+              {(() => {
+                // One box, asked four ways (2026-11-01): a Tuesday need or
+                // project, a business owner's "需求一句话", or the open question.
+                const picked = chosenSession ?? suggestedSession(pickedPurpose);
+                const tuesday = Boolean(picked && sessions.find((session) => session.value === picked)?.tuesday);
+                const ask =
+                  tuesday && bringChoice === "need"
+                    ? { label: copy.fields.tuesdayNeedTopic, placeholder: copy.fields.tuesdayNeedPlaceholder, hint: copy.fields.topicHint }
+                    : tuesday && bringChoice === "project"
+                      ? { label: copy.fields.tuesdayProjectTopic, placeholder: copy.fields.tuesdayProjectPlaceholder, hint: copy.fields.topicHint }
+                      : pickedPurpose === "biz"
+                        ? { label: copy.fields.topicBiz, placeholder: copy.fields.topicBizPlaceholder, hint: copy.fields.topicBizHint }
+                        : { label: copy.fields.topic, placeholder: copy.fields.topicPlaceholder, hint: copy.fields.topicHint };
+                return (
+                  <>
+                    <label className="label" htmlFor={fieldId("topic")}>
+                      {ask.label}
+                    </label>
+                    <textarea
+                      className="field"
+                      id={fieldId("topic")}
+                      name="topic"
+                      rows={2}
+                      ref={topicRef}
+                      placeholder={ask.placeholder}
+                    />
+                    <p className="field-hint">{ask.hint}</p>
+                  </>
+                );
+              })()}
 
               {coach && (
                 <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
@@ -1180,21 +1232,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
               stays with the name in step 1 instead — see emailField. */}
           {!returning && !copy.fields.emailRequired && emailField}
 
-          {/* Asked of everyone, not only whoever picked "none": a Thursday
-              regular who would also come on a Saturday counts towards whether a
-              Saturday is worth running. */}
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label">{copy.fields.availability}</legend>
-            <div className="choice-group choice-group--compact">
-              {copy.fields.availabilityOptions.map((option) => (
-                <label className="choice" key={option.value}>
-                  <input type="checkbox" name="availability" value={option.value} />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
+          {/* "Other times" left the form on 2026-11-01: 7% answered it. The API still accepts it. */}
           <div>
             <label className="label" htmlFor={fieldId("source")}>
               {copy.fields.source}

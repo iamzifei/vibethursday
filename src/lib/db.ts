@@ -703,6 +703,9 @@ export function ensureSchema(): Promise<void> {
     // What they will order at the venue that morning (2026-10-15): a drink id
     // from the menu, or "food". Keyed by session so next week's is separate.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS venue_pledges jsonb NOT NULL DEFAULT '{}'::jsonb`);
+    // What they bring to a Build Tuesday (2026-11-01): need / project / help,
+    // keyed by session like venue_pledges, so the cases can be lined up.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS tuesday_bring jsonb NOT NULL DEFAULT '{}'::jsonb`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS session_shares (
         session     date NOT NULL,
@@ -4578,6 +4581,9 @@ export type TuesdayFeeRow = {
   status: "pending" | "paid" | "waived" | null;
   claimed_at: string | null;
   paid_at: string | null;
+  /** need / project / help for this Tuesday (2026-11-01), and their one sentence. */
+  bring: string | null;
+  topic: string | null;
 };
 
 /**
@@ -4598,7 +4604,9 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
             ) AS member,
             f.id::text AS fee_id, f.ref, f.status,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
-            to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at
+            to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
+            g.tuesday_bring ->> ($1::date)::text AS bring,
+            nullif(g.topic, '') AS topic
        FROM signups g
        LEFT JOIN session_fees f ON f.signup_id = g.id AND f.session = $1::date
       WHERE $1::date = ANY(g.sessions)
@@ -4677,6 +4685,15 @@ export async function listSessionShares(session: string): Promise<{ name: string
 ============================================================================= */
 
 /** Records what someone will order at a morning. Only on their own row. */
+/** What someone brings to one Build Tuesday: need / project / help (2026-11-01). Only on their own row. */
+export async function setTuesdayBring(signupId: string, session: string, bring: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE signups SET tuesday_bring = tuesday_bring || jsonb_build_object($2::text, $3::text) WHERE id = $1::bigint`,
+    [signupId, session, bring],
+  );
+}
+
 export async function setVenuePledge(signupId: string, session: string, pledge: string): Promise<void> {
   await ensureSchema();
   await getPool().query(
