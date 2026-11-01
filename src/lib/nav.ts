@@ -31,8 +31,9 @@ export const NAV_LINKS = [
   // and the archive.
   // The same members, works and questions as the links before it, in a
   // pixel Sydney you walk through. Next to them because it is made of them.
-  { href: "/play", label: "play" },
   { href: "/sessions", label: "sessions" },
+  // 2026-11-01: the guide took /play's slot — it is the community's one rules page.
+  { href: "/guide", label: "guide" },
   // The year-long membership (its first step is the class), in the bar since
   // 2026-10-12; labelled "membership" since 2026-10-15.
   { href: "/class", label: "class" },
@@ -44,12 +45,8 @@ export const NAV_LINKS = [
   // page footer still links it (SiteFooter's `support`).
 ] as const;
 
-/**
- * The community guide (2026-10-28). In every footer rather than the bar: it is
- * reached mostly from links pasted in the group chat, and the bar's slots are
- * already full.
- */
-export const GUIDE_LINK = { href: "/guide", label: "guide" } as const;
+/** The pixel game, moved from the bar to the footer on 2026-11-01. */
+export const PLAY_LINK = { href: "/play", label: "play" } as const;
 
 /** Linked from the home page footer only, never the bar (see SiteFooter). */
 export const SUPPORT_LINK = { href: "/support", label: "support" } as const;

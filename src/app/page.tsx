@@ -314,6 +314,11 @@ export default async function Page({ searchParams }: PageProps) {
                 </li>
               ))}
             </ol>
+
+            {/* The full set lives on /guide (2026-11-01); these five are the excerpt. */}
+            <Link className="body-sm" href={langHref("/guide", lang)} style={{ color: "var(--spark)" }}>
+              {c.rules.more}
+            </Link>
           </div>
         </section>
 

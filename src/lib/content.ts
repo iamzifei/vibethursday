@@ -112,8 +112,9 @@ export const copy = {
           body: "做了一半的东西、一条内容、一个还在琢磨的想法，都能拿出来讲。这里不评判完成度——半成品反而更容易聊出东西来。",
         },
         {
-          title: "展示可以，插播不行",
-          body: "你做的东西就是你最好的宣发，大方讲。但别人讲的时候别转成你的推销——猎头抓人、中介拉客、收完名单就走的，不欢迎。",
+          // 2026-11-01：跟 /guide 第 6 条对齐（台上不卖东西）。
+          title: "讲做法，不打广告",
+          body: "你做的东西、你是怎么做的，大方讲。但台上不打广告、不拉人报课；猎头抓人、中介拉客、收完名单就走的，不欢迎。",
         },
       ],
     },
@@ -345,13 +346,15 @@ export const copy = {
     rules: {
       eyebrow: "§ 05 — 几条规矩",
       title: "就这五条。",
+      // 2026-11-01：以 /guide「八条约定」为准，这里放最要紧的五条，全文链过去。
       items: [
-        "只来两个人也照办。",
+        "周四永远免费。不卖票，随来随走；报名只是为了估人数。到了在店里点一份喝的或吃的，这是我们和场地的约定。",
         "时间雷打不动，每周四上午同一时段。接下来几场固定在 Chatswood 的 The Avenue（地址在首屏），Chatswood 火车站出来就到。万一换场地，vibethursday.com/go 和群里都会提前说。",
-        "免费，不售票。报名只是为了估人数。",
-        "上去分享永远是可选的。想讲就讲，只来听的人一样欢迎——这个局里听的人本来就比讲的人多。",
-        "展示可以，插播不行。你做的东西就是你的宣发，轮到你的时候大方讲；别人讲的时候别转成你的推销。只来收名单、抓人、拉客的，会被请出去。",
+        "讲真做过的。做成了讲结果，没做成讲卡在哪。上去分享永远是可选的，只来听的人一样欢迎。",
+        "台上不卖东西。讲做法，不打广告，不拉人报课。只来收名单、抓人、拉客的，会被请出去。",
+        "听到的留在屋里。别人讲到的客户名字、生意数字，不往外传。",
       ],
+      more: "全部八条约定 →",
     },
 
     signup: {
@@ -712,14 +715,14 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "不要，不售票，也不会有会员费，这条不变。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
+          a: "周四不要钱，不售票，这条不变（周二的闭门会和共创会员是另外的，价格写在各自页面上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
           href: "/support",
           linkLabel: "这儿有个入口",
           aTail: "；不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
         },
         {
           q: "我能在这里推我自己的产品吗？",
-          a: "能，这本来就是形式的一部分，给大家看东西本身就是宣发。找用户、找合伙人、找反馈，写在你的成员卡上，或者报名时说你想上去讲讲。唯一的界线是：别人讲的时候不是你的场子。这条对所有人一样，包括我。",
+          a: "可以给大家看你做的东西、讲你是怎么做的，这本来就是形式的一部分。但台上不打广告、不拉人报课。找用户、找合伙人、找反馈，写在你的成员卡上，散场后自由聊的时候去找人。别人讲的时候不是你的场子，这条对所有人一样，包括我。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -840,11 +843,11 @@ export const copy = {
       meta: {
         title: "这个活动的开销 · Vibe Thursday",
         description:
-          "活动免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。想搭把手的话，入口在这儿。",
+          "周四免费，以后也免费。但它不是零成本——场地每周有最低消费或场地费，通常一两百澳元。想搭把手的话，入口在这儿。",
       },
       eyebrow: "§ 开销",
-      title: "活动免费。但它不是零成本。",
-      lede: "先把最要紧的说完：这个活动永远免费，没有门票，也不会有会员费。这一页不是在卖什么。",
+      title: "周四免费。但它不是零成本。",
+      lede: "先把最要紧的说完：周四永远免费，没有门票。这一页不是在卖什么。",
 
       costTitle: "每周的开销",
       costItems: [
@@ -895,7 +898,8 @@ export const copy = {
 
     footer: {
       tagline: "每周四见。",
-      location: "Chatswood The Avenue · 每周四 10:30 开门，10:45 开始",
+      // 2026-11-01：两个场次都写上。
+      location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · Chatswood Lemon Grove 三楼 · 闭门会",
       supportLink: "这个活动的开销",
       consultLink: "约 James 一对一咨询",
       // The label on the GitHub mark. It is never shown — the mark carries the
@@ -1911,8 +1915,8 @@ export const copy = {
           body: "It does not have to be a working product. Something half-built, a piece of content, an idea you are still turning over — all of it is worth five minutes. Nobody is grading how finished it is."
         },
         {
-          title: "Show, don't sell",
-          body: "What you built is your best marketing — show it properly. Just don't turn someone else's turn into your pitch. Recruiters working the room, agencies hunting clients, people collecting contacts and leaving: not welcome.",
+          title: "Show how, don't advertise",
+          body: "Show what you built and how you did it, properly. But no ads and no selling courses from the floor. Recruiters working the room, agencies hunting clients, people collecting contacts and leaving: not welcome.",
         },
       ],
     },
@@ -2130,12 +2134,13 @@ export const copy = {
       eyebrow: "§ 05 — House rules",
       title: "All five of them.",
       items: [
-        "It runs even if two people show up.",
+        "Thursday is always free. No tickets, come and go; signing up is only so we know how many chairs. Order a drink or something to eat at the venue — that is our deal with them.",
         "The time never moves — Thursday mornings, always. The next few sessions are at The Avenue in Chatswood, right by the station; the address is on the first screen. If the venue ever changes, vibethursday.com/go and the group say so ahead of time.",
-        "Free, no tickets. Signing up is only so we know how many chairs.",
-        "Sharing is always optional. Take a turn if you want one; people who only come to listen are just as welcome — there are always more listeners than speakers.",
-        "Show, don't sell. What you built is your marketing — show it properly when it is your turn, just never turn someone else's into your pitch. People here only to harvest contacts or hunt will be asked to leave.",
+        "Talk about what you actually did: the result if it worked, where you got stuck if it did not. Sharing is always optional; people who only come to listen are just as welcome.",
+        "Nothing is sold from the floor. Show how, no ads, no pitching courses. People here only to harvest contacts or hunt will be asked to leave.",
+        "What is said in the room stays there. Client names and business numbers someone mentions do not go further.",
       ],
+      more: "All eight agreements →",
     },
 
     signup: {
@@ -2409,14 +2414,14 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "No. No tickets, no membership fee, and that will not change. Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
+          a: "Thursday is free. No tickets, and that will not change (the Tuesday session and the membership are separate, priced on their own pages). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
           href: "/support",
           linkLabel: "there is a page for it",
           aTail: ". Chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
         },
         {
           q: "Can I promote my own product here?",
-          a: "Yes, that is the format, not a loophole. Showing what you built is marketing. Looking for users, a cofounder, or feedback belongs on your member card, or say you want a turn when you sign up. The only line is that someone else's turn is not your stage. That applies to everyone, me included.",
+          a: "You can show what you built and how you did it — that is the format. But no ads and no pitching courses from the floor. Looking for users, a cofounder, or feedback belongs on your member card, and in the open conversation after. Someone else's turn is not your stage. That applies to everyone, me included.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -2527,11 +2532,11 @@ export const copy = {
       meta: {
         title: "What this costs · Vibe Thursday",
         description:
-          "The meetup is free and stays free. It is not costless though — a venue charges a minimum spend or a room fee each week, usually a hundred or two. If you ever want to help carry that, this is where.",
+          "Thursday is free and stays free. It is not costless though — a venue charges a minimum spend or a room fee each week, usually a hundred or two. If you ever want to help carry that, this is where.",
       },
       eyebrow: "§ Costs",
-      title: "It is free. It is not costless.",
-      lede: "The important part first: this meetup is free, always will be, and there will never be a ticket or a membership fee. This page is not selling anything.",
+      title: "Thursday is free. It is not costless.",
+      lede: "The important part first: Thursday is free, always will be, and there will never be a ticket. This page is not selling anything.",
 
       costTitle: "What a week costs",
       costItems: [
@@ -2582,7 +2587,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "The Avenue, Chatswood · Thursdays, doors 10:30am, starts 10:45am",
+      location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · Lemon Grove level 3, Chatswood · closed session",
       supportLink: "What this costs",
       consultLink: "Book a one-to-one with James",
       sourceLink: "This site's source on GitHub",
