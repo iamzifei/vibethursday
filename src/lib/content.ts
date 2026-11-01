@@ -398,7 +398,7 @@ export const copy = {
           { value: "tech", label: "找机会：工作、项目、合作" },
         ],
         steps: ["你是谁", "你更像哪一类？", "关于你（选填）", "哪一场？"],
-        recommended: "做东西的朋友更推荐周二 Build Tuesday：十来个人打开电脑互相看。周四有空位也欢迎来。",
+        recommended: "做东西的朋友更推荐周二 Build Tuesday：十来个人，带着需求或项目来，一起拆清楚。周四有空位也欢迎来。",
         bizFocus: "最想让 AI 帮你哪一块？",
         bizFocusOptions: [
           { value: "leads", label: "找客户、获客" },
@@ -641,13 +641,13 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "有东西能打开给人看的，或想做智能体、网站、小工具的", "闭门研讨：每人演示、现场咨询、对接资源", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "带着真实业务需求的老板，或在做东西、想要具体反馈的人", "闭门会：一到两个真实需求或项目，大家一起拆、给反馈", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
           cta: "报周二",
           member: "了解共创会员",
         },
       },
       // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
-      tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人、打开电脑互相看做的东西。",
+      tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人，带着需求或项目来，一起拆清楚。",
       tuesdayHintCta: "改报周二",
       // 周四进了候补、周二还有位子时，成功页上出现。
       tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有位子，在做东西的话可以改到那天：",
@@ -666,7 +666,7 @@ export const copy = {
       // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
-        { value: "tuesday", label: "周二动手局：打开电脑，互相看做的东西" },
+        { value: "tuesday", label: "周二闭门会：带着需求或项目来，一起拆" },
         // 写明收费（James 10-05 改了 10-04 的决定）：先过滤只想要免费的人，也让之后私信时
         // 预期一致。不写价格——还没定。
         { value: "class", label: "收费小班：有人带着一步步做" },
@@ -1682,11 +1682,11 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood，周二上午的闭门研讨会：十来个在做东西的人，打开电脑互相看做的东西，现场咨询、对接资源。30 澳元 + GST，共创会员免费。Vibe Thursday 的姊妹场。",
+        description: "悉尼 Chatswood，周二上午的闭门会：每场一位老板带着真实业务需求、或一位在做东西的人带着项目来，十来个人一起梳理、给反馈。30 澳元 + GST，共创会员免费。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
-      title: "打开电脑，互相看看在做的东西。",
-      lede: "周四的人越来越多，在做东西的人想细看、细聊，在一屋子人里很难。所以单开一个周二上午：小房间，十来个人，不上台，不讲课。",
+      title: "带一个真需求来，一起把它拆清楚。",
+      lede: "周二是限定人数的闭门会。每场请一位老板带着真实的业务需求来，或者一位在做东西的人带着自己的项目来，十来个人围着它一起梳理、给反馈。",
       factsTitle: "时间和地点",
       facts: [
         { label: "时间", value: "上午 10:30–12:00" },
@@ -1701,18 +1701,18 @@ export const copy = {
       directionsCaption: "怎么走：点开看大图",
       whoTitle: "给谁",
       who: [
-        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。",
-        "判断标准就一条：你能打开电脑，给别人看你做的东西，哪怕只做了一半。",
-        // 2026-10-26 James 定：有具体需求的人也欢迎，拿他们的需求当现场案例演示。
-        "还没开始做、但有具体需求的也欢迎：想做一个智能体、一个网站，或者预约、报价、客户管理这类小工具。带着需求来，现场拿它当案例做给你看。",
+        // 2026-11-01：周二改成「磨需求」，带需求的老板排第一。
+        "有真实业务需求的老板：想用 AI 省人、省时间，或者想做一个智能体、网站、预约报价客户管理这类工具，但不知道该怎么做、要花多少。",
+        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。带着做了一半的项目来，说清卡在哪。",
         "只想随便看看、还没想好要做什么的，更适合周四。",
       ],
       formatTitle: "怎么进行",
       format: [
-        "没有台上，也没有投影。大家围着桌子，轮流打开电脑给旁边的人看。",
-        "每人大约 5–8 分钟：做了什么、卡在哪、想听什么意见。然后大家一起拆。",
-        "带上电脑和充电器。没做完、很粗糙都没关系，卡住的地方最值得聊。",
-        "James 现场做咨询和 Q&A；几个人卡在同一类问题上的，帮你们对接社群里能做的人。",
+        // 2026-11-01 James 定：从 11-03 起每场围绕真实需求或项目展开。
+        "每场一到两个案例。老板讲现在怎么做、花多少时间和钱、想要什么结果；做东西的人讲做了什么、卡在哪、想听什么意见。",
+        "在场的人一起拆：能不能做、怎么做、大概要多久。散场前把需求写清楚，说好谁来跟进。",
+        "哪一场还没有现成的需求，大家就带自己的产品或需求来，一起共创交流。",
+        "James 主持，帮你把方案把关。",
       ],
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
       compareTitle: "来周二还是周四？",
@@ -2170,7 +2170,7 @@ export const copy = {
           { value: "tech", label: "Looking for opportunities: work, projects, partners" },
         ],
         steps: ["You", "Which sounds most like you?", "About you (optional)", "Which morning?"],
-        recommended: "Building things? Build Tuesday is the better fit — a dozen people, laptops open. Thursday is welcome too while it has places.",
+        recommended: "Building things? Build Tuesday is the better fit — about a dozen people working through real needs and projects together. Thursday is welcome too while it has places.",
         bizFocus: "What would you most like AI to help with?",
         bizFocusOptions: [
           { value: "leads", label: "Finding customers" },
@@ -2346,12 +2346,12 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "People with something to show, or with an agent, website or tool they want built", "Closed workshop: everyone demos, consulting and introductions on the spot", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "Business owners with a real need, or people building something who want specific feedback", "Closed session: one or two real needs or projects, worked through together", "12, sign up to hold a place", "A$30 + GST; members free"],
           cta: "Sign up for Tuesday",
           member: "About membership",
         },
       },
-      tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, laptops open, looking at each other's work.",
+      tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, bringing real needs or projects and working through them together.",
       tuesdayHintCta: "Switch to Tuesday",
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
@@ -2366,7 +2366,7 @@ export const copy = {
       dinnerSkipped: "You're on Thursday's waitlist, so dinner can be booked once you have a place.",
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
-        { value: "tuesday", label: "Build Tuesday: laptops open, looking at each other's work" },
+        { value: "tuesday", label: "Build Tuesday: bring a need or a project, work through it together" },
         { value: "class", label: "A paid small class, walked through step by step" },
         { value: "none", label: "Neither — Thursday is enough" },
       ],
@@ -3217,11 +3217,11 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, a closed Tuesday-morning workshop: about a dozen people who build things, laptops open, looking at each other's work, with consulting and introductions on the spot. A$30 + GST; members free. A sister session of Vibe Thursday.",
+        description: "Chatswood, Sydney, a closed Tuesday-morning session: each time a business owner brings a real need, or a builder brings a project, and about a dozen people work through it together. A$30 + GST; members free. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
-      title: "Open your laptop and show each other what you're building.",
-      lede: "Thursday keeps getting bigger, and looking closely at someone's work is hard in a room that full. So people who build things get a Tuesday morning of their own: a small room, about a dozen people, no stage, no talk.",
+      title: "Bring a real need, and work it through together.",
+      lede: "Tuesday is a closed session with limited places. Each time, a business owner brings a real need, or someone building something brings their project, and about a dozen people work through it together and give feedback.",
       factsTitle: "When and where",
       facts: [
         { label: "Time", value: "10:30am–12:00" },
@@ -3235,17 +3235,16 @@ export const copy = {
       directionsCaption: "How to get there — tap for the full image",
       whoTitle: "Who it is for",
       who: [
-        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not.",
-        "One test: you can open your laptop and show someone what you made, even if it is half done.",
-        "Not building yet but have something specific in mind? Also welcome: an agent, a website, or a small tool for bookings, quotes or customers. Bring the need and it becomes the live example.",
+        "Business owners with a real need: you want AI to save people or time, or you want an agent, a website, or a tool for bookings, quotes or customers, but are not sure how or what it would take.",
+        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not. Bring a half-done project and say where you are stuck.",
         "If you mostly want to look around and have nothing particular in mind yet, Thursday will suit you better.",
       ],
       formatTitle: "How it runs",
       format: [
-        "No stage and no projector. Everyone sits round the table and takes turns opening their laptop for the people next to them.",
-        "About 5–8 minutes each: what you made, where you are stuck, what you want an opinion on. Then everyone digs in.",
-        "Bring your laptop and charger. Unfinished and rough is fine — where you are stuck is the best part to talk about.",
-        "James consults and takes questions on the spot; where several people are stuck on the same kind of problem, he introduces you to people in the community who can build it.",
+        "One or two cases each time. A business owner explains how it is done now, what it costs in time and money, and what result they want; a builder explains what they made, where they are stuck, and what they want an opinion on.",
+        "Everyone works through it: can it be done, how, and roughly how long. Before we wrap up, the need is written down clearly and we agree who follows up.",
+        "When there is no ready-made need that week, everyone brings their own product or need and we work on them together.",
+        "James hosts and checks the plan with you.",
       ],
       compareTitle: "Tuesday or Thursday?",
       compareUnsure: "Not sure? Start with Thursday: free, a bigger room, a good way to meet everyone. Come to Tuesday when you have something you want looked at closely and specific feedback on.",
