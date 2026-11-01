@@ -11,6 +11,7 @@ import path from "node:path";
 
 import { feeFor, openSpecialSessions, SPECIAL_SESSIONS } from "../src/lib/sessions.ts";
 import { feeLabel, feeToPay, looksLikeFeeRef, newFeeRef, payLabel } from "../src/lib/tuesday-fee.ts";
+import { COURSE } from "../src/lib/course.ts";
 
 test("from 20 October every Tuesday is $30 + GST; Thursdays and the first two Tuesdays stay free", () => {
   assert.equal(feeFor("2026-10-06"), null);
@@ -91,8 +92,9 @@ test(
       const member = await insert("Mia", `Mia ${stamp}`);
       const guest = await insert("Gus", `gus-${stamp}`);
       await pool.query(
-        `INSERT INTO course_orders (course, name, wechat, ref, status, paid_at) VALUES ('test', 'Mia', $1, $2, 'paid', now())`,
-        [`mia${stamp}`, `AI${String(stamp).slice(-5)}`],
+        // The membership class: since 2026-11-01 only it makes a member (tests/membership.test.mts).
+        `INSERT INTO course_orders (course, name, wechat, ref, status, paid_at) VALUES ($3, 'Mia', $1, $2, 'paid', now())`,
+        [`mia${stamp}`, `AI${String(stamp).slice(-5)}`, COURSE.id],
       );
       assert.equal(await isMember(member), true, "matched by WeChat ID, ignoring case and spaces");
       assert.equal(await isMember(guest), false);
@@ -122,7 +124,7 @@ test(
       assert.equal(merged?.ref, "TUDDDDD");
       assert.equal(merged?.status, "paid");
     } finally {
-      await pool.query(`DELETE FROM course_orders WHERE course = 'test'`).catch(() => {});
+      await pool.query(`DELETE FROM course_orders WHERE ref = $1`, [`AI${String(stamp).slice(-5)}`]).catch(() => {});
       await pool.query(`DELETE FROM signups WHERE id = ANY($1::bigint[])`, [made]).catch(() => {});
       await pool.end();
     }

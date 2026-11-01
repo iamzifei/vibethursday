@@ -27,6 +27,33 @@ export const COURSE = {
   cap: 40,
 } as const;
 
+/**
+ * The classes whose paid order makes someone a 共创会员 for a year (member
+ * badge, Tuesdays free). Only the $599 one (James 2026-11-01): until then any
+ * paid order counted, which would have made every A$365 AI+IP student a member.
+ * `db.ts` reads this in every membership check.
+ */
+export const MEMBERSHIP_COURSES = [COURSE.id] as const;
+
+/**
+ * The class on sale on /class from 2026-11-01: the AI+IP class, one day.
+ * Not a membership (see MEMBERSHIP_COURSES); members take it free, so their
+ * order is confirmed without a transfer. `COURSE` above stays the 10/25 class
+ * because the after-class tools (/class/kit and friends) still belong to it.
+ */
+export const IP_COURSE = {
+  id: "2026-11-15-ai-ip",
+  title: "澳洲 AI+IP 实战课",
+  date: "2026-11-15",
+  dateLabel: "11 月 15 日（周日）",
+  timeLabel: "9:00 登记，9:30 开课，15:00 结束",
+  placeLabel: "1/71 Chandos St, St Leonards NSW 2065",
+  priceLabel: "365 澳元 + GST",
+  /** What to transfer: A$365 plus 10% GST. */
+  payLabel: "401.50 澳元（365 + GST）",
+  cap: 40,
+} as const;
+
 /** A payment reference: easy to read out and type into a bank app. */
 export function newCourseRef(): string {
   // No 0/O or 1/I, so it survives being read aloud or retyped.

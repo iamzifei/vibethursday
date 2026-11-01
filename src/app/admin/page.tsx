@@ -11,7 +11,7 @@ import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
-import { COURSE } from "@/lib/course";
+import { COURSE, IP_COURSE } from "@/lib/course";
 import { dinnerConfig } from "@/lib/dinner";
 import {
   countCheckins,
@@ -104,7 +104,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders, oldCourseOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -123,7 +123,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listPhotosForReview(),
       // Counting only; a failure here must not take the admin page down.
       listLoginStats().catch(() => []),
-      listCourseOrders(COURSE.id).catch(() => []),
+      listCourseOrders(IP_COURSE.id).catch(() => []),
+      // The 10/25 membership class is no longer on sale (2026-11-01), but an
+      // order still waiting for its transfer must stay markable as paid here.
+      listCourseOrders(COURSE.id).then((rows) => rows.filter((o) => o.status === "pending")).catch(() => []),
     ]);
 
   // Thursday's opening shares (2026-10-15): the next Thursday's volunteers,
@@ -1294,12 +1297,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
           the money shows up under their reference. */}
       <section className="stack-4" id="course">
         <div className="group-head">
-          <h2 className="h3">{COURSE.title} · {COURSE.date}</h2>
+          <h2 className="h3">{IP_COURSE.title} · {IP_COURSE.date}</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            已付 {courseOrders.filter((o) => o.status === "paid").length} · 待付 {courseOrders.filter((o) => o.status === "pending").length} · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {COURSE.cap}
+            已付 {courseOrders.filter((o) => o.status === "paid").length} · 待付 {courseOrders.filter((o) => o.status === "pending").length} · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {IP_COURSE.cap}
           </span>
         </div>
-        {courseOrders.length === 0 ? (
+        {courseOrders.length + oldCourseOrders.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名。</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -1318,10 +1321,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
               <tbody>
-                {courseOrders.map((order) => (
+                {[...courseOrders, ...oldCourseOrders].map((order) => (
                   <tr key={order.id}>
                     <td className="mono">{order.ref}</td>
-                    <td>{order.name}{order.signup_id ? "" : " ·新"}</td>
+                    <td>{order.name}{order.signup_id ? "" : " ·新"}{oldCourseOrders.some((o) => o.id === order.id) ? ` ·${COURSE.title}（599）` : ""}</td>
                     <td className="mono">{order.wechat}</td>
                     <td>
                       {{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}

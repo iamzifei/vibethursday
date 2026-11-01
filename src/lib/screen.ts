@@ -18,14 +18,19 @@ export const SCREEN_LINKS = {
   member: "/vip",
 } as const;
 
-/** The membership slide: the same items, values and price as /vip. */
-export const SCREEN_MEMBER = {
-  price: "599 澳元 + GST",
+/**
+ * The class slide: the same class, price and items as /vip (2026-11-01, the
+ * AI+IP class; until then the $599 membership, no longer on sale).
+ */
+export const SCREEN_CLASS = {
+  title: "澳洲 AI+IP 实战课",
+  when: "11 月 15 日（周日）9:00–15:00 · St Leonards",
+  price: "365 澳元 + GST",
   points: [
-    "4 小时实战课：手把手从智能体到官网搭建",
-    "12 个月在线社群，每周行业洞察与案例分享",
-    "全年超 30 次周二 Workshop，会员免费",
-    "部分好想法免费搭建，收益共享",
-    "加赠 AI自媒体+IP实战课；前 15 名送一页式官网",
+    "Nick｜商业 IP 定位",
+    "Lankey｜IP 打造",
+    "特邀嘉宾｜实战分享",
+    "James｜AI 应用",
+    "含一年复训：全年不少于 6 次；共创会员免费",
   ],
 };

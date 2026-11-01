@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
 import { requestOrigin } from "@/lib/request-origin";
-import { SCREEN_LINKS, SCREEN_MEMBER, SCREEN_SCHEDULE } from "@/lib/screen";
+import { SCREEN_LINKS, SCREEN_CLASS, SCREEN_SCHEDULE } from "@/lib/screen";
 
 export const dynamic = "force-dynamic";
 
@@ -63,19 +63,18 @@ export default async function ScreenPage() {
       </section>
       </div>
       <div className="screen__slide screen__slide--b">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="screen__poster" src="/class/poster-member.webp" width={1080} height={1619} alt="疯狂星期四共创会员海报" />
+        {/* Text only since 2026-11-01: there is no poster for this class on the site. */}
         <section className="screen__intro">
-          <p className="eyebrow">§ 想系统学 AI 的</p>
-          <h1>疯狂星期四<br />共创会员</h1>
-          <p className="screen__price">{SCREEN_MEMBER.price}</p>
+          <p className="eyebrow">§ {SCREEN_CLASS.when}</p>
+          <h1>{SCREEN_CLASS.title}</h1>
+          <p className="screen__price">{SCREEN_CLASS.price}</p>
           <ul className="screen__points">
-            {SCREEN_MEMBER.points.map((point) => <li key={point}>{point}</li>)}
+            {SCREEN_CLASS.points.map((point) => <li key={point}>{point}</li>)}
           </ul>
         </section>
         <figure className="screen__codes">
-          <div className="door-qr screen__qr" aria-label="会员介绍二维码" dangerouslySetInnerHTML={{ __html: memberQr }} />
-          <figcaption><strong>扫码看会员详情</strong>vibethursday.com/vip</figcaption>
+          <div className="door-qr screen__qr" aria-label="课程介绍二维码" dangerouslySetInnerHTML={{ __html: memberQr }} />
+          <figcaption><strong>扫码看课程安排</strong>vibethursday.com/vip</figcaption>
         </figure>
       </div>
     </main>

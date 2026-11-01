@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentAccount } from "@/lib/account";
-import { COURSE, newCourseRef, parseCourseForm } from "@/lib/course";
-import { createCourseOrder, getSignupProfile } from "@/lib/db";
+import { IP_COURSE, newCourseRef, parseCourseForm } from "@/lib/course";
+import { createCourseOrder, getSignupProfile, isMember } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   let name = form.name;
   let wechat = form.wechat;
   let signupId: string | null = null;
+  let member = false;
 
   // Only when the page offered "recognised as X" (`self=1`): someone who
   // tapped "not me" on a shared phone signs up whoever they typed.
@@ -57,6 +58,8 @@ export async function POST(request: Request) {
         name = profile.name;
         wechat = profile.wechat;
         signupId = account.signupId;
+        // A 共创会员's membership already covers this class (2026-11-01).
+        member = await isMember(account.signupId);
       }
     } catch (error) {
       console.error("[course] could not read the recognised signup", error);
@@ -67,8 +70,8 @@ export async function POST(request: Request) {
 
   try {
     const order = await createCourseOrder({
-      course: COURSE.id,
-      cap: COURSE.cap,
+      course: IP_COURSE.id,
+      cap: IP_COURSE.cap,
       signupId,
       name,
       wechat,
@@ -76,6 +79,7 @@ export async function POST(request: Request) {
       bizFocus: form.bizFocus,
       note: form.note,
       ref: newCourseRef(),
+      free: member,
     });
     return back({ ref: order.ref });
   } catch (error) {

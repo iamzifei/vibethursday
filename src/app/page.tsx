@@ -18,7 +18,7 @@ import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
 import { LANG_PARAM } from "@/lib/content";
 import { bookableSessions, formatSession, isSpecialSession, sydneyToday } from "@/lib/sessions";
-import { COURSE } from "@/lib/course";
+import { IP_COURSE } from "@/lib/course";
 
 
 type PageProps = {
@@ -127,7 +127,7 @@ export default async function Page({ searchParams }: PageProps) {
   }
 
   // Shown until the class date has passed (Sydney calendar date).
-  const showClassPromo = sydneyToday().toISOString().slice(0, 10) <= COURSE.date;
+  const showClassPromo = sydneyToday().toISOString().slice(0, 10) <= IP_COURSE.date;
 
   // The document is declared zh-CN in the layout, so the English view
   // re-declares its own language here for screen-reader pronunciation.
@@ -339,8 +339,8 @@ export default async function Page({ searchParams }: PageProps) {
                 foot={
                   tuesdayOpen && (
                     <>
-                      <a href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>{" "}
-                      <a href={langHref("/class", lang)}>{c.signup.compare.tuesday.member}</a>
+                      {/* The membership link went 2026-11-01: /class sells the AI+IP class now. */}
+                      <a href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>
                     </>
                   )
                 }

@@ -11,6 +11,7 @@ import { createHmac } from "node:crypto";
 
 import { CHECKOUT_HOLD_MINUTES, CHECKOUT_MINUTES, checkoutSettled, HOLD_MINUTES, kindOfRef, minutesLeft, stripeEnabled, toCents, verifyStripeSignature } from "../src/lib/stripe-pay.ts";
 import { dinnerConfig } from "../src/lib/dinner.ts";
+import { COURSE } from "../src/lib/course.ts";
 
 const SECRET = "whsec_test";
 const sign = (body: string, t: number, secret = SECRET) => `t=${t},v1=${createHmac("sha256", secret).update(`${t}.${body}`).digest("hex")}`;
@@ -165,8 +166,9 @@ test(
       const memberFee = await m.getOrCreateSessionFee(tuesday, member, "TUMMMM2", HOLD_MINUTES);
       await pool.query(
         `INSERT INTO course_orders (course, signup_id, name, wechat, ref, status, paid_at)
-         SELECT 'test', id, name, wechat, 'AIMMMM2', 'paid', now() FROM signups WHERE id = $1::bigint`,
-        [member],
+         SELECT $2, id, name, wechat, 'AIMMMM2', 'paid', now() FROM signups WHERE id = $1::bigint`,
+        // The membership class: since 2026-11-01 only it makes a member (tests/membership.test.mts).
+        [member, COURSE.id],
       );
       await expire("session_fees", memberFee.ref);
       await m.releaseExpiredHolds();

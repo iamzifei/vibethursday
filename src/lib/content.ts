@@ -40,7 +40,7 @@ export const copy = {
       works: "作品",
       play: "游戏",
       sessions: "场次",
-      class: "会员",
+      class: "课程",
       tuesday: "周二",
       guide: "社区攻略",
       about: "这是什么",
@@ -89,9 +89,10 @@ export const copy = {
       // The paid class, linked from the first screen until its date has passed
       // (see `COURSE` in course.ts). Thursdays stay free; this is a separate thing.
       classPromo: {
-        label: "10/25 周日 · 精品小班",
-        text: "老板的 AI 第一课：带走一个懂你生意的 AI 商业顾问，加入 Vibe Thursday 共创会员",
-        cta: "看详情和海报 →",
+        // 2026-11-01：换成 11-15 AI+IP 实战课（IP_COURSE）。
+        label: "11/15 周日 · 澳洲 AI+IP 实战课",
+        text: "学点 AI，做点内容，让生意多些机会。365 澳元 + GST，含一年复训",
+        cta: "看课程安排 →",
       },
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
@@ -646,7 +647,6 @@ export const copy = {
           name: "周二 Build Tuesday",
           cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "带着真实业务需求的老板，或在做东西、想要具体反馈的人", "闭门会：一到两个真实需求或项目，大家一起拆、给反馈", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
           cta: "报周二",
-          member: "了解共创会员",
         },
       },
       // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
@@ -1856,7 +1856,7 @@ export const copy = {
       works: "Works",
       play: "Play",
       sessions: "Sessions",
-      class: "Membership",
+      class: "Class",
       tuesday: "Tuesday",
       guide: "How it works",
       about: "What this is",
@@ -1892,9 +1892,9 @@ export const copy = {
       capacityFull: "The next one's 40 seats are taken; signing up joins the waitlist — if you are not booked, please pick the following week",
       goLink: "Everything for this week is here: vibethursday.com/go →",
       classPromo: {
-        label: "Sun 25 Oct · small class, taught in Chinese",
-        text: "AI 101 for business owners: leave with an AI business advisor that knows your business, and a year of Vibe Thursday membership",
-        cta: "Details →",
+        label: "Sun 15 Nov · AI + personal brand class, taught in Chinese",
+        text: "Learn some AI, make some content, bring your business more chances. A$365 + GST, with a year of refresher sessions",
+        cta: "See the day →",
       },
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
@@ -2353,7 +2353,6 @@ export const copy = {
           name: "Tuesday · Build Tuesday",
           cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "Business owners with a real need, or people building something who want specific feedback", "Closed session: one or two real needs or projects, worked through together", "12, sign up to hold a place", "A$30 + GST; members free"],
           cta: "Sign up for Tuesday",
-          member: "About membership",
         },
       },
       tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, bringing real needs or projects and working through them together.",

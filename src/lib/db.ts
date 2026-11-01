@@ -9,7 +9,16 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
+import { MEMBERSHIP_COURSES } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
+
+/**
+ * The SQL list of classes that make a 共创会员 (`MEMBERSHIP_COURSES`), for the
+ * four membership checks below. Built from constants in this repository, never
+ * from input; the quote doubling is only so a stray apostrophe could not break
+ * the statement.
+ */
+const MEMBER_COURSES_SQL = MEMBERSHIP_COURSES.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
 
 /**
  * Postgres access.
@@ -1451,7 +1460,7 @@ const MEMBER_COLUMNS = `
   -- matched the same way as isMember. Shown as a badge on the card.
   EXISTS (
     SELECT 1 FROM course_orders o
-     WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+     WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
        AND (o.signup_id = g.id
             OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
   ) AS cocreator,
@@ -2931,6 +2940,12 @@ export async function createCourseOrder(input: {
   bizFocus: string[];
   note: string | null;
   ref: string;
+  /**
+   * Confirmed without a transfer: a 共创会员 taking a class their membership
+   * already covers (2026-11-01). Still takes a place and still waitlists when
+   * the class is full. Callers decide this from isMember, never from the form.
+   */
+  free?: boolean;
 }): Promise<{ ref: string; status: CourseOrder["status"]; existing: boolean }> {
   await ensureSchema();
   const client = await getPool().connect();
@@ -2964,17 +2979,18 @@ export async function createCourseOrder(input: {
       `SELECT count(*)::text AS n FROM course_orders WHERE course = $1 AND status IN ('pending', 'paid')`,
       [input.course],
     );
-    const status: CourseOrder["status"] = Number(taken.rows[0].n) < input.cap ? "pending" : "waitlist";
+    const open = Number(taken.rows[0].n) < input.cap;
+    const status: CourseOrder["status"] = !open ? "waitlist" : input.free ? "paid" : "pending";
 
     // A cancelled order for the same person is reopened rather than duplicated
     // (the unique index allows one row per person per class).
     const saved = await client.query<{ ref: string; status: CourseOrder["status"] }>(
-      `INSERT INTO course_orders (course, signup_id, name, wechat, industry, biz_focus, note, ref, status)
-       VALUES ($1, $2::bigint, $3, $4, $5, $6::text[], $7, $8, $9)
+      `INSERT INTO course_orders (course, signup_id, name, wechat, industry, biz_focus, note, ref, status, paid_at)
+       VALUES ($1, $2::bigint, $3, $4, $5, $6::text[], $7, $8, $9, CASE WHEN $9 = 'paid' THEN now() END)
        ON CONFLICT (course, lower(regexp_replace(wechat, '\\s+', '', 'g')))
        DO UPDATE SET status = EXCLUDED.status, name = EXCLUDED.name, industry = EXCLUDED.industry,
                      biz_focus = EXCLUDED.biz_focus, note = EXCLUDED.note, signup_id = EXCLUDED.signup_id,
-                     created_at = now(), paid_at = NULL
+                     created_at = now(), paid_at = EXCLUDED.paid_at
        RETURNING ref, status`,
       [input.course, input.signupId, input.name, input.wechat, input.industry, input.bizFocus, input.note, input.ref, status],
     );
@@ -4266,6 +4282,7 @@ export async function isMember(signupId: string): Promise<boolean> {
        SELECT 1 FROM course_orders o, signups g
         WHERE g.id = $1::bigint
           AND o.status = 'paid'
+          AND o.course IN (${MEMBER_COURSES_SQL})
           AND o.paid_at > now() - interval '1 year'
           AND (o.signup_id = g.id
                OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
@@ -4336,7 +4353,7 @@ export async function releaseExpiredHolds(): Promise<void> {
           AND f.session = ANY(g.sessions)
           AND NOT EXISTS (
             SELECT 1 FROM course_orders o
-             WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+             WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
                AND (o.signup_id = g.id
                     OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
           )`,
@@ -4575,7 +4592,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
     `SELECT g.id::text AS signup_id, g.name, g.wechat,
             EXISTS (
               SELECT 1 FROM course_orders o
-               WHERE o.status = 'paid' AND o.paid_at > now() - interval '1 year'
+               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS member,
