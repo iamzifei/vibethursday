@@ -27,9 +27,11 @@ export const copy = {
     meta: {
       // The English tail is there for the search phrase people actually type
       // ("sydney ai meetup"); the Chinese half is what the room calls it.
-      title: "Vibe Thursday · 悉尼每周四上午的 AI 局 · Sydney AI Meetup",
+      // 2026-11-02：加长尾词「悉尼华人 AI 线下聚会」，给搜索和 AI 引用；只写能证实的
+      // （每周、2026 年 8 月起），不写「最火」「最大」。
+      title: "Vibe Thursday · 悉尼华人 AI 线下聚会 · 每周四上午 · Sydney AI Meetup",
       description:
-        "每周四上午 10:30，悉尼 Chatswood。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
+        "悉尼华人 AI 线下聚会，2026 年 8 月起每周四上午 10:30 在 Chatswood。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
     },
 
     nav: {
@@ -63,7 +65,7 @@ export const copy = {
     hero: {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
-      subtitle: "悉尼 · 每周四上午的 AI 局",
+      subtitle: "悉尼华人 AI 线下聚会 · 每周四上午",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。有东西随时拿出来，只想听也完全没问题。",
       facts: [
         { label: "时间", value: "每周四 10:30 开门 · 10:45 开始", href: null, linkLabel: null },
@@ -1759,7 +1761,7 @@ export const copy = {
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "带项目来，或者带需求来，当天就开始做。",
-      lede: "12 人闭门会。上午聊项目和技术，中午聊老板的需求，下午当场动手。",
+      lede: "12 人闭门会。上午按自己的节奏推进项目，导师团在旁边陪跑；中午聊老板的需求；下午 workshop 当场动手。",
       chips: ["每周二 10:30–15:30", "Chatswood", "12 人", "30 澳元 + GST · 会员免费"],
       cta: "报名周二",
       ctaMember: "会员全年免费 →",
@@ -1769,17 +1771,20 @@ export const copy = {
         { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
         { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
+        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员和导师团免费" },
       ],
       whoTitle: "给谁",
       who: [
         "在做东西的人：独立开发、一人公司、用 AI 搭产品或工作流的",
+        "想考一张能核验的 AI 证书的人：下午一起备考 AWS AI Practitioner",
         "会 AI、会技术，想找真实需求、组队做项目的人",
         "有真实需求的老板：上午看看产品怎么做，中午聊你的需求",
       ],
-      formatTitle: "一天三段",
+      // 2026-11-02：参考 Alpha School 的说法——上午专注、按自己的节奏，导师当 guide
+      // 陪跑不讲课，下午 workshop。时间和流程本身没变。
+      formatTitle: "一天三段：上午专注，下午动手",
       format: [
-        { time: "10:30–12:00", title: "项目和技术", body: "带项目的人讲做到哪、卡在哪，会技术的一起拆。" },
+        { time: "10:30–12:00", title: "专注推进", body: "每人按自己的节奏推进手上的项目。导师团和共建者在旁边陪跑：不讲课，卡住了随时找他们，会技术的一起拆。" },
         { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
         { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。也可以一起备考 AWS AI 证书（AI Practitioner，可以中文考，考试费自付），每人顺手做一个小项目练手。" },
       ],
@@ -1917,7 +1922,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · Sydney's free weekly AI meetup",
       description:
-        "Every Thursday at 10:30am in Chatswood, Sydney. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
+        "Sydney's weekly in-person AI meetup for Chinese-speaking builders: every Thursday at 10:30am in Chatswood since August 2026. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
     },
 
     nav: {
@@ -3355,7 +3360,7 @@ export const copy = {
       },
       eyebrow: "§ Build Tuesday",
       title: "Bring a project or a real need, and start on it the same day.",
-      lede: "Twelve people, behind closed doors. Projects and tech in the morning, owners' needs over lunch, a hands-on workshop after.",
+      lede: "Twelve people, behind closed doors. Work on your own project at your own pace in the morning, with mentors alongside as guides; owners' needs over lunch; a hands-on workshop after.",
       chips: ["Tuesdays 10:30–15:30", "Chatswood", "12 places", "A$30 + GST · members free"],
       cta: "Sign up for Tuesday",
       ctaMember: "Free all year for members →",
@@ -3373,9 +3378,9 @@ export const copy = {
         "People who know AI and tech and want real needs to work on, with a team",
         "Business owners with a real need: see how products get made in the morning, talk through yours at lunch",
       ],
-      formatTitle: "Three parts",
+      formatTitle: "Three parts: focus in the morning, build in the afternoon",
       format: [
-        { time: "10:30–12:00", title: "Projects and tech", body: "Show where your project is and where it is stuck; the tech people dig in." },
+        { time: "10:30–12:00", title: "Focused work", body: "Move your own project on at your own pace. Mentors and builders are alongside as guides, not lecturers: ask when you are stuck, and the tech people dig in." },
         { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
         { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need. Or study together for the AWS Certified AI Practitioner (you pay your own exam fee), building a small project as practice." },
       ],
