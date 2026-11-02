@@ -651,7 +651,7 @@ export const copy = {
       tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有位子，在做东西的话可以改到那天：",
       tuesdayOverflowCta: "去改到周二",
       // A paid Build Tuesday (2026-10-14): the one step left after booking.
-      feeMember: "你是共创会员或导师团成员，这一场免费。",
+      feeMember: "这一场你不用付门票。",
       // 报完周二、还没付的人看到的升单引导（2026-11-02）。
       memberUpsell: {
         title: "常来周二的话，办共创会员更划算",
@@ -1728,7 +1728,7 @@ export const copy = {
         { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
         { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员和导师团免费" },
+        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
       ],
       whoTitle: "给谁",
       who: [
@@ -1754,7 +1754,7 @@ export const copy = {
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
       compareTitle: "来周二还是周四？",
       compareUnsure: "拿不准就先来周四：免费，人多，先认识大家；手上有东西想给人细看、想要具体反馈，再来周二。",
-      thursdayNote: "周四照常办。同一周的周二和周四只能报一场，报了周二会自动退掉那周的周四。",
+      thursdayNote: "周四照常办，同一周的周二和周四可以都报。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
       signupLede: "名额只有 12 个，先报名占座，再付款，付完会显示地址；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
@@ -1781,7 +1781,7 @@ export const copy = {
       waitlisted: "候补第 {n} 位",
       waitlistNote: "候补要收到 James 的通知再来；没收到的话，请改到下一个周四。",
       // Build Tuesday's fee (2026-10-14): what this row still owes, if anything.
-      feeMember: "共创会员 / 导师团，免费",
+      feeMember: "免费",
       feeDue: "需转账 {amount}",
       feeClaimed: "已说转账，等核对",
       feePaid: "已付",
@@ -2386,7 +2386,7 @@ export const copy = {
       tuesdayHintCta: "Switch to Tuesday",
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
-      feeMember: "You are a member or on the mentor team, so this one is free.",
+      feeMember: "No fee for you this time.",
       memberUpsell: {
         title: "Coming most Tuesdays? Membership works out cheaper",
         body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
@@ -3309,7 +3309,7 @@ export const copy = {
       },
       compareTitle: "Tuesday or Thursday?",
       compareUnsure: "Not sure? Start with Thursday: free, a bigger room, a good way to meet everyone. Come to Tuesday when you have something you want looked at closely and specific feedback on.",
-      thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
+      thursdayNote: "Thursday runs as usual, and you can come to both in the same week.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
       signupLede: "There are only 12 places: sign up to hold one, then pay, and the address shows. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
@@ -3333,7 +3333,7 @@ export const copy = {
       booked: "Booked",
       waitlisted: "Waitlist, #{n}",
       waitlistNote: "Waitlisted people come once James contacts them; if you have not heard, please move to the next Thursday.",
-      feeMember: "Member / mentor — free",
+      feeMember: "Free",
       feeDue: "To pay: {amount}",
       feeClaimed: "Transfer noted, being checked",
       feePaid: "Paid",

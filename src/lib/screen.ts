@@ -29,7 +29,7 @@ export const SCREEN_LINKS = {
 export const SCREEN_TUESDAY = {
   title: "Build Tuesday · 周二动手局",
   when: "每周二 10:30–15:30 · Chatswood · 12 人闭门会",
-  price: "30 澳元 + GST · 共创会员和导师团免费",
+  price: "30 澳元 + GST · 共创会员免费",
   points: [
     "上午｜按自己的节奏推进项目，导师团陪跑",
     "中午｜边吃边聊老板的需求",

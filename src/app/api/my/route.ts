@@ -8,7 +8,7 @@ import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
 import { WX_OPENID_COOKIE, WX_TRIED_COOKIE, WX_TRIED_MAX_AGE_S } from "@/lib/wechat-gate";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, isSpecialSession, sydneyToday } from "@/lib/sessions";
 import { newFeeRef } from "@/lib/tuesday-fee";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
@@ -187,10 +187,10 @@ export async function POST(request: Request) {
     // payment lands (`giveUpReplaced`). An unpaid hold that lapses leaves
     // them exactly where they were.
     if (feeFor(to) !== null && stripeEnabled() && !(await isTuesdayFree(signupId))) {
-      const before = [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)];
       const result = await moveSessionFor(signupId, null, to);
       if (result !== "booked") return back({ t: token, done: "waitlist", d: to });
-      const replaces = [...new Set([...(from ? [from] : []), ...sameWeekSessions(to, before)])];
+      // Only where they moved from: the other session that week stays (2026-11-02).
+      const replaces = from ? [from] : [];
       const fee = await getOrCreateSessionFee(to, signupId, newFeeRef(), HOLD_MINUTES, replaces);
       if (fee.status === "pending") return NextResponse.redirect(new URL(`/tuesday/pay?ref=${fee.ref}`, origin), 303);
       // Already paid for this Tuesday earlier: the move can complete now.
@@ -201,14 +201,9 @@ export async function POST(request: Request) {
     // Cancel and add in one transaction: never "old Thursday gone, new one not taken".
     const result = await moveSessionFor(signupId, from, to);
 
-    // One morning a week, as on the signup form: taking a week's Tuesday gives
-    // up that week's Thursday (booked or waitlisted), and the other way round.
-    // After the move, so the new place is held before the old one is let go.
-    const after = await getMySignup(signupId);
-    const switched = after
-      ? sameWeekSessions(to, [...after.sessions, ...after.waitlist.map((entry) => entry.session)])
-      : [];
-    for (const other of switched) await cancelSession(signupId, other);
+    // Tuesday and Thursday of one week can both be held (2026-11-02): moving
+    // to one no longer gives up the other.
+    const switched: string[] = [];
 
     // A paid Tuesday with card payment off: the fee is owed, as before.
     if (result === "booked" && feeFor(to) !== null && !(await isTuesdayFree(signupId))) {

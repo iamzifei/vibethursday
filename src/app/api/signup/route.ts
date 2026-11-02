@@ -5,7 +5,7 @@ import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
-import { bookableSessions, feeFor, isSpecialSession, sameWeekSessions, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { bookableSessions, feeFor, isSpecialSession, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { admission, capFor } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -348,7 +348,7 @@ export async function POST(request: Request) {
   // then that week's Thursday is kept until the payment lands, and given up
   // by it (`replaces`), so an unpaid hold that lapses costs them nothing.
   let switched: string[] = [];
-  let replaces: string[] = [];
+  const replaces: string[] = [];
   let member: boolean | null = null;
   const paidTuesday = Boolean(firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null);
   if (paidTuesday) {
@@ -358,23 +358,9 @@ export async function POST(request: Request) {
       console.error("[signup] could not check membership", error);
     }
   }
-  const deferSwitch = paidTuesday && payHold !== null && member === false;
-  if (firstSession && profileUpdated) {
-    try {
-      const mine = await getMySignup(signupId);
-      if (mine) {
-        const others = sameWeekSessions(firstSession, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]);
-        if (deferSwitch) replaces = others;
-        else {
-          switched = others;
-          for (const other of switched) await cancelSession(signupId, other);
-        }
-      }
-    } catch (error) {
-      console.error("[signup] saved, but could not give up the other session that week", error);
-      switched = [];
-    }
-  }
+  // Tuesday and Thursday of one week can both be booked (2026-11-02): a
+  // signup no longer gives up the other session that week. `switched` and
+  // `replaces` stay empty; they remain in the response for older clients.
 
   // A paid Tuesday (2026-10-14): members come free; everyone else gets a
   // reference to transfer against, the same one if they sign up again. Only

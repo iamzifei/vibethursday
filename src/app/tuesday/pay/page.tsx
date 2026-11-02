@@ -106,7 +106,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                       )}
                       {fee.replaces.length > 0 && (
                         <p className="body" style={{ margin: 0 }}>
-                          付款成功后，你报的 {fee.replaces.map((date) => formatSession(date, "zh")).join("、")} 会自动让出（一周只占一个上午）；没付的话那一场照旧保留。
+                          付款成功后，你改期前报的 {fee.replaces.map((date) => formatSession(date, "zh")).join("、")} 会自动取消；没付的话那一场照旧保留。
                         </p>
                       )}
                       <form method="post" action="/api/pay/checkout">

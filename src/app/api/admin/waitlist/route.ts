@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
-import { getMySignup, getOrCreateSessionFee, promoteFromWaitlist, isTuesdayFree } from "@/lib/db";
-import { feeFor, formatSession, sameWeekSessions } from "@/lib/sessions";
+import { getOrCreateSessionFee, promoteFromWaitlist, isTuesdayFree } from "@/lib/db";
+import { feeFor, formatSession } from "@/lib/sessions";
 import { PROMOTION_HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { newFeeRef } from "@/lib/tuesday-fee";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -56,9 +56,8 @@ export async function POST(request: Request) {
   if (feeFor(session) !== null && stripeEnabled()) {
     try {
       if (!(await isTuesdayFree(id))) {
-        const mine = await getMySignup(id);
-        const replaces = mine ? sameWeekSessions(session, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]) : [];
-        const fee = await getOrCreateSessionFee(session, id, newFeeRef(), PROMOTION_HOLD_MINUTES, replaces);
+        // Nothing else that week is given up (2026-11-02).
+        const fee = await getOrCreateSessionFee(session, id, newFeeRef(), PROMOTION_HOLD_MINUTES);
         if (fee.status === "pending") {
           const url = new URL("/admin", origin);
           url.searchParams.set(
