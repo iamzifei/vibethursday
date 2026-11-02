@@ -5144,7 +5144,7 @@ export async function listMemberships(): Promise<MembershipRow[]> {
  * rather than duplicated. The paid date is the day they paid (Sydney), so the
  * year runs from then.
  */
-export async function addManualMembership(input: { name: string; wechat: string; paidOn: string; note: string }): Promise<"added" | "already"> {
+export async function addManualMembership(input: { name: string; wechat: string; paidOn: string; note: string }): Promise<"added" | "already" | "checkout_open"> {
   await ensureSchema();
   const wechat = input.wechat.trim();
   const note = `手动登记：${input.note}`;
@@ -5165,16 +5165,28 @@ export async function addManualMembership(input: { name: string; wechat: string;
       return "already";
     }
     const paidAt = `${input.paidOn} 12:00 Australia/Sydney`;
-    const open = await client.query<{ id: string }>(
-      `SELECT id::text AS id FROM course_orders
-        WHERE course = $1 AND status <> 'cancelled'
+    // One row per person per course (course_orders_person_idx), cancelled
+    // ones included: an earlier order of theirs is reused, never duplicated.
+    const open = await client.query<{ id: string; status: string; stripe_session: string | null }>(
+      `SELECT id::text AS id, status, stripe_session FROM course_orders
+        WHERE course = $1
           AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($2, '\\s+', '', 'g'))`,
       [MEMBERSHIP.id, wechat],
     );
-    if (open.rows[0]) {
+    const existing = open.rows[0];
+    // An unfinished /join whose card page may still be open: that page could
+    // still take the money, and the payment would then land on an order
+    // already marked paid. Refused; the organiser waits for it to lapse.
+    if (existing && existing.status === "pending" && existing.stripe_session) {
+      await client.query("ROLLBACK");
+      return "checkout_open";
+    }
+    if (existing) {
       await client.query(
-        `UPDATE course_orders SET status = 'paid', paid_at = $2::timestamptz, note = $3 WHERE id = $1::bigint`,
-        [open.rows[0].id, paidAt, note],
+        `UPDATE course_orders SET status = 'paid', paid_at = $2::timestamptz, note = $3, name = $4,
+                stripe_session = NULL, stripe_subscription = NULL
+          WHERE id = $1::bigint`,
+        [existing.id, paidAt, note, input.name],
       );
     } else {
       await client.query(

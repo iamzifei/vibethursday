@@ -1,6 +1,5 @@
 /**
- * Every organiser page can be found (James 2026-11-02: "admin 里面的所有功能，
- * 例如 /admin/progress，都确保在 admin 页面有入口"). The sidebar and phone menu
+ * Every organiser page can be found from the admin menu (2026-11-02). The sidebar and phone menu
  * come from ADMIN_NAV; a page under src/app/admin with no entry there fails.
  */
 

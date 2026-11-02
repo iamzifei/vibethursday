@@ -2,7 +2,7 @@
  * Every organiser page, in one list (2026-11-02): the admin sidebar and the
  * mobile menu are both drawn from it, and `tests/admin-nav.test.mts` fails if
  * a page under src/app/admin has no entry here — a page nobody can find is a
- * page that does not exist (James: "不然我怕找不到入口").
+ * page that does not exist.
  *
  * Grouped by when in the week each is used. Anchors (#…) are sections of the
  * long /admin page; the rest are pages of their own.

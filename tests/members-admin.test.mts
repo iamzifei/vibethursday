@@ -1,7 +1,7 @@
 /**
  * The 共创会员 register (2026-11-02): every paid membership in one list, by
- * how it was paid, with a way to record one paid outside the site (James:
- * "599 的支付做好记录……有的人也许确实付费了，但是网站没记录").
+ * how it was paid, with a way to record one paid outside the site, which the
+ * site would otherwise go on charging for every Tuesday.
  *
  * A manual entry makes someone a member for a year, so it is organiser-only
  * and needs a note saying how they paid.
@@ -30,10 +30,12 @@ test("★ a manual entry needs a name, a WeChat ID, a past date and a note on ho
   assert.equal(parseManualMember({ ...base, note: "  " }, "2026-11-02").ok, false, "a note is required");
   assert.equal(parseManualMember({ ...base, date: "2026-11-03" }, "2026-11-02").ok, false, "not in the future");
   assert.equal(parseManualMember({ ...base, date: "2025-10-01" }, "2026-11-02").ok, false, "not more than a year back: it would already have lapsed");
+  assert.equal(parseManualMember({ ...base, date: "2025-11-02" }, "2026-11-02").ok, false, "exactly a year back has run out too");
 });
 
 test("how a membership was paid: card (/join), the 10-25 class by transfer, or recorded by hand", () => {
   assert.equal(membershipSource({ course: "vt-cocreator", stripe_session: "cs_1", note: null }), "card");
+  assert.equal(membershipSource({ course: "vt-cocreator", stripe_session: "cs_1", note: "手动登记：转账" }), "manual", "the note wins");
   assert.equal(membershipSource({ course: "vt-cocreator", stripe_session: null, note: "手动登记：现金" }), "manual");
   assert.equal(membershipSource({ course: "vip-2026-10-25", stripe_session: null, note: null }), "class");
 });
@@ -69,6 +71,18 @@ test(
       assert.equal(row?.expires_on, "2027-10-20");
       assert.match(row?.note ?? "", /手动登记/);
       assert.equal(await addManualMembership({ name: "Rae", wechat, paidOn: "2026-10-21", note: "again" }), "already");
+
+      // Review 2026-11-02: a cancelled order still holds the one row per
+      // person; a manual entry revives it instead of failing on the index.
+      await pool.query(`UPDATE course_orders SET status = 'cancelled' WHERE lower(trim(wechat)) = $1`, [wechat]);
+      assert.equal(await isMember(signupId), false);
+      assert.equal(await addManualMembership({ name: "Rae", wechat, paidOn: "2026-10-22", note: "再登记" }), "added");
+      assert.equal(await isMember(signupId), true);
+
+      // An unfinished /join with its card page still open is refused: that
+      // page could still take the money, and the order would then be paid twice.
+      await pool.query(`UPDATE course_orders SET status = 'pending', paid_at = NULL, stripe_session = 'cs_open' WHERE lower(trim(wechat)) = $1`, [wechat]);
+      assert.equal(await addManualMembership({ name: "Rae", wechat, paidOn: "2026-10-22", note: "x" }), "checkout_open");
     } finally {
       await pool.query(`DELETE FROM course_orders WHERE lower(trim(wechat)) = $1`, [wechat]).catch(() => {});
       if (signupId) await pool.query(`DELETE FROM signups WHERE id = $1::bigint`, [signupId]).catch(() => {});

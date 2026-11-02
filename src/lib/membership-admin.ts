@@ -33,7 +33,7 @@ export function parseManualMember(form: Fields, today: string): { ok: true; valu
   // only make a member of someone who no longer is one.
   const yearAgo = new Date(`${today}T00:00:00Z`);
   yearAgo.setUTCFullYear(yearAgo.getUTCFullYear() - 1);
-  if (!isDate(date) || date > today || date < yearAgo.toISOString().slice(0, 10)) return { ok: false, error: "date" };
+  if (!isDate(date) || date > today || date <= yearAgo.toISOString().slice(0, 10)) return { ok: false, error: "date" };
   if (!note || note.length > 200) return { ok: false, error: "note" };
   return { ok: true, value: { name, wechat, paidOn: date, note } };
 }
@@ -43,6 +43,7 @@ export type MembershipSource = "card" | "class" | "manual";
 /** Where a paid membership order came from. */
 export function membershipSource(row: { course: string; stripe_session: string | null; note: string | null }): MembershipSource {
   if (row.course !== MEMBERSHIP.id) return "class";
+  if (row.note?.startsWith("手动登记")) return "manual";
   if (row.stripe_session) return "card";
   return "manual";
 }

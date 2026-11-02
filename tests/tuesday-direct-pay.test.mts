@@ -1,7 +1,7 @@
 /**
- * Paying for a Build Tuesday straight from the signup (James 2026-11-02):
- * "线上报名直接支付，走 stripe，费用是 30+gst。报名付费过 599 的人可以豁免……
- * 如果有遗漏的，留一个联系我的入口".
+ * Paying for a Build Tuesday straight from the signup (2026-11-02): one tap
+ * to the card page, members exempt, and a way to the organiser for anyone
+ * who paid somewhere the site does not see.
  *
  * Read from source: the signup confirmation's main button opens Stripe in
  * one tap (a form post to /api/pay/checkout, which falls back to the payment

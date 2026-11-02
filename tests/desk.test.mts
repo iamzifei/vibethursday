@@ -1,8 +1,7 @@
 /**
  * The check-in desk (2026-11-02): one page an assistant at the door uses to
  * see who signed up, who has arrived, and — on a paid Tuesday — who still owes
- * the fee, and to tick each of those off. James: "我会在周二让小助理根据签到页来
- * 确定签到和报名情况".
+ * the fee, and to tick each of those off.
  *
  * Pure: no database. The page and the two routes it posts to are checked by
  * reading their source.

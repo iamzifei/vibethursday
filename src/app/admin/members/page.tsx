@@ -14,7 +14,7 @@ type PageProps = { searchParams: Promise<{ err?: string; ok?: string; q?: string
 const ERRORS: Record<string, string> = {
   name: "名字要填，最多 60 字。",
   wechat: "微信号要填，要和他报名时填的一样，周二才会自动免费。",
-  date: "付款日期不对：不能是未来，也不能早于一年前（那样会员已经过期了）。",
+  date: "付款日期不对：不能是未来，也不能是一年前或更早（那样会员已经过期了）。",
   note: "备注要写怎么付的（比如「10-20 转账给主办人」），最多 200 字。",
 };
 
@@ -56,6 +56,9 @@ export default async function MembersAdminPage({ searchParams }: PageProps) {
       {params.err && ERRORS[params.err] && <p className="alert" role="alert">{ERRORS[params.err]}</p>}
       {params.ok === "added" && <p className="alert" role="status">已登记。他下次报周二会自动免收；已经报了的，到付款页刷新一下就变免收。</p>}
       {params.ok === "already" && <p className="alert" role="status">这个微信号已经是在期会员，没有重复登记。</p>}
+      {params.ok === "checkout_open" && (
+        <p className="alert" role="alert">他在 /join 开过刷卡页还没付完，那一页还可能扣款。先问他有没有在网站上付；没付的话等那一页过期（最多 24 小时）再来登记。</p>
+      )}
 
       <details className="card stack-3" open={Boolean(params.err)}>
         <summary><strong>手动登记一位会员</strong>（在网站以外付过 599 的人）</summary>
