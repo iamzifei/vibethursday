@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.9",
+    date: "2026-11-02",
+    kind: "minor",
+    scope: "site",
+    zh: "网站更好找了：顶部导航收成周二、会员、课程和一个「社区」菜单，页脚分成活动、社区、更多三栏。首页先问你是哪一种——第一次来就报周四，想带项目动手看周二，想系统学看课程——再用三步讲清第一次来怎么走。现场帮忙签到的助理也有了自己的手机后台。",
+    en: "The site is easier to find your way around: the top bar is now Tuesday, membership, class and one \"Community\" menu, and the footer is three columns. The home page first asks which one you are — first time, join a Thursday; bringing a project, see Tuesday; want to learn it properly, see the class — then explains your first morning in three steps. The helpers checking people in at the door now have their own phone back office too.",
+    link: { href: "/#paths", zh: "看首页的三种来法 →", en: "See the three ways in →" },
+  },
+  {
     version: "5.8",
     date: "2026-11-02",
     kind: "minor",
