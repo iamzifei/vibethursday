@@ -95,7 +95,8 @@ test("Traditional is the Simplified copy, converted, and nothing else", () => {
   // Converted where it is prose.
   assert.equal(actual.members, "成員");
   assert.equal(actual.support, "開銷");
-  assert.equal(actual.subtitle, "悉尼 · 每週四上午的 AI 局");
+  // Spec change 2026-11-02: the hero subtitle now carries the long-tail phrase.
+  assert.equal(actual.subtitle, "悉尼華人 AI 線下聚會 · 每週四上午");
 
   // Not converted where it is not prose: the brand, paths, and the language
   // tag a screen reader reads the page with.
