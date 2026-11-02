@@ -23,7 +23,6 @@ import {
   listFeedback,
   listLoginStats,
   listPhotosForReview,
-  getSessionQuestions,
   listRecentAnswers,
   listRecentDecks,
   listRoster,
@@ -34,11 +33,11 @@ import {
   listPersonRoles,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
-import { formatQuestionList } from "@/lib/session-questions";
 import { walkInMatches } from "@/lib/walk-in-match";
 import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
+import { waitlistFor } from "@/lib/waitlist-order";
 
 import { compositionPerSession, countPerSession, tuesdaySplit, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
@@ -98,7 +97,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // On a Build Tuesday the desk is that Tuesday (`deskSession`).
   const desk = deskSession();
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, deskQuestions, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -112,7 +111,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // are both derived from this one array, so the totals and the sentences
       // under them cannot disagree about what was said.
       listFeedback(),
-      getSessionQuestions(desk),
       listPhotosForReview(),
       // Counting only; a failure here must not take the admin page down.
       listLoginStats().catch(() => []),
@@ -274,15 +272,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   // Who is waiting for this session, oldest signup first, and whether the
   // numbers look like a script rather than people (capacity.ts).
-  const deskWaitlist = signups
-    .filter((row) => row.waitlist.includes(desk))
-    // By when they joined this waitlist, then id — the same order as the place
-    // /my tells people they hold. Not by signup age: that put a regular from
-    // months ago ahead of people who had been waiting all day (2026-09-28).
-    .sort((a, b) => {
-      const at = (row: typeof a) => Date.parse(row.waitlist_since[desk] ?? `${row.created_at.replace(" ", "T")}:00Z`);
-      return at(a) - at(b) || Number(a.id) - Number(b.id);
-    });
+  const deskWaitlist = waitlistFor(signups, desk);
   const dayAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
   const unverifiedLastDay = signups.filter(
     (row) =>
@@ -429,7 +419,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           报名 {deskRow?.total ?? 0} / {capFor(desk)} · 候补 {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length}
         </p>
         <div className="admin-today__actions">
-          <a className="btn btn--primary" href="/admin/desk">签到台（门口用）</a>
+          <a className="btn btn--primary" href="/admin/today">今天</a>
+          <a className="btn btn--secondary" href="/admin/desk">签到台（门口用）</a>
           <a className="btn btn--secondary" href="/admin/door">门口签到码（全屏）</a>
           <a className="btn btn--secondary" href={`/sessions/${desk}`}>当天现场页</a>
         </div>
@@ -469,8 +460,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
             title: "周四 · Vibe Thursday",
             tiles: [
               { href: "/admin/desk?day=thu", n: null, label: "周四签到台", warn: false },
-              { href: "#waitlist", n: waitlistBySession.get(desk) ?? 0, label: "候补（本场）", warn: false },
-              { href: "#photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
+              { href: "/admin/waitlist", n: waitlistBySession.get(desk) ?? 0, label: "候补（本场）", warn: false },
+              { href: "/admin/photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
             ],
           },
           {
@@ -517,101 +508,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </p>
       )}
 
-      {/* ── Waitlist ─────────────────────────────────────────────────
-          Who is waiting, with a way to give each a place. Promoting can take
-          the session over the cap; that is a decision made here, not by the form. */}
-      <section className="stack-4" id="waitlist">
-        <div className="group-head">
-          <h2 className="h3">候补 · {desk}</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            {deskWaitlist.length} 人 · 按进候补的先后
-          </span>
-        </div>
-        {/* People can cancel on /my now (2026-09-28), which frees a place but
-            moves nobody up — that stays a call made here. This line is the
-            prompt to make it. */}
-        {deskWaitlist.length > 0 && (deskRow?.total ?? 0) < capFor(desk) && (
-          <p className="alert" role="status">
-            有人取消了：现在空出 {capFor(desk) - (deskRow?.total ?? 0)} 个位子，候补 {deskWaitlist.length} 人。下面点「给他位子」放人，再在群里告诉他。
-          </p>
-        )}
-        {deskWaitlist.length === 0 ? (
-          <p className="body-sm" style={{ color: "var(--fg3)" }}>
-            没有人在候补。
-          </p>
-        ) : (
-          <div className="table-scroll" tabIndex={0} role="region" aria-label="候补名单">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th scope="col">名字</th>
-                  <th scope="col">微信</th>
-                  <th scope="col">在做什么</th>
-                  <th scope="col">进候补</th>
-                  <th scope="col">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deskWaitlist.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.name}</td>
-                    <td className="mono">{row.wechat ?? "—"}</td>
-                    <td style={{ whiteSpace: "normal", minWidth: "200px" }}>{row.building ?? "—"}</td>
-                    <td className="mono">
-                      {row.waitlist_since[desk]
-                        ? new Intl.DateTimeFormat("en-CA", {
-                            timeZone: "Australia/Sydney",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          }).format(new Date(row.waitlist_since[desk]))
-                        : row.created_at}
-                    </td>
-                    <td>
-                      <form method="post" action="/api/admin/waitlist">
-                        <input type="hidden" name="id" value={row.id} />
-                        <input type="hidden" name="session" value={desk} />
-                        <button className="linkish" type="submit">
-                          给他位子
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* ── This week's Q&A ──────────────────────────────────────────
-          The shortlist the group voted on, pasted here; /go shows it. */}
-      <section className="stack-4" id="questions">
-        <div className="group-head">
-          <h2 className="h3">本周问答 · {desk}</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            场前在 /go 显示候选，当天显示今天聊的
-          </span>
-        </div>
-        <form method="post" action="/api/admin/questions" className="stack-3">
-          <input type="hidden" name="session" value={desk} />
-          <textarea
-            className="field"
-            name="questions"
-            rows={6}
-            defaultValue={formatQuestionList(deskQuestions)}
-            placeholder={"一行一个问题；票最多的两个在行首加 *"}
-          />
-          <p className="field-hint">一行一个问题，行首加 * 表示当天要聊的。序号会自动去掉，最多 8 个。清空后保存即删除。</p>
-          <div>
-            <button className="btn btn--secondary" type="submit">
-              保存
-            </button>
-          </div>
-        </form>
-      </section>
+      {/* Waitlist and the week's questions moved to their own pages
+          (2026-11-02) so an assistant can use them too. */}
+      <p className="body-sm">
+        <a href="/admin/waitlist">候补（{deskWaitlist.length} 人）→</a>　<a href="/admin/questions">本周问答 →</a>
+      </p>
 
       {/* ── Check-in ─────────────────────────────────────────────────
           The code for the table and the list of who has tapped it. The one
@@ -660,92 +561,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
         answers={feedback.filter((row) => row.session === showing)}
       />
 
-      {/* ── Uploaded photos ──────────────────────────────────────────
-          What people uploaded on /sessions/<date>. Nothing here is public
-          until it is approved; the thumbnails load only because this browser
-          holds the admin cookie. Before approving, check that everyone you can
-          recognise in it is somebody who agreed to be shown. */}
-      <section className="stack-4" id="photos">
-        <div className="group-head">
-          <h2 className="h3">照片审核</h2>
-          <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            待审 {photos.filter((p) => p.status === "pending").length} · 已公开{" "}
-            {photos.filter((p) => p.status === "approved").length} · 共{" "}
-            {(photos.reduce((n, p) => n + p.size, 0) / 1024 / 1024).toFixed(1)} MB
-          </span>
-        </div>
-        <p className="body-sm" style={{ color: "var(--fg3)" }}>
-          通过之前看一眼：照片里认得出来的人，是不是都同意上网。拒绝会删掉图片本身；删除连记录一起删。
-        </p>
-
-        {photos.some((p) => p.status === "pending") && (
-          <form method="post" action="/api/admin/photos">
-            <input type="hidden" name="action" value="reject-all-pending" />
-            <button className="btn btn--secondary btn--sm" type="submit">
-              全部待审一键拒绝（被刷屏时用）
-            </button>
-          </form>
-        )}
-
-        {photos.length === 0 ? (
-          <p className="body-sm">还没有人上传照片。</p>
-        ) : (
-          <div className="table-scroll">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>照片</th>
-                  <th>场次</th>
-                  <th>状态</th>
-                  <th>大小</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {photos.map((photo) => (
-                  <tr key={photo.id}>
-                    <td className="mono">{photo.id}</td>
-                    <td>
-                      <a href={`/api/session-photo/${photo.id}`} target="_blank" rel="noopener">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`/api/session-photo/${photo.id}`}
-                          alt={`#${photo.id}`}
-                          height={96}
-                          width={Math.round((96 * photo.width) / photo.height)}
-                          loading="lazy"
-                          style={{ display: "block", borderRadius: "var(--radius-md)" }}
-                        />
-                      </a>
-                    </td>
-                    <td>
-                      <a href={`/sessions/${photo.session}#photos`}>{photo.session}</a>
-                    </td>
-                    <td>{photo.status === "pending" ? "待审" : "已公开"}</td>
-                    <td className="mono">{Math.round(photo.size / 1024)} KB</td>
-                    <td>
-                      {(photo.status === "pending"
-                        ? (["approve", "reject", "delete"] as const)
-                        : (["reject", "delete"] as const)
-                      ).map((action) => (
-                        <form key={action} method="post" action="/api/admin/photos" style={{ display: "inline" }}>
-                          <input type="hidden" name="action" value={action} />
-                          <input type="hidden" name="id" value={photo.id} />
-                          <button className="linkish" type="submit">
-                            {action === "approve" ? "通过 " : action === "reject" ? (photo.status === "approved" ? "撤下 " : "拒绝 ") : "删除"}
-                          </button>
-                        </form>
-                      ))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
+      {/* Photo review moved to /admin/photos (2026-11-02). */}
+      <p className="body-sm">
+        <a href="/admin/photos">照片审核（待审 {photos.filter((p) => p.status === "pending").length}）→</a>
+      </p>
       </section>
 
       <details className="disclosure admin-group" id="community">

@@ -22,7 +22,7 @@ type PageProps = { searchParams: Promise<{ bad?: string }> };
 export default async function StaffPage({ searchParams }: PageProps) {
   const role = await staffRole();
   if (role === "admin") redirect("/admin");
-  if (role === "assistant") redirect("/admin/desk");
+  if (role === "assistant") redirect("/admin/today");
 
   const { bad } = await searchParams;
 

@@ -109,8 +109,10 @@ test("★ the desk is organiser-only, and its buttons come back to it", () => {
 // Spec change 2026-11-02 (admin frame): the jump bar became the sidebar.
 test("the admin navigation leads with the overview, then each day's desk", async () => {
   // Spec change 2026-11-02: the menu is split into a Tuesday and a Thursday block.
+  // Spec change 2026-11-02 (phase 3): "today" leads, the admin overview right after it.
   const { ADMIN_NAV } = await import("../src/lib/admin-nav.ts");
-  assert.equal(ADMIN_NAV[0].links[0].href, "/admin");
+  assert.equal(ADMIN_NAV[0].links[0].href, "/admin/today");
+  assert.equal(ADMIN_NAV[0].links[1].href, "/admin");
   assert.equal(ADMIN_NAV[1].links[0].href, "/admin/desk?day=tue");
   assert.equal(ADMIN_NAV[2].links[0].href, "/admin/desk?day=thu");
 });

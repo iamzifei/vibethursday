@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   // The flood button: no id, so above the per-row guard.
   if (action === "reject-all-pending") {
     await rejectAllPendingPhotos();
-    return NextResponse.redirect(new URL("/admin#photos", await requestOrigin()), { status: 303 });
+    return NextResponse.redirect(new URL("/admin/photos", await requestOrigin()), { status: 303 });
   }
 
   const id = form.get("id");
@@ -60,5 +60,5 @@ export async function POST(request: Request) {
   else if (action === "delete") await deleteSessionPhoto(id);
   else return NextResponse.json({ error: "unknown_action" }, { status: 400 });
 
-  return NextResponse.redirect(new URL("/admin#photos", await requestOrigin()), { status: 303 });
+  return NextResponse.redirect(new URL("/admin/photos", await requestOrigin()), { status: 303 });
 }

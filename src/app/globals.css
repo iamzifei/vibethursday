@@ -5456,17 +5456,42 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .admin-today { display: grid; gap: var(--space-3); }
 .admin-today__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
-/* ── The organiser's frame (2026-11-02, AdminFrame) ───────────────────
-   Phone first: a sticky top bar whose menu drops down. From 960px a fixed
-   sidebar instead, and the bar goes away. */
-.admin-topbar { position: sticky; top: 0; z-index: 40; background: var(--bg-primary); border-bottom: 1px solid var(--border-subtle); }
-.admin-topbar > summary { list-style: none; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); cursor: pointer; min-height: 52px; }
-.admin-topbar > summary::-webkit-details-marker { display: none; }
-.admin-topbar__brand { font-weight: 700; }
+/* ── The team's frame (2026-11-02, AdminFrame) ────────────────────────
+   Phone first: a slim sticky top bar, the page, and a bottom tab bar within
+   thumb reach; "更多" opens the full menu as a sheet above the tabs. From
+   960px a fixed sidebar instead, and both bars go away. */
+.admin-topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: var(--space-3); min-height: 52px; padding: var(--space-2) var(--space-4); background: var(--bg-primary); border-bottom: 1px solid var(--border-subtle); }
+.admin-topbar__brand { font-weight: 700; color: var(--fg1); text-decoration: none; white-space: nowrap; }
 .admin-topbar__here { color: var(--fg3); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.admin-topbar__menu { border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 0.35rem 0.8rem; }
-.admin-topbar[open] .admin-topbar__menu { border-color: var(--accent); color: var(--accent); }
-.admin-topbar > .admin-nav { padding: 0 var(--space-4) var(--space-4); max-height: 75dvh; overflow-y: auto; }
+.admin-topbar__role,
+.admin-side__role { font-size: var(--text-xs); color: var(--accent); border: 1px solid var(--accent-muted); border-radius: var(--radius-full); padding: 2px var(--space-2); white-space: nowrap; }
+.admin-side__role { display: inline-block; margin: 0 0.75rem var(--space-2); }
+
+/* Room for the tab bar, so the last row of every page is not under it. */
+.admin-main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+.admin-tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg-elevated); border-top: 1px solid var(--border-default);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.35);
+}
+.admin-tab {
+  display: flex; align-items: center; justify-content: center; min-height: 60px;
+  border: 0; background: none; font: inherit; font-size: var(--text-base); font-weight: var(--weight-semibold);
+  color: var(--fg2); text-decoration: none; cursor: pointer;
+}
+.admin-tab[aria-current="page"], .admin-tab[aria-expanded="true"] { color: var(--accent); background: var(--accent-subtle); }
+
+.admin-sheet {
+  position: fixed; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 44;
+  max-height: 75dvh; overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  background: var(--bg-primary); border-top: 1px solid var(--border-default);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.55);
+}
+
 .admin-nav__group { margin-top: var(--space-3); }
 .admin-nav__title { margin: 0 0 var(--space-1); font-size: 0.8rem; color: var(--fg3); letter-spacing: 0.04em; }
 .admin-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -5477,7 +5502,8 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .admin-side { display: none; }
 @media (min-width: 960px) {
   .admin-frame { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100dvh; }
-  .admin-topbar { display: none; }
+  .admin-topbar, .admin-tabs, .admin-sheet { display: none; }
+  .admin-main { padding-bottom: 0; }
   .admin-side { display: block; position: sticky; top: 0; height: 100dvh; overflow-y: auto; padding: var(--space-6) var(--space-3); border-right: 1px solid var(--border-subtle); }
   .admin-side__brand { display: block; font-weight: 700; padding: 0 0.75rem var(--space-2); color: inherit; text-decoration: none; }
   .admin-main { min-width: 0; }
@@ -5655,3 +5681,24 @@ h4, .h4 { font-size: var(--text-lg); font-weight: var(--weight-semibold); line-h
 @media (min-width: 860px) {
   .first-steps { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ── Team pages: today, photos (2026-11-02) ─────────────────────────── */
+.today-numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.today-number { display: grid; gap: 2px; padding: var(--space-4); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--bg-secondary); }
+.today-number__label { font-size: var(--text-sm); color: var(--fg3); }
+.today-number__value { font-size: 2.25rem; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--fg1); }
+.today-number__note { font-size: var(--text-xs); color: var(--fg3); }
+@media (min-width: 720px) { .today-numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.today-actions { display: grid; gap: var(--space-3); }
+.today-action { min-height: 56px; justify-content: space-between; font-size: var(--text-base); }
+.today-action__badge { min-width: 28px; padding: 2px var(--space-2); border-radius: var(--radius-full); background: var(--warning); color: #111; font-size: var(--text-sm); text-align: center; }
+@media (min-width: 720px) { .today-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.photo-review-list { display: grid; gap: var(--space-4); list-style: none; margin: 0; padding: 0; }
+.photo-review img { display: block; width: 100%; height: auto; border-radius: var(--radius-md); }
+.photo-review__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+@media (min-width: 720px) { .photo-review-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Menu rows at thumb size in the phone sheet. */
+.admin-sheet .admin-nav a { padding-block: 0.75rem; }

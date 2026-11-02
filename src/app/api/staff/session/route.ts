@@ -11,7 +11,7 @@ const STAFF_SESSION_DAYS = 60;
 
 /**
  * Trades an assistant's personal link for the staff cookie (2026-11-02), then
- * lands on the check-in desk. A bad, old or revoked link lands on /staff,
+ * lands on "today". A bad, old or revoked link lands on /staff,
  * which says what to do.
  */
 export async function GET(request: Request) {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   const pass = staffSessionToken(named.signupId, stamp);
   if (!pass) return refuse();
 
-  const response = NextResponse.redirect(new URL("/admin/desk", origin), 303);
+  const response = NextResponse.redirect(new URL("/admin/today", origin), 303);
   response.cookies.set(STAFF_COOKIE, pass, {
     httpOnly: true,
     secure: origin.startsWith("https://"),

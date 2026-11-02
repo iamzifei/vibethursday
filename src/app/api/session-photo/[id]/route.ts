@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
+import { can } from "@/lib/permissions";
+import { staffRole } from "@/lib/staff";
 import { getSessionPhoto } from "@/lib/db";
 import { servePhoto } from "@/lib/session-photos";
 
@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 /**
  * One uploaded session photo. Public once approved; before that only the
- * organiser's session cookie can load it (for the review queue in /admin), and
+ * team with the photos permission can load it (for /admin/photos), and
  * everyone else gets the same 404 as a photo that does not exist.
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const isAdmin = isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value);
+  const reviewer = can(await staffRole(), "photos");
 
-  return servePhoto(id, isAdmin, getSessionPhoto);
+  return servePhoto(id, reviewer, getSessionPhoto);
 }

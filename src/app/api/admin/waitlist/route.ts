@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
-import { getOrCreateSessionFee, promoteFromWaitlist, isTuesdayFree } from "@/lib/db";
+import { capFor } from "@/lib/capacity";
+import { getOrCreateSessionFee, promoteFromWaitlist, isTuesdayFree, signupCountsBySession } from "@/lib/db";
 import { feeFor, formatSession } from "@/lib/sessions";
 import { PROMOTION_HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { newFeeRef } from "@/lib/tuesday-fee";
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   const key = form?.get("key");
 
-  if (!(await authorise(request, "waitlist", typeof key === "string" ? key : null))) {
+  const role = await authorise(request, "waitlist", typeof key === "string" ? key : null);
+  if (!role) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -46,6 +48,18 @@ export async function POST(request: Request) {
   }
 
   const origin = await requestOrigin();
+
+  // Going over the cap is the admin's call (2026-11-02): an assistant can
+  // give out a place only while one is free.
+  if (role !== "admin") {
+    const booked = (await signupCountsBySession()).get(session) ?? 0;
+    if (booked >= capFor(session)) {
+      const url = new URL("/admin/waitlist", origin);
+      url.searchParams.set("msg", "已经满了：超员放人要管理员来点。");
+      return NextResponse.redirect(url, 303);
+    }
+  }
+
   await promoteFromWaitlist(id, session);
 
   // Off a paid Tuesday's waitlist (2026-10-19): the place is held for them,
@@ -58,7 +72,7 @@ export async function POST(request: Request) {
         // Nothing else that week is given up (2026-11-02).
         const fee = await getOrCreateSessionFee(session, id, newFeeRef(), PROMOTION_HOLD_MINUTES);
         if (fee.status === "pending") {
-          const url = new URL("/admin", origin);
+          const url = new URL("/admin/waitlist", origin);
           url.searchParams.set(
             "msg",
             `已给位子（${formatSession(session, "zh")}），24 小时内付款才锁定，没付自动放回。把付款链接发给他：${origin}/tuesday/pay?ref=${fee.ref}`,
@@ -71,5 +85,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL(`/admin#waitlist`, origin), 303);
+  return NextResponse.redirect(new URL("/admin/waitlist", origin), 303);
 }

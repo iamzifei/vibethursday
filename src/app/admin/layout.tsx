@@ -11,5 +11,5 @@ import { staffRole } from "@/lib/staff";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const role = await staffRole();
   if (!role) return children;
-  return <AdminFrame helper={role === "assistant"}>{children}</AdminFrame>;
+  return <AdminFrame role={role}>{children}</AdminFrame>;
 }

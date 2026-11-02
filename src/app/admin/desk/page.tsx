@@ -7,7 +7,7 @@ import { isSessionDate } from "@/lib/checkin";
 import { capFor } from "@/lib/capacity";
 import { listDeskRows } from "@/lib/db";
 import { buildDesk, deskStats, filterDesk, maskWechat, type DeskEntry, type PayState } from "@/lib/desk";
-import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, sessionForDay, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
+import { deskFocus, deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, sessionForDay, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
 import { feeLabel, payLabel } from "@/lib/tuesday-fee";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
   // The nearest session by default: the evening before a Tuesday that is the
   // Tuesday, though /admin's focus is still on Thursday until the day itself.
   const upcomingTuesday = SPECIAL_SESSIONS.map((item) => item.date).filter((date) => date >= today).sort()[0];
-  const focus = [deskSession(), upcomingTuesday].filter(Boolean).sort()[0] as string;
+  const focus = deskFocus();
   const session = params.s && isSessionDate(params.s) ? params.s : (sessionForDay(params.day) ?? focus);
   const query = (params.q ?? "").trim().slice(0, 50);
   const show = params.show === "arrived" || params.show === "waiting" || params.show === "owing" ? params.show : "all";

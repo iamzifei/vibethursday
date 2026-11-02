@@ -324,6 +324,17 @@ export function sessionForDay(day: unknown): string | null {
  * same reason the desk looks back on a Thursday afternoon: that is when a
  * no-show or a missed check-in gets fixed up.
  */
+/**
+ * The session the desk, "today" and the waitlist open on (2026-11-02): the
+ * nearer of the next desk session and the next Build Tuesday — so on the
+ * evening before a Tuesday it is that Tuesday.
+ */
+export function deskFocus(): string {
+  const today = sydneyToday().toISOString().slice(0, 10);
+  const upcomingTuesday = SPECIAL_SESSIONS.map((item) => item.date).filter((date) => date >= today).sort()[0];
+  return [deskSession(), upcomingTuesday].filter(Boolean).sort()[0] as string;
+}
+
 export function deskSession(): string {
   const today = sydneyToday().toISOString().slice(0, 10);
   return isSpecialSession(today) ? today : focusSession().date;

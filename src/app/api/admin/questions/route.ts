@@ -47,5 +47,5 @@ export async function POST(request: Request) {
 
   await saveSessionQuestions(session, parseQuestionList(typeof raw === "string" ? raw.slice(0, 5000) : ""));
 
-  return NextResponse.redirect(new URL(`/admin#questions`, await requestOrigin()), 303);
+  return NextResponse.redirect(new URL("/admin/questions", await requestOrigin()), 303);
 }
