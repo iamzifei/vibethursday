@@ -45,6 +45,8 @@ export type DeskRow = {
   topic: string | null;
   /** What they said they were building when they signed up. */
   building: string | null;
+  /** Every session they are booked on, YYYY-MM-DD — for the follow-up list. */
+  sessions: string[];
 };
 
 export type PayState = "free" | "member" | "mentor" | "paid" | "waived" | "claimed" | "owing" | "ask";

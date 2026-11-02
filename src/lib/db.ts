@@ -5117,7 +5117,8 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             g.tuesday_bring ->> ($1::date)::text AS bring,
             nullif(g.topic, '') AS topic,
-            nullif(g.building, '') AS building
+            nullif(g.building, '') AS building,
+            COALESCE((SELECT array_agg(to_char(x, 'YYYY-MM-DD') ORDER BY x) FROM unnest(g.sessions) AS x), '{}') AS sessions
        FROM signups g
        LEFT JOIN checkins c ON c.signup_id = g.id AND c.session = $1::date
        LEFT JOIN session_fees f ON f.signup_id = g.id AND f.session = $1::date

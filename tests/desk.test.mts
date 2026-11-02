@@ -33,6 +33,7 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
   bring: null,
   topic: null,
   building: null,
+  sessions: [],
   ...over,
 });
 
@@ -91,7 +92,9 @@ test("the search matches name or WeChat ID, blind to case and spaces", () => {
 
 test("★ the desk is organiser-only, and its buttons come back to it", () => {
   const page = read("src/app/admin/desk/page.tsx");
-  assert.match(page, /isAdminSession/);
+  // Spec change 2026-11-02: the organiser or the helper at the door (staffRole).
+  assert.match(page, /staffRole\(/);
+  assert.match(page, /if \(!role\)/);
   assert.match(page, /name="back" value="desk"/);
   for (const route of ["src/app/api/admin/checkin/route.ts", "src/app/api/admin/tuesday-fee/route.ts"]) {
     // Only the one fixed path, never an address taken from the form.

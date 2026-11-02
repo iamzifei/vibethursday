@@ -9,6 +9,7 @@ import { CHECKIN_COLUMNS, csvCell, ORDER_COLUMNS } from "@/lib/csv";
 import { isSessionDate } from "@/lib/checkin";
 import { feeFor, focusSession } from "@/lib/sessions";
 import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow } from "@/lib/desk";
+import { ACTION_LABEL, followUps } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +90,20 @@ export async function GET(request: Request) {
 
   const { name, lines } =
     // The check-in desk's after-event sheet (2026-11-02, desk.ts).
-    what === "desk"
+    // The follow-up list (2026-11-02, followup.ts): one row per person who came.
+    what === "followup"
+      ? {
+          name: `followup-${session}`,
+          lines: await listDeskRows(session).then((rows) => [
+            ["名字", "微信号", "要做的", "这次想聊", "在做什么"].join(","),
+            ...followUps(buildDesk(rows, feeFor(session) !== null), session).map(({ entry, actions }) =>
+              [entry.name, entry.wechat ?? "", actions.map((action) => ACTION_LABEL[action].title).join("；"), entry.topic ?? "", entry.building ?? ""]
+                .map((value) => csvCell(value))
+                .join(","),
+            ),
+          ]),
+        }
+      : what === "desk"
       ? {
           name: `desk-${session}`,
           lines: await listDeskRows(session).then((rows) => [

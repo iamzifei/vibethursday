@@ -27,6 +27,7 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin#week", label: "报名、候补、问答、海报" },
       { href: "/admin#tuesday-fees", label: "周二收费" },
       { href: "/admin#after", label: "散场后：照片、反馈" },
+      { href: "/admin/followup", label: "会后跟进名单", hint: "需求、项目、该推会员的" },
     ],
   },
   {
