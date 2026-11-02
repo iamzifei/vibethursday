@@ -5,6 +5,7 @@ import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
 import { listProgress, listWallMembers } from "@/lib/db";
 import { MAX_DETAIL, MAX_TITLE, PROGRESS_KINDS, progressByWork, type ProgressEntry } from "@/lib/progress";
+import { sydneyToday } from "@/lib/sessions";
 import { listWorks } from "@/lib/works";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ const ERRORS: Record<string, string> = {
   kind: "类型不对。",
   title: `「发生了什么」要填，最多 ${MAX_TITLE} 字。`,
   detail: `「补充」最多 ${MAX_DETAIL} 字。`,
-  proof: "证明链接要以 https:// 开头。",
+  proof: "证明链接要以 https:// 开头；证书类必须附发证方的核验链接。",
 };
 
 /**
@@ -50,7 +51,8 @@ export default async function ProgressAdminPage({ searchParams }: PageProps) {
   const works = listWorks(members);
   const byWork = progressByWork(entries);
   const matched = new Set<string>();
-  const today = new Date().toISOString().slice(0, 10);
+  // Sydney's date, not UTC: on a Tuesday morning UTC is still Monday.
+  const today = sydneyToday().toISOString().slice(0, 10);
 
   const Entry = ({ entry, anchor }: { entry: ProgressEntry; anchor: string }) => (
     <li className="stack-1">
@@ -121,7 +123,7 @@ export default async function ProgressAdminPage({ searchParams }: PageProps) {
                 <input type="hidden" name="member" value={memberId} />
                 <input type="hidden" name="hash" value={hash} />
                 <label className="label">
-                  日期 <input className="field" type="date" name="date" defaultValue={today} required />
+                  日期 <input className="field" type="date" name="date" defaultValue={today} max={today} required />
                 </label>
                 <label className="label">
                   类型{" "}

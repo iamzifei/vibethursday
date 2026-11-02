@@ -204,7 +204,7 @@ export default async function WorkPage({ params, searchParams }: PageProps) {
                       {entry.proof_url && (
                         // Whoever issued it vouches for it, not this site: nofollow.
                         <a className="body-sm" href={entry.proof_url} target="_blank" rel="nofollow noopener noreferrer">
-                          {entry.kind === "credential" ? p.verify : p.proof} ↗
+                          {entry.kind === "credential" ? p.verify : p.proof} · {new URL(entry.proof_url).hostname} ↗
                         </a>
                       )}
                     </li>

@@ -81,6 +81,13 @@ test("★ a valid form becomes an entry; anything off the list is refused", () =
   assert.equal(parseProgressForm({ ...base, detail: "字".repeat(501) }).ok, false, "detail too long");
   assert.equal(parseProgressForm({ ...base, proof: "http://example.com" }).ok, false, "proof must be https");
   assert.equal(parseProgressForm({ ...base, proof: "javascript:alert(1)" }).ok, false, "no scripts");
+  // Review 2026-11-02: a link shown as "verify with the issuer" must go to the
+  // host it appears to; a certificate without one is only an assertion.
+  assert.equal(parseProgressForm({ ...base, proof: "https://www.credly.com@evil.example/x" }).ok, false, "no userinfo");
+  assert.equal(parseProgressForm({ ...base, kind: "credential" }).ok, false, "a certificate needs its proof link");
+  assert.equal(parseProgressForm({ ...base, member: "9".repeat(19) }).ok, false, "not a bigint");
+  assert.equal(parseProgressForm({ ...base, date: "2026-11-05" }, "2026-11-04").ok, false, "not in the future");
+  assert.equal(parseProgressForm({ ...base, date: "2026-11-04" }, "2026-11-04").ok, true, "today is fine");
 });
 
 test("★ the public timeline is confirmed entries only, newest first", () => {

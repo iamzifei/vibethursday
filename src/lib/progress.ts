@@ -75,7 +75,11 @@ function isKind(value: string): value is ProgressKind {
  * A proof link must be https: it is shown to strangers as "verify with the
  * issuer", so it can be neither a script nor a plain-text page.
  */
-export function parseProgressForm(form: FormFields): { ok: true; value: ProgressInput } | { ok: false; error: string } {
+export function parseProgressForm(
+  form: FormFields,
+  /** Sydney's today; when given, a later date is refused (a badge must not appear early). */
+  today?: string,
+): { ok: true; value: ProgressInput } | { ok: false; error: string } {
   const member = (form.member ?? "").trim();
   const hash = (form.hash ?? "").trim();
   const date = (form.date ?? "").trim();
@@ -84,9 +88,10 @@ export function parseProgressForm(form: FormFields): { ok: true; value: Progress
   const detail = (form.detail ?? "").trim();
   const proof = (form.proof ?? "").trim();
 
-  if (!/^\d+$/.test(member)) return { ok: false, error: "member" };
+  // At most 18 digits: always inside a Postgres bigint.
+  if (!/^\d{1,18}$/.test(member)) return { ok: false, error: "member" };
   if (!/^[0-9a-z]{6}$/.test(hash)) return { ok: false, error: "hash" };
-  if (!isDate(date)) return { ok: false, error: "date" };
+  if (!isDate(date) || (today !== undefined && date > today)) return { ok: false, error: "date" };
   if (!isKind(kind)) return { ok: false, error: "kind" };
   if (!title || [...title].length > MAX_TITLE) return { ok: false, error: "title" };
   if ([...detail].length > MAX_DETAIL) return { ok: false, error: "detail" };
@@ -99,9 +104,12 @@ export function parseProgressForm(form: FormFields): { ok: true; value: Progress
     } catch {
       return { ok: false, error: "proof" };
     }
-    if (parsed.protocol !== "https:") return { ok: false, error: "proof" };
+    // No "user@host" form: https://issuer.com@elsewhere.example goes to elsewhere.
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password) return { ok: false, error: "proof" };
     proofUrl = parsed.toString();
   }
+  // A certificate is worth showing only if a stranger can check it with whoever issued it.
+  if (kind === "credential" && !proofUrl) return { ok: false, error: "proof" };
 
   return {
     ok: true,

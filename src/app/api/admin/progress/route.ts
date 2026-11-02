@@ -5,6 +5,7 @@ import { addProgress, deleteProgress, setProgressConfirmed } from "@/lib/db";
 import { parseProgressForm } from "@/lib/progress";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+import { sydneyToday } from "@/lib/sessions";
 
 /** The most this route reads from a request body (see `boundedRequest`). */
 const MAX_BODY = 16 * 1024;
@@ -56,14 +57,19 @@ export async function POST(request: Request) {
       title: text("title"),
       detail: text("detail"),
       proof: text("proof"),
-    });
+    }, sydneyToday().toISOString().slice(0, 10));
     if (!parsed.ok) return back(`?err=${parsed.error}`, "");
-    await addProgress(parsed.value);
+    try {
+      await addProgress(parsed.value);
+    } catch {
+      // A member id that is no longer there fails the foreign key: a stale form.
+      return back("?err=member", "");
+    }
     return back("?ok=added", `#w-${parsed.value.memberId}-${parsed.value.workHash}`);
   }
 
   const id = text("id");
-  if (!id || !/^\d+$/.test(id)) return NextResponse.json({ error: "bad_id" }, { status: 400 });
+  if (!id || !/^\d{1,18}$/.test(id)) return NextResponse.json({ error: "bad_id" }, { status: 400 });
   const anchor = text("anchor");
   const hash = anchor && /^w-\d+-[0-9a-z]{6}$/.test(anchor) ? `#${anchor}` : "";
 
