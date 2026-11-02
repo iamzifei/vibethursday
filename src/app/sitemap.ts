@@ -1,3 +1,4 @@
+import { blogPosts } from "@/lib/blog";
 import type { MetadataRoute } from "next";
 import { getCopy } from "@/lib/content";
 import { countCheckins, listWallMembers } from "@/lib/db";
@@ -90,6 +91,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     everyLanguage("/guide", { changeFrequency: "monthly", priority: 0.6 }),
     // The first chapter of how the meetup was run (2026-11-02), Chinese only.
     { url: `${base}/guide/how-we-run`, changeFrequency: "monthly" as const, priority: 0.6 },
+    // The blog (2026-11-02): the index and every post.
+    { url: `${base}/blog`, changeFrequency: "weekly" as const, priority: 0.7 },
+    ...blogPosts().map((post) => ({ url: `${base}/blog/${post.slug}`, lastModified: new Date(`${post.date}T00:00:00Z`), changeFrequency: "monthly" as const, priority: 0.6 })),
     ...works.map((work) => everyLanguage(`/works/${work.key}`, { changeFrequency: "monthly", priority: 0.5 })),
     ...[...dates]
       .sort()

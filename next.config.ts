@@ -100,6 +100,12 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {
+        // Blog covers only (2026-11-02): the pages under /blog must not be
+        // cached for a month, or a corrected post would not show.
+        source: "/blog/:file(.+\\.(?:webp|jpg))",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
         // The game's music. Same reasoning as the photos: no hash in the
         // name, so thirty days rather than immutable.
         source: "/audio/:path*",

@@ -1,3 +1,4 @@
+import { blogPosts } from "@/lib/blog";
 import { copy, type Copy } from "@/lib/content";
 import { SESSION_END, SESSION_START, VENUE } from "@/lib/seo";
 import { formatSession, nextThursdays } from "@/lib/sessions";
@@ -94,6 +95,8 @@ export async function GET(): Promise<Response> {
 - [成员墙 / Member wall](${base}/members): ${zh.members.lede}
 - [码头 / The Wharf](${base}/wharf): ${zh.wharf.lede} — ${en.wharf.lede}
 - [Vibe Thursday 是怎么办起来的 · 第一章](${base}/guide/how-we-run): 从第一场到每周照常的六步，附跑单和预告模板（中文）
+- [博客](${base}/blog): 往期场次要点和常见 AI 问题（中文），作者 澳洲AI教父
+${blogPosts().map((post) => `- [${post.title}](${base}/blog/${post.slug}): ${post.description}`).join("\n")}
 - [场次 / Sessions](${base}/sessions): ${zh.archive.lede} — ${en.archive.lede}
 - [作品 / Works](${base}/works): ${zh.works.lede} — ${en.works.lede}
 - [这个活动的开销 / What it costs](${base}/support): ${zh.support.title} ${en.support.title}

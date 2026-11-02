@@ -28,6 +28,8 @@ export const NAV_LINKS = [
   // The session archive, then the wall and the works: the parts of this site
   // that get thicker every week.
   { href: "/sessions", label: "sessions" },
+  // 2026-11-02: articles from the public Thursdays and the common questions.
+  { href: "/blog", label: "blog" },
   { href: "/members", label: "members" },
   { href: "/works", label: "works" },
   // 2026-11-01: the guide took /play's slot — it is the community's one rules page.
