@@ -2003,10 +2003,11 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
 .mcard__tags .tag { position: relative; z-index: 1; }
 
 /* Phone width: the wall is for scanning on the Thursday to find someone, so
-   each card drops to two lines — name and attendance, then what they are
-   looking for or can help with — with the avatar on the left and every line
-   on one left edge. Headline, assets and tags stay on the member's own page.
-   Desktop keeps the full card. */
+   each card is name and attendance, then one line of who they are (headline,
+   else bio — 2026-11-02, a directory is scanned for what people do), then one
+   line of what they are looking for or can help with, with the avatar on the
+   left and every line on one left edge. Assets and tags stay on the member's
+   own page. Desktop keeps the full card. */
 @media (max-width: 639px) {
   .mwall { gap: var(--space-2); grid-auto-rows: auto; }
 
@@ -2022,7 +2023,7 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
   .mwall .mcard:not(.mcard--light) .mcard__head,
   .mwall .mcard:not(.mcard--light) .mcard__id { display: contents; }
 
-  .mwall .mcard:not(.mcard--light) .monogram { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .mwall .mcard:not(.mcard--light) .monogram { grid-column: 1; grid-row: 1 / span 3; align-self: start; }
   .mwall .mcard:not(.mcard--light) .mcard__name {
     grid-column: 2; grid-row: 1;
     font-size: var(--text-base);
@@ -2032,8 +2033,12 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
   /* Roles are on the member page; the count is what says "a regular". */
   .mwall .mcard:not(.mcard--light) .mcard__meta .chip:not(.chip--quiet) { display: none; }
 
-  .mwall .mcard:not(.mcard--light) .wants {
+  .mwall .mcard:not(.mcard--light) .mcard__headline {
     grid-column: 2 / -1; grid-row: 2;
+    -webkit-line-clamp: 1; line-clamp: 1; min-width: 0;
+  }
+  .mwall .mcard:not(.mcard--light) .wants {
+    grid-column: 2 / -1; grid-row: 3;
     padding-left: 0; border-left: 0; gap: 0;
   }
   /* One line of matchmaking, not three: the first row that exists wins. */
@@ -2041,7 +2046,6 @@ a.chip--on { border-color: var(--accent); background: var(--accent-subtle); colo
   .mwall .mcard:not(.mcard--light) .wants__row ~ .wants__row { display: none; }
   .mwall .mcard:not(.mcard--light) .wants dd { -webkit-line-clamp: 1; line-clamp: 1; min-width: 0; color: var(--fg2); }
 
-  .mwall .mcard:not(.mcard--light) .mcard__headline,
   .mwall .mcard:not(.mcard--light) .asset-list,
   .mwall .mcard:not(.mcard--light) .mcard__tags { display: none; }
 }
