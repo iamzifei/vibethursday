@@ -1,8 +1,7 @@
 /**
  * The check-in desk (2026-11-02): who signed up for one session, who has
  * arrived, and on a paid Build Tuesday who still owes the fee — the three
- * questions an assistant at the door answers all morning (James: "我会在周二让
- * 小助理根据签到页来确定签到和报名情况").
+ * questions whoever is helping at the door answers all morning.
  *
  * Pure, so the rules are tested without a database. `listDeskRows` in db.ts
  * reads the rows; `/admin/desk` renders them.
@@ -13,6 +12,10 @@
  *   expected, just without a reserved seat.
  * - A walk-in is someone who checked in without having booked.
  * - Thursdays are free, so nobody owes anything on one.
+ * - Only someone booked on the Tuesday can pay for it on the site: the card
+ *   page refuses anyone else, and marking a fee paid books the person (past
+ *   the cap). A walk-in or someone on the waitlist is "ask": the organiser
+ *   settles it, not the desk.
  */
 
 /** One person on the desk, as read from the database. */
@@ -38,7 +41,7 @@ export type DeskRow = {
   topic: string | null;
 };
 
-export type PayState = "free" | "member" | "paid" | "waived" | "claimed" | "owing";
+export type PayState = "free" | "member" | "paid" | "waived" | "claimed" | "owing" | "ask";
 
 export type DeskEntry = DeskRow & {
   arrived: boolean;
@@ -49,6 +52,7 @@ export type DeskEntry = DeskRow & {
 function payState(row: DeskRow, paidSession: boolean): PayState {
   if (!paidSession) return "free";
   if (row.member) return "member";
+  if (!row.booked) return "ask";
   if (row.fee_status === "paid") return "paid";
   if (row.fee_status === "waived") return "waived";
   if (row.claimed_at) return "claimed";
@@ -103,4 +107,19 @@ export function filterDesk(entries: readonly DeskEntry[], query: string): DeskEn
   const needle = squash(query);
   if (!needle) return [...entries];
   return entries.filter((entry) => squash(`${entry.name}`).includes(needle) || squash(entry.wechat ?? "").includes(needle));
+}
+
+const SHOWS = new Set(["arrived", "waiting", "owing"]);
+
+/**
+ * Where a desk button comes back to: the same session, search and filter,
+ * scrolled to the row. Built here from checked parts only — the routes never
+ * redirect to anything taken from the form as an address.
+ */
+export function deskReturnPath(session: string, signupId: string, q: string | null, show: string | null): string {
+  const search = new URLSearchParams({ s: session });
+  const query = (q ?? "").trim().slice(0, 50);
+  if (query) search.set("q", query);
+  if (show && SHOWS.has(show)) search.set("show", show);
+  return `/admin/desk?${search.toString()}#r-${signupId}`;
 }

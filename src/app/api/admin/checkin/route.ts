@@ -5,6 +5,13 @@ import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
 import { checkIn, undoCheckin } from "@/lib/db";
 import { requestOrigin } from "@/lib/request-origin";
+import { deskReturnPath } from "@/lib/desk";
+
+/** A form field as text, or null. */
+const text = (form: FormData | null | undefined, name: string) => {
+  const value = form?.get(name);
+  return typeof value === "string" ? value : null;
+};
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -72,7 +79,7 @@ export async function POST(request: Request) {
   // from the form.
   const back = form?.get("back");
   if (back === "desk") {
-    return NextResponse.redirect(new URL(`/admin/desk?s=${session}#r-${signupId}`, await requestOrigin()), 303);
+    return NextResponse.redirect(new URL(deskReturnPath(session, signupId, text(form, "q"), text(form, "show")), await requestOrigin()), 303);
   }
 
   return NextResponse.redirect(

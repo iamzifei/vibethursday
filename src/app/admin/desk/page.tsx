@@ -23,13 +23,14 @@ const PAY_LABEL: Record<PayState, string> = {
   waived: "免收",
   claimed: "说已转账 · 待核",
   owing: "未付",
+  ask: "没报这一场 · 收款找主办人",
 };
 
 const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带项目", help: "来帮忙" };
 
 /**
  * The check-in desk (2026-11-02, desk.ts): one phone-sized page for whoever is
- * at the door — James's assistant on a Build Tuesday. For one session it
+ * helping at the door on a Build Tuesday or a Thursday. For one session it
  * answers who booked, who has arrived, and who still owes the fee, and every
  * row has the button that settles it. Nothing else from /admin is on it.
  *
@@ -43,7 +44,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
         <div className="card stack-3">
           <h1 className="h3">没有权限</h1>
           <p className="body-sm">
-            先在这台手机上打开一次 James 发你的后台链接（<code>/admin?key=…</code>），再回到这一页。
+            先在这台手机上打开一次主办人发你的后台链接，再回到这一页。
           </p>
         </div>
       </main>
@@ -98,7 +99,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
           )}
           {entry.waitlisted && !entry.booked && <span className="pill">候补</span>}
           {entry.pay !== "free" && (
-            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" ? " pill--warn" : " pill--live"}`}>
+            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" ? " pill--warn" : " pill--live"}`}>
               {PAY_LABEL[entry.pay]}
               {entry.pay === "claimed" && entry.claimed_at ? ` ${entry.claimed_at}` : ""}
             </span>
@@ -115,6 +116,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
           <input type="hidden" name="session" value={session} />
           <input type="hidden" name="signupId" value={entry.id} />
           <input type="hidden" name="back" value="desk" />
+          <input type="hidden" name="q" value={query} />
+          <input type="hidden" name="show" value={show} />
           <input type="hidden" name="action" value={entry.arrived ? "undo" : "checkin"} />
           <button className={entry.arrived ? "btn btn--secondary btn--sm" : "btn btn--primary btn--sm"} type="submit">
             {entry.arrived ? "撤销签到" : "签到"}
@@ -127,6 +130,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
               <input type="hidden" name="session" value={session} />
               <input type="hidden" name="signupId" value={entry.id} />
               <input type="hidden" name="back" value="desk" />
+              <input type="hidden" name="q" value={query} />
+              <input type="hidden" name="show" value={show} />
               <input type="hidden" name="status" value="paid" />
               <button className="btn btn--secondary btn--sm" type="submit">标已付</button>
             </form>
@@ -137,6 +142,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
             <input type="hidden" name="session" value={session} />
             <input type="hidden" name="signupId" value={entry.id} />
             <input type="hidden" name="back" value="desk" />
+            <input type="hidden" name="q" value={query} />
+            <input type="hidden" name="show" value={show} />
             <input type="hidden" name="status" value="pending" />
             <button className="linkish body-sm" type="submit">改回未付</button>
           </form>
@@ -185,13 +192,13 @@ export default async function DeskPage({ searchParams }: PageProps) {
         <summary><strong>怎么用（第一次看这里）</strong></summary>
         <ol className="stack-2 body-sm" style={{ margin: 0 }}>
           <li>来一个人，问名字，在下面搜名字或微信号，点<strong>「签到」</strong>。</li>
-          <li>搜不到 = 没报名：请对方扫门口的签到码，选「我没报名」填三格，签完会自动出现在这里，标着「现场新来」。</li>
+          <li>搜不到 = 没报名：请对方扫门口的签到码，选「我没报名」填三格，签完会自动出现在这里，标着「现场新来」。{fee !== null && " 没报这一场的人（现场新来、候补）门票由主办人处理，你只管签到。"}</li>
           {fee !== null && (
             <>
               <li>
                 看付款：绿色（已付 / 共创会员 / 免收）不用管。<strong>黄色「未付」</strong>：门票 {feeLabel(fee)}，共 {payLabel(fee)}。点「付款码」让对方扫码刷卡，付完自动变已付；对方当场转账的，看到到账截图后点「标已付」。
               </li>
-              <li>「说已转账 · 待核」= 对方在网站上点过「我已转账」，钱还没核。让 James 散场后核，现场不用追。</li>
+              <li>「说已转账 · 待核」= 对方在网站上点过「我已转账」，钱还没核。由主办人散场后核，现场不用追。</li>
               <li>想入共创会员的：一年周二免门票，链接是 vibethursday.com/join，让对方自己付，不用你处理。</li>
             </>
           )}

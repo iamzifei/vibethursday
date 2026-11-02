@@ -56,6 +56,17 @@ export default async function DeskPayPage({ searchParams }: PageProps) {
     );
   }
 
+  // Only someone booked on this Tuesday can pay for it here: the payment page
+  // refuses anyone else, and a fee row would book them past the cap.
+  if (!person.booked) {
+    return (
+      <main className="shell section stack-4">
+        <p className="body-lg">{person.name} 没有报这一场（现场新来或候补），门票请主办人处理。</p>
+        <Link href={back}>← 回签到台</Link>
+      </main>
+    );
+  }
+
   const { ref, status } = await getOrCreateSessionFee(s!, id!, newFeeRef());
   const url = `${await requestOrigin()}/tuesday/pay?ref=${ref}`;
   // Dark on white, never inverted: plenty of scanners fail on a light-on-dark code.

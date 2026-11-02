@@ -5076,6 +5076,9 @@ export async function listProgress(options: { confirmedOnly?: boolean; memberIds
  */
 export async function listDeskRows(session: string): Promise<DeskRow[]> {
   await ensureSchema();
+  // Lapsed card holds first, as the fee desk does: otherwise someone whose
+  // hold ran out still shows as booked and owing until another page runs it.
+  await releaseExpiredHolds();
   const result = await getPool().query<DeskRow>(
     `SELECT g.id::text AS id, g.name, g.wechat,
             ($1::date = ANY(g.sessions)) AS booked,

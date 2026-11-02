@@ -13,7 +13,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { buildDesk, deskStats, filterDesk, type DeskRow } from "../src/lib/desk.ts";
+import { buildDesk, deskReturnPath, deskStats, filterDesk, type DeskRow } from "../src/lib/desk.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
@@ -76,7 +76,7 @@ test("★ who has not arrived comes first; a walk-in is someone who checked in w
   assert.equal(stats.walkIns, 1);
   assert.equal(stats.arrived, 2);
   assert.equal(stats.notYet, 2);
-  assert.equal(stats.owing, 4, "nobody here is paid or a member");
+  assert.equal(stats.owing, 2, "the two booked people; the walk-in and the waitlist are 'ask'");
 });
 
 test("the search matches name or WeChat ID, blind to case and spaces", () => {
@@ -94,7 +94,7 @@ test("★ the desk is organiser-only, and its buttons come back to it", () => {
   for (const route of ["src/app/api/admin/checkin/route.ts", "src/app/api/admin/tuesday-fee/route.ts"]) {
     // Only the one fixed path, never an address taken from the form.
     assert.match(read(route), /back === "desk"/, route);
-    assert.match(read(route), /\/admin\/desk\?s=/, route);
+    assert.match(read(route), /deskReturnPath/, route);
   }
 });
 
@@ -109,4 +109,28 @@ test("the room's check-in page ends with the day's one rule, never someone's own
   assert.match(page, /t\.doneTuesday/);
   assert.match(page, /t\.doneThursday/);
   assert.doesNotMatch(page, /listDeskRows|listTuesdayFeeDesk/, "no per-person fee on a page anyone with the code can open");
+});
+
+// Review 2026-11-02: the card payment page only takes people booked on that
+// Tuesday, and marking someone paid books them (past the cap). So the desk
+// offers payment only to the booked; a walk-in or the waitlist goes to the
+// organiser.
+test("★ on a paid Tuesday, someone not booked (walk-in, waitlist) is 'ask the organiser', never 'owing'", () => {
+  const desk = buildDesk(
+    [
+      row({ id: "1", booked: false, checked_in_at: "10:40", source: "walk-in" }),
+      row({ id: "2", booked: false, waitlisted: true }),
+      row({ id: "3", booked: false, waitlisted: true, member: true }),
+    ],
+    true,
+  );
+  const pay = Object.fromEntries(desk.map((entry) => [entry.id, entry.pay]));
+  assert.deepEqual(pay, { "1": "ask", "2": "ask", "3": "member" });
+  assert.equal(deskStats(desk).owing, 0);
+});
+
+test("a button on the desk comes back to the same search and filter", () => {
+  assert.equal(deskReturnPath("2026-11-03", "9", "ann", "waiting"), "/admin/desk?s=2026-11-03&q=ann&show=waiting#r-9");
+  assert.equal(deskReturnPath("2026-11-03", "9", null, "bogus"), "/admin/desk?s=2026-11-03#r-9", "an unknown filter is dropped");
+  assert.equal(deskReturnPath("2026-11-03", "9", "x".repeat(80), null), `/admin/desk?s=2026-11-03&q=${"x".repeat(50)}#r-9`);
 });

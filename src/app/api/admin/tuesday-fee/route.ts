@@ -5,6 +5,13 @@ import { isSessionDate } from "@/lib/checkin";
 import { getOrCreateSessionFee, setSessionFeeStatus } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
+import { deskReturnPath } from "@/lib/desk";
+
+/** A form field as text, or null. */
+const text = (form: FormData | null | undefined, name: string) => {
+  const value = form?.get(name);
+  return typeof value === "string" ? value : null;
+};
 import { fromThisSite } from "@/lib/same-origin";
 import { newFeeRef } from "@/lib/tuesday-fee";
 
@@ -57,7 +64,7 @@ export async function POST(request: Request) {
   // From the check-in desk (2026-11-02): back to it, on the same row. A fixed path only.
   const back = form?.get("back");
   if (back === "desk") {
-    return NextResponse.redirect(new URL(`/admin/desk?s=${session}#r-${signupId}`, await requestOrigin()), 303);
+    return NextResponse.redirect(new URL(deskReturnPath(session, signupId, text(form, "q"), text(form, "show")), await requestOrigin()), 303);
   }
   return NextResponse.redirect(new URL("/admin#tuesday-fees", await requestOrigin()), 303);
 }
