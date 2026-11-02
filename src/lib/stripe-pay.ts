@@ -98,6 +98,8 @@ export type CheckoutSession = {
   status: "open" | "complete" | "expired";
   payment_status: "paid" | "unpaid" | "no_payment_required";
   metadata: Record<string, string>;
+  /** Set on a subscription Checkout (the membership) once it is complete. */
+  subscription?: string | null;
 };
 
 async function stripeRequest(path: string, init: { method: "GET" | "POST"; form?: URLSearchParams; idempotencyKey?: string }): Promise<unknown> {
@@ -137,9 +139,15 @@ export async function createCheckout(input: {
    * at once get one Checkout page from Stripe, not two that could both be paid.
    */
   idempotencyKey: string;
+  /**
+   * A subscription renewed every year instead of a one-off payment: the
+   * membership (James 2026-11-02). The reference also goes on the
+   * subscription, so its renewals can be told apart in Stripe.
+   */
+  recurring?: "year";
 }): Promise<CheckoutSession> {
   const form = new URLSearchParams({
-    mode: "payment",
+    mode: input.recurring ? "subscription" : "payment",
     locale: "auto",
     client_reference_id: input.ref,
     success_url: input.successUrl,
@@ -151,13 +159,22 @@ export async function createCheckout(input: {
     "line_items[0][price_data][currency]": "aud",
     "line_items[0][price_data][unit_amount]": String(toCents(input.amount)),
     "line_items[0][price_data][product_data][name]": input.title,
-    "payment_intent_data[description]": `${input.title} · ${input.ref}`,
     "metadata[ref]": input.ref,
     "metadata[kind]": input.kind,
     "metadata[signup_id]": input.signupId,
     "metadata[session]": input.session,
-    "payment_intent_data[metadata][ref]": input.ref,
   });
+  if (input.recurring) {
+    // Stripe refuses payment_intent_data on a subscription; the reference
+    // rides on the subscription instead, and from there on every invoice.
+    form.set("line_items[0][price_data][recurring][interval]", input.recurring);
+    form.set("subscription_data[description]", `${input.title} · ${input.ref}`);
+    form.set("subscription_data[metadata][ref]", input.ref);
+    form.set("subscription_data[metadata][kind]", input.kind);
+  } else {
+    form.set("payment_intent_data[description]", `${input.title} · ${input.ref}`);
+    form.set("payment_intent_data[metadata][ref]", input.ref);
+  }
   return (await stripeRequest("checkout/sessions", { method: "POST", form, idempotencyKey: input.idempotencyKey })) as CheckoutSession;
 }
 

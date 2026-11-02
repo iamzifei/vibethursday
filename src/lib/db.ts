@@ -9,7 +9,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
-import { MEMBERSHIP_COURSES } from "./course.ts";
+import { MEMBERSHIP, MEMBERSHIP_COURSES } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 
 /**
@@ -19,6 +19,13 @@ import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts
  * the statement.
  */
 const MEMBER_COURSES_SQL = MEMBERSHIP_COURSES.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
+/**
+ * How long one payment keeps someone a member: a year, plus a week's grace
+ * (2026-11-02). The yearly subscription renews on the anniversary but its
+ * invoice is paid an hour or more later — days, on a card retry — and a
+ * paying member must not drop out in between.
+ */
+const MEMBER_WINDOW = "1 year 7 days";
 
 /**
  * Postgres access.
@@ -669,6 +676,9 @@ export function ensureSchema(): Promise<void> {
     // The Checkout page opened for a 共创会员 bought by card (2026-11-02,
     // course.ts MEMBERSHIP). Classes paid by transfer leave it NULL.
     await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
+    // The yearly subscription behind a membership (2026-11-02): each paid
+    // renewal finds its order by this and moves paid_at on a year.
+    await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS stripe_subscription text`);
 
     // ── The organiser's notes on people (2026-10-13, person-profile.ts) ──
     // Read only by /admin pages. Kept off `signups` so nothing in the signup
@@ -1466,7 +1476,7 @@ const MEMBER_COLUMNS = `
   -- matched the same way as isMember. Shown as a badge on the card.
   EXISTS (
     SELECT 1 FROM course_orders o
-     WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
+     WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
        AND (o.signup_id = g.id
             OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
   ) AS cocreator,
@@ -4298,7 +4308,7 @@ export async function isMember(signupId: string): Promise<boolean> {
         WHERE g.id = $1::bigint
           AND o.status = 'paid'
           AND o.course IN (${MEMBER_COURSES_SQL})
-          AND o.paid_at > now() - interval '1 year'
+          AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
           AND (o.signup_id = g.id
                OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
      ) AS member`,
@@ -4319,7 +4329,7 @@ export async function isMemberWechat(wechat: string): Promise<boolean> {
        SELECT 1 FROM course_orders o
         WHERE o.status = 'paid'
           AND o.course IN (${MEMBER_COURSES_SQL})
-          AND o.paid_at > now() - interval '1 year'
+          AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
           AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace($1, '\\s+', '', 'g'))
      ) AS member`,
     [wechat],
@@ -4388,7 +4398,7 @@ export async function releaseExpiredHolds(): Promise<void> {
           AND f.session = ANY(g.sessions)
           AND NOT EXISTS (
             SELECT 1 FROM course_orders o
-             WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
+             WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
                AND (o.signup_id = g.id
                     OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
           )`,
@@ -4434,18 +4444,51 @@ export async function attachCheckout(kind: "tuesday" | "dinner" | "member", ref:
 }
 
 /**
+ * A membership's yearly renewal was paid (2026-11-02): its year starts again
+ * now. Returns the order's reference, or null when the subscription is not a
+ * membership — the same Stripe account carries other products' subscriptions.
+ */
+export async function renewMembership(subscription: string, periodStart: Date): Promise<string | null> {
+  await ensureSchema();
+  // The year runs from the start of the period paid for, never backwards, so
+  // a replayed or late event cannot buy an extra year. Only a paid row: a
+  // cancelled or reopened one is not revived by an old subscription.
+  const result = await getPool().query<{ ref: string }>(
+    `UPDATE course_orders SET paid_at = greatest(paid_at, $3::timestamptz)
+      WHERE stripe_subscription = $1 AND course = $2 AND status = 'paid'
+      RETURNING ref`,
+    [subscription, MEMBERSHIP.id, periodStart],
+  );
+  return result.rows[0]?.ref ?? null;
+}
+
+/**
+ * A lapsed membership bought again (2026-11-02): one row per WeChat ID, so
+ * the old row goes back to unpaid with no Checkout page, ready to pay anew.
+ */
+export async function reopenMembershipOrder(ref: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE course_orders SET status = 'pending', stripe_session = NULL, stripe_subscription = NULL WHERE ref = $1 AND course = $2`,
+    [ref, MEMBERSHIP.id],
+  );
+}
+
+/**
  * Settles a card payment: the row is paid and its hold cleared. A Tuesday
  * whose hold had already lapsed is put back on the person's sessions — the
  * money arrived, so the place is theirs, even if that makes one over the cap.
  * Returns false when there was nothing to settle (already paid, or no row).
  */
-export async function markPaidByCard(kind: "tuesday" | "dinner" | "member", ref: string): Promise<boolean> {
+export async function markPaidByCard(kind: "tuesday" | "dinner" | "member", ref: string, subscription: string | null = null): Promise<boolean> {
   await ensureSchema();
   if (kind === "member") {
-    // The money arrived, so it is paid whatever the row said before.
+    // The money arrived, so it is paid whatever the row said before. The
+    // subscription is kept so renewals can find this order.
     const result = await getPool().query(
-      `UPDATE course_orders SET status = 'paid', paid_at = now() WHERE ref = $1 AND status <> 'paid'`,
-      [ref],
+      `UPDATE course_orders SET status = 'paid', paid_at = now(), stripe_subscription = coalesce($2, stripe_subscription)
+        WHERE ref = $1 AND status <> 'paid'`,
+      [ref, subscription],
     );
     return (result.rowCount ?? 0) > 0;
   }
@@ -4646,7 +4689,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
     `SELECT g.id::text AS signup_id, g.name, g.wechat,
             EXISTS (
               SELECT 1 FROM course_orders o
-               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '1 year'
+               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS member,

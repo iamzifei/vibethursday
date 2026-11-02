@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SessionCompare } from "@/components/SessionCompare";
+import { MemberUpsell } from "@/components/MemberUpsell";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -127,6 +128,8 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                 {t.thursdayNote} <a href={langHref("/", lang)}>{t.thursdayLink} →</a>
               </p>
             </div>
+
+            <MemberUpsell copy={t.memberUpsell} />
 
             {next && (
               <div className="stack-4" id="signup">

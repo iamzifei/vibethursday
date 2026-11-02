@@ -56,18 +56,31 @@ const INDUSTRY_OPTIONS = [
 type IconName = "advisor" | "list" | "laptop" | "tool" | "handshake" | "people" | "globe" | "gift" | "calendar" | "pin";
 
 /**
- * The AI+IP class (2026-11-01, `IP_COURSE`), laid out from the poster James
- * sent that day, without its QR code.
- * Only what the poster says: no speaker bios or promises it does not make.
+ * The AI+IP class (`IP_COURSE`), laid out from the two posters James sent on
+ * 2026-11-02 — headline, the three promises, the day's table, price — without
+ * the partner branding or its QR code (payment stays a bank transfer).
+ * Only what the posters say: no speaker bios or promises they do not make.
  */
-const MODULES: { n: string; who: string; title: string; icon: IconName }[] = [
-  { n: "01", who: "Nick", title: "商业 IP 定位", icon: "advisor" },
-  { n: "02", who: "Lankey", title: "IP 打造", icon: "people" },
-  { n: "03", who: "特邀嘉宾", title: "实战分享", icon: "handshake" },
-  { n: "04", who: "James", title: "AI 应用", icon: "laptop" },
+const PROMISES = [
+  { strong: "用好", em: "AI" },
+  { strong: "打造", em: "IP" },
+  { strong: "让生意", em: "更好做" },
 ];
 
-/** What A$365 buys besides the day itself. */
+/** The day, row for row as the poster's table: time, who, what. */
+const SCHEDULE: [string, string, string][] = [
+  ["09:00–09:30", "签到", "登记入场"],
+  ["09:30–10:20", "Nick", "商业 IP 定位"],
+  ["10:20–10:30", "休息", "交流与休息"],
+  ["10:30–11:20", "Lankey", "IP 打造"],
+  ["11:20–12:20", "午餐", "午餐交流"],
+  ["12:20–13:10", "特邀嘉宾", "实战分享"],
+  ["13:10–13:20", "休息", "交流与休息"],
+  ["13:20–14:10", "James", "AI 应用"],
+  ["14:10–15:00", "全体导师", "课后答疑与交流"],
+];
+
+/** 「含一年课程会员权益」: what A$365 buys besides the day (the 11-01 poster). */
 const REFRESH: { icon: IconName; text: string }[] = [
   { icon: "calendar", text: "全年不少于 6 次复训机会" },
   { icon: "gift", text: "复训留位费：40 澳元 / 次（含 GST）" },
@@ -75,25 +88,13 @@ const REFRESH: { icon: IconName; text: string }[] = [
   { icon: "list", text: "复训日期、主题及预约安排提前通知" },
 ];
 
-/** The first class's day, as the poster has it ("拟": subject to change). */
-const SCHEDULE: [string, string][] = [
-  ["9:00", "登记入场"],
-  ["9:30", "Nick｜商业 IP 定位"],
-  ["10:20", "休息"],
-  ["10:30", "Lankey｜IP 打造"],
-  ["11:20", "午餐"],
-  ["12:20", "特邀嘉宾｜实战分享"],
-  ["13:10", "休息"],
-  ["13:20", "James｜AI 应用"],
-  ["14:10", "课后答疑与交流，15:00 结束"],
-];
 
 /** Past Thursdays, faces already covered. */
 const PROOF_PHOTOS = ["session-03-3", "session-04-5", "session-07-2"];
 
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
-  { q: "365 包含什么？", a: "11 月 15 日这一天的课，加一年复训资格：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
+  { q: "365 包含什么？", a: "11 月 15 日这一天的课，加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
   { q: "我是共创会员，要付钱吗？", a: "不用，这门课已经包含在你的会员里。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
   { q: "安排会变吗？", a: "上面是首期的拟定安排，具体时间和安排以最终通知为准。" },
 ];
@@ -263,17 +264,23 @@ export default async function ClassPage({ searchParams }: PageProps) {
               // section the same shape — number, heading, one line, content —
               // with the same space between them. No cards inside cards.
               <>
-                <header className="vip-hero">
-                  <span className="eyebrow">§ {IP_COURSE.title} · {IP_COURSE.dateLabel}</span>
-                  <h1>学点 AI，做点内容，<br />让生意多些机会</h1>
-                  <p className="vip-lead">老板、创业者、自媒体新手都欢迎。一天里讲四块：商业 IP 定位、IP 打造、实战分享、AI 应用。</p>
+                <header className="vip-hero ip-hero">
+                  <span className="eyebrow">§ {IP_COURSE.title}</span>
+                  <h1 className="ip-hero__title">AI 时代，<br />主动出击！</h1>
+                  <p className="ip-hero__course">澳洲 AI+IP 实战课</p>
+                  <p className="ip-hero__tag">澳洲自媒体人的黄埔军校</p>
+                  <ul className="ip-promises" aria-label="这门课的三件事">
+                    {PROMISES.map((p) => (
+                      <li key={p.strong}>{p.strong}<em>{p.em}</em></li>
+                    ))}
+                  </ul>
                   <div className="vip-offer">
-                    <p className="vip-offer__price">{IP_COURSE.priceLabel}</p>
-                    <p className="vip-offer__eq">＝ 首次课程 ＋ 一年复训资格</p>
+                    <p className="vip-offer__price">AUD $365 + GST</p>
+                    <p className="vip-offer__eq">含一年课程会员权益</p>
                     <ul className="vip-offer__facts">
-                      <li><Icon name="calendar" />11/15（周日）9:00–15:00</li>
-                      <li><Icon name="pin" />St Leonards</li>
-                      <li><Icon name="laptop" />案例分享 · 动手练习 · 现场交流</li>
+                      <li><Icon name="calendar" />2026 年 11 月 15 日（周日）· 悉尼</li>
+                      <li><Icon name="calendar" />9:00 签到 · 15:00 结束</li>
+                      <li><Icon name="pin" />{IP_COURSE.placeLabel}</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
                     <p className="vip-offer__left">共创会员已包含这门课，报名免费</p>
@@ -281,21 +288,35 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </header>
 
                 <section className="vip-section">
-                  <SectionHead n="01" title="来学什么" lead="案例分享 · 动手练习 · 现场交流" />
-                  <ul className="vip-features">
-                    {MODULES.map((module) => (
-                      <li key={module.n}>
-                        <span className="vip-features__icon"><Icon name={module.icon} /></span>
-                        <div>
-                          <h3>{module.n} · {module.who}｜{module.title}</h3>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <SectionHead n="01" title="课程安排" lead="2026 年 11 月 15 日（周日）· 悉尼 St Leonards" />
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="table ip-schedule">
+                      <thead>
+                        <tr>
+                          <th scope="col">时间</th>
+                          <th scope="col">主讲</th>
+                          <th scope="col">课程内容</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {SCHEDULE.map(([time, who, what]) => {
+                          const talk = !["签到", "休息", "午餐"].includes(who);
+                          return (
+                            <tr key={time} className={talk ? "ip-schedule__talk" : undefined}>
+                              <td className="mono">{time}</td>
+                              <td>{who}</td>
+                              <td>{what}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="vip-note">具体时间和安排以最终通知为准。</p>
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="02" title="课程 ＋ 全年复训" lead={`${IP_COURSE.priceLabel}，包含首次课程和一年复训资格。`} />
+                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $365 + GST，包含这一天的课和一年的课程会员权益。" />
                   <ul className="vip-features">
                     {REFRESH.map((item) => (
                       <li key={item.text}>
@@ -309,18 +330,8 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="03" title="首期课程安排（拟）" lead={`${IP_COURSE.dateLabel}，${IP_COURSE.timeLabel}`} />
-                  <ol className="vip-timeline">
-                    {SCHEDULE.map(([time, title]) => (
-                      <li key={time}>
-                        <span className="mono">{time}</span>
-                        <div>
-                          <strong>{title}</strong>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="vip-note">地点：{IP_COURSE.placeLabel}。首期时间及具体安排以最终通知为准。</p>
+                  <SectionHead n="03" title="上课地点" />
+                  <p className="body-lg" style={{ margin: 0 }}>{IP_COURSE.placeLabel}</p>
                 </section>
 
                 <section className="vip-section">
@@ -359,7 +370,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
 
                 {/* Phones: the price and the way in, always one tap away. */}
                 <a className="vip-sticky" href="#class-signup">
-                  <span>{IP_COURSE.priceLabel} · 含一年复训</span>
+                  <span>AUD $365 + GST · 含一年课程会员权益</span>
                   <strong>报名</strong>
                 </a>
 
@@ -370,7 +381,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   地点：{IP_COURSE.placeLabel}
                   <br />
-                  费用：{IP_COURSE.priceLabel}（含一年复训），银行转账；共创会员免费
+                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；共创会员免费
                   <br />
                   席位有限，报满即止
                 </p>

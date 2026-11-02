@@ -5235,3 +5235,15 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 }
 
 .guide__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }
+
+/* /class, the AI+IP class (2026-11-02): the posters' headline, three promises
+   and the day as a table, in the site's own colours. */
+.ip-hero__title { font-size: clamp(2.6rem, 9vw, 4.5rem); line-height: 1.05; letter-spacing: -0.02em; }
+.ip-hero__course { margin: 0; font-size: clamp(1.5rem, 5vw, 2.1rem); font-weight: 800; color: var(--fg1); }
+.ip-hero__tag { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--fg2); }
+.ip-promises { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ip-promises li { padding: var(--space-2) var(--space-4); border: 1px solid var(--border-subtle); border-radius: 999px; font-weight: 700; color: var(--fg1); }
+.ip-promises em { font-style: normal; color: var(--accent); }
+.ip-schedule { width: 100%; }
+.ip-schedule td, .ip-schedule th { white-space: nowrap; }
+.ip-schedule__talk td { color: var(--fg1); font-weight: 600; }

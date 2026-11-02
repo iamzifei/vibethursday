@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { currentAccount } from "@/lib/account";
 import { checkoutUrlFor } from "@/lib/card-pay";
 import { MEMBERSHIP, newMemberRef, parseCourseForm } from "@/lib/course";
-import { createCourseOrder, getSignupProfile, isMember, isMemberWechat } from "@/lib/db";
+import { createCourseOrder, getSignupProfile, isMember, isMemberWechat, reopenMembershipOrder } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
@@ -71,10 +71,10 @@ export async function POST(request: Request) {
       note: null,
       ref: newMemberRef(),
     });
-    // A paid row for someone who is no longer a member is last year's: one
-    // row per WeChat ID, so a renewal is handled by hand for now rather than
-    // showing "welcome" without a charge.
-    if (order.status === "paid") return back({ err: "renew" });
+    // A paid row for someone who is no longer a member is a lapsed year (the
+    // subscription was cancelled): one row per WeChat ID, so it is reopened
+    // and paid again rather than showing "welcome" without a charge.
+    if (order.status === "paid") await reopenMembershipOrder(order.ref);
     if (!stripeEnabled()) return back({ ref: order.ref });
     return NextResponse.redirect(await checkoutUrlFor(order.ref, "member", origin), 303);
   } catch (error) {

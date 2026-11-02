@@ -16,6 +16,7 @@ import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
 import { TuesdayVenue } from "@/components/TuesdayVenue";
+import { MemberUpsell } from "@/components/MemberUpsell";
 import { formatSession } from "@/lib/sessions";
 import type { DinnerOffer } from "@/lib/dinner";
 
@@ -586,6 +587,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             <a className="btn btn--primary btn--block" href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
               {copy.feeDueCta} →
             </a>
+            <MemberUpsell copy={copy.memberUpsell} />
           </div>
         )}
         {receipt?.dinner && "skipped" in receipt.dinner && <p>{copy.dinnerSkipped}</p>}

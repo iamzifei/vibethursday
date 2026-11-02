@@ -17,6 +17,8 @@ export const NAV_LINKS = [
   // Build Tuesday, in the bar since 2026-10-15: people could not find how to
   // sign up for it, or tell it apart from Thursday.
   { href: "/tuesday", label: "tuesday" },
+  // The 共创会员 (2026-11-02): Tuesday's membership, so right after Tuesday.
+  { href: "/join", label: "member" },
   { href: "/members", label: "members" },
   // Next to the wall on purpose. These two are the only things on this site
   // that get thicker over time — every other item describes what happens on a

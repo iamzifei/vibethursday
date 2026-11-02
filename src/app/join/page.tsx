@@ -12,9 +12,16 @@ import { stripeEnabled } from "@/lib/stripe-pay";
 
 export const dynamic = "force-dynamic";
 
-// Not in the nav and not for search (James 2026-11-02): the membership is
-// offered at Build Tuesday and by a link sent to someone who asks.
-export const metadata: Metadata = { title: "共创会员 · Vibe Thursday", robots: { index: false } };
+// In the nav since the second round of 2026-11-02 (it began unlisted).
+// A page opened by its reference is someone's own order: kept out of search.
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { ref } = await searchParams;
+  return {
+    title: "共创会员 · Vibe Thursday",
+    description: "Vibe Thursday 共创会员：599 澳元 + GST 一年，每年自动续费。一年内每周二 Build Tuesday 免门票，再送一次澳洲 AI+IP 实战课。",
+    ...(ref ? { robots: { index: false } } : {}),
+  };
+}
 
 type PageProps = { searchParams: Promise<{ ref?: string; paid?: string; error?: string; err?: string; other?: string }> };
 
@@ -30,7 +37,6 @@ const ERRORS: Record<string, string> = {
   rate: "试太多次了，过一会儿再来。",
   failed: "没保存成功，请再试一次；还不行就私信 James。",
   member: "这个微信号已经是共创会员了，不用再买。",
-  renew: "你的会员已经满一年了，续费请私信 James。",
 };
 
 /**
@@ -84,7 +90,7 @@ export default async function JoinPage({ searchParams }: PageProps) {
                 </div>
                 {order.status === "paid" ? (
                   <>
-                    <p className="body-lg">付款已确认，从今天起一年内有效。</p>
+                    <p className="body-lg">付款已确认，从今天起一年内有效，到期自动续费。</p>
                     {perks}
                     <p className="body">
                       付款编号 <strong className="mono">{order.ref}</strong>，有问题私信 James 时带上它。报周二时用同一个微信号，会自动免费。
@@ -121,11 +127,11 @@ export default async function JoinPage({ searchParams }: PageProps) {
                 <div className="stack-3">
                   <span className="eyebrow">§ {MEMBERSHIP.title}</span>
                   <h1>一年的 Build Tuesday，再加一次 AI+IP 课。</h1>
-                  <p className="body-lg">{MEMBERSHIP.priceLabel}，刷卡付款，付完马上生效。</p>
+                  <p className="body-lg">{MEMBERSHIP.priceLabel} 一年，刷卡付款，付完马上生效，每年自动续费。</p>
                 </div>
                 {perks}
                 <p className="body" style={{ color: "var(--fg3)" }}>
-                  之前买过 599 的（10 月 25 日那门课），已经是共创会员，不用再买。
+                  之前买过 599 的（10 月 25 日那门课），已经是共创会员，不用再买。不想续费了，私信 James 取消，当年的权益照常用到期满。
                 </p>
                 {error && <p className="alert" role="alert">{error}</p>}
                 {alreadyMember ? (

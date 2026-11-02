@@ -70,6 +70,11 @@ export function SiteFooter({ lang, copy, support = false, consult = true }: Prop
                 {copy.footer.consultLink}
               </a>
             )}
+            {/* VT Bot (2026-11-02): in the footer, not the bar — the bar is for
+                the meetup itself, and Thursday sells nothing. */}
+            <a href="https://bot.vibethursday.com/" rel="noopener noreferrer" target="_blank">
+              {copy.footer.botLink}
+            </a>
 
             {/* Down here rather than in the bar at the top. The nav is for the
                 five things somebody comes to this site to do; this is for the

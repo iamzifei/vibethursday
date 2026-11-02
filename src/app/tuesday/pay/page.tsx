@@ -3,12 +3,13 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy } from "@/lib/content";
-import { getSessionFeeByRef } from "@/lib/db";
+import { getSessionFeeByRef, isMember, setSessionFeeStatus } from "@/lib/db";
 import { feeFor, formatSession } from "@/lib/sessions";
 import { feeLabel, looksLikeFeeRef, payLabel, tuesdayPaymentInfo } from "@/lib/tuesday-fee";
 import { settleIfPaid } from "@/lib/card-pay";
-import { minutesLeft, stripeEnabled } from "@/lib/stripe-pay";
+import { expireCheckoutPage, minutesLeft, stripeEnabled } from "@/lib/stripe-pay";
 import { TuesdayVenue } from "@/components/TuesdayVenue";
+import { MemberUpsell } from "@/components/MemberUpsell";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,14 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
   // Back from Stripe, or a page left open: settle it here rather than wait
   // for the webhook, then read the row again.
   if (ref && fee && (await settleIfPaid("tuesday", fee))) fee = await getSessionFeeByRef(ref).catch(() => null);
+  // Became a member after booking (the offer on this page, 2026-11-02): this
+  // Tuesday is then free, so it is let in rather than left asking for money.
+  if (ref && fee && fee.status === "pending" && fee.booked && (await isMember(fee.signup_id).catch(() => false))) {
+    await setSessionFeeStatus(fee.id, "waived").catch((error) => console.error("[tuesday-pay] could not waive for a member", error));
+    // A card page opened before joining must not still take the A$33.
+    if (fee.stripe_session) await expireCheckoutPage(fee.stripe_session).catch(() => {});
+    fee = await getSessionFeeByRef(ref).catch(() => null);
+  }
   const price = fee ? feeFor(fee.session) : null;
   const paymentInfo = tuesdayPaymentInfo();
   const card = stripeEnabled();
@@ -126,9 +135,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                         </div>
                       </details>
                     )}
-                    <p className="body">
-                      共创会员周二免费，<a href="/join">了解会员</a>。
-                    </p>
+                    <MemberUpsell copy={{ title: "常来周二的话，办共创会员更划算", body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办好后回到这一页刷新，这一场就不用付了。", cta: "了解共创会员" }} />
                   </>
                 ) : fee.claimed_at ? (
                   <div className="stack-3">
@@ -169,7 +176,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                       </button>
                     </form>
                     <p className="body">
-                      备注编号别填错，我们靠它对账。共创会员周二免费，<a href="/join">了解会员</a>。
+                      备注编号别填错，我们靠它对账。共创会员周二免费，<a href="/join">了解共创会员</a>。
                     </p>
                   </>
                 )}

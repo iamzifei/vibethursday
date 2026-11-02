@@ -1,4 +1,4 @@
-import { expireCheckout, markPaidByCard } from "@/lib/db";
+import { expireCheckout, markPaidByCard, renewMembership } from "@/lib/db";
 import { bodyTooLarge, boundedRequest } from "@/lib/rate-limit";
 import { checkoutSettled, verifyStripeSignature, type CheckoutSession, type PayKind } from "@/lib/stripe-pay";
 
@@ -33,6 +33,30 @@ export async function POST(request: Request) {
     return new Response("Bad body", { status: 400 });
   }
 
+  // A membership's yearly renewal (2026-11-02). Invoices carry no metadata of
+  // ours, so the subscription id is matched against membership orders; a
+  // subscription that is not a membership is acknowledged and left alone.
+  // Only renewals: the first invoice is settled by checkout.session.completed.
+  if (event.type === "invoice.paid") {
+    const invoice = event.data?.object as unknown as {
+      billing_reason?: string;
+      subscription?: string | null;
+      parent?: { subscription_details?: { subscription?: string | null } | null } | null;
+      lines?: { data?: { period?: { start?: number } }[] };
+    };
+    const subscription = invoice?.subscription ?? invoice?.parent?.subscription_details?.subscription ?? null;
+    const periodStart = invoice?.lines?.data?.[0]?.period?.start;
+    if (!subscription || invoice?.billing_reason !== "subscription_cycle" || !periodStart) return new Response("ignored");
+    try {
+      const ref = await renewMembership(subscription, new Date(periodStart * 1000));
+      if (ref) console.log("[stripe] membership renewed", ref);
+      return new Response(ref ? "ok" : "ignored");
+    } catch (error) {
+      console.error("[stripe] could not renew", subscription, error);
+      return new Response("Retry", { status: 500 });
+    }
+  }
+
   const session = event.data?.object;
   const kind = session?.metadata?.kind as PayKind | undefined;
   const ref = session?.metadata?.ref;
@@ -40,7 +64,7 @@ export async function POST(request: Request) {
 
   try {
     if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && checkoutSettled(session.payment_status)) {
-      await markPaidByCard(kind, ref);
+      await markPaidByCard(kind, ref, session.subscription ?? null);
     } else if (event.type === "checkout.session.expired" && kind !== "member") {
       // A membership holds no place, so an expired page releases nothing.
       await expireCheckout(kind, session.id);

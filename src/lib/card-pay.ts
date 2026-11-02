@@ -33,7 +33,7 @@ export async function settleIfPaid(kind: PayKind, row: { ref: string; status: st
   try {
     const checkout = await getCheckout(row.stripe_session);
     if (!checkoutSettled(checkout.payment_status)) return false;
-    return await markPaidByCard(kind, row.ref);
+    return await markPaidByCard(kind, row.ref, checkout.subscription ?? null);
   } catch (error) {
     console.error("[pay] could not check the Checkout page", error);
     return false;
@@ -58,7 +58,7 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
   if (row.stripe_session) {
     const existing = await getCheckout(row.stripe_session);
     if (checkoutSettled(existing.payment_status)) {
-      await markPaidByCard(kind, ref);
+      await markPaidByCard(kind, ref, existing.subscription ?? null);
       return back;
     }
     // A place no longer theirs (cancelled, released) must not be payable
@@ -94,6 +94,8 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
     successUrl: `${back}&paid=1`,
     cancelUrl: back,
     idempotencyKey: `checkout-${ref}-${row.stripe_session ?? "first"}`,
+    // The membership renews itself every year (James 2026-11-02).
+    ...(kind === "member" ? { recurring: "year" as const } : {}),
   });
   // The hold lapsed while Stripe was answering: the place may already be
   // someone else's, so this page is closed before anyone can pay on it.

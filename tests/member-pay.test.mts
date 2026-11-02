@@ -47,11 +47,15 @@ test("the webhook settles membership payments; the code route does not take them
   assert.match(code, /kind === "member"/);
 });
 
-test("/join stays out of the nav and out of search", () => {
-  const nav = readFileSync(path.join(root, "src/lib/nav.ts"), "utf8");
-  assert.ok(!nav.includes("/join"));
+// Spec change, second round of 2026-11-02 (James): the membership is in the
+// nav and open to search, no longer unlisted.
+test("/join is in the nav, right after Tuesday", async () => {
+  const { NAV_LINKS } = await import("../src/lib/nav.ts");
+  const hrefs = NAV_LINKS.map((link) => link.href as string);
+  assert.equal(hrefs[hrefs.indexOf("/tuesday") + 1], "/join");
   const page = readFileSync(path.join(root, "src/app/join/page.tsx"), "utf8");
-  assert.match(page, /index: false/);
+  // Indexed, except a page opened on someone's own order reference.
+  assert.match(page, /\.\.\.\(ref \? \{ robots: \{ index: false \} \} : \{\}\)/);
 });
 
 const db = process.env.COURSE_TEST_DATABASE_URL;
@@ -91,6 +95,80 @@ test(
     } finally {
       await pool.query(`DELETE FROM course_orders WHERE ref = ANY($1::text[])`, [refs]).catch(() => {});
       if (signupId) await pool.query(`DELETE FROM signups WHERE id = $1::bigint`, [signupId]).catch(() => {});
+      // The pool is shared with the renewal test below, which closes it.
+    }
+  },
+);
+
+/* ── A yearly subscription (James 2026-11-02): renews by itself ─────────── */
+
+test("★ the membership Checkout is a yearly subscription at A$658.90, tagged with its reference", async () => {
+  const { createCheckout } = await import("../src/lib/stripe-pay.ts");
+  const sent: string[] = [];
+  const realFetch = globalThis.fetch;
+  process.env.STRIPE_SECRET_KEY = "sk_test_x";
+  globalThis.fetch = (async (_url: unknown, init?: { body?: string }) => {
+    sent.push(String(init?.body ?? ""));
+    return new Response(JSON.stringify({ id: "cs_1", url: "https://checkout", status: "open", payment_status: "unpaid", metadata: {} }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    await createCheckout({
+      kind: "member", ref: "CMABCDE", signupId: "", session: MEMBERSHIP.id, amount: MEMBERSHIP.amount,
+      title: "x", successUrl: "https://s", cancelUrl: "https://c", idempotencyKey: "k", recurring: "year",
+    });
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.STRIPE_SECRET_KEY;
+  }
+  const form = new URLSearchParams(sent[0]);
+  assert.equal(form.get("mode"), "subscription");
+  assert.equal(form.get("line_items[0][price_data][recurring][interval]"), "year");
+  assert.equal(form.get("line_items[0][price_data][unit_amount]"), "65890");
+  assert.equal(form.get("client_reference_id"), "CMABCDE");
+  assert.equal(form.get("metadata[kind]"), "member");
+  assert.equal(form.get("subscription_data[metadata][ref]"), "CMABCDE");
+  // Stripe refuses payment_intent_data on a subscription Checkout.
+  assert.equal([...form.keys()].some((key) => key.startsWith("payment_intent_data")), false);
+});
+
+test("the webhook renews on invoice.paid, matched by subscription", () => {
+  const webhook = readFileSync(path.join(root, "src/app/api/stripe/webhook/route.ts"), "utf8");
+  assert.match(webhook, /invoice\.paid/);
+  assert.match(webhook, /renewMembership/);
+  assert.match(webhook, /subscription_cycle/, "only renewals, not the first invoice");
+});
+
+test(
+  "★ a renewal moves the year on to the period paid for, never back; an unknown subscription changes nothing",
+  { skip: db ? false : "set COURSE_TEST_DATABASE_URL to a throwaway local Postgres to run this" },
+  async () => {
+    process.env.DATABASE_URL = db;
+    const { createCourseOrder, getPool, markPaidByCard, renewMembership } = await import("../src/lib/db.ts");
+    const pool = getPool();
+    const stamp = Date.now();
+    const refs: string[] = [];
+    try {
+      const order = await createCourseOrder({
+        course: MEMBERSHIP.id, cap: MEMBERSHIP.cap, signupId: null, name: "Rex", wechat: `rex-${stamp}`,
+        industry: null, bizFocus: [], note: null, ref: newMemberRef(),
+      });
+      refs.push(order.ref);
+      await markPaidByCard("member", order.ref, `sub_${stamp}`);
+      // Pretend the year is nearly over.
+      await pool.query(`UPDATE course_orders SET paid_at = now() - interval '364 days' WHERE ref = $1`, [order.ref]);
+      const periodStart = new Date();
+      assert.equal(await renewMembership(`sub_${stamp}`, periodStart), order.ref);
+      const paidAt = async () => (await pool.query<{ t: Date }>(`SELECT paid_at AS t FROM course_orders WHERE ref = $1`, [order.ref])).rows[0].t.getTime();
+      assert.equal(await paidAt(), periodStart.getTime(), "the year now runs from the renewed period");
+      // A replayed old invoice cannot move it back, nor forward past the period paid for.
+      await renewMembership(`sub_${stamp}`, new Date(periodStart.getTime() - 365 * 864e5));
+      assert.equal(await paidAt(), periodStart.getTime());
+      assert.equal(await renewMembership("sub_not_ours", periodStart), null);
+      // A cancelled order is not revived by a renewal.
+      await pool.query(`UPDATE course_orders SET status = 'cancelled' WHERE ref = $1`, [order.ref]);
+      assert.equal(await renewMembership(`sub_${stamp}`, new Date()), null);
+    } finally {
+      await pool.query(`DELETE FROM course_orders WHERE ref = ANY($1::text[])`, [refs]).catch(() => {});
       await pool.end();
     }
   },

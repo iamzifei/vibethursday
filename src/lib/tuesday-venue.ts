@@ -30,6 +30,10 @@ export const TUESDAY_VENUE = {
     imageLabel: "Directions",
   },
   mapsUrl: "https://maps.google.com/?q=Lemon+Grove+427-441+Victoria+Ave+Chatswood+NSW+2067",
-  /** The walking-directions picture; linked only from the views above. */
+  /**
+   * The walking-directions picture, shown only in the views above. The files
+   * stay at these URLs (James 2026-11-02): just never shown on a public page.
+   */
   directionsImage: "/tuesday/directions.jpg",
+  directionsThumb: "/tuesday/directions.webp",
 } as const;

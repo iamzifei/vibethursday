@@ -42,6 +42,7 @@ export const copy = {
       sessions: "场次",
       class: "课程",
       tuesday: "周二",
+      member: "会员",
       guide: "社区攻略",
       about: "这是什么",
       schedule: "流程",
@@ -677,6 +678,12 @@ export const copy = {
       tuesdayOverflowCta: "去改到周二",
       // A paid Build Tuesday (2026-10-14): the one step left after booking.
       feeMember: "你是共创会员，这一场免费。",
+      // 报完周二、还没付的人看到的升单引导（2026-11-02）。
+      memberUpsell: {
+        title: "常来周二的话，办共创会员更划算",
+        body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办了之后，这一场也不用付了。",
+        cta: "了解共创会员",
+      },
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
       feeDueCta: "去付款",
       dinnerDue: "聚餐占座：去付款，付了才算占上。",
@@ -922,6 +929,7 @@ export const copy = {
       location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · Chatswood · 闭门会，付款后显示地址",
       supportLink: "这个活动的开销",
       consultLink: "约 James 一对一咨询",
+      botLink: "VT Bot：微信里的 AI 助理",
       // The label on the GitHub mark. It is never shown — the mark carries the
       // link — but it is what a screen reader announces, so it is translated
       // even though the slogan beside it is not.
@@ -1715,7 +1723,7 @@ export const copy = {
       factsTitle: "时间和地点",
       facts: [
         { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
-        { label: "地点", value: "Chatswood。付款后，付款页和「查我的报名」里会显示具体地址和路线" },
+        { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
         { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
       ],
@@ -1733,6 +1741,12 @@ export const copy = {
         "13:30–15:30 workshop：趁热当场动手，把项目往前推一步，或者把老板的需求做出第一个样子，不用回去再重新对接。",
         "James 主持，帮你把方案把关。",
       ],
+      // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
+      memberUpsell: {
+        title: "常来周二？办共创会员更划算",
+        body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票（平时 30 澳元 + GST 一次），再送一次澳洲 AI+IP 实战课（365 澳元 + GST）。来 20 次周二就回本，还多一门课。",
+        cta: "了解共创会员",
+      },
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
       compareTitle: "来周二还是周四？",
       compareUnsure: "拿不准就先来周四：免费，人多，先认识大家；手上有东西想给人细看、想要具体反馈，再来周二。",
@@ -1873,6 +1887,7 @@ export const copy = {
       sessions: "Sessions",
       class: "Class",
       tuesday: "Tuesday",
+      member: "Membership",
       guide: "How it works",
       about: "What this is",
       schedule: "Run of show",
@@ -2391,6 +2406,11 @@ export const copy = {
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
       feeMember: "You are a member, so this one is free.",
+      memberUpsell: {
+        title: "Coming most Tuesdays? Membership works out cheaper",
+        body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
+        cta: "About membership",
+      },
       feeDue: "One step left: transfer {amount} to confirm your place.",
       feeDueCta: "Pay now",
       dinnerDue: "Dinner seat: pay to hold it.",
@@ -2620,6 +2640,7 @@ export const copy = {
       location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · Chatswood · closed session, address shown once paid",
       supportLink: "What this costs",
       consultLink: "Book a one-to-one with James",
+      botLink: "VT Bot: an AI assistant in WeChat",
       sourceLink: "This site's source on GitHub",
     },
 
@@ -3260,7 +3281,7 @@ export const copy = {
       factsTitle: "When and where",
       facts: [
         { label: "Time", value: "10:30–15:30, in three parts; the morning alone is fine" },
-        { label: "Where", value: "Chatswood. Once you have paid, the exact address and directions show on the payment page and under \"My signup\"" },
+        { label: "Where", value: "Chatswood. Once you have signed up and paid, the address and a directions map show on the payment page and under \"My signup\"" },
         { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
         { label: "Cost", value: "A$30 + GST for the whole day, paid by card within 30 minutes of signing up, which locks in your place; members free" },
       ],
@@ -3278,6 +3299,11 @@ export const copy = {
         "13:30–15:30, workshop: start on it there and then — move a project forward, or build a first version of an owner's need, instead of arranging it all again later.",
         "James hosts and checks the plan with you.",
       ],
+      memberUpsell: {
+        title: "Coming most Tuesdays? Membership works out cheaper",
+        body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year (normally A$30 + GST each), plus one AI+IP class (A$365 + GST). Twenty Tuesdays pays for it, and the class is on top.",
+        cta: "About membership",
+      },
       compareTitle: "Tuesday or Thursday?",
       compareUnsure: "Not sure? Start with Thursday: free, a bigger room, a good way to meet everyone. Come to Tuesday when you have something you want looked at closely and specific feedback on.",
       thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
