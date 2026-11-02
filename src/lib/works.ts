@@ -1,5 +1,6 @@
 // Relative, not "@/": the tests load this through Node's type stripper.
 import type { ProductStage } from "./members.ts";
+import { tagKey, topTags } from "./directory.ts";
 
 /**
  * The works view: every product on the member wall, in one place.
@@ -19,67 +20,107 @@ import type { ProductStage } from "./members.ts";
 export type WorkSource = {
   slug: string;
   display_name: string;
+  /** The maker's own tags, used as the work's fields (2026-11-02). */
+  tags?: readonly string[];
   assets: readonly {
     kind: string;
     title: string;
     tagline: string | null;
     url: string | null;
     stage: string | null;
+    platform?: string | null;
   }[];
 };
 
 export type Work = {
+  /** Its address under /works: see `workKey`. */
+  key: string;
   slug: string;
   maker: string;
   title: string;
   tagline: string | null;
   url: string | null;
   stage: ProductStage | null;
+  /** What it is about, borrowed from the maker's tags — no extra field to fill. */
+  fields: string[];
 };
+
+export type WorkFilter = {
+  stage?: string | null;
+  /** One field, matched whatever the case. */
+  field?: string | null;
+  /** Words that must all appear in the title, tagline, maker or fields. */
+  q?: string | null;
+};
+
+/**
+ * A work's address: its maker's slug and a short hash of its title.
+ *
+ * Not the database id: saving a card deletes and re-inserts its assets, so ids
+ * change on every edit and a shared link would break. The address moves when
+ * the work is renamed or its maker changes their handle — the same edit that
+ * moves their own /members page.
+ * FNV-1a, 32 bits, base 36 — no crypto needed, only stability.
+ */
+export function workKey(slug: string, title: string): string {
+  const text = title.trim().toLowerCase().replace(/\s+/g, " ");
+  let hash = 0x811c9dc5;
+  for (const char of text) {
+    hash ^= char.codePointAt(0)!;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `${slug}-${hash.toString(36).padStart(6, "0").slice(-6)}`;
+}
 
 /**
  * Whether a title is a title.
  *
- * The editor accepts whatever gets typed, and at least one card on the wall
- * carries a single hyphen in both the name and the tagline — somebody filling
- * a required field to move past it. On a card among that person's own things
- * it reads as what it is; on a page of everything the room has built it reads
- * as a broken row.
- *
- * This is a judgement about the string, not about the product: anything with
- * a letter, a digit or a CJK character in it stays, however short.
+ * The editor accepts any non-empty string, and a placeholder such as "-" is a
+ * real row that would otherwise show up as a work with no name.
  */
 function isTitle(value: string): boolean {
   return /[\p{L}\p{N}]/u.test(value);
 }
 
 /**
- * Flattens the wall into a list of products.
- *
- * ★ Order is the wall's own order — most recently seen first — and not the
- * stage. Sorting by how far along something is would turn this page into a
- * league table, and "runs on my laptop" would be at the bottom of it. The
- * whole reason the wall carries a stage at all is that being stuck somewhere
- * is a legitimate thing to put in front of a room, arguably a more interesting
- * one than having shipped. The stage is shown on each card and can be filtered
- * on; it does not decide who goes first.
+ * Every product on the wall, in the wall's order (most recent first),
+ * optionally narrowed. A bare string is the stage, as it always was.
  */
-export function listWorks(members: readonly WorkSource[], stage?: string | null): Work[] {
+export function listWorks(members: readonly WorkSource[], filter?: string | null | WorkFilter): Work[] {
+  const { stage = null, field = null, q = null } =
+    typeof filter === "object" && filter !== null ? filter : { stage: filter ?? null };
+  const terms = q ? q.toLowerCase().split(/\s+/).filter(Boolean) : [];
+  const wantField = field ? tagKey(field) || null : null;
+  const seen = new Set<string>();
   const works: Work[] = [];
 
   for (const member of members) {
+    const fields = [...(member.tags ?? [])];
     for (const asset of member.assets) {
       if (asset.kind !== "product") continue;
       if (!isTitle(asset.title)) continue;
       if (stage && asset.stage !== stage) continue;
+      if (wantField && !fields.some((f) => tagKey(f) === wantField)) continue;
+      if (terms.length > 0) {
+        const text = [asset.title, asset.tagline, member.display_name, ...fields].filter(Boolean).join(" ").toLowerCase();
+        if (!terms.every((term) => text.includes(term))) continue;
+      }
+
+      // One maker listing the same title twice (or "Foo" and "foo ") is one
+      // work: one address, one row.
+      const key = workKey(member.slug, asset.title);
+      if (seen.has(key)) continue;
+      seen.add(key);
 
       works.push({
+        key,
         slug: member.slug,
         maker: member.display_name,
         title: asset.title,
         tagline: asset.tagline,
         url: asset.url,
         stage: (asset.stage as ProductStage | null) ?? null,
+        fields,
       });
     }
   }
@@ -87,7 +128,24 @@ export function listWorks(members: readonly WorkSource[], stage?: string | null)
   return works;
 }
 
-/** How many products sit at each stage, for the filter row. */
+/** One work by its key, or null — for /works/<key>. */
+export function findWork(members: readonly WorkSource[], key: string): Work | null {
+  return listWorks(members).find((work) => work.key === key) ?? null;
+}
+
+/**
+ * The fields the works fall into, most common first, counted per work and
+ * merged across case ("AI Agent" and "ai agent" are one). The label shown is
+ * the spelling most people used.
+ */
+export function topFields(members: readonly WorkSource[], limit: number): { label: string; count: number }[] {
+  return topTags(listWorks(members).map((work) => ({ tags: work.fields })), limit);
+}
+
+/**
+ * How many works are at each stage, for the filter chips — counted from the
+ * same list the page renders, so a chip never promises a row that is not there.
+ */
 export function countByStage(members: readonly WorkSource[]): Map<string, number> {
   const counts = new Map<string, number>();
 
@@ -97,4 +155,15 @@ export function countByStage(members: readonly WorkSource[]): Map<string, number
   }
 
   return counts;
+}
+
+/** The site's domain-icon URL for a work's link, or null. Lazy-loaded, small. */
+export function faviconFor(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const host = new URL(url).hostname;
+    return host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64` : null;
+  } catch {
+    return null;
+  }
 }

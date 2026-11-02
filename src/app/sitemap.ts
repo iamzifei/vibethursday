@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getCopy } from "@/lib/content";
-import { countCheckins } from "@/lib/db";
+import { countCheckins, listWallMembers } from "@/lib/db";
+import { listWorks } from "@/lib/works";
 import { nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
 
@@ -46,6 +47,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(await countCheckins()).keys(),
   ]);
 
+  // Every work's own page (2026-11-02): a product is put on the wall to be
+  // seen. A person's own page still stays out of this list (see above), even
+  // though a work page names its maker and links to them — links in.
+  // A database hiccup costs these entries, never the whole sitemap.
+  const works = listWorks(await listWallMembers().catch(() => []));
+
   // All three languages are the same URL with a different `lang`, so every
   // entry declares its own set rather than there being separate trees.
   const everyLanguage = (
@@ -81,6 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     everyLanguage("/tuesday", { changeFrequency: "weekly", priority: 0.6 }),
     // The community guide: how a Thursday runs and what we ask of each other.
     everyLanguage("/guide", { changeFrequency: "monthly", priority: 0.6 }),
+    ...works.map((work) => everyLanguage(`/works/${work.key}`, { changeFrequency: "monthly", priority: 0.5 })),
     ...[...dates]
       .sort()
       .map((date) => everyLanguage(`/sessions/${date}`, { changeFrequency: "monthly", priority: 0.5 })),

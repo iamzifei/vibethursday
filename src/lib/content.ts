@@ -916,9 +916,9 @@ export const copy = {
     // 读到任何一句都不该觉得自己不该出现在这儿。
     members: {
       meta: {
-        title: "成员 · Vibe Thursday",
+        title: "成员目录：悉尼做 AI 的人 · Vibe Thursday",
         description:
-          "来过 Vibe Thursday 的人，和他们在做的事。产品、公司业务、自媒体、社群，或者只是想聊的方向。",
+          "悉尼 AI 社群 Vibe Thursday 的成员目录：独立开发者、老板、顾问、自媒体人，各自在做什么、在找什么、能帮什么。按角色和标签（AI Agent、自媒体、出海、电商……）筛选，找合作、找客户、找同行。",
       },
       eyebrow: "§ 成员",
       title: "来过的人，和他们在做的事。",
@@ -961,6 +961,13 @@ export const copy = {
       searchPlaceholder: "搜名字或在做什么，比如 SEO",
       searchSubmit: "搜",
       searchClear: "清除搜索",
+      // Directory (2026-11-02).
+      tagsLabel: "热门标签",
+      worksOnly: "有作品的",
+      pageLabel: "第 {p} / {n} 页",
+      prev: "← 上一页",
+      next: "下一页 →",
+      results: "{n} 位",
       searchEmpty: "没搜到「{q}」。换个词试试，或者他可能还没认领名片。",
       roles: {
         builder: "在做产品",
@@ -1263,8 +1270,8 @@ export const copy = {
      */
     works: {
       meta: {
-        title: "作品 · Vibe Thursday",
-        description: "来 Vibe Thursday 的人做出来的东西。已上线的、还在内测的、只在自己电脑上跑的，都在这儿。",
+        title: "作品目录：悉尼 AI 社群成员做的产品 · Vibe Thursday",
+        description: "悉尼 Vibe Thursday 成员做的 AI 产品和工具：AI 智能体、自媒体、出海、电商、效率工具……已上线、内测中、已有收入的都在这里，可以按领域和阶段筛选、搜索。",
       },
       eyebrow: "§ 作品",
       title: "这些人做出来的东西。",
@@ -1276,6 +1283,31 @@ export const copy = {
       empty: "这个阶段还没有东西。",
       emptyAll: "墙上还没有人挂产品。",
       wallCta: "看成员墙",
+      // Directory (2026-11-02).
+      searchLabel: "搜作品",
+      searchPlaceholder: "搜名字、做什么、做的人，比如 小红书",
+      searchSubmit: "搜",
+      searchClear: "清除搜索",
+      fieldsLabel: "领域",
+      stagesLabel: "阶段",
+      submitCta: "把你的作品挂上来",
+      resultCount: "{n} 个作品",
+      detail: {
+        metaTitle: "{title}：{tagline} · Vibe Thursday 作品",
+        metaTitleBare: "{title} · Vibe Thursday 作品",
+        metaDescription: "{title}，{maker} 做的。{tagline}来自悉尼 AI 社群 Vibe Thursday 的作品目录。",
+        back: "← 所有作品",
+        maker: "做的人",
+        stage: "阶段",
+        fields: "领域",
+        link: "网址",
+        visit: "打开网站",
+        noUrl: "还没有公开网址，想了解可以去名片上找做的人。",
+        more: "{name} 的其他作品",
+        makerCta: "看 {name} 的名片",
+        home: "首页",
+        works: "作品",
+      },
     },
 
     claim: {
@@ -1317,6 +1349,7 @@ export const copy = {
       handleHint: "只能用小写字母、数字和连字符。留空我给你生成一个。",
       headline: "一句话介绍",
       headlinePlaceholder: "你是谁、在做什么，一句话",
+      headlineHint: "这一句会显示在成员目录的卡片上，也是别人搜到你时看到的第一句话。",
       bio: "多说两句",
       bioPlaceholder: "选填。背景、在折腾的方向、最近在想什么都行。",
       roles: "你是哪一种",
@@ -1329,7 +1362,7 @@ export const copy = {
       matchHint: "这两栏是整面墙最有用的部分。别人是靠它找到你的，不是靠你的头衔。",
       tags: "标签",
       tagsPlaceholder: "AI Agent, 出海, 小红书",
-      tagsHint: "逗号分隔，最多 6 个。中英文逗号都行。",
+      tagsHint: "逗号分隔，最多 6 个，中英文逗号都行。尽量点下面大家常用的标签，同一种写法，别人按标签筛选才找得到你。",
       tagsSuggest: "别人在用的：",
       assets: "你的东西",
       assetsHint:
@@ -1343,7 +1376,7 @@ export const copy = {
       assetTaglinePlaceholder: "它是干嘛的",
       assetUrl: "链接",
       assetUrlPlaceholder: "选填",
-      assetUrlHint: "还没上线、只在本地跑，链接空着就行，选个阶段反而更有话题。",
+      assetUrlHint: "填了网址，作品目录里才有它的图标和「打开网站」按钮。还没上线、只在本地跑，空着就行，选个阶段反而更有话题。",
       assetStage: "阶段",
       assetPlatform: "平台",
       hidden: "暂时不公开",
@@ -2606,9 +2639,9 @@ export const copy = {
 
     members: {
       meta: {
-        title: "Members · Vibe Thursday",
+        title: "Member directory: people building with AI in Sydney · Vibe Thursday",
         description:
-          "The people who come to Vibe Thursday and what they are working on. Products, businesses, channels, communities — or just what they want to talk about.",
+          "The member directory of Vibe Thursday, a Sydney AI community: indie builders, business owners, advisors and creators — what each is working on, looking for and can help with. Filter by role and tag (AI agents, content, going global, e-commerce) to find partners, customers and peers.",
       },
       eyebrow: "§ Members",
       title: "Who comes, and what they are working on.",
@@ -2638,6 +2671,12 @@ export const copy = {
       searchPlaceholder: "Forgotten the name? Search what they do — \"SEO\", \"ads\"",
       searchSubmit: "Search",
       searchClear: "Clear search",
+      tagsLabel: "Popular tags",
+      worksOnly: "Has works",
+      pageLabel: "Page {p} of {n}",
+      prev: "← Previous",
+      next: "Next →",
+      results: "{n}",
       searchEmpty: "Nothing matches \u201c{q}\u201d. Try another word — or they may not have claimed a card yet.",
       clearTag: "Clear tag filter",
       roles: {
@@ -2852,8 +2891,8 @@ export const copy = {
 
     works: {
       meta: {
-        title: "Works · Vibe Thursday",
-        description: "What the people who come to Vibe Thursday have built. Shipped, in beta, or still only running on a laptop.",
+        title: "Works directory: products built by a Sydney AI community · Vibe Thursday",
+        description: "AI products and tools built by people at Vibe Thursday in Sydney: agents, content tools, going global, e-commerce, productivity — shipped, in beta or already earning, filterable by field and stage, and searchable.",
       },
       eyebrow: "§ Works",
       title: "What this room has built.",
@@ -2865,6 +2904,30 @@ export const copy = {
       empty: "Nothing at this stage yet.",
       emptyAll: "Nobody has put a product on the wall yet.",
       wallCta: "See the member wall",
+      searchLabel: "Search works",
+      searchPlaceholder: "Search by name, what it does or who made it",
+      searchSubmit: "Search",
+      searchClear: "Clear search",
+      fieldsLabel: "Field",
+      stagesLabel: "Stage",
+      submitCta: "Add your work",
+      resultCount: "{n} works",
+      detail: {
+        metaTitle: "{title}: {tagline} · Vibe Thursday works",
+        metaTitleBare: "{title} · Vibe Thursday works",
+        metaDescription: "{title}, made by {maker}. {tagline} From the works directory of Vibe Thursday, a Sydney AI community.",
+        back: "← All works",
+        maker: "Made by",
+        stage: "Stage",
+        fields: "Field",
+        link: "Website",
+        visit: "Open the website",
+        noUrl: "No public link yet — find the maker through their card.",
+        more: "More from {name}",
+        makerCta: "See {name}'s card",
+        home: "Home",
+        works: "Works",
+      },
     },
 
     claim: {
@@ -2906,6 +2969,7 @@ export const copy = {
       handleHint: "Lowercase letters, numbers and hyphens. Leave it blank and one gets generated.",
       headline: "One line about you",
       headlinePlaceholder: "Who you are and what you are working on, in a sentence",
+      headlineHint: "This line shows on your card in the member directory, and is the first thing people see when they find you.",
       bio: "A bit more",
       bioPlaceholder: "Optional. Background, what you are poking at, what you have been thinking about.",
       roles: "Which of these are you",
@@ -2918,7 +2982,7 @@ export const copy = {
       matchHint: "These two are the most useful thing on the wall. People find you through them, not through your title.",
       tags: "Tags",
       tagsPlaceholder: "AI agents, growth, design",
-      tagsHint: "Comma separated, six at most.",
+      tagsHint: "Comma separated, six at most. Pick from the common tags below where you can — the same spelling is what lets people find you by tag.",
       tagsSuggest: "Already in use:",
       assets: "Your things",
       assetsHint:
@@ -2932,7 +2996,7 @@ export const copy = {
       assetTaglinePlaceholder: "What it does",
       assetUrl: "Link",
       assetUrlPlaceholder: "Optional",
-      assetUrlHint: "Not shipped, only runs on your laptop? Leave the link empty and pick a stage instead — that is the more interesting answer anyway.",
+      assetUrlHint: "With a link, the works directory shows its icon and an \"Open the website\" button. Not shipped, only runs on your laptop? Leave it empty and pick a stage instead — that is the more interesting answer anyway.",
       assetStage: "Stage",
       assetPlatform: "Platform",
       hidden: "Keep it off the wall for now",

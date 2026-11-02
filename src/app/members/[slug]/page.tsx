@@ -13,6 +13,9 @@ import { getMemberBySlug as readMemberBySlug, listAnswersBy } from "@/lib/db";
 const getMemberBySlug = cache(readMemberBySlug);
 import { currentMemberId } from "@/lib/member-auth";
 import { formatSession, nextThursdays } from "@/lib/sessions";
+import { JsonLd } from "@/components/JsonLd";
+import { siteUrl } from "@/lib/site";
+import { listWorks } from "@/lib/works";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -67,9 +70,45 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
   const answers = await listAnswersBy(member.id);
 
   const isMine = (await currentMemberId()) === member.id;
+  const workKeys = new Map(listWorks([member]).map((work) => [work.title, work.key]));
+
+  // For machines (2026-11-02): this page is about one person — who they say
+  // they are, what they know about, where else they are, what they built.
+  // Only what the card already shows publicly; nothing from the signup.
+  const base = siteUrl();
+  const pageUrl = `${base}/members/${member.slug}`;
+  const profile = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    url: pageUrl,
+    mainEntity: {
+      "@type": "Person",
+      name: member.display_name,
+      url: pageUrl,
+      ...(member.headline || member.bio ? { description: member.headline ?? member.bio } : {}),
+      ...(member.tags.length > 0 ? { knowsAbout: member.tags } : {}),
+      ...(member.assets.some((asset) => asset.kind === "profile" && asset.url)
+        ? { sameAs: member.assets.filter((asset) => asset.kind === "profile" && asset.url).map((asset) => asset.url) }
+        : {}),
+      memberOf: { "@type": "Organization", name: "Vibe Thursday", url: base },
+    },
+    ...(listWorks([member]).length > 0
+      ? { hasPart: listWorks([member]).map((work) => ({ "@type": "CreativeWork", name: work.title, url: `${base}/works/${work.key}` })) }
+      : {}),
+  };
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: c.works.detail.home, item: `${base}/` },
+      { "@type": "ListItem", position: 2, name: m.eyebrow.replace(/^§\s*/, ""), item: `${base}/members` },
+      { "@type": "ListItem", position: 3, name: member.display_name, item: pageUrl },
+    ],
+  };
 
   return (
     <div lang={c.htmlLang}>
+      <JsonLd data={[profile, breadcrumb]} />
       <SiteHeader
         lang={lang}
         copy={c}
@@ -190,7 +229,14 @@ export default async function MemberPage({ params, searchParams }: PageProps) {
                       {asset.stage && <span className="chip chip--stage">{m.stages[asset.stage]}</span>}
                     </div>
 
-                    <h2 className="h3">{asset.title}</h2>
+                    <h2 className="h3">
+                      {/* A product links to its own page in the works directory (2026-11-02). */}
+                      {workKeys.has(asset.title) && asset.kind === "product" ? (
+                        <Link href={`/works/${workKeys.get(asset.title)}${langSuffix(lang)}`}>{asset.title}</Link>
+                      ) : (
+                        asset.title
+                      )}
+                    </h2>
                     {asset.tagline && <p className="body-sm">{asset.tagline}</p>}
 
                     {asset.url && (

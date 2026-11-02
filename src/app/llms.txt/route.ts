@@ -2,6 +2,8 @@ import { copy, type Copy } from "@/lib/content";
 import { SESSION_END, SESSION_START, VENUE } from "@/lib/seo";
 import { formatSession, nextThursdays } from "@/lib/sessions";
 import { siteUrl } from "@/lib/site";
+import { listWallMembers } from "@/lib/db";
+import { listWorks } from "@/lib/works";
 
 // The absolute URLs below are only known once the app is running.
 export const dynamic = "force-dynamic";
@@ -67,6 +69,17 @@ export async function GET(): Promise<Response> {
   const next = nextThursdays(1)[0];
   const address = `${VENUE.name}, ${VENUE.streetAddress}, ${VENUE.addressLocality} ${VENUE.addressRegion} ${VENUE.postalCode}`;
 
+  // The works directory, one line each (2026-11-02): what a model would cite
+  // when asked what this community has built. A database hiccup drops the
+  // list, never the file.
+  const works = listWorks(await listWallMembers().catch(() => []));
+  // Each field on one line: members write these, and a newline in a tagline
+  // must not become a heading or an instruction in a file written for models.
+  const oneLine = (text: string) => text.replace(/\s+/g, " ").replace(/[\[\]]/g, "").trim();
+  const workLines = works
+    .map((work) => `- [${oneLine(work.title)}](${base}/works/${work.key})${work.tagline ? `: ${oneLine(work.tagline)}` : ""} — ${oneLine(work.maker)}${work.url ? ` · ${oneLine(work.url)}` : ""}`)
+    .join("\n");
+
   const body = `# Vibe Thursday
 
 > ${zh.meta.description}
@@ -89,6 +102,10 @@ Every page has three views on the same URL: Simplified Chinese (no parameter,
 the default), Traditional Chinese with \`?lang=zh-Hant\`, and English with
 \`?lang=en\`. The Traditional view is the Simplified copy converted character by
 character, so it is not reproduced below.
+
+## 作品目录 · Works directory
+
+${workLines || "-"}
 
 ## 中文
 

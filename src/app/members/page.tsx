@@ -5,13 +5,16 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
+import { JsonLd } from "@/components/JsonLd";
+import { paginate, tagKey, topTags } from "@/lib/directory";
+import { siteUrl } from "@/lib/site";
 import { listWallMembers, type Member } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
 import { ROLES, type Role } from "@/lib/members";
 import { focusSession, formatSession } from "@/lib/sessions";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string; role?: string; tag?: string; q?: string }>;
+  searchParams: Promise<{ lang?: string; role?: string; tag?: string; q?: string; works?: string; page?: string }>;
 };
 
 // Reads from Postgres on every request. The wall changes whenever anyone edits
@@ -19,14 +22,22 @@ type PageProps = {
 // small.
 export const dynamic = "force-dynamic";
 
+/** Cards per page (2026-11-02): a phone scrolls a page, not the whole wall. */
+const PAGE_SIZE = 24;
+
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const lang = resolveLang((await searchParams).lang);
+  const params = await searchParams;
+  const lang = resolveLang(params.lang);
   const c = getCopy(lang).members;
+  // Filtered, searched and later pages are cuts of the same wall: followed,
+  // not indexed, so /members itself carries the weight.
+  const narrowed = Boolean(params.role || params.tag || params.q || params.works || (params.page && params.page !== "1"));
 
   return {
     alternates: pageAlternates("/members", lang),
     title: c.meta.title,
     description: c.meta.description,
+    robots: { index: !narrowed, follow: true },
     openGraph: {
       title: c.meta.title,
       description: c.meta.description,
@@ -45,6 +56,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
     ? (params.role as Role)
     : null;
   const tag = params.tag?.trim() || null;
+  const worksOnly = params.works === "1";
 
   // Capped, because it is echoed back into the input and into the empty-state
   // message. A paragraph pasted in here should not become the page.
@@ -86,7 +98,8 @@ export default async function MembersPage({ searchParams }: PageProps) {
   // one small query, and pushing the filters down would buy nothing.
   const filtered = everyone.filter((member) => {
     if (role && !member.roles.includes(role)) return false;
-    if (tag && !member.tags.some((t) => t.toLowerCase() === tag.toLowerCase())) return false;
+    if (tag && !member.tags.some((t) => tagKey(t) === tagKey(tag))) return false;
+    if (worksOnly && member.assets.length === 0) return false;
 
     if (terms.length > 0) {
       const text = haystack(member);
@@ -108,32 +121,64 @@ export default async function MembersPage({ searchParams }: PageProps) {
   // next-Thursday answer jumps a week, which used to empty this group out the
   // moment a session finished. See sessions.ts for the measurement.
   const { date: upcoming, past: lookingBack } = focusSession();
-  const comingThisWeek = filtered.filter((member) => member.sessions.includes(upcoming));
-  const rest = filtered.filter((member) => !member.sessions.includes(upcoming));
+  const everyoneElse = filtered.filter((member) => !member.sessions.includes(upcoming));
+  const { items: rest, page, pages } = paginate(
+    everyoneElse,
+    Number(params.page ?? 1),
+    PAGE_SIZE,
+  );
+  // This week's group sits above the pages, on the first one only.
+  const thisWeekCount = filtered.length - everyoneElse.length;
+  const comingThisWeek = page === 1 ? filtered.filter((member) => member.sessions.includes(upcoming)) : [];
+  const popularTags = topTags(everyone, 12);
 
-  const filterHref = (value: Role | null) => {
-    const params = new URLSearchParams();
-    if (value) params.set("role", value);
-    if (tag) params.set("tag", tag);
-    // Carried through, so picking a role narrows a search rather than losing it.
-    if (query) params.set("q", query);
-    if (LANG_PARAM[lang]) params.set("lang", LANG_PARAM[lang]!);
-    const search = params.toString();
-    return search ? `/members?${search}` : "/members";
+  /** The current view's address with some of its parts changed; any change resets to page 1. */
+  const viewHref = (next: { role?: Role | null; tag?: string | null; works?: boolean; page?: number }) => {
+    const value = { role, tag, works: worksOnly, q: query, page: 1, ...next };
+    const search = new URLSearchParams();
+    if (value.role) search.set("role", value.role);
+    if (value.tag) search.set("tag", value.tag);
+    if (value.works) search.set("works", "1");
+    if (value.q) search.set("q", value.q);
+    if (value.page > 1) search.set("page", String(value.page));
+    if (LANG_PARAM[lang]) search.set("lang", LANG_PARAM[lang]!);
+    const text = search.toString();
+    return text ? `/members?${text}` : "/members";
   };
+
+  const base = siteUrl();
+  const shown = [...comingThisWeek, ...rest];
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: m.meta.title,
+    numberOfItems: filtered.length,
+    itemListElement: shown.map((member, index) => ({
+      "@type": "ListItem",
+      // Page 1 also carries this week's group, so later pages start after it.
+      position: (page === 1 ? 0 : thisWeekCount + (page - 1) * PAGE_SIZE) + index + 1,
+      url: `${base}/members/${member.slug}`,
+      name: member.display_name,
+    })),
+  };
+
+  // Picking a role keeps the search, tag and works filter, and goes back to page 1.
+  const filterHref = (value: Role | null) => viewHref({ role: value });
 
   /** The same view with the search cleared and every other filter kept. */
   const clearSearchHref = (() => {
-    const params = new URLSearchParams();
-    if (role) params.set("role", role);
-    if (tag) params.set("tag", tag);
-    if (LANG_PARAM[lang]) params.set("lang", LANG_PARAM[lang]!);
-    const search = params.toString();
-    return search ? `/members?${search}` : "/members";
+    const search = new URLSearchParams();
+    if (role) search.set("role", role);
+    if (tag) search.set("tag", tag);
+    if (worksOnly) search.set("works", "1");
+    if (LANG_PARAM[lang]) search.set("lang", LANG_PARAM[lang]!);
+    const text = search.toString();
+    return text ? `/members?${text}` : "/members";
   })();
 
   return (
     <div lang={c.htmlLang}>
+      <JsonLd data={[itemList]} />
       <SiteHeader lang={lang} copy={c} path="/members" />
 
       <main id="main">
@@ -187,6 +232,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
             <form className="wall-search" method="get" action="/members" role="search">
               {role && <input type="hidden" name="role" value={role} />}
               {tag && <input type="hidden" name="tag" value={tag} />}
+              {worksOnly && <input type="hidden" name="works" value="1" />}
               {LANG_PARAM[lang] && <input type="hidden" name="lang" value={LANG_PARAM[lang]!} />}
 
               <label className="visually-hidden" htmlFor="wall-q">
@@ -222,7 +268,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
                 </Link>
               ))}
               {tag && (
-                <Link className="chip chip--link chip--on" href={`/members${langSuffix(lang)}`}>
+                <Link className="chip chip--link chip--on" href={viewHref({ tag: null })}>
                   #{tag} ✕
                 </Link>
               )}
@@ -232,6 +278,21 @@ export default async function MembersPage({ searchParams }: PageProps) {
                   <span className="visually-hidden"> — {m.searchClear}</span>
                 </Link>
               )}
+            </div>
+
+            {/* The most common tags, as filters (2026-11-02), and "has works". */}
+            <div className="filters" aria-label={m.tagsLabel}>
+              <Link className={`chip chip--link${worksOnly ? " chip--on" : ""}`} href={viewHref({ works: !worksOnly })}>
+                {m.worksOnly}
+              </Link>
+              {popularTags.map((item) => {
+                const on = tag ? tagKey(tag) === tagKey(item.label) : false;
+                return (
+                  <Link className={`chip chip--link${on ? " chip--on" : ""}`} key={item.label} href={viewHref({ tag: on ? null : item.label })}>
+                    #{item.label} · {item.count}
+                  </Link>
+                );
+              })}
             </div>
 
             {filtered.length === 0 ? (
@@ -261,12 +322,21 @@ export default async function MembersPage({ searchParams }: PageProps) {
                     // Only "everyone" when there is no group above it holding
                     // some of them back.
                     title={comingThisWeek.length > 0 ? m.others : m.everyone}
-                    count={m.countLabel.replace("{n}", String(rest.length))}
+                    count={m.countLabel.replace("{n}", String(everyoneElse.length))}
                     members={rest}
                     copy={m}
                     lang={lang}
                     upcoming={upcoming}
                   />
+                )}
+                {pages > 1 && (
+                  <nav className="pager" aria-label={m.pageLabel.replace("{p}", String(page)).replace("{n}", String(pages))}>
+                    {page > 1 ? <Link rel="prev" className="btn btn--secondary" href={viewHref({ page: page - 1 })}>{m.prev}</Link> : <span />}
+                    <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
+                      {m.pageLabel.replace("{p}", String(page)).replace("{n}", String(pages))}
+                    </span>
+                    {page < pages ? <Link rel="next" className="btn btn--secondary" href={viewHref({ page: page + 1 })}>{m.next}</Link> : <span />}
+                  </nav>
                 )}
               </>
             )}

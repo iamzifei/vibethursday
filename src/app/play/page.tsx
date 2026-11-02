@@ -74,9 +74,8 @@ async function loadCommunity(): Promise<Community> {
           .slice(0, 3)
           .map((asset) => ({ title: asset.title, tagline: asset.tagline, url: asset.url, stage: asset.stage })),
       })),
-      works: listWorks(members)
-        .slice(0, 13)
-        .map((work, index) => ({ key: `${work.slug}-${index}`, ...work })),
+      // Each work carries its own stable key (`workKey`) since 2026-11-02.
+      works: listWorks(members).slice(0, 13),
       questions: questions
         .filter((question) => question.lane !== "chat")
         .filter((question) => {

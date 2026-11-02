@@ -122,6 +122,7 @@ const TAGS_ON_CARD = 4;
 
 export function MemberCard({ member, copy, lang, upcoming }: Props) {
   const topic = cardTopic(member);
+  const summary = member.headline ?? member.bio;
   const shown = member.assets.slice(0, ASSETS_ON_CARD);
   const overflow = member.assets.length - shown.length;
 
@@ -152,7 +153,10 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
             </Link>
           </h3>
           {member.cocreator && <span className="chip chip--stage mcard__badge">{cocreatorLabel(lang)}</span>}
-          {member.headline && <p className="mcard__headline">{member.headline}</p>}
+          {/* One line on every card that has a headline or a bio (2026-11-02):
+              a directory is read by scanning, and half the wall has no
+              headline. Falls back to the bio ("can help" has its own row). */}
+          {summary && <p className="mcard__headline">{summary}</p>}
         </div>
       </div>
 

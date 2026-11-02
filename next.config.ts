@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://g.alicdn.com",
               "style-src 'self' 'unsafe-inline' https://g.alicdn.com",
               // data: for the QR codes the poster and badge draw from an inline SVG.
-              "img-src 'self' data: blob: https://challenges.cloudflare.com",
+              "img-src 'self' data: blob: https://challenges.cloudflare.com https://www.google.com",
               "font-src 'self'",
               // The lesson player fetches and streams from Alibaba Cloud on the video domain set up there.
               "media-src 'self' blob: https:",

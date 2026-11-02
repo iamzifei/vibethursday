@@ -203,7 +203,12 @@ export function MemberEditor({ member, copy, labels, lang, suggestedTags }: Prop
           canHelp,
           // Split here rather than server-side so what you typed and what you
           // get back are obviously the same list.
-          tags: splitTags(tags),
+          // A typed tag that matches a popular one, whatever the case, is saved
+          // in the popular spelling (2026-11-02), so the directory's tag
+          // filters find everyone who meant the same thing.
+          tags: splitTags(tags).map(
+            (tag) => suggestedTags.find((suggestion) => suggestion.toLowerCase() === tag.toLowerCase()) ?? tag,
+          ),
           hidden,
           publish,
           assets: assets.map((asset) => ({
@@ -344,6 +349,7 @@ export function MemberEditor({ member, copy, labels, lang, suggestedTags }: Prop
           placeholder={copy.headlinePlaceholder}
           onChange={(event) => setHeadline(event.target.value)}
         />
+        <p className="hint">{copy.headlineHint}</p>
       </div>
 
       <div>
