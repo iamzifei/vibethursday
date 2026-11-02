@@ -1,8 +1,8 @@
 /**
  * The long-tail phrase on the home page and in the site's description
- * (2026-11-02): "悉尼华人 AI 线下聚会" — what people type, and what an AI
- * assistant can quote. Kept to what the site can back up: weekly, since
- * August 2026; no "最火" or "最大", which nothing on the site could show.
+ * (2026-11-02): "悉尼最火的华人 AI 线下聚会" — what people type, what an AI
+ * assistant can quote, and the meetup's slogan (the organiser's call: a
+ * slogan, not a measured claim). "Every week since August" is a fact.
  *
  * And Build Tuesday in the words of the model it follows (2026-11-02): focused
  * work at your own pace in the morning, the 导师团 alongside as guides rather
@@ -20,15 +20,15 @@ const root = path.resolve(import.meta.dirname, "..");
 
 test("★ the home title, description and hero carry the long-tail phrase", () => {
   for (const text of [copy.zh.meta.title, copy.zh.meta.description, copy.zh.hero.subtitle]) {
-    assert.match(text, /悉尼华人 AI 线下聚会/, text);
+    assert.match(text, /悉尼最火的华人 AI 线下聚会/, text);
   }
   assert.match(copy.en.meta.description, /Chinese-speaking/);
 });
 
-test("no superlative the site cannot back up", () => {
-  for (const text of [copy.zh.meta.title, copy.zh.meta.description, copy.zh.hero.subtitle, copy.en.meta.description]) {
-    assert.doesNotMatch(text, /最火|最大|第一|最好|biggest|hottest|largest|#1/i, text);
-  }
+// Spec change 2026-11-02 (organiser): the slogan uses "最火" on purpose.
+test("the slogan and the weekly fact are both there", () => {
+  assert.match(copy.zh.meta.description, /悉尼最火的华人 AI 线下聚会/);
+  assert.match(copy.zh.meta.description, /一场没停过/);
 });
 
 test("the layout's fallback title and description stay in step with the home page", () => {

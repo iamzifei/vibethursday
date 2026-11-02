@@ -27,11 +27,11 @@ export const copy = {
     meta: {
       // The English tail is there for the search phrase people actually type
       // ("sydney ai meetup"); the Chinese half is what the room calls it.
-      // 2026-11-02：加长尾词「悉尼华人 AI 线下聚会」，给搜索和 AI 引用；只写能证实的
-      // （每周、2026 年 8 月起），不写「最火」「最大」。
-      title: "Vibe Thursday · 悉尼华人 AI 线下聚会 · 每周四上午 · Sydney AI Meetup",
+      // 2026-11-02：长尾词「悉尼最火的华人 AI 线下聚会」，给搜索和 AI 引用，也是造势
+      // （James 定，用作品牌口号，不需要数据佐证）。「从没停过」是事实：8 月起每周都办。
+      title: "Vibe Thursday · 悉尼最火的华人 AI 线下聚会 · 每周四上午 · Sydney AI Meetup",
       description:
-        "悉尼华人 AI 线下聚会，2026 年 8 月起每周四上午 10:30 在 Chatswood。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
+        "悉尼最火的华人 AI 线下聚会，2026 年 8 月起每周四上午 10:30 在 Chatswood，一场没停过。一群在做东西的人围一张桌子，聊各自在用 AI 干什么、卡在哪。想给大家看点东西可以，只来听也完全没问题。免费，不售票。",
     },
 
     nav: {
@@ -65,7 +65,7 @@ export const copy = {
     hero: {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
-      subtitle: "悉尼华人 AI 线下聚会 · 每周四上午",
+      subtitle: "悉尼最火的华人 AI 线下聚会 · 每周四上午",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。有东西随时拿出来，只想听也完全没问题。",
       facts: [
         { label: "时间", value: "每周四 10:30 开门 · 10:45 开始", href: null, linkLabel: null },
@@ -1923,7 +1923,7 @@ export const copy = {
     meta: {
       title: "Vibe Thursday · Sydney's free weekly AI meetup",
       description:
-        "Sydney's weekly in-person AI meetup for Chinese-speaking builders: every Thursday at 10:30am in Chatswood since August 2026. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
+        "Sydney's most popular in-person AI meetup for Chinese-speaking builders: every Thursday at 10:30am in Chatswood since August 2026, without missing a week. A table of people who build things, talking about what they are doing with AI and where they are stuck. Show something if you want to, or just listen. Free, no tickets.",
     },
 
     nav: {
