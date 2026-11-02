@@ -108,7 +108,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
             <span className="chip">{BRING_LABEL[entry.bring] ?? entry.bring}</span>
           )}
         </span>
-        {entry.topic && <span className="body-sm desk-row__topic">想聊：{entry.topic}</span>}
+        {entry.topic && <span className="body-sm desk-row__topic">最近一次报名写的：{entry.topic}</span>}
         {entry.building && <span className="body-sm desk-row__topic">在做：{entry.building}</span>}
       </div>
 

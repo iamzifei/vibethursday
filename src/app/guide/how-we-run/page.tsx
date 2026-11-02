@@ -10,7 +10,7 @@ import { PLAYBOOK_CHAPTER_1 as CHAPTER } from "@/lib/playbook";
 import { siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `${CHAPTER.title} · Vibe Thursday`,
+  title: CHAPTER.title,
   description: CHAPTER.description,
   alternates: { canonical: "/guide/how-we-run" },
 };
