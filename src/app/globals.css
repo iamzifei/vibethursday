@@ -5315,3 +5315,10 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 /* The wall's pages (2026-11-02): previous, where you are, next. */
 .pager { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-3); }
 .pager > :last-child { justify-self: end; }
+
+/* A work's progress record (2026-11-02, progress.ts): a plain dated list. */
+.progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); border-left: 2px solid var(--border-subtle); }
+.progress-item { display: grid; gap: var(--space-1); padding-left: var(--space-4); }
+.progress-item__meta { display: flex; gap: var(--space-2); align-items: center; color: var(--fg3); font-size: 0.9rem; }
+.progress-item__title { font-weight: 600; }
+.progress-item__detail { color: var(--fg2); }

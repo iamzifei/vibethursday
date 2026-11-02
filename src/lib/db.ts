@@ -11,6 +11,7 @@ import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
 import { MEMBERSHIP, MEMBERSHIP_COURSES } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
+import type { ProgressEntry, ProgressInput } from "./progress.ts";
 
 /**
  * The SQL list of classes that make a 共创会员 (`MEMBERSHIP_COURSES`), for the
@@ -798,6 +799,27 @@ export function ensureSchema(): Promise<void> {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS course_kit_course_idx ON course_kit (course, kind)`);
+
+    // ── A work's progress (2026-11-02, progress.ts) ──────────────────
+    // Dated entries written by the organiser; public only once confirmed
+    // (the maker agreed to that line being shown). Keyed by the maker and the
+    // work's title hash, not an asset id: saving a card re-inserts its assets.
+    // Goes with the card: deleting the member deletes the record.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS work_progress (
+        id            bigserial PRIMARY KEY,
+        member_id     bigint NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        work_hash     text NOT NULL,
+        happened_on   date NOT NULL,
+        kind          text NOT NULL CHECK (kind IN ('tuesday', 'launch', 'users', 'revenue', 'credential', 'note')),
+        title         text NOT NULL,
+        detail        text,
+        proof_url     text,
+        confirmed_at  timestamptz,
+        created_at    timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS work_progress_work_idx ON work_progress (member_id, work_hash)`);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -4973,6 +4995,72 @@ export async function listCourseKit(course: string): Promise<CourseKitRecord[]> 
       WHERE course = $1
       ORDER BY created_at DESC, id DESC`,
     [course],
+  );
+  return result.rows;
+}
+
+
+/* ── A work's progress (2026-11-02, progress.ts) ─────────────────────── */
+
+/** Columns read back for every record; the date as text so no time zone can move it. */
+const PROGRESS_COLUMNS = `
+  id::text AS id,
+  member_id::text AS member_id,
+  work_hash,
+  to_char(happened_on, 'YYYY-MM-DD') AS happened_on,
+  kind,
+  title,
+  detail,
+  proof_url,
+  (confirmed_at IS NOT NULL) AS confirmed
+`;
+
+/** Records a new entry as a draft. Returns its id. */
+export async function addProgress(input: ProgressInput): Promise<string> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string }>(
+    `INSERT INTO work_progress (member_id, work_hash, happened_on, kind, title, detail, proof_url)
+     VALUES ($1::bigint, $2, $3::date, $4, $5, $6, $7)
+     RETURNING id::text AS id`,
+    [input.memberId, input.workHash, input.happenedOn, input.kind, input.title, input.detail, input.proofUrl],
+  );
+  return result.rows[0].id;
+}
+
+/** Confirms (the maker agreed to show it) or takes an entry back to draft. */
+export async function setProgressConfirmed(id: string, confirmed: boolean): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE work_progress SET confirmed_at = CASE WHEN $2::boolean THEN COALESCE(confirmed_at, now()) ELSE NULL END
+      WHERE id = $1::bigint`,
+    [id, confirmed],
+  );
+}
+
+export async function deleteProgress(id: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`DELETE FROM work_progress WHERE id = $1::bigint`, [id]);
+}
+
+/**
+ * Records, optionally only confirmed ones and only for some members. Public
+ * pages always pass `confirmedOnly`; the filter is also applied again by
+ * `publicTimeline`, so a draft needs two mistakes to leak.
+ */
+export async function listProgress(options: { confirmedOnly?: boolean; memberIds?: readonly string[] } = {}): Promise<ProgressEntry[]> {
+  await ensureSchema();
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (options.confirmedOnly) where.push("confirmed_at IS NOT NULL");
+  if (options.memberIds) {
+    params.push(options.memberIds);
+    where.push(`member_id = ANY($${params.length}::bigint[])`);
+  }
+  const result = await getPool().query<ProgressEntry>(
+    `SELECT ${PROGRESS_COLUMNS} FROM work_progress
+      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+      ORDER BY happened_on DESC, id DESC`,
+    params,
   );
   return result.rows;
 }

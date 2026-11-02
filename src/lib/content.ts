@@ -1307,6 +1307,23 @@ export const copy = {
         makerCta: "看 {name} 的名片",
         home: "首页",
         works: "作品",
+        // A work's progress record (2026-11-02, progress.ts). Only entries the
+        // maker agreed to show; a certificate links to whoever issued it.
+        progress: {
+          heading: "进展",
+          lede: "每一条都经做的人同意才公开，按时间倒序。",
+          verify: "去发证方核验",
+          proof: "看证明",
+          tuesdayBadge: "周二 demo",
+          kinds: {
+            tuesday: "周二 demo",
+            launch: "上线",
+            users: "用户",
+            revenue: "收入",
+            credential: "证书",
+            note: "进展",
+          },
+        },
       },
     },
 
@@ -2927,6 +2944,21 @@ export const copy = {
         makerCta: "See {name}'s card",
         home: "Home",
         works: "Works",
+        progress: {
+          heading: "Progress",
+          lede: "Each entry is shown with the maker's agreement, newest first.",
+          verify: "Verify with the issuer",
+          proof: "See the proof",
+          tuesdayBadge: "Tuesday demo",
+          kinds: {
+            tuesday: "Tuesday demo",
+            launch: "Launch",
+            users: "Users",
+            revenue: "Revenue",
+            credential: "Certificate",
+            note: "Update",
+          },
+        },
       },
     },
 

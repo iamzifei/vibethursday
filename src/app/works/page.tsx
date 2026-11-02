@@ -8,7 +8,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { WorkIcon } from "@/components/WorkIcon";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
-import { listWallMembers } from "@/lib/db";
+import { listProgress, listWallMembers } from "@/lib/db";
+import { lastTuesdayDemo, progressByWork } from "@/lib/progress";
 import { PRODUCT_STAGES, type ProductStage } from "@/lib/members";
 import { siteUrl } from "@/lib/site";
 import { countByStage, listWorks, topFields } from "@/lib/works";
@@ -77,6 +78,17 @@ export default async function WorksPage({ searchParams }: PageProps) {
   const counts = countByStage(members);
   const fields = topFields(members, 10);
   const total = listWorks(members).length;
+  // Which works were demoed at a Build Tuesday (confirmed progress entries).
+  // A read failure only costs the badge, never the directory.
+  const idBySlug = new Map(members.map((member) => [member.slug, member.id]));
+  const progress = progressByWork(
+    await listProgress({ confirmedOnly: true }).catch((error) => {
+      console.error("[works] could not read progress", error);
+      return [];
+    }),
+  );
+  const demoedOn = (slug: string, key: string) =>
+    lastTuesdayDemo(progress.get(`${idBySlug.get(slug)}:${key.slice(-6)}`) ?? []);
 
   const href = (next: { stage?: string | null; field?: string | null; q?: string | null }) => {
     const value = { stage, field, q: query, ...next };
@@ -175,6 +187,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                     </Link>
                     <div className="work__foot">
                       {work.stage && <span className="pill">{m.stages[work.stage]}</span>}
+                      {demoedOn(work.slug, work.key) && <span className="pill pill--live">{w.detail.progress.tuesdayBadge}</span>}
                       {work.fields.slice(0, 2).map((item) => (
                         <span className="chip" key={item}>{item}</span>
                       ))}

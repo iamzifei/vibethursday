@@ -8,7 +8,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WorkIcon } from "@/components/WorkIcon";
 import { getCopy, resolveLang } from "@/lib/content";
-import { getMemberBySlug as readMemberBySlug } from "@/lib/db";
+import { getMemberBySlug as readMemberBySlug, listProgress } from "@/lib/db";
+import { publicTimeline } from "@/lib/progress";
 import { pageAlternates } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
 import { findWork, listWorks } from "@/lib/works";
@@ -83,6 +84,18 @@ export default async function WorkPage({ params, searchParams }: PageProps) {
   if (!found) notFound();
   const { member, work } = found;
   const others = listWorks([member]).filter((item) => item.key !== work.key);
+  // The progress record (2026-11-02): confirmed entries only. It is the page's
+  // second half, not its subject — if it cannot be read the work still shows.
+  const hash = work.key.slice(-6);
+  const timeline = publicTimeline(
+    (
+      await listProgress({ confirmedOnly: true, memberIds: [member.id] }).catch((error) => {
+        console.error("[works] could not read the progress record", error);
+        return [];
+      })
+    ).filter((entry) => entry.work_hash === hash),
+  );
+  const p = d.progress;
 
   const base = siteUrl();
   const pageUrl = `${base}/works/${work.key}`;
@@ -174,6 +187,31 @@ export default async function WorkPage({ params, searchParams }: PageProps) {
                 </div>
               )}
             </dl>
+
+            {timeline.length > 0 && (
+              <section className="stack-3" aria-labelledby="work-progress">
+                <h2 className="h3" id="work-progress" style={{ margin: 0 }}>{p.heading}</h2>
+                <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>{p.lede}</p>
+                <ol className="progress-list">
+                  {timeline.map((entry) => (
+                    <li key={entry.id} className="progress-item">
+                      <span className="progress-item__meta">
+                        <time dateTime={entry.happened_on}>{entry.happened_on}</time>
+                        <span className="chip">{p.kinds[entry.kind]}</span>
+                      </span>
+                      <span className="progress-item__title">{entry.title}</span>
+                      {entry.detail && <span className="body-sm progress-item__detail">{entry.detail}</span>}
+                      {entry.proof_url && (
+                        // Whoever issued it vouches for it, not this site: nofollow.
+                        <a className="body-sm" href={entry.proof_url} target="_blank" rel="nofollow noopener noreferrer">
+                          {entry.kind === "credential" ? p.verify : p.proof} ↗
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
 
             {others.length > 0 && (
               <section className="stack-3" aria-labelledby="work-more">

@@ -439,6 +439,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         {/* Their own pages, not sections of this one (2026-10-13). */}
         <a href="/admin/tag">标注来的人</a>
         <a href="/admin/people">所有人画像</a>
+        <a href="/admin/progress">作品进展</a>
       </nav>
 
       <section className="stack-8 admin-group" id="week">

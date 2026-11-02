@@ -63,13 +63,22 @@ export type WorkFilter = {
  * FNV-1a, 32 bits, base 36 — no crypto needed, only stability.
  */
 export function workKey(slug: string, title: string): string {
+  return `${slug}-${titleHash(title)}`;
+}
+
+/**
+ * The title half of a work's key: six base-36 characters, blind to case and
+ * spacing. Kept apart so that a work's progress record (progress.ts) can hang
+ * off the maker's id and this hash, and survive the maker changing handle.
+ */
+export function titleHash(title: string): string {
   const text = title.trim().toLowerCase().replace(/\s+/g, " ");
   let hash = 0x811c9dc5;
   for (const char of text) {
     hash ^= char.codePointAt(0)!;
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return `${slug}-${hash.toString(36).padStart(6, "0").slice(-6)}`;
+  return hash.toString(36).padStart(6, "0").slice(-6);
 }
 
 /**
