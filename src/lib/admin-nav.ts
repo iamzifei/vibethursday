@@ -18,6 +18,7 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin", label: "总览" },
       { href: "/admin/desk", label: "签到台", hint: "门口用，手机上看" },
       { href: "/admin/door", label: "门口签到码", hint: "平板全屏" },
+      { href: "/live", label: "投屏：今日在场", hint: "签到一个上墙一个" },
     ],
   },
   {

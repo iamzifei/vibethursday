@@ -36,6 +36,9 @@ test("every anchor in the navigation exists on /admin", () => {
 
 test("the frame wraps every admin page, but only once signed in", () => {
   const layout = readFileSync(path.join(adminDir, "layout.tsx"), "utf8");
-  assert.match(layout, /isAdminSession/);
+  // Spec change 2026-11-02: the helper at the door gets a narrower frame, so
+  // the layout asks staffRole (admin, helper or nobody) instead.
+  assert.match(layout, /staffRole/);
+  assert.match(layout, /if \(!role\) return children/);
   assert.match(layout, /AdminFrame/);
 });
