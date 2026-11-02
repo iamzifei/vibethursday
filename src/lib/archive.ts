@@ -1,6 +1,7 @@
 // Relative, not "@/": the tests load this through Node's type stripper, which
 // does not read tsconfig's path aliases.
 import type { Lane } from "./questions.ts";
+import { EXTRA_SESSION_PHOTOS } from "./session-extra-photos.ts";
 
 /**
  * The archive: one row per session that has happened.
@@ -128,6 +129,8 @@ export function buildArchive(
   attendance: ReadonlyMap<string, number> = new Map(),
   /** People booked or waitlisted per morning (`countBookings`). */
   bookings: ReadonlyMap<string, number> = new Map(),
+  /** Picks the alt text of photos kept outside `content.ts` (EXTRA_SESSION_PHOTOS). */
+  altLang: "zh" | "en" = "zh",
 ): ArchiveRow[] {
   const written = [...sessions]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -139,7 +142,7 @@ export function buildArchive(
   // A session that only the check-in table knows about yet.
   const unwritten = [...attendance.keys()]
     .filter((date) => !sessions.some((session) => session.date === date))
-    .map((date) => ({ date, title: null, note: null, poster: null, photos: [] as ArchiveSession["photos"] }));
+    .map((date) => ({ date, title: null, note: null, poster: null, photos: (EXTRA_SESSION_PHOTOS[date] ?? []).map((photo) => ({ ...photo, alt: photo.alt[altLang] })) }));
 
   let thursdays = 0;
   const numbered = [...written, ...unwritten]

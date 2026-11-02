@@ -72,6 +72,41 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.8",
+    date: "2026-11-02",
+    kind: "minor",
+    scope: "site",
+    zh: "网站改成手机优先：首页、周二、会员、课程页都是报名放前面，屏幕底部有一个随时能点的报名按钮。网站发布的现场照片都改成了手绘风格，人物的脸都换掉了；档案里每一场都配了图，没留照片的那几场会写明用的是另一场的现场。",
+    en: "The site is now built for phones first: on the home, Tuesday, membership and class pages the form comes early and a sign-up button stays at the bottom of the screen. The site's own photos from the room are now redrawn in a hand-painted style with faces replaced, and every morning in the archive has a picture — where none was taken, it says the picture is from another morning.",
+    link: { href: "/sessions", zh: "看每一场 →", en: "See every morning →" },
+  },
+  {
+    version: "5.7",
+    date: "2026-11-02",
+    kind: "minor",
+    scope: "room",
+    zh: "Build Tuesday 改成围绕真实需求或项目、一整天三段，10:30–15:30：上午聊项目和技术，中午边吃边聊真实需求，下午当场动手。具体地址报名付款后显示。共创会员（一年内每周二免费，再送一次 AI+IP 实战课）现在可以在网站上直接刷卡加入。周四照旧免费，不卖东西。",
+    en: "Build Tuesday is now built around real needs and projects, a full day in three parts, 10:30–15:30: projects and tech in the morning, real needs over lunch, hands-on in the afternoon. The exact address is shown once you have signed up and paid. The co-creator membership — every Tuesday free for a year, plus one AI+IP class — can now be bought by card on the site. Thursday stays free and sells nothing.",
+    link: { href: "/tuesday", zh: "看周二 →", en: "See Tuesday →" },
+  },
+  {
+    version: "5.6",
+    date: "2026-10-28",
+    kind: "minor",
+    scope: "site",
+    zh: "社区攻略上线：一个上午分三段、四种参与方式、八条约定，手机上一分钟看完；每一条有自己的链接，方便在群里引用。",
+    en: "The guide is up: the three parts of a morning, four ways to take part and eight agreements, readable on a phone in a minute; every item has its own link to share in the group.",
+    link: { href: "/guide", zh: "看社区攻略 →", en: "Read the guide →" },
+  },
+  {
+    version: "5.5",
+    date: "2026-10-24",
+    kind: "minor",
+    scope: "room",
+    zh: "不再提前在网上点饮品：进门直接在吧台点单付款。网站也不再显示报名人数和剩余位子，只在满员时写「已满」。",
+    en: "No more ordering drinks ahead online: order and pay at the bar when you arrive. The site also no longer shows how many have signed up or how many places are left — only \"full\" when it is.",
+  },
+  {
     version: "5.4",
     date: "2026-10-06",
     kind: "minor",

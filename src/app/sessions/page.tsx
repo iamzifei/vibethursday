@@ -66,7 +66,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
     countBookings(),
   ]);
 
-  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings);
+  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings, lang === "en" ? "en" : "zh");
   const totals = archiveTotals(
     rows,
     wall.length,

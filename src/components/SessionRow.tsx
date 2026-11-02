@@ -3,6 +3,8 @@ import { langSuffix } from "@/components/MemberCard";
 import { isTuesday, type ArchiveRow } from "@/lib/archive";
 import type { Copy, Lang } from "@/lib/content";
 import { formatSession } from "@/lib/sessions";
+import { SceneImage } from "@/components/SceneImage";
+import { SCENES } from "@/lib/scenes";
 
 type Props = {
   row: ArchiveRow;
@@ -114,6 +116,17 @@ export function SessionRow({ row, lang, copy: a, eager, href, standalone }: Prop
             </details>
           )}
         </div>
+      )}
+
+      {/* No photos from this morning (2026-11-02): one redrawn scene from
+          another one, said to be exactly that, so every row has a picture
+          without passing another day off as this one. Picked by date, so a
+          row always shows the same scene. */}
+      {row.photos.length === 0 && (
+        <figure className="stack-2" style={{ margin: 0, maxWidth: "420px" }}>
+          <SceneImage id={SCENES[Number(row.date.replace(/-/g, "")) % SCENES.length].id} alt="" sizes="(min-width: 720px) 420px, 100vw" />
+          <figcaption className="hint">{a.noPhotos}</figcaption>
+        </figure>
       )}
 
       {row.questions.length > 0 && (

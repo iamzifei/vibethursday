@@ -168,7 +168,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 06 — 现场",
       title: "每一场都留了几张。",
-      lede: "为保护参与者，认得出的人脸都遮掉了。这里是最近一场，点开看那天的全部照片；之前每一场都在下面的完整记录里。",
+      lede: "这里的照片都转绘过，人物的脸都换掉了。这里是最近一场，点开看那天的全部照片；之前每一场都在下面的完整记录里。",
       archiveCta: "每一场的完整记录",
       // 新增一场：往下面加一条即可，页面按 date 倒序排、最新的默认展开。
       sessions: [
@@ -1188,6 +1188,7 @@ export const copy = {
       // 一场十几条问题，四场排下来页面就长得没人往下翻了。前三条摊开，其余折起来。
       moreQuestions: "还有 {n} 条",
       morePhotos: "那天的另外 {n} 张",
+      noPhotos: "这一场没留照片，这张是另一场的现场（照片转绘，人物的脸都换掉了）。",
       // 画出来的，不是拍的——但它是照着那天的照片画的，所以画的确实是那个房间。
       // alt 要把这两件事都说清楚，不然读屏的人要么以为是照片，要么以为是随便画的。
       posterAlt: "{title}的线稿插画，照着那天的照片画的：深色底上的青柠色线条勾出临水的咖啡馆、几张长桌和围坐的人，窗外是达令港的夜景。画里的人都是背影。",
@@ -1977,7 +1978,7 @@ export const copy = {
     gallery: {
       eyebrow: "§ 06 — The room",
       title: "A few shots from every session.",
-      lede: "Recognisable faces are covered to protect the people who came. This is the latest session — open it for everything from that morning; every earlier one is in the full record below.",
+      lede: "The photos here are redrawn, with faces replaced, to protect the people who came. This is the latest session — open it for everything from that morning; every earlier one is in the full record below.",
       archiveCta: "The full record of each session",
       sessions: [
         {
@@ -2798,6 +2799,7 @@ export const copy = {
       questionsLabel: "On the Wharf that week",
       moreQuestions: "{n} more",
       morePhotos: "{n} more photos from that morning",
+      noPhotos: "No photos from this morning; this one is from another (redrawn from a photo, faces replaced).",
       posterAlt: "A minimal line illustration of {title}, drawn from that morning’s own photographs: lime linework on near-black picking out the café on the water at Darling Harbour, the long tables and the people around them, everyone seen from behind.",
       peopleLabel: "There that morning (of the people with a card)",
       peopleNote: "Only counts people who have claimed a card, so it is lower than the number in the room.",
