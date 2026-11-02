@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { KeepAwake } from "@/components/KeepAwake";
-import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
+import { staffRole } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { capFor } from "@/lib/capacity";
 import { listDeskRows } from "@/lib/db";
-import { buildDesk, deskStats, filterDesk, type DeskEntry, type PayState } from "@/lib/desk";
+import { buildDesk, deskStats, filterDesk, maskWechat, type DeskEntry, type PayState } from "@/lib/desk";
 import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
 import { feeLabel, payLabel } from "@/lib/tuesday-fee";
 
@@ -39,7 +38,10 @@ const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带�
  * `back=desk`; no client script beyond keeping the screen awake.
  */
 export default async function DeskPage({ searchParams }: PageProps) {
-  if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
+  // The organiser, or the helper at the door (2026-11-02): the helper sees
+  // shortened WeChat IDs and no download.
+  const role = await staffRole();
+  if (!role) {
     return (
       <main className="shell section">
         <div className="card stack-3">
@@ -91,7 +93,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
     <li className={`desk-row${entry.arrived ? " desk-row--in" : ""}`} id={`r-${entry.id}`}>
       <div className="desk-row__who">
         <strong className="desk-row__name">{entry.name}</strong>
-        <span className="mono desk-row__wechat">{entry.wechat ?? "没填微信号"}</span>
+        <span className="mono desk-row__wechat">{(role === "helper" ? maskWechat(entry.wechat) : entry.wechat) ?? "没填微信号"}</span>
         <span className="desk-row__tags">
           {entry.arrived ? (
             <span className="pill pill--live">✓ {entry.checked_in_at} 已到{entry.walkIn ? " · 现场新来" : ""}</span>
@@ -164,7 +166,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
           <span className="eyebrow">后台 · 签到台</span>
           <span className="tagger-top__links">
             <Link href="/admin/door">门口签到码</Link>
-            <Link href="/admin">回后台</Link>
+            {role === "admin" && <Link href="/admin">回后台</Link>}
           </span>
         </div>
         <h1 className="h2" style={{ margin: 0 }}>
@@ -231,10 +233,14 @@ export default async function DeskPage({ searchParams }: PageProps) {
         {query && <Link className="chip chip--link" href={href({ q: "" })}>清除搜索「{query}」</Link>}
       </nav>
 
-      <p className="body-sm" style={{ margin: 0 }}>
-        {/* The after-event sheet: who came, as what, and what they wrote. */}
-        <a href={`/api/admin/export?what=desk&session=${session}`}>下载这一场的名单（Excel 可打开）→</a>
-      </p>
+      {role === "admin" && (
+        <p className="body-sm" style={{ margin: 0 }}>
+          {/* The after-event sheet: who came, as what, and what they wrote. */}
+          <a href={`/api/admin/export?what=desk&session=${session}`}>下载这一场的名单（Excel 可打开）→</a>
+          {" · "}
+          <a href={`/admin/followup?s=${session}`}>会后跟进名单 →</a>
+        </p>
+      )}
 
       {shown.length === 0 ? (
         <p className="body" style={{ color: "var(--fg3)" }}>

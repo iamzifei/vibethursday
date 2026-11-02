@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
-import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
+import { staffRole } from "@/lib/staff";
 import { checkinCode, isSessionDate } from "@/lib/checkin";
 import { requestOrigin } from "@/lib/request-origin";
 import { deskSession, formatSession } from "@/lib/sessions";
@@ -23,7 +22,8 @@ export const metadata: Metadata = { title: "签到 · Vibe Thursday", robots: { 
 type PageProps = { searchParams: Promise<{ s?: string }> };
 
 export default async function DoorPage({ searchParams }: PageProps) {
-  if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
+  // The organiser or the helper at the door (2026-11-02).
+  if (!(await staffRole())) {
     return (
       <main className="shell section">
         <div className="card stack-3">

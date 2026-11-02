@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import QRCode from "qrcode";
-import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
+import { staffRole } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { getOrCreateSessionFee, listDeskRows } from "@/lib/db";
 import { requestOrigin } from "@/lib/request-origin";
@@ -25,7 +24,8 @@ type PageProps = { searchParams: Promise<{ s?: string; id?: string }> };
  * get-or-create the signup uses, without a hold, so no place can lapse.
  */
 export default async function DeskPayPage({ searchParams }: PageProps) {
-  if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
+  // The organiser or the helper at the door (2026-11-02).
+  if (!(await staffRole())) {
     return (
       <main className="shell section">
         <p className="body">没有权限。先打开一次后台链接。</p>

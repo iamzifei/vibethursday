@@ -54,3 +54,14 @@ export const ADMIN_NAV: AdminGroup[] = [
 
 /** Pages that are drawn without the admin frame: full screen on a tablet. */
 export const FRAMELESS = ["/admin/door"];
+
+/** What the helper at the door can open (2026-11-02). */
+export const HELPER_NAV: AdminGroup[] = [
+  {
+    title: "签到",
+    links: [
+      { href: "/admin/desk", label: "签到台", hint: "签到、看付款" },
+      { href: "/admin/door", label: "门口签到码", hint: "平板全屏" },
+    ],
+  },
+];

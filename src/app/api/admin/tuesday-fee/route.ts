@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, HELPER_COOKIE, isAdminRequest, isHelperSession } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
 import { getOrCreateSessionFee, setSessionFeeStatus } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -38,7 +38,11 @@ export async function POST(request: Request) {
   const form = await bounded.formData().catch(() => null);
   const key = form?.get("key");
 
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null)) {
+  // The organiser, or the helper at the door (2026-11-02, admin-auth.ts).
+  const jar = await cookies();
+  const admin = isAdminRequest(jar.get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null);
+  const helper = !admin && isHelperSession(jar.get(HELPER_COOKIE)?.value);
+  if (!admin && !helper) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -54,6 +58,9 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
+
+  // Waiving a fee is the organiser's call alone.
+  if (helper && status === "waived") return NextResponse.json({ error: "not_authorised" }, { status: 403 });
 
   try {
     const fee = await getOrCreateSessionFee(session, signupId, newFeeRef());

@@ -162,3 +162,9 @@ export function deskExportRow(entry: DeskEntry): string[] {
     entry.building ?? "",
   ];
 }
+
+/** A WeChat ID shortened for the door helper: enough to tell two people apart, not to add them. */
+export function maskWechat(wechat: string | null): string | null {
+  if (!wechat) return null;
+  return `${wechat.slice(0, 3)}***`;
+}
