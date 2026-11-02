@@ -46,8 +46,11 @@ export default async function RolesPage({ searchParams }: PageProps) {
 
       <section className="card stack-3">
         <h2 className="h3" style={{ margin: 0 }}>添加</h2>
+        <p className="body-sm" style={{ margin: 0 }}>
+          ① 在下面搜这个人的名字或微信号（要在网站上报过名）；② 在搜出来的那一行点「加为导师团」或「加为共建者」。要去掉，在下面的名单里点「移除」。
+        </p>
         <form className="wall-search" action="/admin/roles">
-          <input className="field" type="search" name="q" defaultValue={query} placeholder="搜报过名的人：名字或微信号" />
+          <input className="field" type="search" name="q" defaultValue={query} placeholder="搜报过名的人：名字或微信号" autoFocus={!query} />
           <button className="btn btn--secondary" type="submit">搜</button>
         </form>
         {query && found.length === 0 && <p className="body-sm" style={{ color: "var(--fg3)" }}>没找到。要先在网站上报过一次名才能加。</p>}

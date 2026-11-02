@@ -31,6 +31,7 @@ import {
   listWharfQuestions,
   listProgress,
   listMemberships,
+  listPersonRoles,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { formatQuestionList } from "@/lib/session-questions";
@@ -138,9 +139,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
     (date) => feeFor(date) !== null,
   );
   // The overview tiles (2026-11-02): counts only, each failing soft.
-  const [progressEntries, memberships] = await Promise.all([
+  const [progressEntries, memberships, personRoles] = await Promise.all([
     listProgress().catch(() => []),
     listMemberships().catch(() => []),
+    listPersonRoles().catch(() => []),
   ]);
   const tuesdayFees = await Promise.all(
     feeTuesdays.map(async (session) => ({ session, rows: await listTuesdayFeeDesk(session).catch(() => []) })),
@@ -462,6 +464,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           { href: "#photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
           { href: "/admin/progress", n: drafts, label: "作品进展草稿", warn: drafts > 0 },
           { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
+          { href: "/admin/roles#mentor", n: personRoles.filter((row) => row.role === "mentor").length, label: "导师团 · 点这里加人", warn: false },
+          { href: "/admin/roles#builder", n: personRoles.filter((row) => row.role === "builder").length, label: "共建者 · 点这里加人", warn: false },
         ];
         return (
           <nav className="admin-tiles" aria-label="待办">
