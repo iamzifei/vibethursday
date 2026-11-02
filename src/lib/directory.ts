@@ -42,3 +42,24 @@ export function paginate<T>(items: readonly T[], page: number, size: number): { 
   const current = Math.min(pages, Math.max(1, Number.isFinite(page) ? Math.floor(page) : 1));
   return { items: items.slice((current - 1) * size, current * size), page: current, pages };
 }
+
+
+/**
+ * One identity per person on the wall (2026-11-02), the most specific first:
+ * 导师团, then 共建者, then 共创会员, then everyone else.
+ */
+export const IDENTITIES = ["mentor", "builder", "cocreator", "member"] as const;
+export type Identity = (typeof IDENTITIES)[number];
+
+export function identityOf(person: { mentor: boolean; builder: boolean; cocreator: boolean }): Identity {
+  if (person.mentor) return "mentor";
+  if (person.builder) return "builder";
+  if (person.cocreator) return "cocreator";
+  return "member";
+}
+
+/** Grouped by identity in that order; within a group the order given is kept. */
+export function sortByIdentity<T extends { mentor: boolean; builder: boolean; cocreator: boolean }>(people: readonly T[]): T[] {
+  const rank = (person: T) => IDENTITIES.indexOf(identityOf(person));
+  return people.map((person, index) => ({ person, index })).sort((a, b) => rank(a.person) - rank(b.person) || a.index - b.index).map((item) => item.person);
+}

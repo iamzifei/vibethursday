@@ -979,6 +979,11 @@ export const copy = {
       next: "下一页 →",
       results: "{n} 位",
       searchEmpty: "没搜到「{q}」。换个词试试，或者他可能还没认领名片。",
+      // 2026-11-02：报过名但搜不到自己——名片要先认领、公开才上墙。
+      claimHint: "报过名却搜不到自己？名片要先认领、点「公开」才会出现在这里，一分钟。",
+      claimPublishCta: "认领 / 公开我的名片",
+      identityLabel: "按身份看",
+      identity: { mentor: "导师团", builder: "共建者", cocreator: "共创会员", member: "其他成员" },
       roles: {
         builder: "在做产品",
         business: "有公司 / 业务",
@@ -2719,6 +2724,10 @@ export const copy = {
       next: "Next →",
       results: "{n}",
       searchEmpty: "Nothing matches \u201c{q}\u201d. Try another word — or they may not have claimed a card yet.",
+      claimHint: "Signed up but can't find yourself? A card shows here once you claim it and make it public — one minute.",
+      claimPublishCta: "Claim / publish my card",
+      identityLabel: "By identity",
+      identity: { mentor: "Mentors", builder: "Builders", cocreator: "Co-creator members", member: "Everyone else" },
       clearTag: "Clear tag filter",
       roles: {
         builder: "Building a product",

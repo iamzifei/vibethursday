@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { buildRoster, canCheckIn, filterRoster, isSessionDate, verifyCheckinCode, type RosterEntry } from "@/lib/checkin";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
+import { identityOf } from "@/lib/directory";
 import { listCheckins, listRoster } from "@/lib/db";
 import { feeFor, formatSession, sydneyToday } from "@/lib/sessions";
 import { feeLabel } from "@/lib/tuesday-fee";
@@ -126,6 +127,8 @@ export default async function CheckinPage({ searchParams }: PageProps) {
   const [signups, checkins] = await Promise.all([listRoster(session), listCheckins(session)]);
   const roster = buildRoster(session, signups, checkins);
   const hasCard = new Map(signups.map((row) => [row.id, row.has_card]));
+  // Who each person is (2026-11-02), shown once their name is tapped.
+  const identityById = new Map(signups.map((row) => [row.id, identityOf(row)]));
   const count = checkins.length;
   const query = (params.q ?? "").trim().slice(0, 50);
   const shown = filterRoster(roster, query);
@@ -219,6 +222,12 @@ export default async function CheckinPage({ searchParams }: PageProps) {
           </span>
           <h1>{t.confirmTitle.replace("{name}", who.name)}</h1>
           {who.hint && <p className="body-lg" style={{ color: "var(--fg2)" }}>{who.hint}</p>}
+          {(() => {
+            const identity = identityById.get(who.id);
+            return identity && identity !== "member" ? (
+              <p style={{ margin: 0 }}><span className="chip chip--stage">{c.members.identity[identity]}</span></p>
+            ) : null;
+          })()}
         </div>
 
         <div className="stack-3">

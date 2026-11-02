@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Copy, type Lang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
 import { JsonLd } from "@/components/JsonLd";
-import { paginate, tagKey, topTags } from "@/lib/directory";
+import { IDENTITIES, identityOf, paginate, sortByIdentity, tagKey, topTags, type Identity } from "@/lib/directory";
 import { siteUrl } from "@/lib/site";
 import { listWallMembers, type Member } from "@/lib/db";
 import { currentMemberId } from "@/lib/member-auth";
@@ -14,7 +14,7 @@ import { ROLES, type Role } from "@/lib/members";
 import { focusSession, formatSession } from "@/lib/sessions";
 
 type PageProps = {
-  searchParams: Promise<{ lang?: string; role?: string; tag?: string; q?: string; works?: string; page?: string }>;
+  searchParams: Promise<{ lang?: string; role?: string; tag?: string; q?: string; works?: string; page?: string; who?: string }>;
 };
 
 // Reads from Postgres on every request. The wall changes whenever anyone edits
@@ -57,6 +57,8 @@ export default async function MembersPage({ searchParams }: PageProps) {
     : null;
   const tag = params.tag?.trim() || null;
   const worksOnly = params.works === "1";
+  // By identity (2026-11-02): 导师团 / 共建者 / 共创会员 / everyone else.
+  const who = (IDENTITIES as readonly string[]).includes(params.who ?? "") ? (params.who as Identity) : null;
 
   // Capped, because it is echoed back into the input and into the empty-state
   // message. A paragraph pasted in here should not become the page.
@@ -100,6 +102,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
     if (role && !member.roles.includes(role)) return false;
     if (tag && !member.tags.some((t) => tagKey(t) === tagKey(tag))) return false;
     if (worksOnly && member.assets.length === 0) return false;
+    if (who && identityOf(member) !== who) return false;
 
     if (terms.length > 0) {
       const text = haystack(member);
@@ -121,7 +124,9 @@ export default async function MembersPage({ searchParams }: PageProps) {
   // next-Thursday answer jumps a week, which used to empty this group out the
   // moment a session finished. See sessions.ts for the measurement.
   const { date: upcoming, past: lookingBack } = focusSession();
-  const everyoneElse = filtered.filter((member) => !member.sessions.includes(upcoming));
+  // Sorted by identity so who is who shows at a glance; within each identity
+  // the wall's own order (most recently seen first) is kept.
+  const everyoneElse = sortByIdentity(filtered.filter((member) => !member.sessions.includes(upcoming)));
   const { items: rest, page, pages } = paginate(
     everyoneElse,
     Number(params.page ?? 1),
@@ -129,13 +134,14 @@ export default async function MembersPage({ searchParams }: PageProps) {
   );
   // This week's group sits above the pages, on the first one only.
   const thisWeekCount = filtered.length - everyoneElse.length;
-  const comingThisWeek = page === 1 ? filtered.filter((member) => member.sessions.includes(upcoming)) : [];
+  const comingThisWeek = page === 1 ? sortByIdentity(filtered.filter((member) => member.sessions.includes(upcoming))) : [];
   const popularTags = topTags(everyone, 12);
 
   /** The current view's address with some of its parts changed; any change resets to page 1. */
-  const viewHref = (next: { role?: Role | null; tag?: string | null; works?: boolean; page?: number }) => {
-    const value = { role, tag, works: worksOnly, q: query, page: 1, ...next };
+  const viewHref = (next: { role?: Role | null; tag?: string | null; works?: boolean; page?: number; who?: Identity | null }) => {
+    const value = { role, tag, works: worksOnly, q: query, page: 1, who, ...next };
     const search = new URLSearchParams();
+    if (value.who) search.set("who", value.who);
     if (value.role) search.set("role", value.role);
     if (value.tag) search.set("tag", value.tag);
     if (value.works) search.set("works", "1");
@@ -171,10 +177,12 @@ export default async function MembersPage({ searchParams }: PageProps) {
     if (role) search.set("role", role);
     if (tag) search.set("tag", tag);
     if (worksOnly) search.set("works", "1");
+    if (who) search.set("who", who);
     if (LANG_PARAM[lang]) search.set("lang", LANG_PARAM[lang]!);
     const text = search.toString();
     return text ? `/members?${text}` : "/members";
   })();
+  const identityCounts = new Map(IDENTITIES.map((identity) => [identity, everyone.filter((member) => identityOf(member) === identity).length]));
 
   return (
     <div lang={c.htmlLang}>
@@ -280,6 +288,15 @@ export default async function MembersPage({ searchParams }: PageProps) {
               )}
             </div>
 
+            {/* By identity (2026-11-02): who is who, at a glance. */}
+            <div className="filters" aria-label={m.identityLabel}>
+              {IDENTITIES.filter((identity) => (identityCounts.get(identity) ?? 0) > 0).map((identity) => (
+                <Link className={`chip chip--link${who === identity ? " chip--on" : ""}`} key={identity} href={viewHref({ who: who === identity ? null : identity })}>
+                  {m.identity[identity]} · {identityCounts.get(identity)}
+                </Link>
+              ))}
+            </div>
+
             {/* The most common tags, as filters (2026-11-02), and "has works". */}
             <div className="filters" aria-label={m.tagsLabel}>
               <Link className={`chip chip--link${worksOnly ? " chip--on" : ""}`} href={viewHref({ works: !worksOnly })}>
@@ -296,13 +313,21 @@ export default async function MembersPage({ searchParams }: PageProps) {
             </div>
 
             {filtered.length === 0 ? (
-              <p className="alert">
-                {everyone.length === 0
-                  ? m.empty
-                  : query
-                    ? m.searchEmpty.replace("{q}", query)
-                    : m.emptyFiltered}
-              </p>
+              <div className="stack-2">
+                <p className="alert">
+                  {everyone.length === 0
+                    ? m.empty
+                    : query
+                      ? m.searchEmpty.replace("{q}", query)
+                      : m.emptyFiltered}
+                </p>
+                {/* Signed up but not here (2026-11-02): only claimed, public cards are on the wall. */}
+                {query && (
+                  <p className="body-sm" style={{ margin: 0 }}>
+                    {m.claimHint} <Link href={`/claim${langSuffix(lang)}`}>{m.claimPublishCta} →</Link>
+                  </p>
+                )}
+              </div>
             ) : (
               <>
                 {comingThisWeek.length > 0 && (

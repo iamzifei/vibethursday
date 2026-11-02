@@ -2743,6 +2743,10 @@ export type RosterRow = {
   sessions: string[];
   /** Whether a published, not-hidden card exists — what the wall would show. */
   has_card: boolean;
+  /** Identity, shown on the check-in confirm step (2026-11-02). */
+  cocreator: boolean;
+  mentor: boolean;
+  builder: boolean;
 };
 
 /**
@@ -2763,7 +2767,15 @@ export async function listRoster(session: string): Promise<RosterRow[]> {
             EXISTS (
               SELECT 1 FROM members m
                WHERE m.signup_id = g.id AND m.published_at IS NOT NULL AND NOT m.hidden
-            ) AS has_card
+            ) AS has_card,
+            EXISTS (
+              SELECT 1 FROM course_orders o
+               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+                 AND (o.signup_id = g.id
+                      OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+            ) AS cocreator,
+            EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS mentor,
+            EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'builder') AS builder
        FROM signups g
       WHERE $1::date = ANY(g.sessions)
          OR EXISTS (SELECT 1 FROM checkins c WHERE c.signup_id = g.id AND c.session = $1::date)
