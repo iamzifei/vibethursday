@@ -7,7 +7,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { buildRoster, canCheckIn, filterRoster, isSessionDate, verifyCheckinCode, type RosterEntry } from "@/lib/checkin";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
 import { listCheckins, listRoster } from "@/lib/db";
-import { formatSession, sydneyToday } from "@/lib/sessions";
+import { feeFor, formatSession, sydneyToday } from "@/lib/sessions";
+import { feeLabel } from "@/lib/tuesday-fee";
 import { cookies } from "next/headers";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { wechatLoginHref } from "@/lib/login-link";
@@ -161,6 +162,17 @@ export default async function CheckinPage({ searchParams }: PageProps) {
             </p>
           )}
           <p className="body-lg">{t.doneBody.replace("{n}", String(count))}</p>
+          {/* The day's one rule, the same for everyone (2026-11-02): never
+              this person's own payment status, which the page cannot verify
+              is theirs — anyone holding the code can open any `done=`. */}
+          {(() => {
+            const fee = feeFor(session);
+            return (
+              <p className="body" style={{ color: "var(--fg2)" }}>
+                {fee !== null ? t.doneTuesday.replace("{fee}", feeLabel(fee, lang === "en" ? "en" : "zh")) : t.doneThursday}
+              </p>
+            );
+          })()}
         </div>
         <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
           <Link className="btn btn--primary" href={`/sessions/${session}${langSuffix(lang)}`}>

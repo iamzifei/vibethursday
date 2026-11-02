@@ -67,6 +67,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
 
+  // The check-in desk (2026-11-02) sends `back=desk` to come back to itself,
+  // on the same session and row. Only this one fixed path, never an address
+  // from the form.
+  const back = form?.get("back");
+  if (back === "desk") {
+    return NextResponse.redirect(new URL(`/admin/desk?s=${session}#r-${signupId}`, await requestOrigin()), 303);
+  }
+
   return NextResponse.redirect(
     new URL(`/admin#checkin`, await requestOrigin()),
     303,

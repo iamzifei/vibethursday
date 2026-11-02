@@ -5322,3 +5322,33 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .progress-item__meta { display: flex; gap: var(--space-2); align-items: center; color: var(--fg3); font-size: 0.9rem; }
 .progress-item__title { font-weight: 600; }
 .progress-item__detail { color: var(--fg2); }
+
+/* ── The check-in desk (2026-11-02, /admin/desk) ─────────────────────
+   Phone first: one person per row, big buttons on the right, nothing that
+   needs a sideways scroll. */
+.btn--sm { padding: 0.45rem 0.85rem; font-size: 0.95rem; min-height: 40px; }
+.pill--warn { border-color: var(--warning); color: var(--warning); }
+.desk-switch { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.desk-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+.desk-stats > div { border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-3); }
+.desk-stats dt { color: var(--fg3); font-size: 0.85rem; }
+.desk-stats dd { margin: 0; font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.desk-stats__cap { font-size: 0.9rem; font-weight: 400; color: var(--fg3); }
+.desk-stats--warn { border-color: var(--warning) !important; }
+.desk-stats--warn dd { color: var(--warning); }
+.desk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.desk-row { display: flex; gap: var(--space-3); justify-content: space-between; align-items: flex-start; padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); scroll-margin-top: 6rem; }
+.desk-row--in { opacity: 0.75; }
+.desk-row:target { border-color: var(--accent); opacity: 1; }
+.desk-row__who { display: grid; gap: var(--space-1); min-width: 0; }
+.desk-row__name { font-size: 1.1rem; }
+.desk-row__wechat { color: var(--fg3); font-size: 0.85rem; overflow-wrap: anywhere; }
+.desk-row__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.desk-row__topic { color: var(--fg2); }
+.desk-row__actions { display: flex; flex-direction: column; gap: var(--space-2); align-items: stretch; flex-shrink: 0; }
+.desk-row__actions .btn { width: 100%; }
+@media (min-width: 720px) {
+  .desk-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+.admin-today { display: grid; gap: var(--space-3); }
+.admin-today__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }

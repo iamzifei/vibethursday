@@ -1464,6 +1464,10 @@ export const copy = {
       doneBody: "今天已到 {n} 人。",
       doneWall: "看看今天来了谁 →",
       doneHome: "回首页",
+      // 2026-11-02：签完之后按当天的规矩提醒一句。周二收门票（共创会员免费），
+      // 周四免费但到场每人在店里点一份（10-15 和场地的约定）。
+      doneTuesday: "Build Tuesday 门票 {fee}。还没付的，找门口的小助理扫付款码；共创会员免费，不用付。",
+      doneThursday: "记得在店里点一份饮品或简餐，这是我们和场地的约定。",
       rateLimited: "点得太快了，等一分钟再试。",
       failed: "没签上，再点一次；还不行就找主办人。",
     },
@@ -3091,6 +3095,8 @@ export const copy = {
       doneBody: "{n} here today so far.",
       doneWall: "See who is here today →",
       doneHome: "Back to the home page",
+      doneTuesday: "Build Tuesday is {fee}. Not paid yet? The helper at the door has a payment code for you. Co-creator members don't pay.",
+      doneThursday: "Please order a drink or a bite at the café — it's our deal with the venue.",
       rateLimited: "Too many taps — give it a minute.",
       failed: "That didn’t go through. Tap again, or ask the organiser.",
     },

@@ -12,6 +12,7 @@ import type { CheckinSource } from "./checkin.ts";
 import { MEMBERSHIP, MEMBERSHIP_COURSES } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
+import type { DeskRow } from "./desk.ts";
 
 /**
  * The SQL list of classes that make a 共创会员 (`MEMBERSHIP_COURSES`), for the
@@ -5061,6 +5062,42 @@ export async function listProgress(options: { confirmedOnly?: boolean; memberIds
       ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
       ORDER BY happened_on DESC, id DESC`,
     params,
+  );
+  return result.rows;
+}
+
+
+/* ── The check-in desk (2026-11-02, desk.ts) ─────────────────────────── */
+
+/**
+ * Everyone one session's desk needs: booked, waitlisted, or checked in
+ * without either (a walk-in), with their check-in, 共创会员 status and — on a
+ * paid Tuesday — their fee. Organiser-only: it carries WeChat IDs.
+ */
+export async function listDeskRows(session: string): Promise<DeskRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<DeskRow>(
+    `SELECT g.id::text AS id, g.name, g.wechat,
+            ($1::date = ANY(g.sessions)) AS booked,
+            ($1::date = ANY(g.waitlist)) AS waitlisted,
+            to_char(c.created_at AT TIME ZONE 'Australia/Sydney', 'HH24:MI') AS checked_in_at,
+            c.source,
+            EXISTS (
+              SELECT 1 FROM course_orders o
+               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+                 AND (o.signup_id = g.id
+                      OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+            ) AS member,
+            f.status AS fee_status,
+            to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
+            g.tuesday_bring ->> ($1::date)::text AS bring,
+            nullif(g.topic, '') AS topic
+       FROM signups g
+       LEFT JOIN checkins c ON c.signup_id = g.id AND c.session = $1::date
+       LEFT JOIN session_fees f ON f.signup_id = g.id AND f.session = $1::date
+      WHERE $1::date = ANY(g.sessions) OR $1::date = ANY(g.waitlist) OR c.id IS NOT NULL
+      ORDER BY g.created_at`,
+    [session],
   );
   return result.rows;
 }

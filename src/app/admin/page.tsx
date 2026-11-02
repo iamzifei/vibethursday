@@ -429,9 +429,28 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <h1>后台</h1>
       </div>
 
+      {/* Today first (2026-11-02): the session in focus and the two pages a
+          morning actually runs on — the desk for whoever is at the door, the
+          full-screen code for the table. Numbers are the ones read above. */}
+      <section className="card card--accent admin-today" aria-labelledby="admin-today">
+        <h2 className="h3" id="admin-today" style={{ margin: 0 }}>
+          {formatSession(desk, "zh")}{isSpecialSession(desk) ? " · Build Tuesday" : ""}
+        </h2>
+        <p className="body" style={{ margin: 0 }}>
+          报名 {deskRow?.total ?? 0} / {capFor(desk)} · 候补 {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length}
+          {isSpecialSession(desk) ? "" : ` · 点单 ${orders.length} 杯`}
+        </p>
+        <div className="admin-today__actions">
+          <a className="btn btn--primary" href="/admin/desk">签到台（门口用）</a>
+          <a className="btn btn--secondary" href="/admin/door">门口签到码（全屏）</a>
+          <a className="btn btn--secondary" href={`/sessions/${desk}`}>当天现场页</a>
+        </div>
+      </section>
+
       {/* Four groups in the order a week actually runs. Sticky, and it scrolls
           sideways on a phone rather than wrapping into two rows. */}
       <nav className="admin-jump" aria-label="后台分组">
+        <a href="/admin/desk">签到台</a>
         <a href="#week">本周</a>
         <a href="#after">散场后</a>
         <a href="#community">社群</a>
@@ -453,10 +472,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </p>
       )}
 
-      <p className="body-sm admin-glance">
-        <strong>{desk}</strong>{isSpecialSession(desk) ? " · Build Tuesday" : ""} · 报名 {deskRow?.total ?? 0} / {capFor(desk)} · 候补{" "}
-        {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length} · 点单 {orders.length} 杯
-      </p>
+      {/* The week's numbers are in the "today" card at the top (2026-11-02). */}
 
       {alert && (
         <p className="alert" role="status" style={{ borderColor: "var(--warning)", color: "var(--warning)" }}>

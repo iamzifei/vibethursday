@@ -54,5 +54,10 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
+  // From the check-in desk (2026-11-02): back to it, on the same row. A fixed path only.
+  const back = form?.get("back");
+  if (back === "desk") {
+    return NextResponse.redirect(new URL(`/admin/desk?s=${session}#r-${signupId}`, await requestOrigin()), 303);
+  }
   return NextResponse.redirect(new URL("/admin#tuesday-fees", await requestOrigin()), 303);
 }
