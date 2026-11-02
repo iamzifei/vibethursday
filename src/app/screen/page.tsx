@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
 import { requestOrigin } from "@/lib/request-origin";
-import { SCREEN_LINKS, SCREEN_SCHEDULE, SCREEN_TUESDAY } from "@/lib/screen";
+import { SCREEN_LINKS, screenFor } from "@/lib/screen";
+import { isSpecialSession, sydneyToday } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,13 @@ function qrSvg(url: string): Promise<string> {
  */
 export default async function ScreenPage() {
   const origin = await requestOrigin();
-  const [checkinQr, signupQr, tuesdayQr] = await Promise.all([
+  // A Build Tuesday gets its own day on the screen (2026-11-02).
+  const tuesday = isSpecialSession(sydneyToday().toISOString().slice(0, 10));
+  const day = screenFor(tuesday);
+  const [checkinQr, signupQr, secondQr] = await Promise.all([
     qrSvg(`${origin}${SCREEN_LINKS.checkin}`),
-    qrSvg(`${origin}${SCREEN_LINKS.signup}`),
-    qrSvg(`${origin}${SCREEN_LINKS.tuesday}`),
+    qrSvg(`${origin}${tuesday ? SCREEN_LINKS.tuesday : SCREEN_LINKS.signup}`),
+    qrSvg(`${origin}${day.second.href}`),
   ]);
 
   return (
@@ -35,11 +39,11 @@ export default async function ScreenPage() {
       <KeepAwake />
       <div className="screen__slide screen__slide--a">
       <section className="screen__intro">
-        <p className="eyebrow">§ Vibe Thursday · 疯狂星期四</p>
-        <h1>一群用 AI 做事的人，<br />每周四聚一次。</h1>
-        <p className="screen__lead">这不是课，没有系统教学。手上有东西就打开给大家看，做了一半也行；卡住了，现场问。</p>
+        <p className="eyebrow">{day.eyebrow}</p>
+        <h1>{day.title}</h1>
+        <p className="screen__lead">{day.lead}</p>
         <ol className="screen__schedule">
-          {SCREEN_SCHEDULE.map((slot) => (
+          {day.schedule.map((slot) => (
             <li key={slot.time}>
               <span className="mono">{slot.time}</span>
               <div>
@@ -58,22 +62,22 @@ export default async function ScreenPage() {
         </figure>
         <figure>
           <div className="door-qr screen__qr" aria-label="报名二维码" dangerouslySetInnerHTML={{ __html: signupQr }} />
-          <figcaption><strong>扫码报名</strong>每周四免费 · 下周也能报</figcaption>
+          <figcaption><strong>扫码报名</strong>{day.signupCaption}</figcaption>
         </figure>
       </section>
       </div>
       <div className="screen__slide screen__slide--b">
         <section className="screen__intro">
-          <p className="eyebrow">§ {SCREEN_TUESDAY.when}</p>
-          <h1>{SCREEN_TUESDAY.title}</h1>
-          <p className="screen__price">{SCREEN_TUESDAY.price}</p>
+          <p className="eyebrow">§ {day.second.eyebrow}</p>
+          <h1>{day.second.title}</h1>
+          <p className="screen__price">{day.second.price}</p>
           <ul className="screen__points">
-            {SCREEN_TUESDAY.points.map((point) => <li key={point}>{point}</li>)}
+            {day.second.points.map((point) => <li key={point}>{point}</li>)}
           </ul>
         </section>
         <figure className="screen__codes">
-          <div className="door-qr screen__qr" aria-label="周二报名二维码" dangerouslySetInnerHTML={{ __html: tuesdayQr }} />
-          <figcaption><strong>扫码报周二</strong>vibethursday.com/tuesday</figcaption>
+          <div className="door-qr screen__qr" aria-label="第二个二维码" dangerouslySetInnerHTML={{ __html: secondQr }} />
+          <figcaption>{day.second.caption}</figcaption>
         </figure>
       </div>
     </main>

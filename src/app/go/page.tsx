@@ -158,7 +158,7 @@ export default async function GoPage({ searchParams }: PageProps) {
   const hour = sydneyHour();
   // The card stays up for the whole Tuesday, which runs to 15:30 (2026-11-02).
   const tuesdayToday = isSpecialSession(today) && hour < 16;
-  const tuesdayCheckin = tuesdayToday && checkinLinkOpen(true, hour);
+  const tuesdayCheckin = tuesdayToday && checkinLinkOpen(true, hour, true);
   const tuesdayMine = mine ? mine.sessions.includes(today) || mine.waitlist.some((entry) => entry.session === today) : null;
 
   // Where, read from the home page's venue card, so a venue change is one edit

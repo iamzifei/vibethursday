@@ -117,6 +117,9 @@ export const CHECKIN_LINK_UNTIL = 13;
  * 10:00 to 13:00 Sydney time. The check-in route has its own, wider rule (the
  * whole day) and is unchanged; this only decides whether /go hands out the link.
  */
-export function checkinLinkOpen(isSessionDay: boolean, sydneyHour: number): boolean {
-  return isSessionDay && sydneyHour >= CHECKIN_LINK_FROM && sydneyHour < CHECKIN_LINK_UNTIL;
+export function checkinLinkOpen(isSessionDay: boolean, sydneyHour: number, tuesday = false): boolean {
+  // A Build Tuesday runs to 15:30 (2026-11-02): people coming for the
+  // afternoon workshop check in too.
+  const until = tuesday ? 16 : CHECKIN_LINK_UNTIL;
+  return isSessionDay && sydneyHour >= CHECKIN_LINK_FROM && sydneyHour < until;
 }
