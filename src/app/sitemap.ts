@@ -88,6 +88,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     everyLanguage("/tuesday", { changeFrequency: "weekly", priority: 0.6 }),
     // The community guide: how a Thursday runs and what we ask of each other.
     everyLanguage("/guide", { changeFrequency: "monthly", priority: 0.6 }),
+    // The first chapter of how the meetup was run (2026-11-02), Chinese only.
+    { url: `${base}/guide/how-we-run`, changeFrequency: "monthly" as const, priority: 0.6 },
     ...works.map((work) => everyLanguage(`/works/${work.key}`, { changeFrequency: "monthly", priority: 0.5 })),
     ...[...dates]
       .sort()

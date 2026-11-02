@@ -39,6 +39,8 @@ export type DeskRow = {
   /** Tuesday only: need / project / help, and their one sentence. */
   bring: string | null;
   topic: string | null;
+  /** What they said they were building when they signed up. */
+  building: string | null;
 };
 
 export type PayState = "free" | "member" | "paid" | "waived" | "claimed" | "owing" | "ask";
@@ -122,4 +124,33 @@ export function deskReturnPath(session: string, signupId: string, q: string | nu
   if (query) search.set("q", query);
   if (show && SHOWS.has(show)) search.set("show", show);
   return `/admin/desk?${search.toString()}#r-${signupId}`;
+}
+
+const BRING: Record<string, string> = { need: "带需求", project: "带项目", help: "来帮忙", cert: "备考 AWS 证书" };
+const SOURCE: Record<string, string> = { qr: "扫码", "walk-in": "现场新来", admin: "签到台" };
+const IDENTITY: Record<PayState, string> = {
+  free: "已报名",
+  member: "共创会员",
+  paid: "已付",
+  waived: "免收",
+  claimed: "说已转账",
+  owing: "未付",
+  ask: "没报这一场",
+};
+
+/** The after-event sheet (2026-11-02): who came, as what, and what they wrote when signing up. */
+export const DESK_EXPORT_COLUMNS = ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么"] as const;
+
+export function deskExportRow(entry: DeskEntry): string[] {
+  const identity = entry.pay === "free" && !entry.booked ? (entry.walkIn ? "现场新来" : "候补") : IDENTITY[entry.pay];
+  return [
+    entry.name,
+    entry.wechat ?? "",
+    entry.checked_in_at ?? "没来",
+    entry.source ? (SOURCE[entry.source] ?? entry.source) : "",
+    identity,
+    entry.bring ? (BRING[entry.bring] ?? entry.bring) : "",
+    entry.topic ?? "",
+    entry.building ?? "",
+  ];
 }

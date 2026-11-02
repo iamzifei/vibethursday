@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
-import { checkinCode } from "@/lib/checkin";
+import { checkinCode, isSessionDate } from "@/lib/checkin";
 import { requestOrigin } from "@/lib/request-origin";
 import { deskSession, formatSession } from "@/lib/sessions";
 
@@ -20,7 +20,9 @@ export const metadata: Metadata = { title: "签到 · Vibe Thursday", robots: { 
  * it carries the whole signup list (James 2026-10-01). Organiser-only, like
  * /admin, so the code is not one more public link.
  */
-export default async function DoorPage() {
+type PageProps = { searchParams: Promise<{ s?: string }> };
+
+export default async function DoorPage({ searchParams }: PageProps) {
   if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
     return (
       <main className="shell section">
@@ -34,8 +36,11 @@ export default async function DoorPage() {
     );
   }
 
-  // The Tuesday on a Build Tuesday, otherwise the Thursday in focus.
-  const session = deskSession();
+  // The Tuesday on a Build Tuesday, otherwise the Thursday in focus — or any
+  // date given as ?s=, so a code can be printed ahead and taped to the door
+  // (suggested by a helper, 2026-11-02). It still only works on that day.
+  const requested = (await searchParams).s;
+  const session = requested && isSessionDate(requested) ? requested : deskSession();
   const url = `${await requestOrigin()}/checkin?s=${session}&k=${checkinCode(session)}`;
   // Dark on white, never inverted: plenty of scanners fail on a light-on-dark code.
   const qr = await QRCode.toString(url, {
@@ -69,6 +74,9 @@ export default async function DoorPage() {
       />
       <p className="body-lg" style={{ margin: 0 }}>
         找不到自己的名字，直接写名字签到 · {formatSession(session, "zh")}
+      </p>
+      <p className="body-sm door-print-hint" style={{ margin: 0, color: "var(--fg3)" }}>
+        要打印贴门口：用浏览器的「打印」。这个码只在 {formatSession(session, "zh")} 当天有效；别的日子在地址后面加 ?s=日期，比如 ?s=2026-11-10。
       </p>
     </main>
   );

@@ -120,6 +120,19 @@ export default async function GuidePage({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* The free first chapter of how this was run (2026-11-02), Chinese only. */}
+        {lang !== "en" && (
+          <section className="section">
+            <div className="shell">
+              <Link className="card stack-2" href="/guide/how-we-run" style={{ display: "grid", textDecoration: "none", color: "inherit" }}>
+                <span className="eyebrow">想在你的城市也办一个</span>
+                <strong className="h3">Vibe Thursday 是怎么办起来的 · 第一章 →</strong>
+                <span className="body">从第一场到每周照常的六步，附可以直接拿去用的跑单和预告模板。</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
         <section className="section">
           <div className="shell">
             <div className="card card--accent stack-4 guide__close">

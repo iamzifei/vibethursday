@@ -5387,3 +5387,12 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .admin-tile--warn { border-color: var(--warning); }
 .admin-tile--warn strong { color: var(--warning); }
 @media (min-width: 720px) { .admin-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* The playbook chapter (2026-11-02, /guide/how-we-run). */
+.playbook p, .playbook li { line-height: 1.8; }
+.playbook__step { margin-top: var(--space-8); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); }
+.playbook__label { margin-bottom: 0; }
+.playbook__template { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 0.95rem; line-height: 1.7; padding: var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); background: var(--bg-secondary); margin: 0; }
+@media print { .door-print-hint { display: none; } }
+.playbook ol { list-style: decimal; padding-left: 1.4em; }
+.playbook ul { list-style: disc; padding-left: 1.4em; }

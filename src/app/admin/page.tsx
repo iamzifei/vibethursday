@@ -1290,7 +1290,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                             <td>{row.name}</td>
                             {/* 2026-11-01: lines up the morning's one or two cases. */}
                             <td>
-                              {{ need: "需求", project: "项目", help: "来帮忙" }[row.bring ?? ""] ?? "—"}
+                              {{ need: "需求", project: "项目", help: "来帮忙", cert: "备考 AWS 证书" }[row.bring ?? ""] ?? "—"}
                               {(row.bring === "need" || row.bring === "project") && row.topic && <span className="body-sm" style={{ color: "var(--fg3)" }}>：{row.topic}</span>}
                             </td>
                             <td className="mono">{row.wechat ?? "—"}</td>

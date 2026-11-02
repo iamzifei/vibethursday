@@ -26,7 +26,7 @@ const PAY_LABEL: Record<PayState, string> = {
   ask: "没报这一场 · 收款找主办人",
 };
 
-const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带项目", help: "来帮忙" };
+const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带项目", help: "来帮忙", cert: "备考 AWS 证书" };
 
 /**
  * The check-in desk (2026-11-02, desk.ts): one phone-sized page for whoever is
@@ -108,7 +108,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
             <span className="chip">{BRING_LABEL[entry.bring] ?? entry.bring}</span>
           )}
         </span>
-        {tuesday && entry.bring && entry.topic && <span className="body-sm desk-row__topic">{entry.topic}</span>}
+        {entry.topic && <span className="body-sm desk-row__topic">想聊：{entry.topic}</span>}
+        {entry.building && <span className="body-sm desk-row__topic">在做：{entry.building}</span>}
       </div>
 
       <div className="desk-row__actions">
@@ -226,6 +227,11 @@ export default async function DeskPage({ searchParams }: PageProps) {
         ))}
         {query && <Link className="chip chip--link" href={href({ q: "" })}>清除搜索「{query}」</Link>}
       </nav>
+
+      <p className="body-sm" style={{ margin: 0 }}>
+        {/* The after-event sheet: who came, as what, and what they wrote. */}
+        <a href={`/api/admin/export?what=desk&session=${session}`}>下载这一场的名单（Excel 可打开）→</a>
+      </p>
 
       {shown.length === 0 ? (
         <p className="body" style={{ color: "var(--fg3)" }}>

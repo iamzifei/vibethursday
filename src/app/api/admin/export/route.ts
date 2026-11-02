@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
 import { tooMany } from "@/lib/rate-limit";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
-import { listCheckins, listCourseKit, listFeedback, listOrders, listSignups } from "@/lib/db";
+import { listCheckins, listCourseKit, listFeedback, listOrders, listSignups, listDeskRows } from "@/lib/db";
 import { KIT_EXPORT_FIELDS } from "@/lib/class-kit";
 import { COURSE } from "@/lib/course";
 
 import { CHECKIN_COLUMNS, csvCell, ORDER_COLUMNS } from "@/lib/csv";
 import { isSessionDate } from "@/lib/checkin";
-import { focusSession } from "@/lib/sessions";
+import { feeFor, focusSession } from "@/lib/sessions";
+import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow } from "@/lib/desk";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,16 @@ export async function GET(request: Request) {
   const session = sessionParam && isSessionDate(sessionParam) ? sessionParam : focusSession().date;
 
   const { name, lines } =
-    what === "orders"
+    // The check-in desk's after-event sheet (2026-11-02, desk.ts).
+    what === "desk"
+      ? {
+          name: `desk-${session}`,
+          lines: await listDeskRows(session).then((rows) => [
+            DESK_EXPORT_COLUMNS.join(","),
+            ...buildDesk(rows, feeFor(session) !== null).map((entry) => deskExportRow(entry).map((value) => csvCell(value)).join(",")),
+          ]),
+        }
+      : what === "orders"
       ? {
           name: `orders-${session}`,
           lines: await listOrders(session).then((rows) => [

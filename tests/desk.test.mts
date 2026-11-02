@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { buildDesk, deskReturnPath, deskStats, filterDesk, type DeskRow } from "../src/lib/desk.ts";
+import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow, deskReturnPath, deskStats, filterDesk, type DeskRow } from "../src/lib/desk.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
@@ -30,6 +30,7 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
   claimed_at: null,
   bring: null,
   topic: null,
+  building: null,
   ...over,
 });
 
@@ -132,4 +133,25 @@ test("a button on the desk comes back to the same search and filter", () => {
   assert.equal(deskReturnPath("2026-11-03", "9", "ann", "waiting"), "/admin/desk?s=2026-11-03&q=ann&show=waiting#r-9");
   assert.equal(deskReturnPath("2026-11-03", "9", null, "bogus"), "/admin/desk?s=2026-11-03#r-9", "an unknown filter is dropped");
   assert.equal(deskReturnPath("2026-11-03", "9", "x".repeat(80), null), `/admin/desk?s=2026-11-03&q=${"x".repeat(50)}#r-9`);
+});
+
+// Suggested by a helper (2026-11-02): after the morning, one list of who came,
+// as what, and what they wrote when signing up — for the follow-up.
+test("★ the after-event list: who came, as what, and what they wrote", () => {
+  const [entry] = buildDesk(
+    [row({ name: "Ann", checked_in_at: "10:35", source: "qr", member: true, bring: "cert", topic: "想考 AWS", building: "做跨境客服" })],
+    true,
+  );
+  assert.deepEqual(DESK_EXPORT_COLUMNS, ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么"]);
+  assert.deepEqual(deskExportRow(entry), ["Ann", "ann_01", "10:35", "扫码", "共创会员", "备考 AWS 证书", "想考 AWS", "做跨境客服"]);
+  const [absent] = buildDesk([row({ booked: true })], false);
+  assert.deepEqual(deskExportRow(absent).slice(2, 5), ["没来", "", "已报名"]);
+});
+
+test("the desk links its export, and the door code can be shown (and printed) for any date", () => {
+  assert.match(read("src/app/api/admin/export/route.ts"), /what === "desk"/);
+  assert.match(read("src/app/admin/desk/page.tsx"), /what=desk/);
+  const door = read("src/app/admin/door/page.tsx");
+  assert.match(door, /searchParams/);
+  assert.match(door, /isSessionDate/);
 });

@@ -432,6 +432,8 @@ export const copy = {
           { value: "need", label: "带一个需求：想让 AI 帮我做件事" },
           { value: "project", label: "带一个项目：做了一半，想听意见" },
           { value: "help", label: "来帮忙拆：听听别人的，给点意见" },
+          // 2026-11-02：周二的一个课题，一起备考第三方 AI 证书（考试费自付）。
+          { value: "cert", label: "备考 AWS AI 证书（AI Practitioner，可以中文考）" },
         ],
         tuesdayBringHint: "每场排一到两个案例，带需求或项目来的，可能会被请上来讲 10 分钟，提前私信你。",
         tuesdayNeedTopic: "什么需求？一句话",
@@ -1778,7 +1780,7 @@ export const copy = {
       format: [
         { time: "10:30–12:00", title: "项目和技术", body: "带项目的人讲做到哪、卡在哪，会技术的一起拆。" },
         { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
-        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。" },
+        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。也可以一起备考 AWS AI 证书（AI Practitioner，可以中文考，考试费自付），每人顺手做一个小项目练手。" },
       ],
       stickyLabel: "周二全天 · 30 澳元 + GST",
       // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
@@ -2274,6 +2276,7 @@ export const copy = {
           { value: "need", label: "A need: something I want AI to do" },
           { value: "project", label: "A project: half done, want opinions" },
           { value: "help", label: "Help: listen and give my view" },
+          { value: "cert", label: "Studying for the AWS AI certificate (AI Practitioner)" },
         ],
         tuesdayBringHint: "Each session works through one or two cases; if you bring a need or a project you may be asked to take ten minutes, and you'll hear beforehand.",
         tuesdayNeedTopic: "What is the need, in a sentence?",
@@ -3372,7 +3375,7 @@ export const copy = {
       format: [
         { time: "10:30–12:00", title: "Projects and tech", body: "Show where your project is and where it is stuck; the tech people dig in." },
         { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
-        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need." },
+        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need. Or study together for the AWS Certified AI Practitioner (you pay your own exam fee), building a small project as practice." },
       ],
       stickyLabel: "Tuesday · A$30 + GST",
       memberUpsell: {
