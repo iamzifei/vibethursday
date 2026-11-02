@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "周二付款 · Vibe Thursday", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ ref?: string; done?: string; paid?: string; error?: string; code?: string }> };
+type PageProps = { searchParams: Promise<{ ref?: string; done?: string; paid?: string; error?: string; code?: string; in?: string }> };
 
 /**
  * How to pay for a Build Tuesday (2026-10-14). Reached from the signup
@@ -62,6 +62,8 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
               </div>
             ) : (
               <>
+                {/* Straight from checking in at the door (2026-11-02). */}
+                {params.in === "1" && <p className="alert" role="status">✓ 已签到。还差门票，付完就好。</p>}
                 <div className="stack-3">
                   <span className="eyebrow">§ Build Tuesday · {formatSession(fee.session, "zh")}</span>
                   <h1>

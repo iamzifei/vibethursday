@@ -27,6 +27,8 @@ type PageProps = {
     new?: string;
     /** A roster id that just checked in: show the done step. */
     done?: string;
+    /** "1": a walk-in checked in on a full paid Tuesday (2026-11-02). */
+    full?: string;
     /** What went wrong on the last post. */
     err?: string;
     /** A search over the roster (`filterRoster`). */
@@ -165,6 +167,7 @@ export default async function CheckinPage({ searchParams }: PageProps) {
           {/* The day's one rule, the same for everyone (2026-11-02): never
               this person's own payment status, which the page cannot verify
               is theirs — anyone holding the code can open any `done=`. */}
+          {params.full === "1" && <p className="alert" role="status">{t.walkInFull}</p>}
           {(() => {
             const fee = feeFor(session);
             return (

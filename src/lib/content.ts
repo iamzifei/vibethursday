@@ -1476,6 +1476,7 @@ export const copy = {
       // 周四免费，但到场每人在店里点一份。
       doneTuesday: "Build Tuesday 门票 {fee}。还没付的，找门口的小助理扫付款码；共创会员免费，不用付。",
       doneThursday: "记得在店里点一份饮品或简餐，这是我们和场地的约定。",
+      walkInFull: "签到好了。今天的位子已经满了，门票和座位请找门口的主办人或助理。",
       rateLimited: "点得太快了，等一分钟再试。",
       failed: "没签上，再点一次；还不行就找主办人。",
     },
@@ -3110,6 +3111,7 @@ export const copy = {
       doneHome: "Back to the home page",
       doneTuesday: "Build Tuesday is {fee}. Not paid yet? The helper at the door has a payment code for you. Co-creator members don't pay.",
       doneThursday: "Please order a drink or a bite at the café — it's our deal with the venue.",
+      walkInFull: "You're checked in. Today is full, though — please see the organiser or the helper at the door about a place and the fee.",
       rateLimited: "Too many taps — give it a minute.",
       failed: "That didn’t go through. Tap again, or ask the organiser.",
     },

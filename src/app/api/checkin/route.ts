@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { AFTER_CHECKIN_PATH, canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { checkIn, listRoster, saveSignup } from "@/lib/db";
+import { checkIn, getOrCreateSessionFee, isTuesdayFree, listRoster, saveSignup, sessionHeadcount } from "@/lib/db";
+import { afterCheckin } from "@/lib/checkin-pay";
+import { capFor } from "@/lib/capacity";
+import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
+import { newFeeRef } from "@/lib/tuesday-fee";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
-import { sydneyToday } from "@/lib/sessions";
+import { feeFor, sydneyToday } from "@/lib/sessions";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -76,6 +80,29 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url, 303);
   };
 
+  // On a paid Build Tuesday (2026-11-02, checkin-pay.ts): someone who still
+  // owes goes on to their own payment page, marked "checked in"; a walk-in
+  // who found the room full is told to see the organiser.
+  const afterwards = async (signupId: string, booked: boolean, walkIn = false) => {
+    const feeDay = feeFor(session) !== null;
+    const free = feeDay ? await isTuesdayFree(signupId).catch(() => false) : false;
+    // A walk-in just booked gets a hold, as an online signup does. Someone
+    // already booked never does: they are in the room, and a lapsed hold
+    // would take their place away mid-morning.
+    const fee = feeDay && !free && booked
+      ? await getOrCreateSessionFee(session, signupId, newFeeRef(), walkIn && stripeEnabled() ? HOLD_MINUTES : null).catch(() => null)
+      : null;
+    const next = afterCheckin({ feeDay, free, booked, status: fee?.status ?? (feeDay && !free && booked ? "pending" : null) });
+    if (next === "pay" && fee) {
+      const url = new URL("/tuesday/pay", origin);
+      url.searchParams.set("ref", fee.ref);
+      url.searchParams.set("in", "1");
+      return NextResponse.redirect(url, 303);
+    }
+    if (next === "full") return back({ done: signupId, full: "1" });
+    return toBadge();
+  };
+
   // The code is the door. Checked before anything is read from the body, and
   // checked against today rather than against the session it names: a code
   // for next Thursday is only valid next Thursday.
@@ -110,7 +137,7 @@ export async function POST(request: Request) {
       if (!onRoster) return back({ err: "failed" });
 
       await checkIn({ session, signupId, onWall, source: "qr" });
-      return toBadge();
+      return afterwards(signupId, true);
     }
 
     if (!name) {
@@ -120,10 +147,20 @@ export async function POST(request: Request) {
     // A walk-in is a signup made on the day. `saveSignup` merges into an
     // existing row when the WeChat ID is already known, so a regular who
     // forgot to sign up this week and types their ID lands on their own row.
+    // On a paid Tuesday a walk-in takes a place only if one is left
+    // (2026-11-02): the room is small and a place is never promised at the
+    // door. Otherwise they are checked in on the waitlist.
+    const wechatIn = clean(form?.get("wechat") ?? null, 100);
+    let full = false;
+    if (feeFor(session) !== null) {
+      const { count, alreadyIn } = await sessionHeadcount(session, null, wechatIn);
+      full = !alreadyIn && count >= capFor(session);
+    }
+
     const walkInId = await saveSignup({
       name,
       email: null,
-      wechat: clean(form?.get("wechat") ?? null, 100),
+      wechat: wechatIn,
       building: clean(form?.get("building") ?? null, 1000),
       demoIntent: null,
       topic: null,
@@ -136,10 +173,11 @@ export async function POST(request: Request) {
       source: "walk-in",
       lang,
       botCheck: "skipped",
+      ...(full ? { waitlisted: true } : {}),
     });
 
     await checkIn({ session, signupId: walkInId, onWall, source: "walk-in" });
-    return toBadge();
+    return afterwards(walkInId, !full, true);
   } catch (error) {
     console.error("[checkin] failed", error);
     return back({ err: "failed" });
