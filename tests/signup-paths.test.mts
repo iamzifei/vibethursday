@@ -119,3 +119,23 @@ test("where you pay, GST is added and shown", () => {
   assert.match(MEMBERSHIP.payLabel, /658\.90/);
   assert.match(IP_COURSE.payLabel, /401\.50/);
 });
+
+// ── 5. The human check reads as a check, not as "signed up" ────────────────
+
+test("Turnstile shows only when a click is needed, so its green tick is not read as 'done'", () => {
+  assert.match(read("src/components/Turnstile.tsx"), /appearance: "interaction-only"/);
+});
+
+// ── 6. Direct payment links for people the organiser signs up himself ──────
+
+test("the admin has a page with both direct payment links and their QR codes, organiser only", async () => {
+  const page = read("src/app/admin/paylinks/page.tsx");
+  assert.match(page, /isAdminSession/);
+  assert.match(page, /PAYLINK_TUESDAY/);
+  assert.match(page, /PAYLINK_MEMBER/);
+  assert.match(page, /QRCode\.toDataURL/);
+  // The links are configuration, not code: nothing from Stripe is written into this public repo.
+  assert.doesNotMatch(page, /buy\.stripe\.com/);
+  const { ADMIN_NAV } = await import("../src/lib/admin-nav.ts");
+  assert.ok(ADMIN_NAV.flatMap((group) => group.links).some((link) => link.href === "/admin/paylinks"));
+});

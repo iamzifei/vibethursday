@@ -10,6 +10,7 @@ type TurnstileApi = {
       sitekey: string;
       language?: string;
       theme?: "auto" | "light" | "dark";
+      appearance?: "always" | "execute" | "interaction-only";
       callback: (token: string) => void;
       "expired-callback"?: () => void;
       "error-callback"?: () => void;
@@ -121,6 +122,10 @@ export function Turnstile({ siteKey, lang, onToken }: Props) {
           // Turnstile has its own tags: zh-cn, zh-tw, en.
           language: lang === "en" ? "en" : lang === "zh-Hant" ? "zh-tw" : "zh-cn",
           theme: "dark",
+          // Shown only when Cloudflare actually needs a click (2026-11-02).
+          // Always on, it ended in a green "成功！" that people read as "signed
+          // up", and they left without pressing the real submit button.
+          appearance: "interaction-only",
           callback: (token) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(null),
           "error-callback": () => onTokenRef.current(null),
