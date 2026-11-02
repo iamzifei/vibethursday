@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
    * days is long enough to make repeat visits free and short enough that
    * replacing a file in place heals on its own.
    */
+  // The drinks order page is gone (2026-11-02): old links in the group land on /go.
+  async redirects() {
+    return [{ source: "/order", destination: "/go", permanent: false }];
+  },
   async headers() {
     return [
       {

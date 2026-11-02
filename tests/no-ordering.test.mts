@@ -38,3 +38,7 @@ test("the rule is still said: one thing each, ordered at the venue", async () =>
   const { copy } = await import("../src/lib/content.ts");
   assert.match(JSON.stringify(copy.zh), /点一份/);
 });
+
+test("an old /order link lands on /go", () => {
+  assert.match(read("next.config.ts"), /source: "\/order", destination: "\/go"/);
+});

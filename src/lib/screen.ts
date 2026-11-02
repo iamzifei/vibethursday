@@ -70,7 +70,7 @@ export function screenFor(tuesday: boolean): ScreenDay {
     schedule: [
       { time: "10:30", title: "专注推进", note: "先扫码签到；每人推进自己的项目，会技术的一起拆" },
       { time: "12:00", title: "午饭聊需求", note: "各自点餐，边吃边聊老板的需求" },
-      { time: "13:30", title: "workshop", note: "当场动手；备考 AWS AI 证书的一起做题" },
+      { time: "13:30", title: "workshop", note: "趁热当场动手，把项目往前推一步" },
     ],
     signupCaption: "下周二也能报 · 12 人闭门",
     second: {

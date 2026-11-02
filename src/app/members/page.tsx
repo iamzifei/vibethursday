@@ -31,7 +31,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const c = getCopy(lang).members;
   // Filtered, searched and later pages are cuts of the same wall: followed,
   // not indexed, so /members itself carries the weight.
-  const narrowed = Boolean(params.role || params.tag || params.q || params.works || (params.page && params.page !== "1"));
+  const narrowed = Boolean(params.role || params.tag || params.q || params.works || params.who || (params.page && params.page !== "1"));
 
   return {
     alternates: pageAlternates("/members", lang),

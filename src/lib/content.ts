@@ -434,8 +434,6 @@ export const copy = {
           { value: "need", label: "带一个需求：想让 AI 帮我做件事" },
           { value: "project", label: "带一个项目：做了一半，想听意见" },
           { value: "help", label: "来帮忙拆：听听别人的，给点意见" },
-          // 2026-11-02：周二的一个课题，一起备考第三方 AI 证书（考试费自付）。
-          { value: "cert", label: "备考 AWS AI 证书（AI Practitioner，可以中文考）" },
         ],
         tuesdayBringHint: "每场排一到两个案例，带需求或项目来的，可能会被请上来讲 10 分钟，提前私信你。",
         tuesdayNeedTopic: "什么需求？一句话",
@@ -1735,7 +1733,6 @@ export const copy = {
       whoTitle: "给谁",
       who: [
         "在做东西的人：独立开发、一人公司、用 AI 搭产品或工作流的",
-        "想考一张能核验的 AI 证书的人：下午一起备考 AWS AI Practitioner",
         "会 AI、会技术，想找真实需求、组队做项目的人",
         "有真实需求的老板：上午看看产品怎么做，中午聊你的需求",
       ],
@@ -1745,7 +1742,7 @@ export const copy = {
       format: [
         { time: "10:30–12:00", title: "专注推进", body: "每人按自己的节奏推进手上的项目。导师团和共建者在旁边陪跑：不讲课，卡住了随时找他们，会技术的一起拆。" },
         { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
-        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。也可以一起备考 AWS AI 证书（AI Practitioner，可以中文考，考试费自付），每人顺手做一个小项目练手。" },
+        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。" },
       ],
       stickyLabel: "周二全天 · 30 澳元 + GST",
       // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
@@ -2241,7 +2238,6 @@ export const copy = {
           { value: "need", label: "A need: something I want AI to do" },
           { value: "project", label: "A project: half done, want opinions" },
           { value: "help", label: "Help: listen and give my view" },
-          { value: "cert", label: "Studying for the AWS AI certificate (AI Practitioner)" },
         ],
         tuesdayBringHint: "Each session works through one or two cases; if you bring a need or a project you may be asked to take ten minutes, and you'll hear beforehand.",
         tuesdayNeedTopic: "What is the need, in a sentence?",
@@ -3303,7 +3299,7 @@ export const copy = {
       format: [
         { time: "10:30–12:00", title: "Focused work", body: "Move your own project on at your own pace. Mentors and builders are alongside as guides, not lecturers: ask when you are stuck, and the tech people dig in." },
         { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
-        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need. Or study together for the AWS Certified AI Practitioner (you pay your own exam fee), building a small project as practice." },
+        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need." },
       ],
       stickyLabel: "Tuesday · A$30 + GST",
       memberUpsell: {

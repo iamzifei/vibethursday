@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 const DEMO_INTENTS = new Set(["yes", "maybe", "listen"]);
 
 /** What someone brings to a Build Tuesday (2026-11-01). Kept in step with `copy.fields.tuesdayBringOptions`. */
-const TUESDAY_BRING = new Set(["need", "project", "help", "cert"]);
+const TUESDAY_BRING = new Set(["need", "project", "help"]);
 
 /** Other times someone could make. Kept in step with `copy.fields.availabilityOptions`. */
 const AVAILABILITY = new Set(["weekday_evening", "weekend_day", "weekend_evening"]);
