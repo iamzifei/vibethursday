@@ -5267,3 +5267,14 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .quote { margin: 0; padding: var(--space-4) 20px; border-left: 3px solid var(--accent); background: var(--bg-secondary, transparent); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 .quote p { margin: 0; color: var(--fg1); line-height: 1.75; }
 .quote cite { display: block; margin-top: var(--space-2); color: var(--fg3); font-size: 0.85rem; font-style: normal; }
+
+/* Home sign-up: the Thursday/Tuesday table, folded (2026-11-02). */
+.compare-fold > summary { cursor: pointer; color: var(--spark, var(--fg2)); }
+.compare-fold[open] > summary { margin-bottom: var(--space-4); }
+
+/* Phones (2026-11-02 home refactor): time beside the title, so the run of
+   show is a list to glance at rather than six stacked blocks. */
+@media (max-width: 559px) {
+  .slot { grid-template-columns: 6.5em 1fr; column-gap: var(--space-3); padding-block: var(--space-3); }
+  .slot__time { font-size: 0.8rem; padding-top: 0.15em; }
+}

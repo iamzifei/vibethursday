@@ -34,7 +34,9 @@ export const copy = {
 
     nav: {
       brand: "Vibe Thursday",
-      cta: "报名",
+      // "报名周四", not just "报名" (2026-11-02): on /class, /join and /tuesday a
+      // bare "sign up" read as signing up for that page.
+      cta: "报名周四",
       members: "成员",
       wharf: "码头",
       works: "作品",
@@ -62,7 +64,7 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "悉尼 · 每周四上午的 AI 局",
-      lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。手上有东西想给大家看，随时可以；只想听，也完全没问题。产品、自动化流程、内容流水线、投放打法、提示词，甚至还没跑通的想法，都算。",
+      lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。有东西随时拿出来，只想听也完全没问题。",
       facts: [
         { label: "时间", value: "每周四 10:30 开门 · 10:45 开始", href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
@@ -87,17 +89,11 @@ export const copy = {
       capacityFull: "下一场的 40 个座位已满，再报名会进候补——没报上的请优先选下一场",
       // 群公告里只放 /go。首屏也给它一个入口，从网站进来的人找得到同一个地方。
       goLink: "本周要做的事都在这里：vibethursday.com/go →",
-      // The paid class, linked from the first screen until its date has passed
-      // (see `COURSE` in course.ts). Thursdays stay free; this is a separate thing.
-      classPromo: {
-        // 2026-11-01：换成 11-15 AI+IP 实战课（IP_COURSE）。
-        label: "11/15 周日 · 澳洲 AI+IP 实战课",
-        text: "学点 AI，做点内容，让生意多些机会。365 澳元 + GST，含一年复训",
-        cta: "看课程安排 →",
-      },
       cta: "报名下一场",
       ctaSecondary: "先看看是什么",
-      note: "12:00 之后自愿留下吃个午饭。赶着接娃或者要回去干活的，12 点直接走就行。",
+      // The bar pinned to the bottom of the page (2026-11-02).
+      stickyLabel: "每周四上午 · 免费",
+      sceneAlt: "周四上午的现场：长桌坐满，电脑都打开着（现场照片转绘，人物已替换）",
     },
 
     what: {
@@ -113,16 +109,11 @@ export const copy = {
           title: "不用做完，也不用是产品",
           body: "做了一半的东西、一条内容、一个还在琢磨的想法，都能拿出来讲。这里不评判完成度——半成品反而更容易聊出东西来。",
         },
-        {
-          // 2026-11-01：跟 /guide 第 6 条对齐（台上不卖东西）。
-          title: "讲做法，不打广告",
-          body: "你做的东西、你是怎么做的，大方讲。但台上不打广告、不拉人报课；猎头抓人、中介拉客、收完名单就走的，不欢迎。",
-        },
       ],
     },
 
     who: {
-      eyebrow: "§ 03 — 谁适合来",
+      eyebrow: "§ 04 — 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
         "独立开发者",
@@ -138,7 +129,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 04 — 流程",
+      eyebrow: "§ 05 — 流程",
       title: "每周同一个节奏。",
       slots: [
         {
@@ -301,12 +292,12 @@ export const copy = {
     // 而其余每一节讲的是「周四会发生什么」。三节并成一节：看的人少翻两屏就到流程
     // 和报名，三样东西挨在一起也更像它们本来的关系——同一批人，他们想聊什么，做出了什么。
     gathered: {
-      eyebrow: "§ 02 — 攒下来的",
+      eyebrow: "§ 03 — 攒下来的",
       title: "你去了会遇到谁，他们在问什么，做出了什么。",
       lede: "这三样是这个站上唯一会随时间变厚的东西。其余每一节讲的都是周四会发生什么，这一节讲的是已经攒下了什么。",
     },
 
-    // 下面三块是 § 02 里的三张卡，eyebrow 是卡片的小标题，不带编号。
+    // 下面两块是 § 03 里的两张卡，eyebrow 是卡片的小标题，不带编号。
     membersTeaser: {
       eyebrow: "成员墙",
       title: "你去了会遇到谁。",
@@ -315,17 +306,6 @@ export const copy = {
       ctaSecondary: "认领我的名片",
     },
 
-    // § 03。位置是刻意的：紧挨着成员墙，因为这两样是这个站唯一会随时间变厚的
-    // 东西。其余每一节讲的都是「周四会发生什么」，只有这两节讲的是「已经攒下了什么」。
-    wharfTeaser: {
-      eyebrow: "码头",
-      title: "周四之前，先知道谁在问什么。",
-      lede: "报名时写的那句「最想问什么」会挂到码头上。看到你答得上来的，周四找他聊十分钟就完了——不用等到现场再从头认人。",
-      cta: "去码头看看",
-      // 只在有内容时出现。数字由页面算，不写死。
-      count: "本周 {n} 个问题",
-      empty: "这周还没有人挂问题上去。",
-    },
 
     // § 05。放在「大家想问什么」后面：那两节从相反的两端回答同一个疑问——
     // 这些人想要什么，以及他们真的做完过什么。
@@ -336,17 +316,9 @@ export const copy = {
       cta: "看大家做的东西",
     },
 
-    // The fourth card in § 02: the same people, questions and works, walked
-    // through rather than read — a pixel Sydney built on the real street map.
-    playTeaser: {
-      eyebrow: "像素游戏",
-      title: "在一张像素悉尼里见到他们。",
-      lede: "从环形码头出发，走过海港大桥，坐 T1 去 Chatswood。成员站在街上，作品摆在周四集市的摊位上，码头的告示板挂着大家的问题。街道来自真实地图，多人在线，手机能玩。",
-      cta: "开始玩",
-    },
 
     rules: {
-      eyebrow: "§ 05 — 几条规矩",
+      eyebrow: "§ 02 — 几条规矩",
       title: "就这五条。",
       // 2026-11-01：以 /guide「八条约定」为准，这里放最要紧的五条，全文链过去。
       items: [
@@ -658,6 +630,9 @@ export const copy = {
       hookTuesdayCta: "看看 Build Tuesday",
       // Thursday and Tuesday side by side, above the form (2026-10-15): people
       // could not tell them apart or find how to sign up for Tuesday.
+      // Folded table and the line pointing at the rules (2026-11-02).
+      compareFold: "周四和周二有什么不同？点开对比",
+      rulesNote: "报名即同意下面的五条规矩 →",
       compare: {
         rows: ["时间地点", "给谁", "怎么进行", "人数", "费用"],
         thursday: {
@@ -1248,7 +1223,7 @@ export const copy = {
       // ChatGPT 转述的是首页正文，Google 的活动结果要求每场有独立地址）。
       upcomingEyebrow: "§ 下一场",
       upcomingTitle: "{date}，还没到。",
-      upcomingLede: "到了那天，这一页会变成「今天来了谁」；现在它是那一场的介绍。时间、地点、流程都在下面，报名在首页底部。",
+      upcomingLede: "到了那天，这一页会变成「今天来了谁」；现在它是那一场的介绍。时间、地点、流程都在下面，报名在首页。",
       upcomingCta: "报名这一场",
       // ── 大家上传的照片（/sessions/<日期>）──
       // 传上来默认不公开，主办方在后台看过才放出来。同意那一句不能省：
@@ -1883,7 +1858,7 @@ export const copy = {
 
     nav: {
       brand: "Vibe Thursday",
-      cta: "Sign up",
+      cta: "Join Thursday",
       members: "Members",
       wharf: "The Wharf",
       works: "Works",
@@ -1906,7 +1881,7 @@ export const copy = {
       eyebrow: "SYDNEY · EVERY THURSDAY",
       title: "Vibe Thursday",
       subtitle: "Sydney · every Thursday morning",
-      lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine. A product, an automation, a content pipeline, an ad playbook, a prompt system, or an idea that does not work yet all count.",
+      lede: "A table of people who build things, over coffee, talking about what they are doing with AI and where they are stuck. Got something to show? Go ahead. Only want to listen? Also fine.",
       facts: [
         { label: "When", value: "Thursdays · doors 10:30am, starts 10:45am", href: null, linkLabel: null },
         {
@@ -1925,14 +1900,10 @@ export const copy = {
       nextPrefix: "Next · ",
       capacityFull: "The next one's 40 seats are taken; signing up joins the waitlist — if you are not booked, please pick the following week",
       goLink: "Everything for this week is here: vibethursday.com/go →",
-      classPromo: {
-        label: "Sun 15 Nov · AI + personal brand class, taught in Chinese",
-        text: "Learn some AI, make some content, bring your business more chances. A$365 + GST, with a year of refresher sessions",
-        cta: "See the day →",
-      },
       cta: "Sign up for the next one",
       ctaSecondary: "What is this?",
-      note: "We carry on over lunch from noon. On school pickup, or need to get back to work? Leave at twelve.",
+      stickyLabel: "Thursday mornings · free",
+      sceneAlt: "A Thursday morning: a long table, laptops open (redrawn from a photo, faces replaced)",
     },
 
     what: {
@@ -1948,15 +1919,11 @@ export const copy = {
           title: "Unfinished is fine",
           body: "It does not have to be a working product. Something half-built, a piece of content, an idea you are still turning over — all of it is worth five minutes. Nobody is grading how finished it is."
         },
-        {
-          title: "Show how, don't advertise",
-          body: "Show what you built and how you did it, properly. But no ads and no selling courses from the floor. Recruiters working the room, agencies hunting clients, people collecting contacts and leaving: not welcome.",
-        },
       ],
     },
 
     who: {
-      eyebrow: "§ 03 — Who it is for",
+      eyebrow: "§ 04 — Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
         "Indie developers",
@@ -1971,7 +1938,7 @@ export const copy = {
     },
 
     schedule: {
-      eyebrow: "§ 04 — Run of show",
+      eyebrow: "§ 05 — Run of show",
       title: "Same rhythm every week.",
       slots: [
         {
@@ -2127,7 +2094,7 @@ export const copy = {
     // section is "what happens on a Thursday". One section now, so the reader
     // reaches the run of show and the sign-up two screens sooner.
     gathered: {
-      eyebrow: "§ 02 — What has accumulated",
+      eyebrow: "§ 03 — What has accumulated",
       title: "Who you will meet, what they are asking, what they have built.",
       lede: "These three are the only things on this site that get thicker over time. Every other section describes a Thursday; this one is what the Thursdays so far have left behind.",
     },
@@ -2141,14 +2108,6 @@ export const copy = {
       ctaSecondary: "Claim my card",
     },
 
-    wharfTeaser: {
-      eyebrow: "The Wharf",
-      title: "Know what people are asking, before Thursday.",
-      lede: "The line people write on the sign-up form — what they most want to ask — ends up on the Wharf. See one you can answer, and Thursday is ten minutes with that person instead of an hour working out who to talk to.",
-      cta: "Go down to the Wharf",
-      count: "{n} questions this week",
-      empty: "Nobody has put a question up for this week yet.",
-    },
 
     worksTeaser: {
       eyebrow: "Works",
@@ -2157,15 +2116,9 @@ export const copy = {
       cta: "See what people have built",
     },
 
-    playTeaser: {
-      eyebrow: "Pixel game",
-      title: "Meet them in a pixel Sydney.",
-      lede: "Start at Circular Quay, walk across the Harbour Bridge, take the T1 to Chatswood. Members stand on the street, their work sits on stalls at the Thursday market, and the Wharf's questions are pinned to a noticeboard. The streets come from a real map; it is multiplayer, and it works on a phone.",
-      cta: "Play",
-    },
 
     rules: {
-      eyebrow: "§ 05 — House rules",
+      eyebrow: "§ 02 — House rules",
       title: "All five of them.",
       items: [
         "Thursday is always free. No tickets, come and go; signing up is only so we know how many chairs. Order a drink or something to eat at the venue — that is our deal with them.",
@@ -2393,6 +2346,8 @@ export const copy = {
       sessionTimeSuffixTuesday: "10:30am · Build Tuesday",
       hook: "Thursday is for meeting people. If you have a specific need or build things, come to Build Tuesday; if you want to be walked through it, have a look at our paid classes.",
       hookTuesdayCta: "See Build Tuesday",
+      compareFold: "How Thursday and Tuesday differ",
+      rulesNote: "Signing up means you are fine with the five rules below →",
       compare: {
         rows: ["When, where", "For", "How it runs", "Places", "Cost"],
         thursday: {
@@ -2866,7 +2821,7 @@ export const copy = {
       detailDescription: "{title}: who was there, the photos and the questions from that morning.",
       upcomingEyebrow: "§ Next session",
       upcomingTitle: "{date}. Not yet.",
-      upcomingLede: "On the day this page becomes \"who is here today\"; until then it is that session's introduction. Time, place and run of show are below; sign-up is at the bottom of the home page.",
+      upcomingLede: "On the day this page becomes \"who is here today\"; until then it is that session's introduction. Time, place and run of show are below; sign up on the home page.",
       upcomingCta: "Sign up for this one",
       photos: {
         title: "From the room",

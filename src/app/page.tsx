@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SessionCompare } from "@/components/SessionCompare";
 import { SignupForm } from "@/components/SignupForm";
+import { SceneImage } from "@/components/SceneImage";
+import { StickyCta } from "@/components/StickyCta";
 import { dinnerConfig } from "@/lib/dinner";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -102,7 +104,6 @@ export default async function Page({ searchParams }: PageProps) {
    * privacy boundary: published, unhidden cards only.
    */
   let featured: { slug: string; name: string; text: string }[] = [];
-  let thisWeekCount = 0;
 
   try {
     // The same rows the Wharf itself shows, not a second derivation of them:
@@ -112,15 +113,22 @@ export default async function Page({ searchParams }: PageProps) {
       (question) => question.lane === "question",
     );
 
-    featured = questions.slice(0, 3).map((question) => ({
-      slug: question.slug,
-      name: question.name,
-      text: question.text,
-    }));
-
-    thisWeekCount = questions.filter(
-      (question) => question.session === nextSession?.value,
-    ).length;
+    // A question asked twice shows once, and a row of three characters or
+    // fewer says nothing to a stranger.
+    const seen = new Set<string>();
+    featured = questions
+      .filter((question) => {
+        const key = question.text.trim().toLowerCase();
+        if (key.length < 4 || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 3)
+      .map((question) => ({
+        slug: question.slug,
+        name: question.name,
+        text: question.text,
+      }));
   } catch (error) {
     console.error("[home] the wharf block could not be loaded", error);
   }
@@ -244,8 +252,8 @@ export default async function Page({ searchParams }: PageProps) {
               ))}
             </dl>
 
-            {/* No class promotion here (James 2026-11-02): Thursday is free and
-                sells nothing; the class is in the nav for whoever wants it. */}
+            {/* No class promotion here (2026-11-02): Thursday is free and sells
+                nothing; the class is in the nav for whoever wants it. */}
 
             <div className="stack-3 rise rise-4">
               {nextSession && (
@@ -274,43 +282,17 @@ export default async function Page({ searchParams }: PageProps) {
               <Link className="body-sm hl" href={langHref("/go", lang)}>
                 {c.hero.goLink}
               </Link>
-
-              <p className="body-sm" style={{ color: "var(--fg3)" }}>
-                {c.hero.note}
-              </p>
             </div>
           </div>
         </section>
 
-        {/* The form comes straight after the first screen: a phone visitor from
-            the group used to scroll about seven screens to reach it (2026-09-28
-            review). The sections below are unchanged, in the same order. */}
-        {/* ── Signup ───────────────────────────────────────────────── */}
-        {/* Moved up, right after the run of show, on 2026-09-24. The rules are
-            what the morning expects of you — they belong with what happens on
-            the day, read before signing up, not after the photo album. */}
-        <section className="section">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.rules.eyebrow}</span>
-              <h2>{c.rules.title}</h2>
-            </div>
+        {/* The form comes straight after the first screen and one picture
+            of the room (2026-11-02 refactor): sign-up first, explaining after.
+            The five rules moved below "what this is" — the form links to them. */}
+        <div className="shell" style={{ paddingBottom: "var(--space-8)" }}>
+          <SceneImage id="scene-1" alt={c.hero.sceneAlt} eager />
+        </div>
 
-            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {c.rules.items.map((item, index) => (
-                <li className="rule" key={item}>
-                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-
-            {/* The full set lives on /guide (2026-11-01); these five are the excerpt. */}
-            <Link className="body-sm" href={langHref("/guide", lang)} style={{ color: "var(--spark)" }}>
-              {c.rules.more}
-            </Link>
-          </div>
-        </section>
 
         <section className="section" id="signup">
           <div className="shell stack-8">
@@ -324,17 +306,21 @@ export default async function Page({ searchParams }: PageProps) {
                   Only while a Tuesday is open — otherwise it points nowhere. */}
               {/* Thursday and Tuesday side by side (2026-10-15), so nobody has
                   to guess which one is theirs or where Tuesday's form is. */}
+              {/* Folded (2026-11-02): the table used to push the form a whole
+                  screen down. One line says where Tuesday is; the table is a tap away. */}
+              <details className="compare-fold">
+                <summary className="body-sm">{c.signup.compareFold}</summary>
               <SessionCompare
                 compare={c.signup.compare}
-                foot={
-                  tuesdayOpen && (
-                    <>
-                      {/* The membership link went 2026-11-01: /class sells the AI+IP class now. */}
-                      <a href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>
-                    </>
-                  )
-                }
               />
+              </details>
+              {/* Outside the fold, so the way to Tuesday stays one tap away. */}
+              {tuesdayOpen && (
+                <a className="body-sm" href={langHref("/tuesday", lang)}>{c.signup.compare.tuesday.cta} →</a>
+              )}
+              <a className="body-sm" href="#rules" style={{ color: "var(--fg3)" }}>
+                {c.signup.rulesNote}
+              </a>
             </div>
 
             <SignupForm
@@ -404,6 +390,30 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* ── The five rules (after "what this is" since 2026-11-02) ── */}
+        <section className="section" id="rules">
+          <div className="shell stack-8">
+            <div className="stack-4">
+              <span className="eyebrow">{c.rules.eyebrow}</span>
+              <h2>{c.rules.title}</h2>
+            </div>
+
+            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {c.rules.items.map((item, index) => (
+                <li className="rule" key={item}>
+                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+
+            {/* The full set lives on /guide (2026-11-01); these five are the excerpt. */}
+            <Link className="body-sm" href={langHref("/guide", lang)} style={{ color: "var(--spark)" }}>
+              {c.rules.more}
+            </Link>
+          </div>
+        </section>
+
         {/* ── What has accumulated ─────────────────────────────────
             Second on the page, straight after "what this is", because "who
             would I actually meet" is the whole decision for two different
@@ -440,9 +450,9 @@ export default async function Page({ searchParams }: PageProps) {
               </div>
             ) : null}
 
-            {/* Two by two, not auto-fit: four cards in three columns left one on
-                its own row. Each card is a column with its buttons pushed to
-                the bottom, so buttons on the same row line up.
+            {/* Two cards side by side: the wall and the works. The Wharf and
+                the pixel game cards left on 2026-11-02; both pages are still
+                linked (the Wharf from the archive, the game from the footer).
                 The buttons are plain links, not <Link>: in WeChat's Android
                 browser a client-side navigation from here reportedly did
                 nothing (2026-10-18), and a full page load always works. */}
@@ -462,39 +472,12 @@ export default async function Page({ searchParams }: PageProps) {
               </div>
 
               <div className="card stack-3 teaser">
-                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.wharfTeaser.eyebrow}</span>
-                <h3 className="h3">{c.wharfTeaser.title}</h3>
-                <p className="body-sm">{c.wharfTeaser.lede}</p>
-                <div className="teaser__cta">
-                  <a className="btn btn--secondary" href={langHref("/wharf", lang)}>
-                    {c.wharfTeaser.cta}
-                  </a>
-                  <span className="body-sm" style={{ color: "var(--fg3)" }}>
-                    {thisWeekCount > 0
-                      ? c.wharfTeaser.count.replace("{n}", String(thisWeekCount))
-                      : c.wharfTeaser.empty}
-                  </span>
-                </div>
-              </div>
-
-              <div className="card stack-3 teaser">
                 <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.worksTeaser.eyebrow}</span>
                 <h3 className="h3">{c.worksTeaser.title}</h3>
                 <p className="body-sm">{c.worksTeaser.lede}</p>
                 <div className="teaser__cta">
                   <a className="btn btn--secondary" href={langHref("/works", lang)}>
                     {c.worksTeaser.cta}
-                  </a>
-                </div>
-              </div>
-
-              <div className="card stack-3 teaser">
-                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.playTeaser.eyebrow}</span>
-                <h3 className="h3">{c.playTeaser.title}</h3>
-                <p className="body-sm">{c.playTeaser.lede}</p>
-                <div className="teaser__cta">
-                  <a className="btn btn--secondary" href={langHref("/play", lang)}>
-                    {c.playTeaser.cta}
                   </a>
                 </div>
               </div>
@@ -778,6 +761,9 @@ export default async function Page({ searchParams }: PageProps) {
             </figure>
           </div>
         </section>
+        {/* The way in, a tap away from anywhere on the page (2026-11-02).
+            Hidden while the first screen's button or the form is in view. */}
+        <StickyCta href="#signup" label={c.hero.stickyLabel} cta={c.hero.cta} />
       </main>
 
       <SiteFooter lang={lang} copy={c} support />

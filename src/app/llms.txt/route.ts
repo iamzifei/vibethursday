@@ -100,8 +100,8 @@ ${section(en, false)}
 
 ## 说明 · Notes
 
-- 报名在首页底部（${base}/#signup），免费，不售票。
-- Signing up is free and happens at the bottom of the home page (${base}/#signup); there are no tickets.
+- 报名在首页首屏下方（${base}/#signup），免费，不售票。
+- Signing up is free and happens on the home page, just below the first screen (${base}/#signup); there are no tickets.
 `;
 
   return new Response(body, {

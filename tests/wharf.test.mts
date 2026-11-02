@@ -119,7 +119,8 @@ test("both languages have every line the Wharf renders", () => {
     // Each of these three is a sentence with a number substituted into it.
     assert.ok(w.say.waiting.includes("{n}"), `${lang}'s waiting line has no count in it`);
     assert.ok(w.older.includes("{n}") && w.older.includes("{m}"), `${lang}'s older line`);
-    assert.ok(copy[lang].wharfTeaser.count.includes("{n}"), `${lang}'s teaser count`);
+    // Spec change 2026-11-02: the home page's Wharf teaser card (and its
+    // "{n} this week" line) was removed in the home page refactor.
     assert.ok(copy[lang].members.topicOn.includes("{date}"), `${lang}'s dated topic label`);
   }
 });

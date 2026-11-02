@@ -13,38 +13,28 @@ import { LANG_PARAM, type Lang } from "./lang.ts";
  * nowhere.
  */
 export const NAV_LINKS = [
-  { href: "/#what", label: "about" },
+  // Reordered 2026-11-02 (home page refactor): the three things that cost
+  // money first, then what has accumulated from the Thursdays, then the rules.
+  // "/#what" left the bar: it is an anchor on the home page, reached by
+  // scrolling — the same reason "流程" left before it.
+  //
   // Build Tuesday, in the bar since 2026-10-15: people could not find how to
   // sign up for it, or tell it apart from Thursday.
   { href: "/tuesday", label: "tuesday" },
   // The 共创会员 (2026-11-02): Tuesday's membership, so right after Tuesday.
   { href: "/join", label: "member" },
-  { href: "/members", label: "members" },
-  // Next to the wall on purpose. These two are the only things on this site
-  // that get thicker over time — every other item describes what happens on a
-  // Thursday, these two are what has accumulated from the Thursdays so far.
-  //
-  // The donation link was deliberately kept out of this bar, on the grounds
-  // that being in it makes something look like a main attribute of the meetup.
-  // That reasoning is why this one belongs in it.
-  { href: "/works", label: "works" },
-  // "/wharf" sat here until 2026-10-11. Its replies never took off, so it left
-  // the bar; the page and its questions stay, reachable from the home page
-  // and the archive.
-  // The same members, works and questions as the links before it, in a
-  // pixel Sydney you walk through. Next to them because it is made of them.
+  // The AI+IP class, in the bar since 2026-10-12.
+  { href: "/class", label: "class" },
+  // The session archive, then the wall and the works: the parts of this site
+  // that get thicker every week.
   { href: "/sessions", label: "sessions" },
+  { href: "/members", label: "members" },
+  { href: "/works", label: "works" },
   // 2026-11-01: the guide took /play's slot — it is the community's one rules page.
   { href: "/guide", label: "guide" },
-  // The year-long membership (its first step is the class), in the bar since
-  // 2026-10-12; labelled "membership" since 2026-10-15.
-  { href: "/class", label: "class" },
-  // "流程" used to sit here and no longer does. It is an anchor a third of the
-  // way down the home page, and anyone reading the home page reaches it by
-  // scrolling; the bar's remaining slots are worth more to the four pages that
-  // are not on the home page at all.
-  // "/support" left the bar on 2026-10-15 to make room for Tuesday; the home
-  // page footer still links it (SiteFooter's `support`).
+  // Not in the bar: "/wharf" (since 2026-10-11, linked from the archive),
+  // "/support" (since 2026-10-15, in the home page footer), "/play" (footer
+  // since 2026-11-01).
 ] as const;
 
 /** The pixel game, moved from the bar to the footer on 2026-11-01. */
