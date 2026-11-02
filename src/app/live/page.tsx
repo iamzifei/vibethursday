@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "今日在场 · Vibe Thursday", robo
 const REFRESH_SECONDS = 20;
 
 /**
- * "今日在场" for the room's screen (2026-11-02, suggested by a helper): one
+ * "今日在场" for the room's screen (2026-11-02): one
  * card per person who checked in and chose to be on the wall — the same
  * people, and no more, than the session's own public page names. A card
  * appears as each person checks in; the page reloads itself, no script.

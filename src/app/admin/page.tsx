@@ -1313,7 +1313,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                             <td className="mono">{row.ref ?? "—"}</td>
                             <td>
                               {row.member
-                                ? "会员，免费"
+                                ? "会员/导师团，免费"
                                 : row.status === "paid"
                                   ? `已付 ${row.paid_at ?? ""}`
                                   : row.status === "waived"

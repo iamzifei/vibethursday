@@ -1,5 +1,5 @@
 /**
- * The follow-up list after a session (2026-11-02, suggested by a helper):
+ * The follow-up list after a session (2026-11-02):
  * who came, grouped by what to do next — a need to take on, a project that
  * could use a 共建者, someone studying for the certificate, a regular who is
  * not yet a 共创会员, a first-timer. Rules, not guesses; only people who came.

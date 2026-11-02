@@ -4439,6 +4439,8 @@ export async function releaseExpiredHolds(): Promise<void> {
         WHERE f.signup_id = g.id AND f.status = 'pending'
           AND f.hold_until IS NOT NULL AND f.hold_until < now()
           AND f.session = ANY(g.sessions)
+          -- Nor a 导师团 member (2026-11-02): free on Tuesdays like a 共创会员.
+          AND NOT EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor')
           AND NOT EXISTS (
             SELECT 1 FROM course_orders o
              WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
@@ -5291,4 +5293,14 @@ export async function searchSignups(query: string): Promise<{ id: string; name: 
     [needle],
   );
   return result.rows;
+}
+
+
+/** Takes the payment hold off someone's Tuesday place: they are in the room (2026-11-02). */
+export async function clearFeeHold(session: string, signupId: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE session_fees SET hold_until = NULL WHERE session = $1::date AND signup_id = $2::bigint AND status = 'pending'`,
+    [session, signupId],
+  );
 }

@@ -29,6 +29,8 @@ type PageProps = {
     done?: string;
     /** "1": a walk-in checked in on a full paid Tuesday (2026-11-02). */
     full?: string;
+    /** "1": checked in, the Tuesday fee still to pay — at the door (2026-11-02). */
+    owe?: string;
     /** What went wrong on the last post. */
     err?: string;
     /** A search over the roster (`filterRoster`). */
@@ -168,6 +170,7 @@ export default async function CheckinPage({ searchParams }: PageProps) {
               this person's own payment status, which the page cannot verify
               is theirs — anyone holding the code can open any `done=`. */}
           {params.full === "1" && <p className="alert" role="status">{t.walkInFull}</p>}
+          {params.owe === "1" && <p className="alert" role="status">{t.oweAtDoor}</p>}
           {(() => {
             const fee = feeFor(session);
             return (

@@ -140,7 +140,7 @@ test("a button on the desk comes back to the same search and filter", () => {
   assert.equal(deskReturnPath("2026-11-03", "9", "x".repeat(80), null), `/admin/desk?s=2026-11-03&q=${"x".repeat(50)}#r-9`);
 });
 
-// Suggested by a helper (2026-11-02): after the morning, one list of who came,
+// 2026-11-02: after the morning, one list of who came,
 // as what, and what they wrote when signing up — for the follow-up.
 test("★ the after-event list: who came, as what, and what they wrote", () => {
   const [entry] = buildDesk(

@@ -111,11 +111,15 @@ export function deskStats(entries: readonly DeskEntry[]): DeskStats {
 
 const squash = (text: string) => text.toLowerCase().replace(/[\s　]+/g, "");
 
-/** Narrows by name or WeChat ID, ignoring case and spaces. Empty keeps everyone. */
-export function filterDesk(entries: readonly DeskEntry[], query: string): DeskEntry[] {
+/**
+ * Narrows by name or WeChat ID, ignoring case and spaces. Empty keeps
+ * everyone. `nameOnly` for the door helper: matching on the full WeChat ID
+ * would let them spell out an ID the page shows shortened.
+ */
+export function filterDesk(entries: readonly DeskEntry[], query: string, nameOnly = false): DeskEntry[] {
   const needle = squash(query);
   if (!needle) return [...entries];
-  return entries.filter((entry) => squash(`${entry.name}`).includes(needle) || squash(entry.wechat ?? "").includes(needle));
+  return entries.filter((entry) => squash(`${entry.name}`).includes(needle) || (!nameOnly && squash(entry.wechat ?? "").includes(needle)));
 }
 
 const SHOWS = new Set(["arrived", "waiting", "owing"]);

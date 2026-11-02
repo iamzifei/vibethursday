@@ -53,3 +53,7 @@ test("★ a helper can tick people in and mark a fee paid, never waive one", () 
   assert.match(fee, /isHelperSession/);
   assert.match(fee, /helper && status === "waived"/);
 });
+
+test("a helper searches by name only, so a WeChat ID cannot be spelt out letter by letter", () => {
+  assert.match(read("src/app/admin/desk/page.tsx"), /filterDesk\(desk, query, role === "helper"\)/);
+});

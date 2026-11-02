@@ -37,3 +37,21 @@ test("the check-in route follows it, checks capacity for a walk-in, and the page
   assert.ok(copy.zh.checkin.walkInFull.length > 0);
   assert.ok(copy.en.checkin.walkInFull.length > 0);
 });
+
+// Review 2026-11-02: tapping a name on the roster is not proof of being that
+// person, so it never opens their payment page (where anyone could press
+// "I've transferred" for them). Only someone who has just filled in the
+// walk-in form goes straight to their own payment page.
+test("★ a roster tap that owes is sent to the helper, not to the payment page", () => {
+  const route = read("src/app/api/checkin/route.ts");
+  assert.match(route, /walkIn && next === "pay"/);
+  assert.match(route, /owe: "1"/);
+  assert.match(route, /clearFeeHold\(/, "someone in the room never loses their place to a lapsing hold");
+  assert.match(route, /sessions\.includes\(session\)/, "booked comes from the roster row, not assumed");
+});
+
+test("a mentor's place is never released by a lapsed hold", () => {
+  const db = read("src/lib/db.ts");
+  const release = db.slice(db.indexOf("export async function releaseExpiredHolds"));
+  assert.match(release.slice(0, 2500), /person_roles/);
+});

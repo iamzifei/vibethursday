@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { AFTER_CHECKIN_PATH, canCheckIn, isSessionDate, verifyCheckinCode } from "@/lib/checkin";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { checkIn, getOrCreateSessionFee, isTuesdayFree, listRoster, saveSignup, sessionHeadcount } from "@/lib/db";
+import { checkIn, clearFeeHold, getOrCreateSessionFee, isTuesdayFree, listRoster, saveSignup, sessionHeadcount } from "@/lib/db";
 import { afterCheckin } from "@/lib/checkin-pay";
 import { capFor } from "@/lib/capacity";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
@@ -86,19 +86,30 @@ export async function POST(request: Request) {
   const afterwards = async (signupId: string, booked: boolean, walkIn = false) => {
     const feeDay = feeFor(session) !== null;
     const free = feeDay ? await isTuesdayFree(signupId).catch(() => false) : false;
-    // A walk-in just booked gets a hold, as an online signup does. Someone
-    // already booked never does: they are in the room, and a lapsed hold
-    // would take their place away mid-morning.
-    const fee = feeDay && !free && booked
-      ? await getOrCreateSessionFee(session, signupId, newFeeRef(), walkIn && stripeEnabled() ? HOLD_MINUTES : null).catch(() => null)
-      : null;
+    let fee: { ref: string; status: "pending" | "paid" | "waived" } | null = null;
+    if (feeDay && !free && booked) {
+      try {
+        // A walk-in just booked gets a hold, as an online signup does.
+        fee = await getOrCreateSessionFee(session, signupId, newFeeRef(), walkIn && stripeEnabled() ? HOLD_MINUTES : null);
+        // Someone booked who is now in the room never loses their place to a
+        // hold running out mid-morning.
+        if (!walkIn && fee.status === "pending") await clearFeeHold(session, signupId);
+      } catch (error) {
+        console.error("[checkin] could not read the Tuesday fee", error);
+      }
+    }
     const next = afterCheckin({ feeDay, free, booked, status: fee?.status ?? (feeDay && !free && booked ? "pending" : null) });
-    if (next === "pay" && fee) {
+    // Only someone who has just filled in the walk-in form is known to be the
+    // person paying: they go straight to their own payment page. A tap on a
+    // roster name proves nothing — anyone with the code can tap any name — so
+    // it never opens that person's payment page; they are sent to the helper.
+    if (walkIn && next === "pay" && fee) {
       const url = new URL("/tuesday/pay", origin);
       url.searchParams.set("ref", fee.ref);
       url.searchParams.set("in", "1");
       return NextResponse.redirect(url, 303);
     }
+    if (next === "pay") return back({ done: signupId, owe: "1" });
     if (next === "full") return back({ done: signupId, full: "1" });
     return toBadge();
   };
@@ -133,11 +144,13 @@ export async function POST(request: Request) {
       // Only a name on today's list. Ids are sequential and the code is on a
       // café table, so without this anyone in the room could walk every past
       // signup onto today's public page one id at a time.
-      const onRoster = (await listRoster(session)).some((row) => row.id === signupId);
+      const onRoster = (await listRoster(session)).find((row) => row.id === signupId);
       if (!onRoster) return back({ err: "failed" });
 
       await checkIn({ session, signupId, onWall, source: "qr" });
-      return afterwards(signupId, true);
+      // The roster also lists people already checked in without a place
+      // (a walk-in on a full day): booked only if the session is theirs.
+      return afterwards(signupId, onRoster.sessions.includes(session));
     }
 
     if (!name) {

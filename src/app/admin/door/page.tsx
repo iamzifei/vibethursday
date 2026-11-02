@@ -38,7 +38,7 @@ export default async function DoorPage({ searchParams }: PageProps) {
 
   // The Tuesday on a Build Tuesday, otherwise the Thursday in focus — or any
   // date given as ?s=, so a code can be printed ahead and taped to the door
-  // (suggested by a helper, 2026-11-02). It still only works on that day.
+  // (2026-11-02). It still only works on that day.
   const requested = (await searchParams).s;
   const session = requested && isSessionDate(requested) ? requested : deskSession();
   const url = `${await requestOrigin()}/checkin?s=${session}&k=${checkinCode(session)}`;

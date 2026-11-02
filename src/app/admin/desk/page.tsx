@@ -72,7 +72,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
   const tuesday = isSpecialSession(session);
   const desk = buildDesk(await listDeskRows(session), fee !== null);
   const stats = deskStats(desk);
-  const searched = filterDesk(desk, query);
+  const searched = filterDesk(desk, query, role === "helper");
   const shown = searched.filter((entry) =>
     show === "arrived" ? entry.arrived
     : show === "waiting" ? !entry.arrived
@@ -215,7 +215,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
       <form className="wall-search" action="/admin/desk">
         <input type="hidden" name="s" value={session} />
         {show !== "all" && <input type="hidden" name="show" value={show} />}
-        <input className="field" type="search" name="q" defaultValue={query} placeholder="搜名字或微信号" autoComplete="off" />
+        <input className="field" type="search" name="q" defaultValue={query} placeholder={role === "helper" ? "搜名字" : "搜名字或微信号"} autoComplete="off" />
         <button className="btn btn--secondary" type="submit">搜</button>
       </form>
 
