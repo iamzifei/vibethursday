@@ -5,15 +5,13 @@ import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
-import { getMemberById, getMySignup, getOrder, getSessionQuestions, listSessionShares, signupCountsBySession } from "@/lib/db";
+import { getMemberById, getMySignup, getSessionQuestions, listSessionShares, signupCountsBySession } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { SESSION_CAP } from "@/lib/capacity";
 import { questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
 import { CHAT_URL, checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
-import { formatPrice } from "@/lib/menu";
-import { orderCode, orderCookieName, readOrderToken } from "@/lib/order";
 import { checkinCode } from "@/lib/checkin";
 import { focusSession, formatSession, isSpecialSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
 
@@ -58,12 +56,9 @@ export default async function GoPage({ searchParams }: PageProps) {
   // hiccup must not take down the one page everybody is sent to, so a failure
   // is treated as "anonymous".
   const store = await cookies();
-  const orderId = readOrderToken(store.get(orderCookieName(session))?.value);
-
   const rememberedId = readRememberToken(store.get(REMEMBER_COOKIE)?.value);
 
-  const [order, member, questions, counts, mine] = await Promise.all([
-    orderId ? getOrder(orderId, session).catch(() => null) : null,
+  const [member, questions, counts, mine] = await Promise.all([
     currentMemberId()
       .then((id) => (id ? getMemberById(id) : null))
       .catch(() => null),
@@ -106,21 +101,12 @@ export default async function GoPage({ searchParams }: PageProps) {
         : inFocus === false || member
           ? false
           : null,
-    hasOrder: Boolean(order),
     hasCard: Boolean(member),
     checkinOpen,
   });
 
-  const orderHref = withLang(`/order?s=${session}&k=${orderCode(session)}`, lang);
-
   const links: Record<GoItem, { title: string; body: string; href: string | null }> = {
     signup: { ...(full ? t.items.signupFull : t.items.signup), href: `/${langSuffix(lang)}#signup` },
-    order: { ...t.items.order, href: orderHref },
-    myOrder: {
-      title: t.items.myOrder.title,
-      body: order ? `${order.name} · ${order.label} · ${formatPrice(order.cents)}` : t.items.myOrder.body,
-      href: orderHref,
-    },
     mySignup: {
       title: t.items.mySignup.title,
       // Remembered: their actual Thursdays, e.g. "1 Oct · booked; 8 Oct · waitlist".

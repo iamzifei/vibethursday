@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
 import { tooMany } from "@/lib/rate-limit";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
-import { listCheckins, listCourseKit, listFeedback, listOrders, listSignups, listDeskRows } from "@/lib/db";
+import { listCheckins, listCourseKit, listFeedback, listSignups, listDeskRows } from "@/lib/db";
 import { KIT_EXPORT_FIELDS } from "@/lib/class-kit";
 import { COURSE } from "@/lib/course";
 
-import { CHECKIN_COLUMNS, csvCell, ORDER_COLUMNS } from "@/lib/csv";
+import { CHECKIN_COLUMNS, csvCell } from "@/lib/csv";
 import { isSessionDate } from "@/lib/checkin";
 import { feeFor, focusSession } from "@/lib/sessions";
 import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow } from "@/lib/desk";
@@ -109,14 +109,6 @@ export async function GET(request: Request) {
           lines: await listDeskRows(session).then((rows) => [
             DESK_EXPORT_COLUMNS.join(","),
             ...buildDesk(rows, feeFor(session) !== null).map((entry) => deskExportRow(entry).map((value) => csvCell(value)).join(",")),
-          ]),
-        }
-      : what === "orders"
-      ? {
-          name: `orders-${session}`,
-          lines: await listOrders(session).then((rows) => [
-            ORDER_COLUMNS.join(","),
-            ...rows.map((row) => ORDER_COLUMNS.map((column) => csvCell(row[column])).join(",")),
           ]),
         }
       : what === "checkins"

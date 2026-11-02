@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, setVenuePledge, bookDinner, isTuesdayFree } from "@/lib/db";
-import { VENUE_MENU } from "@/lib/menu";
+import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, bookDinner, isTuesdayFree } from "@/lib/db";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
-import { priceOrder } from "@/lib/order";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
@@ -316,35 +314,8 @@ export async function POST(request: Request) {
     }
   }
 
-  // Everyone orders one thing at the venue (2026-10-15): a Thursday booking
-  // carries a drink from the menu or "food". A drink is pre-ordered for the
-  // bar, updating this person's order for that morning if there is one. Only
-  // on their own row, never fatal.
-  const pledgeRaw = clean(body.venuePledge, 40);
-  if (firstSession && !isSpecialSession(firstSession) && !waitlisted && profileUpdated && pledgeRaw) {
-    const priced = pledgeRaw === "food" ? null : priceOrder(VENUE_MENU, pledgeRaw, "small");
-    if (pledgeRaw === "food" || priced) {
-      try {
-        await setVenuePledge(signupId, firstSession, pledgeRaw);
-        if (priced && wechat) {
-          await saveOrder({
-            id: await findOrderFor(firstSession, wechat),
-            session: firstSession,
-            name,
-            wechat,
-            itemId: pledgeRaw,
-            itemLabel: priced.label,
-            size: priced.size,
-            priceCents: priced.cents,
-            note: null,
-            lang: clean(body.lang, 5) ?? "zh",
-          });
-        }
-      } catch (error) {
-        console.error("[signup] saved, but the venue order did not", error);
-      }
-    }
-  }
+  // No ordering through the site (2026-11-02): everyone orders at the counter
+  // when they arrive. The rule is still said on the site; it is not taken here.
 
   // The dinner after a Thursday (2026-10-15): a seat for someone booked on
   // the morning itself, with a dish from the configured list. Same gate as the

@@ -35,8 +35,6 @@ export function goPhase(focus: { date: string; past: boolean }, today: string): 
 export type GoState = {
   /** From a claimed member card. Null when we cannot tell. */
   signedUp: boolean | null;
-  /** This phone has an order for the session in focus. */
-  hasOrder: boolean;
   /** This browser is signed in to a member card. */
   hasCard: boolean;
   /** The check-in link is live right now (`checkinLinkOpen`). */
@@ -45,8 +43,6 @@ export type GoState = {
 
 export type GoItem =
   | "signup"
-  | "order"
-  | "myOrder"
   | "mySignup"
   | "card"
   | "members"
@@ -71,31 +67,22 @@ export type GoItem =
  * and never sit in navigation (decided 2026-08-11), and this page is both.
  * The footer already carries that link.
  *
- * Signing up drops out once we know somebody has; ordering turns into "my
- * order" once this phone has one. We never hide signing up on a guess — an
- * anonymous visitor always sees it.
+ * Signing up drops out once we know somebody has. We never hide signing up
+ * on a guess — an anonymous visitor always sees it. Nothing about ordering:
+ * everyone orders at the counter when they arrive (2026-11-02).
  */
 export function goItems(phase: GoPhase, state: GoState): GoItem[] {
-  // Ordering ahead is off (James 2026-10-23): almost everyone orders and pays
-  // at the counter. An order already placed is still shown as "my order".
-  const drink: GoItem[] = state.hasOrder ? ["myOrder"] : [];
-
   if (phase === "before") {
     // "mySignup" always follows: most people here arrived from the group asking
     // whether their signup went through, or needing to move it (2026-09-28).
-    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), "mySignup", ...drink, "card", "members", "wharf"];
+    return [...(state.signedUp === true ? [] : (["signup"] as GoItem[])), "mySignup", "card", "members", "wharf"];
   }
 
   if (phase === "day") {
-    // From ten (when the check-in link opens) the drinks sheet has already gone
-    // to the bar, so a new order would reach nobody: only an existing order is
-    // shown, and everyone else orders at the counter (James 2026-09-30).
-    if (state.checkinOpen) {
-      // Feedback from ten too: by noon most phones are back in pockets, and on
-      // 1 October nobody had left any by the evening (James 2026-10-01).
-      return ["checkin", ...(state.hasOrder ? (["myOrder"] as GoItem[]) : []), "badge", "members", "feedback"];
-    }
-    return ["checkin", ...drink, "badge", "members"];
+    // Feedback from ten too: by noon most phones are back in pockets, and on
+    // 1 October nobody had left any by the evening (2026-10-01).
+    if (state.checkinOpen) return ["checkin", "badge", "members", "feedback"];
+    return ["checkin", "badge", "members"];
   }
 
   // From noon the session looks back, but anyone who forgot to tap should

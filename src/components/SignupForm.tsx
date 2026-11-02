@@ -417,7 +417,6 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
           demoIntent: data.get("demoIntent"),
           shareTopic: data.get("shareTopic"),
           tuesdayBring: data.get("tuesdayBring"),
-          venuePledge: data.get("venuePledge"),
           dinnerDish: data.get("dinner") === "1" ? data.get("dinnerDish") : null,
           topic: data.get("topic"),
           firstSession: data.get("firstSession"),
@@ -1122,7 +1121,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                         <div>
                           <label className="label" htmlFor={fieldId("dinnerDish")}>{copy.fields.dinnerDish}</label>
                           <select className="field" id={fieldId("dinnerDish")} name="dinnerDish" required defaultValue="">
-                            <option value="" disabled>{copy.fields.venuePledgePick}</option>
+                            <option value="" disabled>{copy.fields.pickOne}</option>
                             {dinner.dishes.map((dish) => (
                               <option key={dish.id} value={dish.id}>{lang === "en" ? dish.en : dish.zh}</option>
                             ))}

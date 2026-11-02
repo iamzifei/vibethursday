@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
 import { FeedbackDesk } from "@/components/FeedbackDesk";
-import { OrderDesk } from "@/components/OrderDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, helperLinkKey, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
@@ -20,11 +19,9 @@ import {
   listCourseOrders,
   listTuesdayFeeDesk,
   listShareCandidates,
-  countVenuePledges,
   listDinner,
   listFeedback,
   listLoginStats,
-  listOrders,
   listPhotosForReview,
   getSessionQuestions,
   listRecentAnswers,
@@ -36,7 +33,6 @@ import {
   listMemberships,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
-import { barSheet, canOrder, orderCode } from "@/lib/order";
 import { formatQuestionList } from "@/lib/session-questions";
 import { walkInMatches } from "@/lib/walk-in-match";
 import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
@@ -101,12 +97,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // On a Build Tuesday the desk is that Tuesday (`deskSession`).
   const desk = deskSession();
 
-  // Same session as the check-in desk, not `nextThursdays(1)[0]`: that one
-  // rolls to next week at noon on the day, and the afternoon is exactly when a
-  // duplicate or a no-show gets cleaned off this morning's sheet.
-  const orderSession = desk;
-
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, deskQuestions, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -120,7 +111,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // are both derived from this one array, so the totals and the sentences
       // under them cannot disagree about what was said.
       listFeedback(),
-      listOrders(orderSession),
       getSessionQuestions(desk),
       listPhotosForReview(),
       // Counting only; a failure here must not take the admin page down.
@@ -138,8 +128,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // to pick 2–3 from. Fails soft.
   const shareSession = nextThursdays(1)[0];
   const shareCandidates = await listShareCandidates(shareSession).catch(() => []);
-  // Everyone orders one thing at the venue (2026-10-15): how that morning stands.
-  const pledges = await countVenuePledges(shareSession).catch(() => null);
   // The dinner after that Thursday (2026-10-15), when one is configured.
   const dinner = dinnerConfig();
   const dinnerSeats = dinner ? await listDinner(shareSession).catch(() => []) : [];
@@ -180,14 +168,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const feedbackSession = sessionForFeedback(sydneyToday().toISOString().slice(0, 10));
   const feedbackUrl = `${origin}/feedback?s=${feedbackSession}&k=${feedbackCode(feedbackSession)}`;
   const feedbackQr = await QRCode.toString(feedbackUrl, {
-    type: "svg",
-    margin: 1,
-    errorCorrectionLevel: "M",
-    color: { dark: "#0a0b0d", light: "#ffffff" },
-  });
-
-  const orderUrl = `${origin}/order?s=${orderSession}&k=${orderCode(orderSession)}`;
-  const orderQr = await QRCode.toString(orderUrl, {
     type: "svg",
     margin: 1,
     errorCorrectionLevel: "M",
@@ -445,7 +425,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </h2>
         <p className="body" style={{ margin: 0 }}>
           报名 {deskRow?.total ?? 0} / {capFor(desk)} · 候补 {waitlistBySession.get(desk) ?? 0} · 已签到 {deskCheckins.length}
-          {isSpecialSession(desk) ? "" : ` · 点单 ${orders.length} 杯`}
         </p>
         <div className="admin-today__actions">
           <a className="btn btn--primary" href="/admin/desk">签到台（门口用）</a>
@@ -584,18 +563,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         )}
       </section>
-
-      {/* ── Drinks ───────────────────────────────────────────────────
-          The sheet the café asked for: every line has a name, so payment is
-          taken by name and nobody walks off with the wrong cup. */}
-      <OrderDesk
-        session={orderSession}
-        isOpen={canOrder(orderSession, sydneyToday().toISOString().slice(0, 10))}
-        url={orderUrl}
-        qrSvg={orderQr}
-        orders={orders}
-        sheet={barSheet(orders)}
-      />
 
       {/* ── This week's Q&A ──────────────────────────────────────────
           The shortlist the group voted on, pasted here; /go shows it. */}
@@ -1233,12 +1200,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
             想分享 {shareCandidates.filter((x) => x.demo_intent === "yes").length} · 看情况 {shareCandidates.filter((x) => x.demo_intent === "maybe").length} · 已选 {shareCandidates.filter((x) => x.picked).length}（建议 2–3 人）
           </span>
         </div>
-        {pledges && (
-          <p className="body-sm">
-            到场点单：饮品 {pledges.drink} · 简餐 {pledges.food} · 没选 {pledges.none}
-            <span style={{ color: "var(--fg3)" }}>（「没选」多是规则上线前报名的人，开场提醒一句）</span>
-          </p>
-        )}
         {shareCandidates.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名分享。可以在群里点名老面孔。</p>
         ) : (
@@ -1590,9 +1551,6 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
           <a className="btn btn--secondary" href="/api/admin/export">
             导出全部报名 CSV
-          </a>
-          <a className="btn btn--secondary" href={`/api/admin/export?what=orders&session=${desk}`}>
-            导出点单 CSV · {desk}
           </a>
           <a className="btn btn--secondary" href={`/api/admin/export?what=checkins&session=${desk}`}>
             导出签到 CSV · {desk}

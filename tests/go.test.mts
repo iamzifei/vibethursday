@@ -7,7 +7,8 @@ import { AFTER_CHECKIN_PATH } from "../src/lib/checkin.ts";
  * `/go` (`src/lib/go.ts`): the one link, and what it shows when.
  */
 
-const ANON: GoState = { signedUp: null, hasOrder: false, hasCard: false, checkinOpen: false };
+// Spec change 2026-11-02: no ordering on the site, so no hasOrder / myOrder.
+const ANON: GoState = { signedUp: null, hasCard: false, checkinOpen: false };
 
 test("which side of the session we are on", () => {
   // Monday to Wednesday: focus is the coming Thursday.
@@ -26,30 +27,26 @@ test("before a session: sign up, check my signup, card, the member wall, the Wha
   assert.deepEqual(goItems("before", ANON), ["signup", "mySignup", "card", "members", "wharf"]);
 });
 
-test("signing up drops out only when we know, and ordering turns into 'my order'", () => {
+test("signing up drops out only when we know", () => {
   assert.deepEqual(goItems("before", { ...ANON, signedUp: true }), ["mySignup", "card", "members", "wharf"]);
   // Known not signed up, or unknown: still offered.
   assert.deepEqual(goItems("before", { ...ANON, signedUp: false })[0], "signup");
-  assert.deepEqual(goItems("before", { ...ANON, hasOrder: true }), ["signup", "mySignup", "myOrder", "card", "members", "wharf"]);
+  assert.deepEqual(goItems("before", ANON), ["signup", "mySignup", "card", "members", "wharf"]);
 });
 
 test("on the day before ten: a check-in reminder, my badge, who is here", () => {
   assert.deepEqual(goItems("day", ANON), ["checkin", "badge", "members"]);
-  assert.deepEqual(goItems("day", { ...ANON, hasOrder: true }), ["checkin", "myOrder", "badge", "members"]);
 });
 
-test("★ from ten on the day nobody can order any more; only an existing order is shown", () => {
-  // James 2026-09-30: by then the sheet has gone to the bar, so an order placed
-  // on the site would reach nobody. Order at the counter instead.
+test("from ten on the day: check-in, badge, who is here, feedback", () => {
   const open = { ...ANON, checkinOpen: true };
   assert.deepEqual(goItems("day", open), ["checkin", "badge", "members", "feedback"]);
-  assert.deepEqual(goItems("day", { ...open, hasOrder: true }), ["checkin", "myOrder", "badge", "members", "feedback"]);
 });
 
 test("after: feedback first", () => {
   assert.deepEqual(goItems("after", ANON), ["feedback", "chat", "session", "nextSignup"]);
   // Nothing personal changes what matters after a session.
-  assert.deepEqual(goItems("after", { signedUp: true, hasOrder: true, hasCard: true, checkinOpen: false }), [
+  assert.deepEqual(goItems("after", { signedUp: true, hasCard: true, checkinOpen: false }), [
     "feedback",
     "chat",
     "session",
@@ -57,14 +54,12 @@ test("after: feedback first", () => {
   ]);
 });
 
-test("★ no phase offers ordering and 'my order' at once, and none drops check-in on the day", () => {
+test("★ no phase offers ordering (it is done at the counter), and none drops check-in on the day", () => {
   for (const phase of ["before", "day", "after"] as const) {
-    for (const hasOrder of [true, false]) {
-      const items = goItems(phase, { ...ANON, hasOrder });
-      assert.ok(!(items.includes("order") && items.includes("myOrder")));
-    }
+    const items = goItems(phase, ANON) as string[];
+    assert.ok(!items.includes("order") && !items.includes("myOrder"));
   }
-  assert.ok(goItems("day", { signedUp: true, hasOrder: true, hasCard: true, checkinOpen: false }).includes("checkin"));
+  assert.ok(goItems("day", { signedUp: true, hasCard: true, checkinOpen: false }).includes("checkin"));
 });
 
 test("★ the support page is never one of the items", () => {
