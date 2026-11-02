@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { clientIp, tooMany } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +18,7 @@ export async function GET(request: Request) {
   const limited = tooMany(request, "admin-action", 300);
   if (limited) return limited;
 
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value)) {
+  if (!(await authorise(request, "admin"))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 

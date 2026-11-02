@@ -416,9 +416,11 @@ test("★ the session page lists approved photos only", () => {
   assert.match(fn.slice(0, fn.indexOf("\n}\n")), /status = 'approved'/);
 });
 
-test("★ approve / reject / delete are admin-only, checked before any action", () => {
+// Spec change 2026-11-02 (James): photo review is open to the assistant too
+// (`photos` in permissions.ts). Still checked before any action.
+test("★ approve / reject / delete need the photos permission, checked before any action", () => {
   const route = read("src/app/api/admin/photos/route.ts");
-  const auth = route.indexOf("isAdminRequest(");
+  const auth = route.indexOf('authorise(request, "photos"');
   assert.ok(auth > 0);
   for (const call of ["approveSessionPhoto(id)", "rejectSessionPhoto(id)", "deleteSessionPhoto(id)"]) {
     assert.ok(route.indexOf(call) > auth, `${call} runs after the admin check`);

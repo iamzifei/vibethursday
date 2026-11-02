@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
 import { FeedbackDesk } from "@/components/FeedbackDesk";
 import { PosterExport } from "@/components/PosterExport";
-import { ADMIN_COOKIE, helperLinkKey, isAdminSession } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
@@ -435,21 +435,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {/* The helper's link (2026-11-02): send it to whoever is at the door.
-          It opens the check-in desk only, with WeChat IDs shortened. */}
-      {(() => {
-        const helperKey = helperLinkKey();
-        if (!helperKey) return null;
-        return (
-          <details className="card stack-2">
-            <summary><strong>给助理的签到链接</strong>（只能进签到台和门口签到码，看不到其他后台数据）</summary>
-            <p className="body-sm mono" style={{ overflowWrap: "anywhere", margin: "var(--space-2) 0 0" }}>
-              {`${siteUrl()}/api/helper/session?key=${helperKey}`}
-            </p>
-            <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>让助理在自己手机上打开一次，30 天内不用再开。要作废这条链接，换掉后台的管理密钥（ADMIN_TOKEN）即可。</p>
-          </details>
-        );
-      })()}
+      {/* The team's door (2026-11-02): one address to remember instead of a
+          link with a key in it. Access is per person, given on /admin/roles. */}
+      <details className="card stack-2">
+        <summary><strong>助理怎么进后台</strong>（每人一条专属链接，单独加、单独撤）</summary>
+        <p className="body-sm" style={{ margin: "var(--space-2) 0 0" }}>
+          ① 在 <a href="/admin/roles">身份与助理</a> 把这个人加为「助理」；② 把那一行下面的「专属登录链接」私发给 TA，在微信里点一次就登录了；③ 以后 TA 打开 <span className="mono">vibethursday.com/staff</span> 就直接进后台。要撤销，在同一页点「移除」，不影响其他人。
+        </p>
+      </details>
 
       {/* What is waiting on the organiser, each a link to where it is dealt
           with. Highlighted only when it needs doing. */}

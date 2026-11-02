@@ -21,9 +21,11 @@ import { PERSON_ROLE_KINDS, ROLE_LABEL } from "../src/lib/person-roles.ts";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("three roles, named as the organiser names them", () => {
-  // Spec change 2026-11-02: 志愿者 added (free on Tuesdays, not on public cards).
-  assert.deepEqual([...PERSON_ROLE_KINDS], ["builder", "mentor", "volunteer"]);
+test("the roles, named as the organiser names them", () => {
+  // Spec change 2026-11-02: 志愿者 added (free on Tuesdays, not on public cards),
+  // then 助理 (the team; signs in at /staff, not on public cards, not free).
+  assert.deepEqual([...PERSON_ROLE_KINDS], ["builder", "mentor", "volunteer", "assistant"]);
+  assert.equal(ROLE_LABEL.assistant, "助理");
   assert.equal(ROLE_LABEL.builder, "共建者");
   assert.equal(ROLE_LABEL.mentor, "导师团");
 });
@@ -42,7 +44,8 @@ test("★ every place that waives the Tuesday fee asks isTuesdayFree, not isMemb
 
 test("roles are managed on an organiser-only page, and shown as badges on member cards", () => {
   assert.match(read("src/app/admin/roles/page.tsx"), /isAdminSession/);
-  assert.match(read("src/app/api/admin/roles/route.ts"), /isAdminRequest/);
+  // Spec change 2026-11-02: the admin check is authorise(request, "admin").
+  assert.match(read("src/app/api/admin/roles/route.ts"), /authorise\(request, "admin"/);
   assert.match(read("src/components/MemberCard.tsx"), /member\.mentor/);
   assert.match(read("src/components/MemberCard.tsx"), /member\.builder/);
 });

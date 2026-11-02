@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { removePersonRole, setPersonRole } from "@/lib/db";
 import { isRoleKind } from "@/lib/person-roles";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
   if (!bounded) return new Response("Payload too large", { status: 413 });
   const form = await bounded.formData().catch(() => null);
   const key = form?.get("key");
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null)) {
+  if (!(await authorise(request, "admin", typeof key === "string" ? key : null))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 

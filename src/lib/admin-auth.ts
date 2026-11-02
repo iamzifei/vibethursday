@@ -109,3 +109,52 @@ export function isHelperSession(value: string | undefined): boolean {
   const expected = helperSessionValue();
   return Boolean(expected && value && same(value, expected));
 }
+
+/* ── An assistant's own pass (2026-11-02) ────────────────────────────────
+   The site's ordinary sign-in rests on a name plus a WeChat ID, and a WeChat
+   ID is something a whole room can see — fine for "show me my signup", not
+   for the back office. So an assistant gets in with a personal link the admin
+   sends them (shown on /admin/roles), which sets a staff-only cookie.
+
+   Both are HMACs over the signup id and the moment the 助理 role was given
+   (`stamp`). Removing the role ends both at once; removing and re-adding it
+   is how a lost or leaked link is replaced. Derived from ADMIN_TOKEN under
+   their own labels, so rotating the admin token ends every pass as well. */
+
+export const STAFF_COOKIE = "vt_staff";
+
+function staffMac(label: string, signupId: string, stamp: string, token: string | undefined): string | null {
+  if (!token) return null;
+  return createHmac("sha256", token).update(`${label}:${signupId}:${stamp}`).digest("base64url");
+}
+
+/** `<signupId>.<mac>` for the link the admin sends. Null when ADMIN_TOKEN is unset. */
+export function staffInviteToken(signupId: string, stamp: string, token: string | undefined = process.env.ADMIN_TOKEN): string | null {
+  const mac = staffMac("vt.staff.invite.v1", signupId, stamp, token);
+  return mac ? `${signupId}.${mac.slice(0, 24)}` : null;
+}
+
+/** `<signupId>.<mac>` for the staff cookie. */
+export function staffSessionToken(signupId: string, stamp: string, token: string | undefined = process.env.ADMIN_TOKEN): string | null {
+  const mac = staffMac("vt.staff.session.v1", signupId, stamp, token);
+  return mac ? `${signupId}.${mac}` : null;
+}
+
+/** Splits a link token or cookie into the signup id it names; null if malformed. */
+export function readStaffToken(value: string | null | undefined): { signupId: string } | null {
+  if (!value || value.length > 200) return null;
+  const match = /^(\d{1,18})\.[A-Za-z0-9_-]{16,64}$/.exec(value);
+  return match ? { signupId: match[1] } : null;
+}
+
+/** Whether a link token is the one for this signup and this grant of the role. */
+export function staffInviteValid(value: string, signupId: string, stamp: string): boolean {
+  const expected = staffInviteToken(signupId, stamp);
+  return Boolean(expected && same(value, expected));
+}
+
+/** Whether a staff cookie is the one for this signup and this grant of the role. */
+export function staffSessionValid(value: string, signupId: string, stamp: string): boolean {
+  const expected = staffSessionToken(signupId, stamp);
+  return Boolean(expected && same(value, expected));
+}

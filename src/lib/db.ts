@@ -845,8 +845,11 @@ export function ensureSchema(): Promise<void> {
     // 志愿者 (2026-11-02): helps run the day, free on Tuesdays like a mentor.
     // Older databases have the two-role check: replace it, in one statement so
     // it is atomic. Safe to repeat; the table is a few dozen rows.
+    // 助理 (assistant, 2026-11-02): a member of the team who signs in at
+    // /staff with WeChat and gets the assistant's permissions (permissions.ts).
+    // Not a community role: never shown on a public card, not free on Tuesdays.
     await pool.query(
-      `ALTER TABLE person_roles DROP CONSTRAINT IF EXISTS person_roles_role_check, ADD CONSTRAINT person_roles_role_check CHECK (role IN ('builder', 'mentor', 'volunteer'))`,
+      `ALTER TABLE person_roles DROP CONSTRAINT IF EXISTS person_roles_role_check, ADD CONSTRAINT person_roles_role_check CHECK (role IN ('builder', 'mentor', 'volunteer', 'assistant'))`,
     );
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
@@ -5289,13 +5292,16 @@ export type PersonRoleRow = {
   name: string;
   wechat: string | null;
   added_on: string;
+  /** Exact grant time; signs an assistant's personal link (assistantStamp). */
+  stamp: string;
 };
 
 export async function listPersonRoles(): Promise<PersonRoleRow[]> {
   await ensureSchema();
   const result = await getPool().query<PersonRoleRow>(
     `SELECT r.signup_id::text AS signup_id, r.role, r.note, g.name, g.wechat,
-            to_char(r.created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS added_on
+            to_char(r.created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS added_on,
+            (extract(epoch FROM r.created_at) * 1000000)::bigint::text AS stamp
        FROM person_roles r JOIN signups g ON g.id = r.signup_id
       ORDER BY r.role, r.created_at`,
   );
@@ -5321,6 +5327,21 @@ export async function removePersonRole(signupId: string, role: PersonRoleKind): 
  * Whether Build Tuesday is free for this person: a 共创会员, on the 导师团, or a
  * 志愿者 (2026-11-02). Every place that waives the fee asks this, not isMember.
  */
+/**
+ * When this person was given the 助理 role, as an exact stamp (microseconds
+ * since the epoch), or null if they do not hold it. The assistant's link and
+ * cookie are signed over it (admin-auth.ts), so re-adding the role changes it.
+ */
+export async function assistantStamp(signupId: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ stamp: string }>(
+    `SELECT (extract(epoch FROM created_at) * 1000000)::bigint::text AS stamp
+       FROM person_roles WHERE signup_id = $1::bigint AND role = 'assistant'`,
+    [signupId],
+  );
+  return result.rows[0]?.stamp ?? null;
+}
+
 export async function isTuesdayFree(signupId: string): Promise<boolean> {
   await ensureSchema();
   const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role IN ('mentor', 'volunteer')`, [signupId]);

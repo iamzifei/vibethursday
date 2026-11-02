@@ -179,7 +179,8 @@ test("★ the admin triage button is behind the key, and above the per-row guard
   // Located by the call, not by the literal `isAdmin(key)`: the route moved to
   // `isAdminRequest(cookie, key)` on 2026-09-24 when the admin token came out
   // of the URL. The three orderings asserted below are unchanged.
-  const auth = route.search(/isAdmin(Request)?\(/);
+  // 2026-11-02: the check is now `authorise(request, "admin", …)` (permissions.ts).
+  const auth = route.search(/authorise\(request, "admin"/);
   const triage = route.indexOf('action === "triage"');
   const idGuard = route.indexOf('error: "bad_id"');
 

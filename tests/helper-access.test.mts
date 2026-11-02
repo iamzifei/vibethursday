@@ -47,13 +47,19 @@ test("★ the desk, its payment code and the door let a helper in; nothing else 
   }
 });
 
-test("★ a helper can tick people in and mark a fee paid, never waive one", () => {
-  assert.match(read("src/app/api/admin/checkin/route.ts"), /isHelperSession/);
+// Spec change 2026-11-02: the helper is now the assistant role, checked through
+// authorise() and the permission table (permissions.ts, tests/permissions.test.mts).
+test("★ an assistant can tick people in and mark a fee paid, never waive one", () => {
+  assert.match(read("src/app/api/admin/checkin/route.ts"), /authorise\(request, "checkin"/);
   const fee = read("src/app/api/admin/tuesday-fee/route.ts");
-  assert.match(fee, /isHelperSession/);
-  assert.match(fee, /helper && status === "waived"/);
+  assert.match(fee, /authorise\(request, "feeMarkPaid"/);
+  assert.match(fee, /status === "waived" && !can\(role, "admin"\)/);
 });
 
-test("a helper searches by name only, so a WeChat ID cannot be spelt out letter by letter", () => {
-  assert.match(read("src/app/admin/desk/page.tsx"), /filterDesk\(desk, query, role === "helper"\)/);
+// Spec change 2026-11-02 (James): the assistant sees WeChat IDs in full, so the
+// name-only search now applies only to whoever lacks `wechatFull`.
+test("whoever cannot see full WeChat IDs searches by name only", () => {
+  const page = read("src/app/admin/desk/page.tsx");
+  assert.match(page, /const fullWechat = can\(role, "wechatFull"\)/);
+  assert.match(page, /filterDesk\(desk, query, !fullWechat\)/);
 });

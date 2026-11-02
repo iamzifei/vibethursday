@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { KeepAwake } from "@/components/KeepAwake";
+import { can } from "@/lib/permissions";
 import { staffRole } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { capFor } from "@/lib/capacity";
@@ -41,16 +42,18 @@ const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带�
  * `back=desk`; no client script beyond keeping the screen awake.
  */
 export default async function DeskPage({ searchParams }: PageProps) {
-  // The organiser, or the helper at the door (2026-11-02): the helper sees
-  // shortened WeChat IDs and no download.
+  // The organiser or an assistant (2026-11-02). Since James's decision of
+  // 2026-11-02 the assistant sees WeChat IDs in full (`wechatFull`); the
+  // download and the follow-up list stay the admin's.
   const role = await staffRole();
+  const fullWechat = can(role, "wechatFull");
   if (!role) {
     return (
       <main className="shell section">
         <div className="card stack-3">
           <h1 className="h3">没有权限</h1>
           <p className="body-sm">
-            先在这台手机上打开一次主办人发你的后台链接，再回到这一页。
+            助理请用微信打开 vibethursday.com/staff 登录；还没开通的，请主办人在后台把你加为「助理」。
           </p>
         </div>
       </main>
@@ -75,7 +78,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
   const tuesday = isSpecialSession(session);
   const desk = buildDesk(await listDeskRows(session), fee !== null);
   const stats = deskStats(desk);
-  const searched = filterDesk(desk, query, role === "helper");
+  const searched = filterDesk(desk, query, !fullWechat);
   const shown = searched.filter((entry) =>
     show === "arrived" ? entry.arrived
     : show === "waiting" ? !entry.arrived
@@ -96,7 +99,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
     <li className={`desk-row${entry.arrived ? " desk-row--in" : ""}`} id={`r-${entry.id}`}>
       <div className="desk-row__who">
         <strong className="desk-row__name">{entry.name}</strong>
-        <span className="mono desk-row__wechat">{(role === "helper" ? maskWechat(entry.wechat) : entry.wechat) ?? "没填微信号"}</span>
+        <span className="mono desk-row__wechat">{(fullWechat ? entry.wechat : maskWechat(entry.wechat)) ?? "没填微信号"}</span>
         <span className="desk-row__tags">
           {entry.arrived ? (
             <span className="pill pill--live">✓ {entry.checked_in_at} 已到{entry.walkIn ? " · 现场新来" : ""}</span>
@@ -222,7 +225,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
       <form className="wall-search" action="/admin/desk">
         <input type="hidden" name="s" value={session} />
         {show !== "all" && <input type="hidden" name="show" value={show} />}
-        <input className="field" type="search" name="q" defaultValue={query} placeholder={role === "helper" ? "搜名字" : "搜名字或微信号"} autoComplete="off" />
+        <input className="field" type="search" name="q" defaultValue={query} placeholder={fullWechat ? "搜名字或微信号" : "搜名字"} autoComplete="off" />
         <button className="btn btn--secondary" type="submit">搜</button>
       </form>
 

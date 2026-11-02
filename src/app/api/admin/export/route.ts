@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import { tooMany } from "@/lib/rate-limit";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { listCheckins, listCourseKit, listFeedback, listSignups, listDeskRows } from "@/lib/db";
 import { KIT_EXPORT_FIELDS } from "@/lib/class-kit";
 import { COURSE } from "@/lib/course";
@@ -78,7 +77,7 @@ export async function GET(request: Request) {
 
   const key = new URL(request.url).searchParams.get("key") ?? undefined;
 
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, key)) {
+  if (!(await authorise(request, "admin", key))) {
     return new Response("Not authorised", { status: 401 });
   }
 

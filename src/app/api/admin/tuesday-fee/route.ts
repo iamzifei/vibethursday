@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, HELPER_COOKIE, isAdminRequest, isHelperSession } from "@/lib/admin-auth";
+import { can } from "@/lib/permissions";
+import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { getOrCreateSessionFee, setSessionFeeStatus } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -38,11 +38,9 @@ export async function POST(request: Request) {
   const form = await bounded.formData().catch(() => null);
   const key = form?.get("key");
 
-  // The organiser, or the helper at the door (2026-11-02, admin-auth.ts).
-  const jar = await cookies();
-  const admin = isAdminRequest(jar.get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null);
-  const helper = !admin && isHelperSession(jar.get(HELPER_COOKIE)?.value);
-  if (!admin && !helper) {
+  // The admin, or an assistant (permissions.ts: `feeMarkPaid`).
+  const role = await authorise(request, "feeMarkPaid", typeof key === "string" ? key : null);
+  if (!role) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -60,11 +58,17 @@ export async function POST(request: Request) {
   }
 
   // Waiving a fee is the organiser's call alone.
-  if (helper && status === "waived") return NextResponse.json({ error: "not_authorised" }, { status: 403 });
+  if (status === "waived" && !can(role, "admin")) return NextResponse.json({ error: "not_authorised" }, { status: 403 });
 
   try {
     const fee = await getOrCreateSessionFee(session, signupId, newFeeRef());
-    await setSessionFeeStatus(fee.id, status, admin ? "admin" : "helper");
+    // An assistant only ever turns an unpaid fee into paid (cash or transfer
+    // at the door). Undoing a card payment, or overriding a waive, is the
+    // admin's (independent review, 2026-11-02).
+    if (role !== "admin" && (status !== "paid" || fee.status !== "pending")) {
+      return NextResponse.json({ error: "not_authorised" }, { status: 403 });
+    }
+    await setSessionFeeStatus(fee.id, status, role === "admin" ? "admin" : "helper");
   } catch {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }

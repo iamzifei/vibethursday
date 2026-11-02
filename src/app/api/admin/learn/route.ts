@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { deleteHandout, ossConfigured, putHandout, videoInfo, vodConfigured } from "@/lib/aliyun";
 import {
   addComment,
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
 
   // Check the organiser before reading the body: otherwise anyone could make
   // the server buffer and parse a 50 MB upload just to be told no.
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value)) return new Response("Not authorised", { status: 403 });
+  if (!(await authorise(request, "admin"))) return new Response("Not authorised", { status: 403 });
   const bounded = await boundedRequest(request, MAX_BODY);
   if (!bounded) return new Response("Payload too large", { status: 413 });
   const form = await bounded.formData().catch(() => null);

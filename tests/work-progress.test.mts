@@ -130,7 +130,8 @@ test("the schema creates the table after members, and the work page shows the ti
 
 test("only an organiser can write a record, and it starts as a draft", () => {
   const route = read("src/app/api/admin/progress/route.ts");
-  assert.match(route, /isAdminRequest/);
+  // Spec change 2026-11-02: the admin check is authorise(request, "admin").
+  assert.match(route, /authorise\(request, "admin"/);
   assert.match(route, /parseProgressForm/);
   const page = read("src/app/admin/progress/page.tsx");
   assert.match(page, /isAdminSession/);

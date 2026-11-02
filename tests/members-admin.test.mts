@@ -43,7 +43,8 @@ test("how a membership was paid: card (/join), the 10-25 class by transfer, or r
 test("the register is organiser-only and posts to an organiser-only route", () => {
   assert.match(read("src/app/admin/members/page.tsx"), /isAdminSession/);
   const route = read("src/app/api/admin/membership/route.ts");
-  assert.match(route, /isAdminRequest/);
+  // Spec change 2026-11-02: the admin check is authorise(request, "admin").
+  assert.match(route, /authorise\(request, "admin"/);
   assert.match(route, /parseManualMember/);
 });
 

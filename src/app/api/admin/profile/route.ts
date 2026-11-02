@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { getCopy } from "@/lib/content";
 import { checkIn, listProfiledPeople, savePersonProfile, undoCheckin } from "@/lib/db";
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
   const bounded = await boundedRequest(request, MAX_BODY);
   if (!bounded) return new Response("Payload too large", { status: 413 });
 
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, null)) {
+  if (!(await authorise(request, "admin", null))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
@@ -83,7 +82,7 @@ export async function GET(request: Request) {
   if (!fromThisSite(request, await requestOrigin())) return new Response("Forbidden", { status: 403 });
   const limited = tooMany(request, "admin-profile", 600);
   if (limited) return limited;
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, null)) {
+  if (!(await authorise(request, "admin", null))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 

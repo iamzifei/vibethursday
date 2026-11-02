@@ -81,7 +81,8 @@ test("card payments and hand marks write who settled the fee", () => {
   assert.match(db, /ADD COLUMN IF NOT EXISTS paid_via text/);
   assert.match(db, /status = 'paid', paid_at = now\(\), paid_via = 'card'/);
   const route = read("src/app/api/admin/tuesday-fee/route.ts");
-  assert.match(route, /setSessionFeeStatus\(fee\.id, status, admin \? "admin" : "helper"\)/);
+  // Spec change 2026-11-02: the role comes from authorise(); assistants record as "helper".
+  assert.match(route, /setSessionFeeStatus\(fee\.id, status, role === "admin" \? "admin" : "helper"\)/);
 });
 
 // ── 3. One "mine" page ──────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { addProgress, deleteProgress, setProgressConfirmed } from "@/lib/db";
 import { parseProgressForm } from "@/lib/progress";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
   const form = await bounded.formData().catch(() => null);
   const key = form?.get("key");
 
-  if (!isAdminRequest((await cookies()).get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null)) {
+  if (!(await authorise(request, "admin", typeof key === "string" ? key : null))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 

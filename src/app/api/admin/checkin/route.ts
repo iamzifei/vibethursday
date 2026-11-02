@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, HELPER_COOKIE, isAdminRequest, isHelperSession } from "@/lib/admin-auth";
+import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { checkIn, undoCheckin } from "@/lib/db";
 import { requestOrigin } from "@/lib/request-origin";
@@ -44,10 +43,8 @@ export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   const key = form?.get("key");
 
-  // The organiser, or the helper at the door (2026-11-02, admin-auth.ts).
-  const jar = await cookies();
-  const admin = isAdminRequest(jar.get(ADMIN_COOKIE)?.value, typeof key === "string" ? key : null);
-  if (!admin && !isHelperSession(jar.get(HELPER_COOKIE)?.value)) {
+  // The admin, or an assistant (permissions.ts: `checkin`).
+  if (!(await authorise(request, "checkin", typeof key === "string" ? key : null))) {
     return NextResponse.json({ error: "not_authorised" }, { status: 403 });
   }
 
