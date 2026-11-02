@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LANG_PARAM, resolveLang } from "@/lib/content";
-import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, isMember, findSignupIdByOpenid, getMySignup, recordLogin, moveSessionFor, unbindOpenid } from "@/lib/db";
+import { bindOpenid, bookDinner, cancelSession, findMySignup, getOrCreateSessionFee, findSignupIdByOpenid, getMySignup, recordLogin, moveSessionFor, unbindOpenid, isTuesdayFree } from "@/lib/db";
 import { LEARN_COOKIE } from "@/lib/learn";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken, verifyMyToken } from "@/lib/my-signup";
 import { readOpenidToken, wechatCookieOptions } from "@/lib/wechat-auth";
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     // — where they moved from and that week's Thursday — goes only when the
     // payment lands (`giveUpReplaced`). An unpaid hold that lapses leaves
     // them exactly where they were.
-    if (feeFor(to) !== null && stripeEnabled() && !(await isMember(signupId))) {
+    if (feeFor(to) !== null && stripeEnabled() && !(await isTuesdayFree(signupId))) {
       const before = [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)];
       const result = await moveSessionFor(signupId, null, to);
       if (result !== "booked") return back({ t: token, done: "waitlist", d: to });
@@ -211,7 +211,7 @@ export async function POST(request: Request) {
     for (const other of switched) await cancelSession(signupId, other);
 
     // A paid Tuesday with card payment off: the fee is owed, as before.
-    if (result === "booked" && feeFor(to) !== null && !(await isMember(signupId))) {
+    if (result === "booked" && feeFor(to) !== null && !(await isTuesdayFree(signupId))) {
       const fee = await getOrCreateSessionFee(to, signupId, newFeeRef());
       if (fee.status === "pending") return NextResponse.redirect(new URL(`/tuesday/pay?ref=${fee.ref}`, origin), 303);
     }

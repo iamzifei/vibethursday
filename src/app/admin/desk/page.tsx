@@ -19,6 +19,7 @@ type PageProps = { searchParams: Promise<{ s?: string; q?: string; show?: string
 const PAY_LABEL: Record<PayState, string> = {
   free: "",
   member: "共创会员 · 免费",
+  mentor: "导师团 · 免费",
   paid: "已付",
   waived: "免收",
   claimed: "说已转账 · 待核",
@@ -98,6 +99,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
             <span className="pill">未到</span>
           )}
           {entry.waitlisted && !entry.booked && <span className="pill">候补</span>}
+          {entry.mentor && entry.pay !== "mentor" && <span className="pill pill--live">导师团</span>}
+          {entry.builder && <span className="pill pill--live">共建者</span>}
           {entry.pay !== "free" && (
             <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" ? " pill--warn" : " pill--live"}`}>
               {PAY_LABEL[entry.pay]}

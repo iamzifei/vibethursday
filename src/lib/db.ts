@@ -13,6 +13,7 @@ import { MEMBERSHIP, MEMBERSHIP_COURSES, newMemberRef } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
 import type { DeskRow } from "./desk.ts";
+import type { PersonRoleKind } from "./person-roles.ts";
 
 /**
  * The SQL list of classes that make a 共创会员 (`MEMBERSHIP_COURSES`), for the
@@ -821,6 +822,19 @@ export function ensureSchema(): Promise<void> {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS work_progress_work_idx ON work_progress (member_id, work_hash)`);
+
+    // ── Roles handed out by the organiser (2026-11-02, person-roles.ts) ──
+    // 共建者 (builder) and 导师团 (mentor), one row per person per role. A
+    // mentor comes to Build Tuesday free (`isTuesdayFree`).
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS person_roles (
+        signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
+        role        text NOT NULL CHECK (role IN ('builder', 'mentor')),
+        note        text,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (signup_id, role)
+      )
+    `);
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -1461,6 +1475,9 @@ export type Member = {
   published: boolean;
   /** A paid 共创会员 (the year-long membership) — shown as a badge. */
   cocreator: boolean;
+  /** 导师团 and 共建者, handed out by the organiser (2026-11-02). */
+  mentor: boolean;
+  builder: boolean;
   /** Every session this person signed up for, oldest first. */
   sessions: string[];
   /**
@@ -1503,6 +1520,9 @@ const MEMBER_COLUMNS = `
        AND (o.signup_id = g.id
             OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
   ) AS cocreator,
+  -- Roles the organiser hands out (2026-11-02, person-roles.ts); badges on the card.
+  EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS mentor,
+  EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'builder') AS builder,
   COALESCE(
     (SELECT array_agg(to_char(s, 'YYYY-MM-DD') ORDER BY s) FROM unnest(g.sessions) AS s),
     '{}'
@@ -4715,7 +4735,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
                WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
-            ) AS member,
+            ) OR EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS member,
             f.id::text AS fee_id, f.ref, f.status,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
@@ -5091,6 +5111,8 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS member,
+            EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS mentor,
+            EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'builder') AS builder,
             f.status AS fee_status,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             g.tuesday_bring ->> ($1::date)::text AS bring,
@@ -5204,4 +5226,68 @@ export async function addManualMembership(input: { name: string; wechat: string;
   } finally {
     client.release();
   }
+}
+
+
+/* ── Roles: 共建者 and 导师团 (2026-11-02, person-roles.ts) ────────────── */
+
+export type PersonRoleRow = {
+  signup_id: string;
+  role: PersonRoleKind;
+  note: string | null;
+  name: string;
+  wechat: string | null;
+  added_on: string;
+};
+
+export async function listPersonRoles(): Promise<PersonRoleRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<PersonRoleRow>(
+    `SELECT r.signup_id::text AS signup_id, r.role, r.note, g.name, g.wechat,
+            to_char(r.created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS added_on
+       FROM person_roles r JOIN signups g ON g.id = r.signup_id
+      ORDER BY r.role, r.created_at`,
+  );
+  return result.rows;
+}
+
+/** Gives someone a role, or updates its note if they already have it. */
+export async function setPersonRole(signupId: string, role: PersonRoleKind, note: string | null): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `INSERT INTO person_roles (signup_id, role, note) VALUES ($1::bigint, $2, $3)
+     ON CONFLICT (signup_id, role) DO UPDATE SET note = EXCLUDED.note`,
+    [signupId, role, note],
+  );
+}
+
+export async function removePersonRole(signupId: string, role: PersonRoleKind): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`DELETE FROM person_roles WHERE signup_id = $1::bigint AND role = $2`, [signupId, role]);
+}
+
+/**
+ * Whether Build Tuesday is free for this person: a 共创会员, or on the 导师团
+ * (2026-11-02). Every place that waives the fee asks this, not isMember.
+ */
+export async function isTuesdayFree(signupId: string): Promise<boolean> {
+  await ensureSchema();
+  const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role = 'mentor'`, [signupId]);
+  return Boolean(mentor.rowCount) || (await isMember(signupId));
+}
+
+/** Signups matching a name or WeChat ID, for adding someone to a role. */
+export async function searchSignups(query: string): Promise<{ id: string; name: string; wechat: string | null; building: string | null }[]> {
+  await ensureSchema();
+  const needle = query.toLowerCase().replace(/\s+/g, "");
+  if (!needle) return [];
+  const result = await getPool().query<{ id: string; name: string; wechat: string | null; building: string | null }>(
+    `SELECT id::text AS id, name, wechat, building FROM signups
+      WHERE position($1 in lower(regexp_replace(name, '\\s+', '', 'g'))) > 0
+         OR position($1 in lower(regexp_replace(coalesce(wechat, ''), '\\s+', '', 'g'))) > 0
+      ORDER BY updated_at DESC NULLS LAST, id DESC
+      LIMIT 20`,
+    [needle],
+  );
+  return result.rows;
 }

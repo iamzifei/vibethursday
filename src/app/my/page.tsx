@@ -9,7 +9,7 @@ import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
 import { TuesdayVenue } from "@/components/TuesdayVenue";
-import { getDinnerFor, getMySignup, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup } from "@/lib/db";
+import { getDinnerFor, getMySignup, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup, isTuesdayFree } from "@/lib/db";
 import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
@@ -186,15 +186,18 @@ export default async function MyPage({ searchParams }: PageProps) {
   const paidTuesdays = upcoming.filter((entry) => entry.position === null && feeFor(entry.session) !== null);
   // A paid 共创会员 gets a badge here and owes nothing for Tuesdays.
   let member = false;
+  // Free on Tuesdays: a 共创会员, or on the 导师团 (2026-11-02).
+  let tuesdayFree = false;
   try {
     member = await isMember(mine.id);
+    tuesdayFree = member || (await isTuesdayFree(mine.id));
   } catch (error) {
     console.error("[my] could not check membership", error);
   }
   if (paidTuesdays.length > 0) {
     try {
       for (const entry of paidTuesdays) {
-        if (member) {
+        if (tuesdayFree) {
           fees.set(entry.session, { member: true });
           continue;
         }

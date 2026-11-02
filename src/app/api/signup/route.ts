@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, isMember, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, setVenuePledge, bookDinner } from "@/lib/db";
+import { bindOpenid, cancelSession, findOrderFor, getMySignup, getOrCreateSessionFee, getSignupProfile, publishCardForSignup, recordLogin, saveOrder, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, setVenuePledge, bookDinner, isTuesdayFree } from "@/lib/db";
 import { VENUE_MENU } from "@/lib/menu";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { priceOrder } from "@/lib/order";
@@ -382,7 +382,7 @@ export async function POST(request: Request) {
   const paidTuesday = Boolean(firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null);
   if (paidTuesday) {
     try {
-      member = await isMember(signupId);
+      member = await isTuesdayFree(signupId);
     } catch (error) {
       console.error("[signup] could not check membership", error);
     }
@@ -416,7 +416,7 @@ export async function POST(request: Request) {
   // their name on the payment page, and whether they are a member.
   if (firstSession && !waitlisted && profileUpdated && feeFor(firstSession) !== null) {
     try {
-      fee = (member ?? (await isMember(signupId)))
+      fee = (member ?? (await isTuesdayFree(signupId)))
         ? { member: true }
         : {
             member: false,

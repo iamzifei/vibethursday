@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy } from "@/lib/content";
-import { getSessionFeeByRef, isMember, setSessionFeeStatus } from "@/lib/db";
+import { getSessionFeeByRef, setSessionFeeStatus, isTuesdayFree } from "@/lib/db";
 import { feeFor, formatSession } from "@/lib/sessions";
 import { feeLabel, looksLikeFeeRef, payLabel, tuesdayPaymentInfo } from "@/lib/tuesday-fee";
 import { settleIfPaid } from "@/lib/card-pay";
@@ -33,7 +33,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
   if (ref && fee && (await settleIfPaid("tuesday", fee))) fee = await getSessionFeeByRef(ref).catch(() => null);
   // Became a member after booking (the offer on this page, 2026-11-02): this
   // Tuesday is then free, so it is let in rather than left asking for money.
-  if (ref && fee && fee.status === "pending" && fee.booked && (await isMember(fee.signup_id).catch(() => false))) {
+  if (ref && fee && fee.status === "pending" && fee.booked && (await isTuesdayFree(fee.signup_id).catch(() => false))) {
     await setSessionFeeStatus(fee.id, "waived").catch((error) => console.error("[tuesday-pay] could not waive for a member", error));
     // A card page opened before joining must not still take the A$33.
     if (fee.stripe_session) await expireCheckoutPage(fee.stripe_session).catch(() => {});

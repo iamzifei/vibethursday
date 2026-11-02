@@ -32,6 +32,7 @@ export const ADMIN_NAV: AdminGroup[] = [
     title: "人",
     links: [
       { href: "/admin/members", label: "共创会员", hint: "名单与手动登记" },
+      { href: "/admin/roles", label: "共建者与导师团", hint: "加、去身份；导师团周二免费" },
       { href: "/admin/tag", label: "标注来的人" },
       { href: "/admin/people", label: "所有人画像" },
     ],

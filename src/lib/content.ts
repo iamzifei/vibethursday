@@ -654,7 +654,7 @@ export const copy = {
       tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有位子，在做东西的话可以改到那天：",
       tuesdayOverflowCta: "去改到周二",
       // A paid Build Tuesday (2026-10-14): the one step left after booking.
-      feeMember: "你是共创会员，这一场免费。",
+      feeMember: "你是共创会员或导师团成员，这一场免费。",
       // 报完周二、还没付的人看到的升单引导（2026-11-02）。
       memberUpsell: {
         title: "常来周二的话，办共创会员更划算",
@@ -1819,7 +1819,7 @@ export const copy = {
       waitlisted: "候补第 {n} 位",
       waitlistNote: "候补要收到 James 的通知再来；没收到的话，请改到下一个周四。",
       // Build Tuesday's fee (2026-10-14): what this row still owes, if anything.
-      feeMember: "共创会员，免费",
+      feeMember: "共创会员 / 导师团，免费",
       feeDue: "需转账 {amount}",
       feeClaimed: "已说转账，等核对",
       feePaid: "已付",
@@ -2428,7 +2428,7 @@ export const copy = {
       tuesdayHintCta: "Switch to Tuesday",
       tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
       tuesdayOverflowCta: "Move to Tuesday",
-      feeMember: "You are a member, so this one is free.",
+      feeMember: "You are a member or on the mentor team, so this one is free.",
       memberUpsell: {
         title: "Coming most Tuesdays? Membership works out cheaper",
         body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
@@ -3409,7 +3409,7 @@ export const copy = {
       booked: "Booked",
       waitlisted: "Waitlist, #{n}",
       waitlistNote: "Waitlisted people come once James contacts them; if you have not heard, please move to the next Thursday.",
-      feeMember: "Member — free",
+      feeMember: "Member / mentor — free",
       feeDue: "To pay: {amount}",
       feeClaimed: "Transfer noted, being checked",
       feePaid: "Paid",

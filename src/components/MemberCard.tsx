@@ -13,6 +13,13 @@ export function cocreatorLabel(lang: Lang): string {
   return lang === "en" ? "Co-creator member" : lang === "zh-Hant" ? "共創會員" : "共创会员";
 }
 
+/** The organiser-given roles (2026-11-02, person-roles.ts), as badges. */
+export function roleLabel(role: "mentor" | "builder", lang: Lang): string {
+  if (lang === "en") return role === "mentor" ? "Mentor" : "Builder";
+  if (role === "mentor") return lang === "zh-Hant" ? "導師團" : "导师团";
+  return lang === "zh-Hant" ? "共建者" : "共建者";
+}
+
 export function langSuffix(lang: Lang, hasQuery = false): string {
   const param = LANG_PARAM[lang];
   if (!param) return "";
@@ -153,6 +160,8 @@ export function MemberCard({ member, copy, lang, upcoming }: Props) {
             </Link>
           </h3>
           {member.cocreator && <span className="chip chip--stage mcard__badge">{cocreatorLabel(lang)}</span>}
+          {member.mentor && <span className="chip chip--stage mcard__badge">{roleLabel("mentor", lang)}</span>}
+          {member.builder && <span className="chip chip--stage mcard__badge">{roleLabel("builder", lang)}</span>}
           {/* One line on every card that has a headline or a bio (2026-11-02):
               a directory is read by scanning, and half the wall has no
               headline. Falls back to the bio ("can help" has its own row). */}

@@ -26,6 +26,8 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
   checked_in_at: null,
   source: null,
   member: false,
+  mentor: false,
+  builder: false,
   fee_status: null,
   claimed_at: null,
   bring: null,
@@ -154,4 +156,12 @@ test("the desk links its export, and the door code can be shown (and printed) fo
   const door = read("src/app/admin/door/page.tsx");
   assert.match(door, /searchParams/);
   assert.match(door, /isSessionDate/);
+});
+
+test("★ a mentor never owes the Tuesday fee, and roles show in the after-event list", () => {
+  const desk = buildDesk([row({ id: "1", mentor: true }), row({ id: "2", member: true, builder: true, checked_in_at: "10:40", source: "qr" })], true);
+  const byId = Object.fromEntries(desk.map((entry) => [entry.id, entry]));
+  assert.equal(byId["1"].pay, "mentor");
+  assert.equal(deskStats(desk).owing, 0);
+  assert.equal(deskExportRow(byId["2"])[4], "共创会员 · 共建者");
 });

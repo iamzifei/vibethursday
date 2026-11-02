@@ -33,6 +33,10 @@ export type DeskRow = {
   source: string | null;
   /** A current 共创会员. */
   member: boolean;
+  /** On the 导师团: free on Tuesdays (2026-11-02). */
+  mentor: boolean;
+  /** A 共建者 on some project. */
+  builder: boolean;
   fee_status: "pending" | "paid" | "waived" | null;
   /** When they said they had transferred, MM-DD HH:MM; null if never. */
   claimed_at: string | null;
@@ -43,7 +47,7 @@ export type DeskRow = {
   building: string | null;
 };
 
-export type PayState = "free" | "member" | "paid" | "waived" | "claimed" | "owing" | "ask";
+export type PayState = "free" | "member" | "mentor" | "paid" | "waived" | "claimed" | "owing" | "ask";
 
 export type DeskEntry = DeskRow & {
   arrived: boolean;
@@ -54,6 +58,7 @@ export type DeskEntry = DeskRow & {
 function payState(row: DeskRow, paidSession: boolean): PayState {
   if (!paidSession) return "free";
   if (row.member) return "member";
+  if (row.mentor) return "mentor";
   if (!row.booked) return "ask";
   if (row.fee_status === "paid") return "paid";
   if (row.fee_status === "waived") return "waived";
@@ -131,6 +136,7 @@ const SOURCE: Record<string, string> = { qr: "扫码", "walk-in": "现场新来"
 const IDENTITY: Record<PayState, string> = {
   free: "已报名",
   member: "共创会员",
+  mentor: "导师团",
   paid: "已付",
   waived: "免收",
   claimed: "说已转账",
@@ -142,7 +148,9 @@ const IDENTITY: Record<PayState, string> = {
 export const DESK_EXPORT_COLUMNS = ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么"] as const;
 
 export function deskExportRow(entry: DeskEntry): string[] {
-  const identity = entry.pay === "free" && !entry.booked ? (entry.walkIn ? "现场新来" : "候补") : IDENTITY[entry.pay];
+  const base = entry.pay === "free" && !entry.booked ? (entry.walkIn ? "现场新来" : "候补") : IDENTITY[entry.pay];
+  // Roles are added to whatever they paid as: "共创会员 · 共建者".
+  const identity = [base, entry.mentor && entry.pay !== "mentor" ? "导师团" : "", entry.builder ? "共建者" : ""].filter(Boolean).join(" · ");
   return [
     entry.name,
     entry.wechat ?? "",

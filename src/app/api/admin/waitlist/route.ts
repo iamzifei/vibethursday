@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminRequest } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
-import { getMySignup, getOrCreateSessionFee, isMember, promoteFromWaitlist } from "@/lib/db";
+import { getMySignup, getOrCreateSessionFee, promoteFromWaitlist, isTuesdayFree } from "@/lib/db";
 import { feeFor, formatSession, sameWeekSessions } from "@/lib/sessions";
 import { PROMOTION_HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { newFeeRef } from "@/lib/tuesday-fee";
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   // hold that week is kept until then. The organiser gets the link to send.
   if (feeFor(session) !== null && stripeEnabled()) {
     try {
-      if (!(await isMember(id))) {
+      if (!(await isTuesdayFree(id))) {
         const mine = await getMySignup(id);
         const replaces = mine ? sameWeekSessions(session, [...mine.sessions, ...mine.waitlist.map((entry) => entry.session)]) : [];
         const fee = await getOrCreateSessionFee(session, id, newFeeRef(), PROMOTION_HOLD_MINUTES, replaces);
