@@ -71,43 +71,14 @@ export function isAdminRequest(cookieValue: string | undefined, providedKey?: st
   return isAdminSession(cookieValue) || isAdmin(providedKey ?? undefined);
 }
 
-/* ── The helper at the door (2026-11-02) ─────────────────────────────────
-   Someone checking people in on the organiser's behalf gets their own link,
-   cookie and much narrower reach: the check-in desk, the door code and a
-   person's payment code — ticking people in and marking a fee paid. Not the
-   rest of /admin. Both values are derived from ADMIN_TOKEN under their own
-   labels, so no new setting is needed, rotating the admin token revokes
-   them, and neither ever verifies as the admin's. */
-
-export const HELPER_COOKIE = "vt_helper";
+/* The shared "helper at the door" link (2026-11-02) was retired the same
+   night, once every assistant had a personal link (below). */
 
 /** Constant-time string comparison; false on any length difference. */
 function same(a: string, b: string): boolean {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
-}
-
-/** The key in the helper's link. Null when ADMIN_TOKEN is unset. */
-export function helperLinkKey(token: string | undefined = process.env.ADMIN_TOKEN): string | null {
-  if (!token) return null;
-  return createHmac("sha256", token).update("vt.helper.link.v1").digest("base64url").slice(0, 24);
-}
-
-export function isHelperKey(provided: string | null | undefined): boolean {
-  const expected = helperLinkKey();
-  return Boolean(expected && provided && same(provided, expected));
-}
-
-/** What the helper's cookie holds. */
-export function helperSessionValue(token: string | undefined = process.env.ADMIN_TOKEN): string | null {
-  if (!token) return null;
-  return createHmac("sha256", token).update("vt.helper.session.v1").digest("base64url");
-}
-
-export function isHelperSession(value: string | undefined): boolean {
-  const expected = helperSessionValue();
-  return Boolean(expected && value && same(value, expected));
 }
 
 /* ── An assistant's own pass (2026-11-02) ────────────────────────────────

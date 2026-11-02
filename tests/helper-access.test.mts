@@ -10,25 +10,22 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("★ the helper key and session are their own: neither opens /admin, neither is the admin token", async () => {
-  process.env.ADMIN_TOKEN = "test-admin-token-123";
-  const { adminSessionValue, helperLinkKey, helperSessionValue, isAdmin, isAdminSession, isHelperKey, isHelperSession } = await import("../src/lib/admin-auth.ts");
-  const key = helperLinkKey()!;
-  assert.ok(key && key.length >= 20);
-  assert.equal(isHelperKey(key), true);
-  assert.equal(isAdmin(key), false, "the helper link is not the admin token");
-  assert.equal(isAdminSession(helperSessionValue()!), false, "a helper session is not an admin session");
-  assert.equal(isHelperSession(adminSessionValue()!), false);
-  assert.equal(isHelperSession(helperSessionValue()!), true);
-  assert.equal(isHelperKey("test-admin-token-123"), false);
-  delete process.env.ADMIN_TOKEN;
-  assert.equal(helperLinkKey(), null, "no admin token, no helper link");
+// Spec change 2026-11-02 (James): the shared helper link is retired now that
+// every assistant has a personal link (admin-auth.ts STAFF_COOKIE). It is
+// removed in code rather than by rotating ADMIN_TOKEN, so nothing else signs out.
+test("★ the old shared helper link no longer exists and no longer opens anything", () => {
+  assert.ok(!existsSync(path.join(root, "src/app/api/helper/session/route.ts")), "the route that issued it is gone");
+  const auth = read("src/lib/admin-auth.ts");
+  for (const name of ["HELPER_COOKIE", "helperLinkKey", "isHelperKey", "helperSessionValue", "isHelperSession"]) {
+    assert.ok(!auth.includes(name), `admin-auth.ts still has ${name}`);
+  }
+  assert.doesNotMatch(read("src/lib/staff.ts"), /vt_helper|HELPER/);
 });
 
 test("WeChat IDs are shortened for a helper", async () => {

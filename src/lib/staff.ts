@@ -1,10 +1,8 @@
 import { cookies } from "next/headers";
 import {
   ADMIN_COOKIE,
-  HELPER_COOKIE,
   isAdmin,
   isAdminSession,
-  isHelperSession,
   readStaffToken,
   STAFF_COOKIE,
   staffSessionValid,
@@ -19,8 +17,8 @@ import { can, type Permission, type StaffRole } from "./permissions.ts";
  * - An assistant: the staff cookie set by their personal link (sent by the
  *   admin from /admin/roles), checked against the 助理 role on every request —
  *   so removing the role takes effect at once, for that one person.
- * - The old shared helper link still counts as an assistant while people move
- *   over; rotating ADMIN_TOKEN ends it.
+ * - The old shared helper link was retired on 2026-11-02 (removed in code, so
+ *   ADMIN_TOKEN did not need rotating).
  *
  * ⚠️ Never the ordinary sign-in (account.ts): that rests on a name and
  * a WeChat ID, which anyone in the room can see.
@@ -28,7 +26,6 @@ import { can, type Permission, type StaffRole } from "./permissions.ts";
 export async function staffRole(): Promise<StaffRole | null> {
   const jar = await cookies();
   if (isAdminSession(jar.get(ADMIN_COOKIE)?.value)) return "admin";
-  if (isHelperSession(jar.get(HELPER_COOKIE)?.value)) return "assistant";
 
   const pass = jar.get(STAFF_COOKIE)?.value;
   const named = readStaffToken(pass);
