@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { authorise } from "@/lib/staff";
 import { correctWechat } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -44,8 +45,6 @@ export async function POST(request: Request) {
   const result = await correctWechat(id, wechat);
   const msg = result.ok ? `微信号已改成 ${wechat}` : result.reason === "taken" ? `没改：${wechat} 已经在另一条报名上（${result.takenBy}）。是同一个人的话，用下面的「合并」。` : "没改：这条报名不存在了。";
 
-  const url = new URL("/admin", await requestOrigin());
-  url.searchParams.set("msg", msg);
-  url.hash = "wechat-fix";
+  const url = new URL(adminHref("wechat-fix", { msg }), await requestOrigin());
   return NextResponse.redirect(url, 303);
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.redirect(
-    new URL(`/admin#checkin`, await requestOrigin()),
+    new URL(adminHref("checkin"), await requestOrigin()),
     303,
   );
 }

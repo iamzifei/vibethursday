@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { authorise } from "@/lib/staff";
 import { mergeSignups } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -49,8 +50,6 @@ export async function POST(request: Request) {
   const result = await mergeSignups(keep, drop);
   const msg = result.ok ? `已把 #${drop} 并进 #${keep}` : `没合并：${REASONS[result.reason] ?? result.reason}`;
 
-  const url = new URL("/admin", await requestOrigin());
-  url.searchParams.set("msg", msg);
-  url.hash = "merge";
+  const url = new URL(adminHref("merge", { msg }), await requestOrigin());
   return NextResponse.redirect(url, 303);
 }

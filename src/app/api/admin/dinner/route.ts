@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { authorise } from "@/lib/staff";
 import { setDinnerStatus } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -37,5 +38,5 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
-  return NextResponse.redirect(new URL("/admin#dinner", await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(adminHref("dinner"), await requestOrigin()), 303);
 }

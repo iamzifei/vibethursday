@@ -28,7 +28,7 @@ export const ADMIN_NAV: AdminGroup[] = [
     title: "今天",
     links: [
       { href: "/admin/today", label: "今天", hint: "这一场的数字和常用按钮", perm: "desk" },
-      { href: "/admin", label: "总览（管理员）", hint: "全部数据和设置" },
+      { href: "/admin", label: "管理员后台", hint: "总览、本周、收款、社群、数据" },
     ],
   },
   {
@@ -36,7 +36,7 @@ export const ADMIN_NAV: AdminGroup[] = [
     links: [
       { href: "/admin/desk?day=tue", label: "周二签到台", hint: "签到、看付款", perm: "desk" },
       { href: "/admin/door?day=tue", label: "周二门口签到码", hint: "平板全屏", perm: "desk" },
-      { href: "/admin#tuesday-fees", label: "周二报名与收费" },
+      { href: "/admin?view=money#tuesday-fees", label: "周二收费" },
       { href: "/admin/followup?day=tue", label: "周二会后跟进", hint: "需求、项目、该推会员的" },
       { href: "/admin/paylinks", label: "直接付款链接", hint: "30 和 599 的链接、二维码" },
       { href: "/admin/members", label: "共创会员", hint: "名单与手动登记" },
@@ -50,11 +50,11 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin/door?day=thu", label: "周四门口签到码", hint: "平板全屏", perm: "desk" },
       { href: "/admin/waitlist", label: "候补", hint: "有空位时放人", perm: "waitlist" },
       { href: "/admin/questions", label: "本周问答", hint: "群里投票选出的问题", perm: "questions" },
-      { href: "/admin#week", label: "周四报名明细、海报" },
+      { href: "/admin?view=week", label: "本周：签到名单、海报、分享、聚餐" },
       { href: "/admin/photos", label: "照片审核", hint: "大家上传的现场照片", perm: "photos" },
-      { href: "/admin#after", label: "周四散场后：反馈" },
+      { href: "/admin?view=after", label: "周四散场后：反馈" },
       { href: "/admin/followup?day=thu", label: "周四会后跟进" },
-      { href: "/admin#community", label: "社群：码头、名片" },
+      { href: "/admin?view=community", label: "社群：码头、名片" },
     ],
   },
   {
@@ -71,12 +71,12 @@ export const ADMIN_NAV: AdminGroup[] = [
     links: [
       { href: "/admin/progress", label: "作品进展" },
       { href: "/admin/learn", label: "录播课" },
-      { href: "/admin#course", label: "课程报名" },
+      { href: "/admin?view=money", label: "收款：周二、课程、会员" },
     ],
   },
   {
     title: "数据与工具",
-    links: [{ href: "/admin#data", label: "数据、合并、导出" }],
+    links: [{ href: "/admin?view=data", label: "数据、合并、导出" }],
   },
 ];
 
@@ -102,3 +102,47 @@ export const ADMIN_TABS: AdminTab[] = [
   { label: "候补", href: "/admin/waitlist", perm: "waitlist", match: ["/admin/waitlist"] },
   { label: "更多", href: null, match: [] },
 ];
+
+/**
+ * The admin overview split into views (2026-11-02): one page that used to be
+ * ~1,700 lines on a phone, now shown a task at a time — `/admin?view=money`.
+ * "overview" (no `view`) is the short landing page.
+ */
+export const ADMIN_VIEWS = ["overview", "week", "after", "money", "community", "data"] as const;
+export type AdminView = (typeof ADMIN_VIEWS)[number];
+
+export const ADMIN_VIEW_LABEL: Record<AdminView, string> = {
+  overview: "总览",
+  week: "本周",
+  after: "散场后",
+  money: "收款",
+  community: "社群",
+  data: "数据与工具",
+};
+
+/** Which view holds each section anchor on /admin. */
+const VIEW_OF: Record<string, AdminView> = {
+  week: "week", checkin: "week", split: "week", dinner: "week", shares: "week",
+  after: "after", feedback: "after",
+  money: "money", "tuesday-fees": "money", course: "money", membership: "money",
+  community: "community", wharf: "community", members: "community",
+  data: "data", "wechat-fix": "data", merge: "data", sessions: "data", logins: "data",
+  "class-interest": "data", composition: "data", deck: "data", signups: "data",
+};
+
+/** Reads `?view=`; anything unknown is the overview. */
+export function adminView(value: string | undefined): AdminView {
+  return (ADMIN_VIEWS as readonly string[]).includes(value ?? "") ? (value as AdminView) : "overview";
+}
+
+/**
+ * The address of a section on /admin, in its view: `adminHref("course")` →
+ * "/admin?view=money#course". Every redirect back to /admin goes through this,
+ * so an action never lands on a view that does not show what it just changed.
+ */
+export function adminHref(anchor: string, params: Record<string, string> = {}): string {
+  const view = VIEW_OF[anchor];
+  if (!view) throw new Error(`unknown /admin section: ${anchor}`);
+  const search = new URLSearchParams({ view, ...params });
+  return `/admin?${search.toString()}#${anchor}`;
+}

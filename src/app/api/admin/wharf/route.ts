@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { authorise } from "@/lib/staff";
 import { requestOrigin } from "@/lib/request-origin";
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.redirect(
-      new URL(`/admin#wharf`, await requestOrigin()),
+      new URL(adminHref("wharf"), await requestOrigin()),
       { status: 303 },
     );
   }
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "bad_merge" }, { status: 400 });
     }
     await mergeQuestions(keep.trim(), ids);
-    return NextResponse.redirect(new URL(`/admin#wharf`, await requestOrigin()), { status: 303 });
+    return NextResponse.redirect(new URL(adminHref("wharf"), await requestOrigin()), { status: 303 });
   }
 
   // ⚠️ Below the triage branch on purpose: triage acts on the whole board and
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.redirect(
-    new URL(`/admin#wharf`, await requestOrigin()),
+    new URL(adminHref("wharf"), await requestOrigin()),
     { status: 303 },
   );
 }

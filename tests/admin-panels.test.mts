@@ -94,3 +94,42 @@ test("★ an assistant gives out places only while one is free; going over the c
 test("the tab bar is filtered by the same permissions as the menu", () => {
   assert.match(read("src/components/admin/AdminFrame.tsx"), /ADMIN_TABS\.filter\(\(tab\) => !tab\.href \|\| can\(role, tab\.perm \?\? "admin"\)\)/);
 });
+
+// ── 3b: the admin overview split into views (2026-11-02) ─────────────────────
+
+test("★ no admin action lands on a bare /admin#anchor that the default view does not show", async () => {
+  const { readdirSync } = await import("node:fs");
+  const dir = path.join(root, "src/app/api/admin");
+  for (const name of readdirSync(dir)) {
+    const file = path.join("src/app/api/admin", name, "route.ts");
+    if (!existsSync(path.join(root, file))) continue;
+    const source = read(file);
+    assert.doesNotMatch(source, /URL\(`\/admin#|URL\("\/admin#|url\.hash = /, `${file} redirects to an /admin anchor without its view`);
+  }
+});
+
+test("each section anchor is rendered inside the view adminHref sends it to", async () => {
+  const { adminHref } = await import("../src/lib/admin-nav.ts");
+  const page = read("src/app/admin/page.tsx");
+  // The view blocks in source order: `{view === "x" && (` up to the next one.
+  const blocks = [...page.matchAll(/\{view === "([a-z]+)" && \(/g)].map((m, i, all) => ({
+    view: m[1],
+    body: page.slice(m.index!, all[i + 1]?.index ?? page.length),
+  }));
+  for (const anchor of ["week", "checkin", "split", "dinner", "shares", "after", "tuesday-fees", "course", "membership", "community", "wharf", "members", "data", "wechat-fix", "merge", "sessions", "logins", "deck", "signups"]) {
+    const view = new URLSearchParams(adminHref(anchor).split("?")[1].split("#")[0]).get("view");
+    const holder = blocks.find((block) => block.body.includes(`id="${anchor}"`));
+    // `checkin` and `feedback` live inside the desk components rendered in those views.
+    if (!holder && (anchor === "checkin")) continue;
+    assert.ok(holder, `#${anchor} is not inside any view block`);
+    assert.equal(holder.view, view, `#${anchor} is in the ${holder.view} view, adminHref says ${view}`);
+  }
+});
+
+test("the overview is short: only the today card, the help and the tiles", () => {
+  const page = read("src/app/admin/page.tsx");
+  const start = page.indexOf('{view === "overview" && (');
+  const end = page.indexOf('{view === "week" && (');
+  assert.ok(start > 0 && end > start);
+  assert.ok(page.slice(start, end).split("\n").length < 120, "the overview block grew past 120 lines");
+});

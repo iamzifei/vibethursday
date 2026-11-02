@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { can } from "@/lib/permissions";
 import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
@@ -77,5 +78,5 @@ export async function POST(request: Request) {
   if (back === "desk") {
     return NextResponse.redirect(new URL(deskReturnPath(session, signupId, text(form, "q"), text(form, "show")), await requestOrigin()), 303);
   }
-  return NextResponse.redirect(new URL("/admin#tuesday-fees", await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(adminHref("tuesday-fees"), await requestOrigin()), 303);
 }

@@ -118,7 +118,7 @@ export function FeedbackDesk({ session, isOpen, url, qrSvg, summary, showing, an
                     {row.asked > 0 ? `${row.yes} / ${row.asked}` : "—"}
                   </td>
                   <td>
-                    <a className="mono" href={`/admin?fb=${row.session}#feedback`}>
+                    <a className="mono" href={`/admin?view=after&fb=${row.session}#feedback`}>
                       看这一场 →
                     </a>
                   </td>

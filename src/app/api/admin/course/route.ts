@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { authorise } from "@/lib/staff";
 import { setCourseOrderStatus } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -36,5 +37,5 @@ export async function POST(request: Request) {
   }
 
   await setCourseOrderStatus(id, status);
-  return NextResponse.redirect(new URL("/admin#course", await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(adminHref("course"), await requestOrigin()), 303);
 }

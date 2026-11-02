@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { authorise } from "@/lib/staff";
 import { requestOrigin } from "@/lib/request-origin";
@@ -52,5 +53,5 @@ export async function POST(request: Request) {
   await setMemberHidden(id, hidden);
 
   // 303 so the browser follows with GET; a 307 would repost the form on reload.
-  return NextResponse.redirect(new URL(`/admin#members`, await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(adminHref("members"), await requestOrigin()), 303);
 }

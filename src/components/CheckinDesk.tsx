@@ -123,6 +123,7 @@ export function CheckinDesk({ session, isToday, url, qrSvg, roster, checkins, qu
         <details className="fold" open={Boolean(needle)}>
           <summary>报了名还没签到的 {waiting.length} 人 — 手动签到</summary>
           <form method="get" action="/admin#checkin" style={{ display: "flex", gap: "var(--space-2)", margin: "var(--space-3) 0" }}>
+            <input type="hidden" name="view" value="week" />
             <input className="field" name="cq" defaultValue={query ?? ""} placeholder="搜名字" aria-label="搜名字" />
             <button className="btn btn--secondary" type="submit">
               搜

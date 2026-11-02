@@ -38,6 +38,7 @@ import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SP
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 import { waitlistFor } from "@/lib/waitlist-order";
+import { ADMIN_VIEW_LABEL, ADMIN_VIEWS, adminHref, adminView } from "@/lib/admin-nav";
 
 import { compositionPerSession, countPerSession, tuesdaySplit, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
 
 type PageProps = {
   /** `fb` picks which session's feedback is read out below the summary. */
-  searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string; msg?: string }>;
+  searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string; msg?: string; view?: string }>;
 };
 
 /** What each `login_events.method` means, for the logins table. */
@@ -67,13 +68,15 @@ const LOGIN_METHOD_LABEL: Record<string, string> = {
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
-  const { key, fb, q, all, cq, msg } = await searchParams;
+  const { key, fb, q, all, cq, msg, view: viewParam } = await searchParams;
+  // One task at a time (2026-11-02): see ADMIN_VIEWS.
+  const view = adminView(viewParam);
 
   // ★ The link still carries the token; the address bar no longer keeps it.
   // Arriving with ?key= goes straight to the one route allowed to set a
   // cookie, which signs the session in and comes back here without it.
   if (key) {
-    const next = fb ? `/admin?fb=${encodeURIComponent(fb)}` : "/admin";
+    const next = fb ? `/admin?view=after&fb=${encodeURIComponent(fb)}` : "/admin";
     redirect(`/api/admin/session?key=${encodeURIComponent(key)}&next=${encodeURIComponent(next)}`);
   }
 
@@ -405,8 +408,26 @@ export default async function AdminPage({ searchParams }: PageProps) {
     <main className="shell section stack-8">
       <div className="stack-4">
         <span className="eyebrow">Vibe Thursday · admin</span>
-        <h1>后台</h1>
+        <h1>{view === "overview" ? "后台" : ADMIN_VIEW_LABEL[view]}</h1>
+        {/* The six views, one tap each (2026-11-02). */}
+        <nav className="chips" aria-label="后台分区">
+          {ADMIN_VIEWS.map((item) => (
+            <a key={item} className={item === view ? "chip chip--link chip--on" : "chip chip--link"} href={item === "overview" ? "/admin" : `/admin?view=${item}`}>
+              {ADMIN_VIEW_LABEL[item]}
+            </a>
+          ))}
+        </nav>
       </div>
+
+      {/* The result of the last action, carried in the redirect. */}
+      {msg && (
+        <p className="alert" role="status">
+          {msg.slice(0, 200)}
+        </p>
+      )}
+
+      {view === "overview" && (
+      <>
 
       {/* Today first (2026-11-02): the session in focus and the two pages a
           morning actually runs on — the desk for whoever is at the door, the
@@ -450,7 +471,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
             title: "周二 · Build Tuesday",
             tiles: [
               { href: "/admin/desk?day=tue", n: null, label: "周二签到台", warn: false },
-              ...(nextFee ? [{ href: "#tuesday-fees", n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
+              ...(nextFee ? [{ href: adminHref("tuesday-fees"), n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
               { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
               { href: "/admin/roles#mentor", n: personRoles.filter((row) => row.role === "mentor").length, label: "导师团 · 点这里加人", warn: false },
               { href: "/admin/roles#builder", n: personRoles.filter((row) => row.role === "builder").length, label: "共建者 · 点这里加人", warn: false },
@@ -487,18 +508,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         );
       })()}
+      </>
+      )}
 
-
+      {view === "week" && (
       <section className="stack-8 admin-group" id="week">
         <h2 className="eyebrow">① 本周</h2>
       {/* ── This week at a glance ──────────────────────────────────────
           Numbers already read above; nothing new is queried for this. */}
-      {/* The result of the last correct / merge action, carried in the redirect. */}
-      {msg && (
-        <p className="alert" role="status">
-          {msg.slice(0, 200)}
-        </p>
-      )}
 
       {/* The week's numbers are in the "today" card at the top (2026-11-02). */}
 
@@ -542,7 +559,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
       </section>
 
       </section>
+      )}
 
+      {view === "after" && (
       <section className="stack-8 admin-group" id="after">
         <h2 className="eyebrow">② 散场后</h2>
         <p className="body-sm">
@@ -566,10 +585,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <a href="/admin/photos">照片审核（待审 {photos.filter((p) => p.status === "pending").length}）→</a>
       </p>
       </section>
+      )}
 
-      <details className="disclosure admin-group" id="community">
-        <summary>③ 社群：码头与成员卡片</summary>
-        <div className="disclosure__body stack-8">
+      {view === "community" && (
+      <section className="stack-8 admin-group" id="community">
+        <h2 className="eyebrow">③ 社群：码头与成员卡片</h2>
       {/* ── The Wharf ────────────────────────────────────────────────
           Two controls, and the first is the one that matters: the lane rule
           is a heuristic and this button is what makes it acceptable for it to
@@ -763,12 +783,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
         )}
       </section>
 
-        </div>
-      </details>
+      </section>
+      )}
 
-      <details className="disclosure admin-group" id="data">
-        <summary>④ 数据与工具：统计、AI 用量、投屏、报名明细</summary>
-        <div className="disclosure__body stack-8">
+      {view === "data" && (
+      <section className="stack-8 admin-group" id="data">
+        <h2 className="eyebrow">④ 数据与工具：统计、AI 用量、投屏、报名明细</h2>
       {/* WeChat IDs that do not look like one — usually a nickname typed into
           the ID box, which cannot be found in WeChat. The organiser learns the
           real ID in the group and fixes it here; the old value is kept so it
@@ -943,7 +963,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </table>
         </div>
       </section>
+      </section>
+      )}
 
+      {view === "week" && (
+      <section className="stack-8 admin-group">
+        <h2 className="eyebrow">分流、聚餐与开场分享</h2>
       {/* Build Tuesday: is it taking people off Thursday, or adding a second
           crowd? (2026-10-05). One row per Tuesday, against the Thursday two
           days later. "只报周二" is the number to watch: anyone who moved on /my
@@ -1072,6 +1097,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
         )}
       </section>
 
+      </section>
+      )}
+
+      {view === "money" && (
+      <section className="stack-8 admin-group" id="money">
+        <h2 className="eyebrow">收款：周二、课程、会员</h2>
       {/* Build Tuesday's fee (2026-10-14): who is booked, who has paid, who
           is a member. "Paid" is set here by hand once the transfer shows up
           under their reference; members are free and need nothing. */}
@@ -1261,7 +1292,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </div>
         )}
       </section>
+      </section>
+      )}
 
+      {view === "data" && (
+      <section className="stack-8 admin-group">
       {/* How people get recognised (2026-10-11): which login is actually
           used. Counted from the day this table existed, not before. */}
       <section className="stack-4" id="logins">
@@ -1533,7 +1568,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       {/* Search and scope: a GET form, so it works with no script and the URL
           can be kept. */}
-      <form method="get" action="/admin" className="stack-2" style={{ maxWidth: "36rem" }}>
+      <form method="get" action="/admin" className="stack-2" style={{ maxWidth: "36rem" }} id="signups">
+        <input type="hidden" name="view" value="data" />
         <label className="label" htmlFor="admin-q">
           报名明细 · {all === "1" ? "全部历史" : `只看 ${desk}`}
         </label>
@@ -1546,7 +1582,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
         <p className="body-sm" style={{ margin: 0 }}>
           {tableRows.length} 行 ·{" "}
-          <a className="hl" href={all === "1" ? "/admin#data" : "/admin?all=1#data"}>
+          <a className="hl" href={all === "1" ? "/admin?view=data#signups" : "/admin?view=data&all=1#signups"}>
             {all === "1" ? `只看 ${desk}` : "看全部历史"}
           </a>
         </p>
@@ -1616,8 +1652,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </table>
         </div>
       )}
-        </div>
-      </details>
+      </section>
+      )}
 
     </main>
   );

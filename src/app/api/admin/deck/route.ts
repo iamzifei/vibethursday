@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { authorise } from "@/lib/staff";
 import { isDeckCode } from "@/lib/deck";
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   await deleteDeck(code);
 
   return NextResponse.redirect(
-    new URL(`/admin#deck`, await requestOrigin()),
+    new URL(adminHref("deck"), await requestOrigin()),
     { status: 303 },
   );
 }

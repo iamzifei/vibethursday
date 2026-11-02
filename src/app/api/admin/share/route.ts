@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminHref } from "@/lib/admin-nav";
 import { authorise } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { setSessionShare } from "@/lib/db";
@@ -42,5 +43,5 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }
-  return NextResponse.redirect(new URL("/admin#shares", await requestOrigin()), 303);
+  return NextResponse.redirect(new URL(adminHref("shares"), await requestOrigin()), 303);
 }
