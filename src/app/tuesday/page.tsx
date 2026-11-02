@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SessionCompare } from "@/components/SessionCompare";
 import { MemberUpsell } from "@/components/MemberUpsell";
+import { SceneImage } from "@/components/SceneImage";
+import { StickyCta } from "@/components/StickyCta";
 import { SignupForm } from "@/components/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -66,72 +68,45 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
       <main id="main">
         <section className="section">
           <div className="shell stack-8" style={{ maxWidth: "680px" }}>
+            {/* Phone first (2026-11-02): what it is in four chips and a picture,
+                the day in three cards, then the form — the details and the
+                comparison with Thursday come after it, for whoever wants them. */}
             <div className="stack-4">
               <span className="eyebrow">{t.eyebrow}</span>
               <h1>{t.title}</h1>
-              <p className="body-lg">{t.lede}</p>
-            </div>
-
-            <div className="stack-4">
-              <h2 className="h3">{t.compareTitle}</h2>
-              <SessionCompare compare={c.signup.compare} />
-              <p className="body-sm">
-                {t.compareUnsure} <a href={langHref("/", lang)}>{t.thursdayLink} →</a>
-              </p>
-            </div>
-
-            <div className="stack-4">
-              <h2 className="h3">{t.factsTitle}</h2>
-              {next ? (
-                <dl className="stack-3" style={{ margin: 0 }}>
-                  {/* The date first, from the same label the form uses, then
-                      the fixed facts. */}
-                  <div className="card stack-1">
-                    <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
-                      {c.signup.fields.session}
-                    </dt>
-                    <dd style={{ margin: 0, color: "var(--fg1)", fontWeight: 600 }}>{formatSession(next.value, lang)}</dd>
-                  </div>
-                  {t.facts.map((fact) => (
-                    <div className="card stack-1" key={fact.label}>
-                      <dt className="eyebrow" style={{ color: "var(--fg3)" }}>
-                        {fact.label}
-                      </dt>
-                      <dd style={{ margin: 0, color: "var(--fg1)" }}>{fact.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : (
-                <p className="body-lg">{t.noSession}</p>
-              )}
-              {/* No map or directions here (2026-11-02): the address is shown
-                  only to people who have paid — see tuesday-venue.ts. */}
-            </div>
-
-            <div className="stack-4">
-              <h2 className="h3">{t.whoTitle}</h2>
-              <ul className="stack-2" style={{ margin: 0 }}>
-                {t.who.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
+              <p className="body-lg" style={{ margin: 0 }}>{t.lede}</p>
+              <ul className="chips">
+                {t.chips.map((chip) => <li key={chip}>{chip}</li>)}
               </ul>
+              <div className="cta-row">
+                <a className="btn btn--primary" href="#signup">{t.cta}</a>
+                <a className="body" href="/join">{t.ctaMember}</a>
+              </div>
             </div>
+
+            <SceneImage id="scene-1" alt={t.sceneAlt} eager />
 
             <div className="stack-4">
               <h2 className="h3">{t.formatTitle}</h2>
-              <ul className="stack-2" style={{ margin: 0 }}>
-                {t.format.map((line) => (
-                  <li key={line}>{line}</li>
+              <ol className="steps">
+                {t.format.map((step) => (
+                  <li key={step.time}>
+                    <span className="mono">{step.time}</span>
+                    <strong>{step.title}</strong>
+                    <p>{step.body}</p>
+                  </li>
                 ))}
-              </ul>
-              <p className="body-sm">
-                {t.thursdayNote} <a href={langHref("/", lang)}>{t.thursdayLink} →</a>
-              </p>
+              </ol>
             </div>
 
-            <MemberUpsell copy={t.memberUpsell} />
+            <div className="stack-3">
+              <h2 className="h3">{t.whoTitle}</h2>
+              <ul className="stack-2" style={{ margin: 0 }}>
+                {t.who.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            </div>
 
-            {next && (
+            {next ? (
               <div className="stack-4" id="signup">
                 <h2 className="h3">{t.signupTitle}</h2>
                 <p className="body">{t.signupLede}</p>
@@ -151,9 +126,37 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                   turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null}
                 />
               </div>
+            ) : (
+              <p className="body-lg" id="signup">{t.noSession}</p>
             )}
+
+            <MemberUpsell copy={t.memberUpsell} />
+
+            <div className="stack-3">
+              <h2 className="h3">{t.factsTitle}</h2>
+              <dl className="stack-2" style={{ margin: 0 }}>
+                {t.facts.map((fact) => (
+                  <div key={fact.label}>
+                    <dt className="eyebrow" style={{ color: "var(--fg3)" }}>{fact.label}</dt>
+                    <dd style={{ margin: 0, color: "var(--fg1)" }}>{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {/* No map or directions here (2026-11-02): the address and map
+                  are shown only to people who have paid — tuesday-venue.ts. */}
+              <p className="body-sm" style={{ margin: 0 }}>
+                {t.thursdayNote} <a href={langHref("/", lang)}>{t.thursdayLink} →</a>
+              </p>
+            </div>
+
+            <details className="stack-3">
+              <summary className="h3" style={{ cursor: "pointer" }}>{t.compareTitle}</summary>
+              <SessionCompare compare={c.signup.compare} />
+              <p className="body-sm">{t.compareUnsure}</p>
+            </details>
           </div>
         </section>
+        {next && <StickyCta href="#signup" label={t.stickyLabel} cta={t.cta} />}
       </main>
 
       <SiteFooter lang={lang} copy={c} />

@@ -1710,8 +1710,9 @@ export const copy = {
     },
 
     // /tuesday：Build Tuesday（周二动手局）。2026-10-04 定：周四太挤，给在做东西的人
-    // 单开一个上午。2026-11-02 James 定：改成一整天三段（项目和技术 / 午饭聊需求 /
-    // workshop），地址只给付了钱的人看（tuesday-venue.ts），这里只写 Chatswood。
+    // 单开一个上午。2026-11-02 James 定：一天三段（项目和技术 / 午饭聊需求 / workshop），
+    // 地址只给付了钱的人看（tuesday-venue.ts），这里只写 Chatswood。
+    // 同日改版：手机优先，短、图文并茂，表单前置，底部常驻报名按钮。
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
@@ -1719,8 +1720,12 @@ export const copy = {
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "带项目来，或者带需求来，当天就开始做。",
-      lede: "周二是限定人数的闭门会，一天分三段：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手。不用回去再约，趁着当场的热情先把东西做出来。",
-      factsTitle: "时间和地点",
+      lede: "12 人闭门会。上午聊项目和技术，中午聊老板的需求，下午当场动手。",
+      chips: ["每周二 10:30–15:30", "Chatswood", "12 人", "30 澳元 + GST · 会员免费"],
+      cta: "报名周二",
+      ctaMember: "会员全年免费 →",
+      sceneAlt: "往期活动现场：一张长桌，大家打开电脑做东西（现场照片转绘，人物已替换）",
+      factsTitle: "时间、地点和费用",
       facts: [
         { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
         { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
@@ -1729,18 +1734,17 @@ export const copy = {
       ],
       whoTitle: "给谁",
       who: [
-        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。带着项目来，说清做到哪、卡在哪。",
-        "会 AI、会技术，想找真实需求、组队做项目的人。",
-        "有真实业务需求的老板：想用 AI 省人、省时间，或者想做个工具但不知道怎么做、要花多少。上午先看看做产品是怎么回事，中午一起吃饭聊你的需求。",
-        "只想随便看看、还没想好要做什么的，更适合周四。",
+        "在做东西的人：独立开发、一人公司、用 AI 搭产品或工作流的",
+        "会 AI、会技术，想找真实需求、组队做项目的人",
+        "有真实需求的老板：上午看看产品怎么做，中午聊你的需求",
       ],
-      formatTitle: "怎么进行",
+      formatTitle: "一天三段",
       format: [
-        "10:30–12:00 项目和技术：带项目的人讲做了什么、卡在哪，会技术的人一起讨论 AI 和技术。老板也可以看看做产品的思路，给自己的需求找个样子。",
-        "12:00–13:30 午饭（各自点）：边吃边聊老板的需求。想聊需求的老板、想接需求的人，自然会留下来。",
-        "13:30–15:30 workshop：趁热当场动手，把项目往前推一步，或者把老板的需求做出第一个样子，不用回去再重新对接。",
-        "James 主持，帮你把方案把关。",
+        { time: "10:30–12:00", title: "项目和技术", body: "带项目的人讲做到哪、卡在哪，会技术的一起拆。" },
+        { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
+        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。" },
       ],
+      stickyLabel: "周二全天 · 30 澳元 + GST",
       // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
       memberUpsell: {
         title: "常来周二？办共创会员更划算",
@@ -3277,8 +3281,12 @@ export const copy = {
       },
       eyebrow: "§ Build Tuesday",
       title: "Bring a project or a real need, and start on it the same day.",
-      lede: "Tuesday is a closed session with limited places, in three parts: projects and tech in the morning, business owners' needs over lunch, and a workshop in the afternoon. No following up later and losing the momentum — start building while everyone is still in the room.",
-      factsTitle: "When and where",
+      lede: "Twelve people, behind closed doors. Projects and tech in the morning, owners' needs over lunch, a hands-on workshop after.",
+      chips: ["Tuesdays 10:30–15:30", "Chatswood", "12 places", "A$30 + GST · members free"],
+      cta: "Sign up for Tuesday",
+      ctaMember: "Free all year for members →",
+      sceneAlt: "A past session: one long table, laptops open (redrawn from a photo; faces replaced)",
+      factsTitle: "Time, place and cost",
       facts: [
         { label: "Time", value: "10:30–15:30, in three parts; the morning alone is fine" },
         { label: "Where", value: "Chatswood. Once you have signed up and paid, the address and a directions map show on the payment page and under \"My signup\"" },
@@ -3287,18 +3295,17 @@ export const copy = {
       ],
       whoTitle: "Who it is for",
       who: [
-        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not. Bring your project and say where you are stuck.",
-        "People who know AI and tech and want real needs to work on, and a team to build them with.",
-        "Business owners with a real need: you want AI to save people or time, or you want a tool but are not sure how or what it would take. See how products get made in the morning, then talk through your need over lunch.",
-        "If you mostly want to look around and have nothing particular in mind yet, Thursday will suit you better.",
+        "People building things: indie developers, one-person companies, anyone making a product or workflow with AI",
+        "People who know AI and tech and want real needs to work on, with a team",
+        "Business owners with a real need: see how products get made in the morning, talk through yours at lunch",
       ],
-      formatTitle: "How it runs",
+      formatTitle: "Three parts",
       format: [
-        "10:30–12:00, projects and tech: people with projects show what they made and where they are stuck; people who know the tech dig into AI and tools together. Business owners get to see how a product gets thought through.",
-        "12:00–13:30, lunch (everyone orders their own): business owners' needs, talked through over food. The owners who want to talk and the people who want to take the work on tend to stay.",
-        "13:30–15:30, workshop: start on it there and then — move a project forward, or build a first version of an owner's need, instead of arranging it all again later.",
-        "James hosts and checks the plan with you.",
+        { time: "10:30–12:00", title: "Projects and tech", body: "Show where your project is and where it is stuck; the tech people dig in." },
+        { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
+        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need." },
       ],
+      stickyLabel: "Tuesday · A$30 + GST",
       memberUpsell: {
         title: "Coming most Tuesdays? Membership works out cheaper",
         body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year (normally A$30 + GST each), plus one AI+IP class (A$365 + GST). Twenty Tuesdays pays for it, and the class is on top.",

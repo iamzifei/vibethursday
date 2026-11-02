@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
+import { SceneImage } from "@/components/SceneImage";
+import { StickyCta } from "@/components/StickyCta";
+import { SCENES } from "@/lib/scenes";
 import { currentAccount } from "@/lib/account";
 import { settleIfPaid } from "@/lib/card-pay";
 import { getCopy } from "@/lib/content";
@@ -30,6 +33,17 @@ const PERKS = [
   "一年内每周二 Build Tuesday 免门票（平时 30 澳元 + GST 一次）",
   "送一次澳洲 AI+IP 实战课（365 澳元 + GST 那门），报名时自动确认，不用付钱",
   "成员墙和个人页上的「共创会员」标",
+];
+
+/**
+ * What people said, in their words, without names (2026-11-02). From messages
+ * sent to the organiser; trimmed, not reworded.
+ */
+const TESTIMONIALS = [
+  {
+    text: "面试时和面试官聊到我们这个疯狂星期四，他对 AI 很感兴趣，问了很多 follow-up question，我就把在这里听来的经验都说了。第二天就收到了 offer call。跳出学生思维的第一堂课。",
+    who: "一位参加过周四的同学",
+  },
 ];
 
 const ERRORS: Record<string, string> = {
@@ -124,20 +138,21 @@ export default async function JoinPage({ searchParams }: PageProps) {
               </>
             ) : (
               <>
+                {/* Phone first (2026-11-02): offer, then the form, then what the
+                    room looks like and what people said — the proof is there
+                    for whoever scrolls, the form never waits behind it. */}
                 <div className="stack-3">
                   <span className="eyebrow">§ {MEMBERSHIP.title}</span>
                   <h1>一年的 Build Tuesday，再加一次 AI+IP 课。</h1>
-                  <p className="body-lg">{MEMBERSHIP.priceLabel} 一年，刷卡付款，付完马上生效，每年自动续费。</p>
+                  <p className="body-lg" style={{ margin: 0 }}>{MEMBERSHIP.priceLabel} 一年，刷卡付款，付完马上生效，每年自动续费。</p>
                 </div>
+                <SceneImage id="scene-2" alt="Vibe Thursday 现场：有人站着分享，大家围着长桌听（现场照片转绘，人物已替换）" eager />
                 {perks}
-                <p className="body" style={{ color: "var(--fg3)" }}>
-                  之前买过 599 的（10 月 25 日那门课），已经是共创会员，不用再买。不想续费了，私信 James 取消，当年的权益照常用到期满。
-                </p>
                 {error && <p className="alert" role="alert">{error}</p>}
                 {alreadyMember ? (
                   <p className="body-lg">✓ {knownName}，你已经是共创会员了，不用再买。</p>
                 ) : (
-                  <form method="post" action="/api/join" className="stack-6">
+                  <form method="post" action="/api/join" className="stack-6" id="join-form">
                     {knownName ? (
                       <div className="stack-2">
                         <input type="hidden" name="self" value="1" />
@@ -173,6 +188,29 @@ export default async function JoinPage({ searchParams }: PageProps) {
                     </button>
                   </form>
                 )}
+                <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
+                  之前买过 599 的（10 月 25 日那门课），已经是共创会员，不用再买。不想续费了，私信 James 取消，当年的权益照常用到期满。
+                </p>
+
+                <section className="stack-4" aria-labelledby="join-proof">
+                  <h2 className="h3" id="join-proof">每周都在的线下圈子</h2>
+                  {TESTIMONIALS.map((item) => (
+                    <blockquote className="quote" key={item.who}>
+                      <p>{item.text}</p>
+                      <cite>— {item.who}</cite>
+                    </blockquote>
+                  ))}
+                  <div className="scene-strip" role="region" aria-label="往期现场" tabIndex={0}>
+                    {SCENES.filter((scene) => scene.id !== "scene-2").map((scene) => (
+                      <figure key={scene.id}>
+                        <SceneImage id={scene.id} alt="" sizes="(min-width: 720px) 330px, 85vw" />
+                        <figcaption className="hint">{scene.zh}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                  <p className="hint" style={{ margin: 0 }}>画面由现场照片转绘，人物的脸都换掉了。</p>
+                </section>
+                {!alreadyMember && <StickyCta href="#join-form" label={`共创会员 · ${MEMBERSHIP.priceLabel} / 年`} cta="加入" />}
               </>
             )}
           </div>
