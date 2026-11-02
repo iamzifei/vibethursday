@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { langHref } from "@/lib/nav";
 import { langSuffix } from "@/components/MemberCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -114,11 +115,22 @@ export default async function CheckinPage({ searchParams }: PageProps) {
         <h1>{t.invalidTitle}</h1>
         <p className="body-lg">{t.invalidBody}</p>
         {/* Not a dead end: /go always says what is on this week, and on the
-            morning itself it carries the live check-in link. */}
-        <div>
-          <Link className="btn btn--secondary" href={`/go${langSuffix(lang)}`}>
-            {t.toGo}
-          </Link>
+            morning itself it carries the live check-in link. Since 2026-11-02
+            also both sign-ups and /my: a code scanned the day before was
+            mostly someone who wanted to sign up, and Tuesday was hard to find. */}
+        <div className="stack-3">
+          <div className="day-switch" aria-label={c.daySwitch.label}>
+            <a className="day-switch__tab day-switch__tab--on" href={langHref("/#signup", lang)}>{c.nav.cta}</a>
+            <a className="day-switch__tab day-switch__tab--on" href={langHref("/tuesday#signup", lang)}>{c.nav.ctaTuesday}</a>
+          </div>
+          <div className="cluster" style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+            <Link className="btn btn--secondary" href={`/my${langSuffix(lang)}`}>
+              {t.toMy}
+            </Link>
+            <Link className="btn btn--secondary" href={`/go${langSuffix(lang)}`}>
+              {t.toGo}
+            </Link>
+          </div>
         </div>
       </div>,
     );

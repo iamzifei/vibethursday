@@ -21,7 +21,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const { ref } = await searchParams;
   return {
     title: "共创会员 · Vibe Thursday",
-    description: "Vibe Thursday 共创会员：599 澳元 + GST 一年，每年自动续费。一年内每周二 Build Tuesday 免门票，再送一次澳洲 AI+IP 实战课。",
+    description: "Vibe Thursday 共创会员：599 澳元一年，每年自动续费。一年内每周二 Build Tuesday 免门票，再送一次澳洲 AI+IP 实战课。",
     ...(ref ? { robots: { index: false } } : {}),
   };
 }
@@ -30,8 +30,8 @@ type PageProps = { searchParams: Promise<{ ref?: string; paid?: string; error?: 
 
 /** What the membership gives, shown before and after paying. */
 const PERKS = [
-  "一年内每周二 Build Tuesday 免门票（平时 30 澳元 + GST 一次）",
-  "送一次澳洲 AI+IP 实战课（365 澳元 + GST 那门），报名时自动确认，不用付钱",
+  "一年内每周二 Build Tuesday 免门票（平时 30 澳元一次）",
+  "送一次澳洲 AI+IP 实战课（365 澳元那门），报名时自动确认，不用付钱",
   "成员墙和个人页上的「共创会员」标",
 ];
 

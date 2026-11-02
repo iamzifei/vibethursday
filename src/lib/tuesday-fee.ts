@@ -15,9 +15,12 @@ import { randomBytes } from "node:crypto";
 /** GST on the fee: the seller is registered, so it is added on top. */
 export const GST_RATE = 0.1;
 
-/** The price as listed, before GST: "30 澳元 + GST". */
+/**
+ * The price as listed on public pages, before GST: "30 澳元" (2026-11-02:
+ * public pages show the price alone; GST is added where you pay).
+ */
 export function feeLabel(fee: number, lang: "zh" | "en" = "zh"): string {
-  return lang === "en" ? `A$${fee} + GST` : `${fee} 澳元 + GST`;
+  return lang === "en" ? `A$${fee}` : `${fee} 澳元`;
 }
 
 /** What to transfer, GST included: 30 → "33 澳元". */
@@ -25,9 +28,11 @@ export function feeToPay(fee: number): number {
   return Math.round(fee * (1 + GST_RATE) * 100) / 100;
 }
 
+/** What is charged, with the GST shown: 30 → "33 澳元（30 + GST 3）". Only where you pay. */
 export function payLabel(fee: number): string {
+  const money = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
   const total = feeToPay(fee);
-  return `${Number.isInteger(total) ? total : total.toFixed(2)} 澳元（含 GST）`;
+  return `${money(total)} 澳元（${money(fee)} + GST ${money(Math.round((total - fee) * 100) / 100)}）`;
 }
 
 /** A payment reference: TU plus five characters, easy to read out and retype. */

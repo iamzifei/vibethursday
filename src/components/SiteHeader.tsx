@@ -1,7 +1,7 @@
 import { LangSwitch } from "@/components/LangSwitch";
 import { SiteNav, type NavItem } from "@/components/SiteNav";
 import type { Copy, Lang } from "@/lib/content";
-import { langHref, NAV_CTA, NAV_LINKS } from "@/lib/nav";
+import { langHref, NAV_LINKS, navCtaFor } from "@/lib/nav";
 
 type Props = {
   lang: Lang;
@@ -31,12 +31,14 @@ export function SiteHeader({ lang, copy, path }: Props) {
     label: copy.nav[link.label],
   }));
 
+  const cta = navCtaFor(path);
+
   return (
     <SiteNav
       brand={copy.nav.brand}
       brandHref={langHref("/", lang)}
       items={items}
-      cta={{ href: langHref(NAV_CTA.href, lang), label: copy.nav[NAV_CTA.label] }}
+      cta={{ href: langHref(cta.href, lang), label: copy.nav[cta.label] }}
       langSwitch={<LangSwitch current={lang} path={path} label={copy.nav.language} />}
       menuLabel={copy.nav.menu}
       skipLabel={copy.nav.skip}

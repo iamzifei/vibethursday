@@ -9,7 +9,7 @@ import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
 import { TuesdayVenue } from "@/components/TuesdayVenue";
-import { getDinnerFor, getMySignup, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup, isTuesdayFree } from "@/lib/db";
+import { getDinnerFor, getMySignup, getMyExtras, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup, isTuesdayFree } from "@/lib/db";
 import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
@@ -194,6 +194,11 @@ export default async function MyPage({ searchParams }: PageProps) {
   } catch (error) {
     console.error("[my] could not check membership", error);
   }
+  // The card and roles (2026-11-02). A failed lookup just leaves the block out.
+  const extras = await getMyExtras(mine.id).catch((error) => {
+    console.error("[my] could not read the card and roles", error);
+    return null;
+  });
   if (paidTuesdays.length > 0) {
     try {
       for (const entry of paidTuesdays) {
@@ -378,6 +383,33 @@ export default async function MyPage({ searchParams }: PageProps) {
           </p>
         )}
       </div>
+
+      {extras && (
+        <div className="stack-3 card" style={{ padding: "var(--space-4)" }}>
+          <h2 className="h3" style={{ margin: 0 }}>{t.rolesTitle}</h2>
+          {member || extras.mentor || extras.builder ? (
+            <p style={{ margin: 0, display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+              {member && <span className="chip chip--stage">{t.memberBadge}</span>}
+              {extras.mentor && <span className="chip chip--stage">{t.roleMentor}</span>}
+              {extras.builder && <span className="chip chip--stage">{t.roleBuilder}</span>}
+            </p>
+          ) : (
+            <p className="body-sm" style={{ margin: 0 }}>{t.roleNone}</p>
+          )}
+          <h2 className="h3" style={{ margin: "var(--space-3) 0 0" }}>{t.cardTitle}</h2>
+          <p className="body-sm" style={{ margin: 0 }}>
+            {!extras.card ? t.cardNone : extras.card.published ? t.cardPublished : t.cardDraft}
+          </p>
+          <p style={{ margin: 0, display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+            {extras.card?.published && (
+              <Link className="btn btn--secondary btn--sm" href={`/members/${extras.card.slug}${langSuffix(lang)}`}>{t.cardView}</Link>
+            )}
+            <Link className="btn btn--secondary btn--sm" href={extras.card ? `/me${langSuffix(lang)}` : `/claim${langSuffix(lang)}`}>
+              {extras.card ? t.cardEdit : t.cardCreate}
+            </Link>
+          </p>
+        </div>
+      )}
 
       {/* Folded: adding another Thursday is the rare case, and left open it
           read as the next step — one person ended up down for five fallbacks

@@ -4,6 +4,7 @@ import { MemberUpsell } from "@/components/MemberUpsell";
 import { SceneImage } from "@/components/SceneImage";
 import { StickyCta } from "@/components/StickyCta";
 import { SignupForm } from "@/components/SignupForm";
+import { DaySwitch } from "@/components/DaySwitch";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { capFor } from "@/lib/capacity";
@@ -108,6 +109,8 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
 
             {next ? (
               <div className="stack-4" id="signup">
+                {/* Thursday or Tuesday, one tap either way (2026-11-02). */}
+                <DaySwitch lang={lang} copy={c.daySwitch} current="tuesday" />
                 <h2 className="h3">{t.signupTitle}</h2>
                 <p className="body">{t.signupLede}</p>
                 <SignupForm

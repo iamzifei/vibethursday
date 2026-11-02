@@ -29,7 +29,7 @@ export const SCREEN_LINKS = {
 export const SCREEN_TUESDAY = {
   title: "Build Tuesday · 周二动手局",
   when: "每周二 10:30–15:30 · Chatswood · 12 人闭门会",
-  price: "30 澳元 + GST · 共创会员免费",
+  price: "30 澳元 · 共创会员免费",
   points: [
     "上午｜按自己的节奏推进项目，导师团陪跑",
     "中午｜边吃边聊老板的需求",
@@ -74,7 +74,7 @@ export function screenFor(tuesday: boolean): ScreenDay {
     ],
     signupCaption: "下周二也能报 · 12 人闭门",
     second: {
-      eyebrow: "共创会员 · 599 澳元 + GST 一年",
+      eyebrow: "共创会员 · 599 澳元一年",
       title: "常来周二，办共创会员",
       price: "一年内每周二免门票",
       points: ["再送一次澳洲 AI+IP 实战课", "名片上有「共创会员」标", "刷卡付款，付完马上生效"],

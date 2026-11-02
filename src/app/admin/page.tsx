@@ -458,24 +458,49 @@ export default async function AdminPage({ searchParams }: PageProps) {
         const owing = nextFee ? nextFee.rows.filter((row) => !row.member && row.status !== "paid" && row.status !== "waived").length : 0;
         const pendingPhotos = photos.filter((p) => p.status === "pending").length;
         const drafts = progressEntries.filter((entry) => !entry.confirmed).length;
-        const tiles: { href: string; n: number; label: string; warn: boolean }[] = [
-          { href: "#waitlist", n: waitlistBySession.get(desk) ?? 0, label: "候补（本场）", warn: false },
-          ...(nextFee ? [{ href: "#tuesday-fees", n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
-          { href: "#photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
-          { href: "/admin/progress", n: drafts, label: "作品进展草稿", warn: drafts > 0 },
-          { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
-          { href: "/admin/roles#mentor", n: personRoles.filter((row) => row.role === "mentor").length, label: "导师团 · 点这里加人", warn: false },
-          { href: "/admin/roles#builder", n: personRoles.filter((row) => row.role === "builder").length, label: "共建者 · 点这里加人", warn: false },
+        type Tile = { href: string; n: number | null; label: string; warn: boolean };
+        // Split by day (2026-11-02), like the menu: Tuesday's numbers in one
+        // row, Thursday's in another, so neither has to be picked out of a mix.
+        const rows: { title: string; tiles: Tile[] }[] = [
+          {
+            title: "周二 · Build Tuesday",
+            tiles: [
+              { href: "/admin/desk?day=tue", n: null, label: "周二签到台", warn: false },
+              ...(nextFee ? [{ href: "#tuesday-fees", n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
+              { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
+              { href: "/admin/roles#mentor", n: personRoles.filter((row) => row.role === "mentor").length, label: "导师团 · 点这里加人", warn: false },
+              { href: "/admin/roles#builder", n: personRoles.filter((row) => row.role === "builder").length, label: "共建者 · 点这里加人", warn: false },
+            ],
+          },
+          {
+            title: "周四 · Vibe Thursday",
+            tiles: [
+              { href: "/admin/desk?day=thu", n: null, label: "周四签到台", warn: false },
+              { href: "#waitlist", n: waitlistBySession.get(desk) ?? 0, label: "候补（本场）", warn: false },
+              { href: "#photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
+            ],
+          },
+          {
+            title: "两天共用",
+            tiles: [{ href: "/admin/progress", n: drafts, label: "作品进展草稿", warn: drafts > 0 }],
+          },
         ];
         return (
-          <nav className="admin-tiles" aria-label="待办">
-            {tiles.map((tile) => (
-              <a key={tile.href} className={tile.warn ? "admin-tile admin-tile--warn" : "admin-tile"} href={tile.href}>
-                <strong>{tile.n}</strong>
-                <span>{tile.label}</span>
-              </a>
+          <div className="stack-4">
+            {rows.map((row) => (
+              <div className="stack-2" key={row.title}>
+                <h2 className="eyebrow" style={{ margin: 0 }}>{row.title}</h2>
+                <nav className="admin-tiles" aria-label={row.title}>
+                  {row.tiles.map((tile) => (
+                    <a key={tile.href} className={tile.warn ? "admin-tile admin-tile--warn" : "admin-tile"} href={tile.href}>
+                      <strong>{tile.n ?? "→"}</strong>
+                      <span>{tile.label}</span>
+                    </a>
+                  ))}
+                </nav>
+              </div>
             ))}
-          </nav>
+          </div>
         );
       })()}
 
@@ -1247,7 +1272,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <div className="group-head">
                   <h2 className="h3">周二收费 · {formatSession(session, "zh")}</h2>
                   <span className="body-sm" style={{ color: "var(--fg3)" }}>
-                    报名 {rows.length} · 会员 {rows.filter((row) => row.member).length} · 已付 {rows.filter((row) => row.status === "paid").length} · 未付 {owing.length}
+                    报名 {rows.length} · 会员 {rows.filter((row) => row.member).length} · 网上已付 {rows.filter((row) => row.status === "paid" && row.paid_via === "card").length} · 手动标已付（待核） {rows.filter((row) => row.status === "paid" && row.paid_via !== "card").length} · 未付 {owing.length}
                   </span>
                 </div>
                 {rows.length === 0 ? (
@@ -1280,7 +1305,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
                               {row.member
                                 ? "会员/导师团，免费"
                                 : row.status === "paid"
-                                  ? `已付 ${row.paid_at ?? ""}`
+                                  ? row.paid_via === "card"
+                                    ? `网上已付 ${row.paid_at ?? ""}`
+                                    : <strong style={{ color: "var(--warning)" }}>手动标已付 {row.paid_at ?? ""} · 待核</strong>
                                   : row.status === "waived"
                                     ? "免收"
                                     : row.claimed_at

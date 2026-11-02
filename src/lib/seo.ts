@@ -254,12 +254,13 @@ export function eventJsonLd(
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: place(),
     organizer: organizer(),
-    // A paid Build Tuesday (2026-10-14) says so: $30 + GST, as transferred.
+    // A paid Build Tuesday (2026-10-14) says so. The price is the one the
+    // page shows, before GST (2026-11-02): structured data must match it.
     isAccessibleForFree: feeFor(isoDate) === null,
     offers: (() => {
       const offer = freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`);
       const fee = feeFor(isoDate);
-      return fee === null ? offer : { ...offer, price: (fee * 1.1).toFixed(2) };
+      return fee === null ? offer : { ...offer, price: fee.toFixed(2) };
     })(),
     inLanguage: inLanguage(lang),
     image: options.images?.length ? [...options.images] : [`${base}/og.jpg`],

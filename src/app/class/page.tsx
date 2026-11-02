@@ -274,7 +274,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     ))}
                   </ul>
                   <div className="vip-offer">
-                    <p className="vip-offer__price">AUD $365 + GST</p>
+                    <p className="vip-offer__price">AUD $365</p>
                     <p className="vip-offer__eq">含一年课程会员权益</p>
                     <ul className="vip-offer__facts">
                       <li><Icon name="calendar" />2026 年 11 月 15 日（周日）· 悉尼</li>
@@ -320,7 +320,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $365 + GST，包含这一天的课和一年的课程会员权益。" />
+                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $365，包含这一天的课和一年的课程会员权益。" />
                   <ul className="vip-features">
                     {REFRESH.map((item) => (
                       <li key={item.text}>
@@ -373,7 +373,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 {/* Phones: the price and the way in, always one tap away. */}
-                <StickyCta href="#class-signup" label="AUD $365 + GST · 共创会员免费一次" cta="报名" />
+                <StickyCta href="#class-signup" label="AUD $365 · 共创会员免费一次" cta="报名" />
 
                 <div className="card card--accent stack-6 vip-signup" id="class-signup">
                 <h2>报名</h2>

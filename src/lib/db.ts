@@ -781,6 +781,13 @@ export function ensureSchema(): Promise<void> {
     // (2026-10-19): the session someone moved from, and that week's Thursday.
     // Until then they keep both, so an unpaid hold that lapses costs nothing.
     await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS replaces date[] NOT NULL DEFAULT '{}'`);
+    // Who settled a paid fee (2026-11-02): 'card' when Stripe confirmed it,
+    // 'admin' or 'helper' when someone tapped "mark paid" at the desk. A hand
+    // mark used to look exactly like a card payment, so the books could not
+    // tell which ones to check against a transfer. Rows paid before this
+    // column existed have it NULL; readers infer it (a Checkout session means
+    // card), because schema init only runs idempotent DDL.
+    await pool.query(`ALTER TABLE session_fees ADD COLUMN IF NOT EXISTS paid_via text`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS hold_until timestamptz`);
     await pool.query(`ALTER TABLE dinner_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
 
@@ -4562,7 +4569,7 @@ export async function markPaidByCard(kind: "tuesday" | "dinner" | "member", ref:
       return (result.rowCount ?? 0) > 0;
     }
     const paid = await client.query<{ signup_id: string; session: string; replaces: string[] }>(
-      `UPDATE session_fees SET status = 'paid', paid_at = now(), hold_until = NULL
+      `UPDATE session_fees SET status = 'paid', paid_at = now(), paid_via = 'card', hold_until = NULL
         WHERE ref = $1 AND status <> 'paid'
         RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session,
                   ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(replaces) AS d) AS replaces`,
@@ -4651,11 +4658,22 @@ export type SessionFee = {
   stripe_session: string | null;
   /** Sessions given up once it is paid. */
   replaces: string[];
+  /** Who settled it, when paid: card, or admin / helper by hand (2026-11-02). */
+  paid_via: "card" | "admin" | "helper" | null;
 };
+
+/**
+ * Who settled a fee, for reading (2026-11-02). Rows paid before `paid_via`
+ * existed are NULL: a Checkout session on the row means card, anything else a
+ * hand mark. Unpaid rows have none.
+ */
+const PAID_VIA_SQL = `CASE WHEN f.status <> 'paid' THEN NULL
+  ELSE coalesce(f.paid_via, CASE WHEN f.stripe_session IS NOT NULL THEN 'card' ELSE 'admin' END) END`;
 
 const FEE_SELECT = `
   SELECT f.id::text AS id, f.ref, to_char(f.session, 'YYYY-MM-DD') AS session, f.status, g.name, g.wechat,
          f.signup_id::text AS signup_id, f.hold_until, f.stripe_session,
+         ${PAID_VIA_SQL} AS paid_via,
          ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(f.replaces) AS d) AS replaces,
          to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
          to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
@@ -4693,17 +4711,25 @@ export async function listSessionFees(sessions: string[]): Promise<SessionFee[]>
 }
 
 /** Marks a fee paid, waived, or back to pending. */
-export async function setSessionFeeStatus(id: string, status: "pending" | "paid" | "waived"): Promise<void> {
+export async function setSessionFeeStatus(
+  id: string,
+  status: "pending" | "paid" | "waived",
+  /** Who marked it paid by hand; recorded as `paid_via` (a card payment never comes through here). */
+  by: "admin" | "helper" = "admin",
+): Promise<void> {
   await ensureSchema();
   // Settled by hand (a transfer, or waived): the place is theirs, so the hold
   // goes, and what it replaces is given up as a card payment would.
   const result = await getPool().query<{ signup_id: string; session: string; replaces: string[] }>(
     `UPDATE session_fees SET status = $2, paid_at = CASE WHEN $2 = 'paid' THEN now() ELSE NULL END,
+            -- An already-paid row keeps who paid it: marking a card payment
+            -- paid again must not turn it into a hand mark.
+            paid_via = CASE WHEN $2 <> 'paid' THEN NULL WHEN status = 'paid' THEN paid_via ELSE $3 END,
             hold_until = CASE WHEN $2 = 'pending' THEN hold_until ELSE NULL END
       WHERE id = $1::bigint
       RETURNING signup_id::text AS signup_id, to_char(session, 'YYYY-MM-DD') AS session,
                 ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(replaces) AS d) AS replaces`,
-    [id, status],
+    [id, status, by],
   );
   const row = result.rows[0];
   if (row && status !== "pending") {
@@ -4729,6 +4755,8 @@ export type TuesdayFeeRow = {
   status: "pending" | "paid" | "waived" | null;
   claimed_at: string | null;
   paid_at: string | null;
+  /** Who settled it, when paid: card, or admin / helper by hand (2026-11-02). */
+  paid_via: "card" | "admin" | "helper" | null;
   /** need / project / help for this Tuesday (2026-11-01), and their one sentence. */
   bring: string | null;
   topic: string | null;
@@ -4750,7 +4778,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) OR EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS member,
-            f.id::text AS fee_id, f.ref, f.status,
+            f.id::text AS fee_id, f.ref, f.status, ${PAID_VIA_SQL} AS paid_via,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
             g.tuesday_bring ->> ($1::date)::text AS bring,
@@ -5128,6 +5156,7 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
             EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS mentor,
             EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'builder') AS builder,
             f.status AS fee_status,
+            ${PAID_VIA_SQL} AS paid_via,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             g.tuesday_bring ->> ($1::date)::text AS bring,
             nullif(g.topic, '') AS topic,
@@ -5289,6 +5318,26 @@ export async function isTuesdayFree(signupId: string): Promise<boolean> {
   await ensureSchema();
   const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role = 'mentor'`, [signupId]);
   return Boolean(mentor.rowCount) || (await isMember(signupId));
+}
+
+/**
+ * What /my shows besides the sessions (2026-11-02): the person's card, if
+ * any, and their roles. One page answers "what did I sign up for, where is my
+ * card, what am I here" — before, those were three pages to find.
+ */
+export async function getMyExtras(signupId: string): Promise<{
+  card: { slug: string; published: boolean } | null;
+  mentor: boolean;
+  builder: boolean;
+}> {
+  await ensureSchema();
+  const card = await getPool().query<{ slug: string; published: boolean }>(
+    `SELECT slug, published_at IS NOT NULL AS published FROM members WHERE signup_id = $1::bigint`,
+    [signupId],
+  );
+  const roles = await getPool().query<{ role: string }>(`SELECT role FROM person_roles WHERE signup_id = $1::bigint`, [signupId]);
+  const has = (role: string) => roles.rows.some((row) => row.role === role);
+  return { card: card.rows[0] ?? null, mentor: has("mentor"), builder: has("builder") };
 }
 
 /** Signups matching a name or WeChat ID, for adding someone to a role. */

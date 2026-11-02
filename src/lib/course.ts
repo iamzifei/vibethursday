@@ -21,9 +21,9 @@ export const COURSE = {
   dateLabel: "10 月 25 日（周日）",
   timeLabel: "上午 9:00 到下午 1:00，中间有茶歇",
   placeLabel: "1/71 Chandos St, St Leonards NSW 2065",
-  priceLabel: "599 澳元 + GST",
+  priceLabel: "599 澳元",
   /** What to transfer: the price plus 10% GST. */
-  payLabel: "599 澳元 + GST",
+  payLabel: "658.90 澳元（599 + GST）",
   cap: 40,
 } as const;
 
@@ -46,7 +46,7 @@ export const MEMBERSHIP = {
   price: 599,
   /** What the card is charged: A$599 plus 10% GST. */
   amount: 658.9,
-  priceLabel: "599 澳元 + GST",
+  priceLabel: "599 澳元",
   payLabel: "658.90 澳元（599 + GST）",
   /** No real cap: high enough that a membership is never waitlisted. */
   cap: 100000,
@@ -73,7 +73,7 @@ export const IP_COURSE = {
   dateLabel: "11 月 15 日（周日）",
   timeLabel: "9:00 登记，9:30 开课，15:00 结束",
   placeLabel: "1/71 Chandos St, St Leonards NSW 2065",
-  priceLabel: "365 澳元 + GST",
+  priceLabel: "365 澳元",
   /** What to transfer: A$365 plus 10% GST. */
   payLabel: "401.50 澳元（365 + GST）",
   cap: 40,

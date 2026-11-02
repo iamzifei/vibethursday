@@ -5410,3 +5410,26 @@ body:has(.sticky-cta) > div > footer, body:has(.sticky-cta) footer.section { pad
 .live__name { font-size: 1.4rem; }
 .live__badges { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .live__line { color: var(--fg2, inherit); font-size: 1.05rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Thursday / Tuesday switch above each sign-up form (2026-11-02, DaySwitch). */
+.day-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+}
+.day-switch__tab {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 999px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--fg2);
+  font-weight: 600;
+}
+.day-switch__tab--on {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}

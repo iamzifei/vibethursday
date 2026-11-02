@@ -45,5 +45,6 @@ test("★ Build Tuesday reads like its model: own pace in the morning, mentors a
   assert.match(tuesday, /workshop/);
   // Settled facts unchanged.
   assert.match(tuesday, /10:30–15:30/);
-  assert.match(tuesday, /30 澳元 \+ GST/);
+  // Spec change 2026-11-02: the price is shown before GST, without "+ GST".
+  assert.match(tuesday, /30 澳元/);
 });

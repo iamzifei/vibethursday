@@ -12,30 +12,41 @@ export type AdminLink = { href: string; label: string; hint?: string };
 export type AdminGroup = { title: string; links: AdminLink[] };
 
 export const ADMIN_NAV: AdminGroup[] = [
+  // Split by day (2026-11-02): Tuesday and Thursday each get their own block,
+  // even where both open the same page — the organiser looks for "Tuesday's
+  // desk", not "the desk, then pick a date". `?day=tue|thu` makes the shared
+  // pages open on that day's next session (sessions.ts `sessionForDay`).
   {
-    title: "今天",
-    links: [
-      { href: "/admin", label: "总览" },
-      { href: "/admin/desk", label: "签到台", hint: "门口用，手机上看" },
-      { href: "/admin/door", label: "门口签到码", hint: "平板全屏" },
-      { href: "/live", label: "投屏：今日在场", hint: "签到一个上墙一个" },
-      { href: "/screen", label: "投屏：场地大屏", hint: "当天流程和二维码，周二周四自动切换" },
-    ],
+    title: "总览",
+    links: [{ href: "/admin", label: "总览", hint: "今天、待办数字" }],
   },
   {
-    title: "本周",
+    title: "周二 · Build Tuesday",
     links: [
-      { href: "/admin#week", label: "报名、候补、问答、海报" },
-      { href: "/admin#tuesday-fees", label: "周二收费" },
-      { href: "/admin#after", label: "散场后：照片、反馈" },
-      { href: "/admin/followup", label: "会后跟进名单", hint: "需求、项目、该推会员的" },
-    ],
-  },
-  {
-    title: "人",
-    links: [
+      { href: "/admin/desk?day=tue", label: "周二签到台", hint: "签到、看付款" },
+      { href: "/admin/door?day=tue", label: "周二门口签到码", hint: "平板全屏" },
+      { href: "/admin#tuesday-fees", label: "周二报名与收费" },
+      { href: "/admin/followup?day=tue", label: "周二会后跟进", hint: "需求、项目、该推会员的" },
       { href: "/admin/members", label: "共创会员", hint: "名单与手动登记" },
-      { href: "/admin/roles", label: "共建者与导师团", hint: "加、去身份；导师团周二免费" },
+      { href: "/admin/roles", label: "共建者与导师团", hint: "加、去身份" },
+    ],
+  },
+  {
+    title: "周四 · Vibe Thursday",
+    links: [
+      { href: "/admin/desk?day=thu", label: "周四签到台", hint: "门口用，手机上看" },
+      { href: "/admin/door?day=thu", label: "周四门口签到码", hint: "平板全屏" },
+      { href: "/admin#week", label: "周四报名、候补、问答、海报" },
+      { href: "/admin#after", label: "周四散场后：照片、反馈" },
+      { href: "/admin/followup?day=thu", label: "周四会后跟进" },
+      { href: "/admin#community", label: "社群：码头、名片" },
+    ],
+  },
+  {
+    title: "两天共用",
+    links: [
+      { href: "/live", label: "投屏：今日在场", hint: "签到一个上墙一个" },
+      { href: "/screen", label: "投屏：场地大屏", hint: "周二周四自动切换" },
       { href: "/admin/tag", label: "标注来的人" },
       { href: "/admin/people", label: "所有人画像" },
     ],
@@ -46,7 +57,6 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin/progress", label: "作品进展" },
       { href: "/admin/learn", label: "录播课" },
       { href: "/admin#course", label: "课程报名" },
-      { href: "/admin#community", label: "社群：码头、名片" },
     ],
   },
   {
@@ -63,8 +73,10 @@ export const HELPER_NAV: AdminGroup[] = [
   {
     title: "签到",
     links: [
-      { href: "/admin/desk", label: "签到台", hint: "签到、看付款" },
-      { href: "/admin/door", label: "门口签到码", hint: "平板全屏" },
+      { href: "/admin/desk?day=tue", label: "周二签到台", hint: "签到、看付款" },
+      { href: "/admin/desk?day=thu", label: "周四签到台", hint: "签到" },
+      { href: "/admin/door?day=tue", label: "周二门口签到码", hint: "平板全屏" },
+      { href: "/admin/door?day=thu", label: "周四门口签到码", hint: "平板全屏" },
     ],
   },
 ];

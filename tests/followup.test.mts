@@ -18,7 +18,7 @@ const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
 const row = (over: Partial<DeskRow>): DeskRow => ({
   id: "1", name: "A", wechat: "a", booked: true, waitlisted: false, checked_in_at: "10:40", source: "qr",
-  member: false, mentor: false, builder: false, fee_status: "paid", claimed_at: null, bring: null, topic: null,
+  member: false, mentor: false, builder: false, fee_status: "paid", paid_via: "card", claimed_at: null, bring: null, topic: null,
   building: null, sessions: [], ...over,
 });
 

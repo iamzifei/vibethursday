@@ -32,9 +32,10 @@ test("only this Tuesday and the next are offered, not every listed one", () => {
 });
 
 test("the amount: listed before GST, transferred with it", () => {
-  assert.equal(feeLabel(30), "30 澳元 + GST");
+  // Spec change 2026-11-02: public pages show the price alone; GST shows where you pay.
+  assert.equal(feeLabel(30), "30 澳元");
   assert.equal(feeToPay(30), 33);
-  assert.equal(payLabel(30), "33 澳元（含 GST）");
+  assert.equal(payLabel(30), "33 澳元（30 + GST 3）");
 });
 
 test("references: TU plus five characters with no 0/O/1/I, never mistaken for a class reference", () => {

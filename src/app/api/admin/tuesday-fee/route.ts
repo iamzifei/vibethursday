@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
   try {
     const fee = await getOrCreateSessionFee(session, signupId, newFeeRef());
-    await setSessionFeeStatus(fee.id, status);
+    await setSessionFeeStatus(fee.id, status, admin ? "admin" : "helper");
   } catch {
     return NextResponse.json({ error: "bad_id" }, { status: 400 });
   }

@@ -21,7 +21,8 @@ function adminPages(): string[] {
 }
 
 test("★ every admin page is in the navigation", () => {
-  const hrefs = new Set(ADMIN_NAV.flatMap((group) => group.links.map((link) => link.href.split("#")[0])));
+  // Spec change 2026-11-02: links may carry ?day=tue|thu, so strip the query too.
+  const hrefs = new Set(ADMIN_NAV.flatMap((group) => group.links.map((link) => link.href.split("#")[0].split("?")[0])));
   for (const page of adminPages()) assert.ok(hrefs.has(page), `${page} has no entry in ADMIN_NAV`);
   assert.ok(hrefs.has("/admin"));
 });
@@ -41,4 +42,16 @@ test("the frame wraps every admin page, but only once signed in", () => {
   assert.match(layout, /staffRole/);
   assert.match(layout, /if \(!role\) return children/);
   assert.match(layout, /AdminFrame/);
+});
+
+test("Tuesday and Thursday each have their own block with their own desk (2026-11-02)", () => {
+  const tue = ADMIN_NAV.find((group) => group.title.startsWith("周二"));
+  const thu = ADMIN_NAV.find((group) => group.title.startsWith("周四"));
+  assert.ok(tue && thu, "no 周二 / 周四 group");
+  assert.ok(tue.links.some((link) => link.href === "/admin/desk?day=tue"));
+  assert.ok(thu.links.some((link) => link.href === "/admin/desk?day=thu"));
+  for (const page of ["desk", "door", "followup"]) {
+    const source = readFileSync(path.join(adminDir, page, "page.tsx"), "utf8");
+    assert.match(source, /sessionForDay\(/, `/admin/${page} ignores ?day=`);
+  }
 });

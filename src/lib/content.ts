@@ -39,6 +39,8 @@ export const copy = {
       // "报名周四", not just "报名" (2026-11-02): on /class, /join and /tuesday a
       // bare "sign up" read as signing up for that page.
       cta: "报名周四",
+      ctaTuesday: "报名周二",
+      my: "我的",
       members: "成员",
       wharf: "码头",
       works: "作品",
@@ -583,7 +585,7 @@ export const copy = {
       classStep: "接下来怎么学？",
       // 2026-11-01：收费课已定（/class 的 AI+IP 实战课），卡片直接给课和链接。
       classCardTitle: "想有人带着学？",
-      classCardBody: "11 月 15 日（周日）澳洲 AI+IP 实战课：学点 AI，做点内容，让生意多些机会。365 澳元 + GST，含一年复训。",
+      classCardBody: "11 月 15 日（周日）澳洲 AI+IP 实战课：学点 AI，做点内容，让生意多些机会。365 澳元，含一年复训。",
       classCardCta: "看课程安排、报名 →",
       classSubmit: "先登记，有新课先通知我",
       thursdayInstead: "我还是想先来周四看看 →",
@@ -640,7 +642,7 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–15:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cells: ["每周二 10:30–15:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手", "12 人，先报名占座", "30 澳元，共创会员免费"],
           cta: "报周二",
         },
       },
@@ -655,7 +657,7 @@ export const copy = {
       // 报完周二、还没付的人看到的升单引导（2026-11-02）。
       memberUpsell: {
         title: "常来周二的话，办共创会员更划算",
-        body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办了之后，这一场也不用付了。",
+        body: "599 澳元一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办了之后，这一场也不用付了。",
         cta: "了解共创会员",
       },
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
@@ -1436,6 +1438,9 @@ export const copy = {
      * 东西这里不再问。唯一多问的一句是「今天这一场的页面上能不能出现你」，
      * 而且是用两个按钮问的，不是一个默认打勾的框：默认打勾等于没人给过的授权。
      */
+    /** The Thursday / Tuesday tabs above each sign-up form (2026-11-02). */
+    daySwitch: { label: "选哪一天报名", thursday: "周四 · 免费 · 来听来聊", tuesday: "周二 · 带项目来做" },
+
     checkin: {
       meta: { title: "签到 · Vibe Thursday" },
       eyebrow: "§ 签到",
@@ -1445,6 +1450,7 @@ export const copy = {
       invalidTitle: "这个码不是今天的。",
       invalidBody: "签到码只在当天有效。打开 vibethursday.com/go 找签到，或者找主办人。",
       toGo: "看本周 →",
+      toMy: "查我的报名 →",
       noCodeTitle: "从 vibethursday.com/go 进来签到。",
       noCodeBody: "这一页要带上当天的码才能用。",
       done: "已签到",
@@ -1564,7 +1570,7 @@ export const copy = {
         members: { title: "成员墙：来的都是谁", body: "每人一张卡，看「想找什么」和「能帮什么」那两栏。" },
         wharf: { title: "看看大家想问什么", body: "答得上来的，到了找他聊十分钟。" },
         // 当天 10 点前：没有桌上的码（James 09-30 定：不放打印的码），只提醒 10 点起这里会出现签到链接。
-        checkin: { title: "记得签到", body: "今天 10 点起，这里会出现签到链接，到了点一下就签上。" },
+    checkin: { title: "记得签到", body: "今天 10 点起，这里会出现签到链接，到了点一下就签上。" },
         // 活动当天 10:00–13:00 这一项变成链接（go.ts 的 checkinLinkOpen）。
         checkinOpen: { title: "签到", body: "点进去，选你的名字就签上了。" },
         // 当天的「我的名牌」：有名片的直接看名牌二维码；没有的先填资料（/badge 会自己转去 /claim）。
@@ -1714,12 +1720,12 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood 的周二闭门会，10:30–15:30：上午带项目的人一起聊项目和 AI 技术，中午边吃边聊老板的需求，下午当场动手做。30 澳元 + GST 一次，共创会员免费。Vibe Thursday 的姊妹场。",
+        description: "悉尼 Chatswood 的周二闭门会，10:30–15:30：上午带项目的人一起聊项目和 AI 技术，中午边吃边聊老板的需求，下午当场动手做。30 澳元一次，共创会员免费。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "带项目来，或者带需求来，当天就开始做。",
       lede: "12 人闭门会。上午按自己的节奏推进项目，导师团在旁边陪跑；中午聊老板的需求；下午 workshop 当场动手。",
-      chips: ["每周二 10:30–15:30", "Chatswood", "12 人", "30 澳元 + GST · 会员免费"],
+      chips: ["每周二 10:30–15:30", "Chatswood", "12 人", "30 澳元 · 会员免费"],
       cta: "报名周二",
       ctaMember: "会员全年免费 →",
       sceneAlt: "往期活动现场：一张长桌，大家打开电脑做东西（现场照片转绘，人物已替换）",
@@ -1728,7 +1734,7 @@ export const copy = {
         { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
         { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
+        { label: "费用", value: "30 澳元一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
       ],
       whoTitle: "给谁",
       who: [
@@ -1744,11 +1750,11 @@ export const copy = {
         { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
         { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。" },
       ],
-      stickyLabel: "周二全天 · 30 澳元 + GST",
+      stickyLabel: "周二全天 · 30 澳元",
       // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
       memberUpsell: {
         title: "常来周二？办共创会员更划算",
-        body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票（平时 30 澳元 + GST 一次），再送一次澳洲 AI+IP 实战课（365 澳元 + GST）。来 20 次周二就回本，还多一门课。",
+        body: "599 澳元一年，每年自动续费：一年内每周二免门票（平时 30 澳元一次），再送一次澳洲 AI+IP 实战课（365 澳元）。来 20 次周二就回本，还多一门课。",
         cta: "了解共创会员",
       },
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
@@ -1764,10 +1770,10 @@ export const copy = {
     // 查 / 改 / 取消我的报名。09-28 一下午群里六七个人问「我报上了吗」「报错周四了怎么改」，
     // 网站两件都做不到：场次只能加不能减，也没有地方看自己报了哪几场。
     my: {
-      meta: { title: "我的报名 · Vibe Thursday" },
-      eyebrow: "§ 我的报名",
-      title: "查一下、改时间，或者取消。",
-      lede: "填报名时用的名字和微信号，就能看到你报了哪几场。",
+      meta: { title: "我的 · Vibe Thursday" },
+      eyebrow: "§ 我的",
+      title: "报了哪几场、我的名片、我的身份，都在这一页。",
+      lede: "填报名时用的名字和微信号，就能看到你报了哪几场，也能改时间、取消、写名片。",
       nameLabel: "名字",
       wechatLabel: "微信号",
       wechatHint: "照报名时填的原样输入，大小写无所谓。",
@@ -1788,6 +1794,18 @@ export const copy = {
       feePay: "去付款",
       // 共创会员标识与「加订聚餐」（2026-10-19）。
       memberBadge: "共创会员",
+      // 2026-11-02: /my is the one "mine" page — sign-ups, card and identity.
+      rolesTitle: "我的身份",
+      roleMentor: "导师团",
+      roleBuilder: "共建者",
+      roleNone: "普通报名。来周二做项目、定下一起做的，主办人会把你标成共建者。",
+      cardTitle: "我的名片",
+      cardPublished: "已经在成员墙上。",
+      cardDraft: "写了草稿，还没公开。",
+      cardNone: "还没有名片。写一张，别人才知道你在做什么、想找什么。",
+      cardView: "看我的名片",
+      cardEdit: "改名片 / 公开",
+      cardCreate: "写我的名片",
       dinnerAddTitle: "散场后留下聚餐：{price} 澳元含 GST，一道主菜 + 一杯咖啡",
       dinnerAddPick: "选主菜",
       dinnerAddCta: "加订聚餐，去付款",
@@ -1884,6 +1902,8 @@ export const copy = {
     nav: {
       brand: "Vibe Thursday",
       cta: "Join Thursday",
+      ctaTuesday: "Join Tuesday",
+      my: "Mine",
       members: "Members",
       wharf: "The Wharf",
       works: "Works",
@@ -2339,7 +2359,7 @@ export const copy = {
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       classStep: "How would you like to learn?",
       classCardTitle: "Want someone to walk you through it?",
-      classCardBody: "Sunday 15 November, the AI + personal brand class (taught in Chinese): learn some AI, make some content, bring your business more chances. A$365 + GST, with a year of refresher sessions.",
+      classCardBody: "Sunday 15 November, the AI + personal brand class (taught in Chinese): learn some AI, make some content, bring your business more chances. A$365, with a year of refresher sessions.",
       classCardCta: "See the day and sign up →",
       classSubmit: "Register, and tell me about new classes first",
       thursdayInstead: "I'd rather come on a Thursday first →",
@@ -2378,7 +2398,7 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–15:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: projects and tech in the morning, business owners' needs over lunch, a hands-on workshop after", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cells: ["Tuesdays 10:30–15:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: projects and tech in the morning, business owners' needs over lunch, a hands-on workshop after", "12, sign up to hold a place", "A$30; members free"],
           cta: "Sign up for Tuesday",
         },
       },
@@ -2389,7 +2409,7 @@ export const copy = {
       feeMember: "No fee for you this time.",
       memberUpsell: {
         title: "Coming most Tuesdays? Membership works out cheaper",
-        body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
+        body: "A$599 a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
         cta: "About membership",
       },
       feeDue: "One step left: transfer {amount} to confirm your place.",
@@ -3033,6 +3053,8 @@ export const copy = {
       avatarFailed: "That did not upload. Try another image or another browser.",
     },
 
+    daySwitch: { label: "Which day to sign up for", thursday: "Thursday · free · come and talk", tuesday: "Tuesday · bring a project" },
+
     checkin: {
       meta: { title: "Check in · Vibe Thursday" },
       eyebrow: "§ Check in",
@@ -3042,6 +3064,7 @@ export const copy = {
       invalidTitle: "This code is not today’s.",
       invalidBody: "A check-in code only works on the day. Find check-in on vibethursday.com/go, or ask the organiser.",
       toGo: "This week →",
+      toMy: "My sign-ups →",
       noCodeTitle: "Check in from vibethursday.com/go.",
       noCodeBody: "This page needs today’s code.",
       done: "Checked in",
@@ -3273,12 +3296,12 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, a closed Tuesday session, 10:30–15:30: projects and AI tech in the morning, business owners' needs over lunch, a hands-on workshop in the afternoon. A$30 + GST; members free. A sister session of Vibe Thursday.",
+        description: "Chatswood, Sydney, a closed Tuesday session, 10:30–15:30: projects and AI tech in the morning, business owners' needs over lunch, a hands-on workshop in the afternoon. A$30; members free. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
       title: "Bring a project or a real need, and start on it the same day.",
       lede: "Twelve people, behind closed doors. Work on your own project at your own pace in the morning, with mentors alongside as guides; owners' needs over lunch; a hands-on workshop after.",
-      chips: ["Tuesdays 10:30–15:30", "Chatswood", "12 places", "A$30 + GST · members free"],
+      chips: ["Tuesdays 10:30–15:30", "Chatswood", "12 places", "A$30 · members free"],
       cta: "Sign up for Tuesday",
       ctaMember: "Free all year for members →",
       sceneAlt: "A past session: one long table, laptops open (redrawn from a photo; faces replaced)",
@@ -3287,7 +3310,7 @@ export const copy = {
         { label: "Time", value: "10:30–15:30, in three parts; the morning alone is fine" },
         { label: "Where", value: "Chatswood. Once you have signed up and paid, the address and a directions map show on the payment page and under \"My signup\"" },
         { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
-        { label: "Cost", value: "A$30 + GST for the whole day, paid by card within 30 minutes of signing up, which locks in your place; members free" },
+        { label: "Cost", value: "A$30 for the whole day, paid by card within 30 minutes of signing up, which locks in your place; members free" },
       ],
       whoTitle: "Who it is for",
       who: [
@@ -3301,10 +3324,10 @@ export const copy = {
         { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
         { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need." },
       ],
-      stickyLabel: "Tuesday · A$30 + GST",
+      stickyLabel: "Tuesday · A$30",
       memberUpsell: {
         title: "Coming most Tuesdays? Membership works out cheaper",
-        body: "A$599 + GST a year, renewed automatically: every Tuesday free for the year (normally A$30 + GST each), plus one AI+IP class (A$365 + GST). Twenty Tuesdays pays for it, and the class is on top.",
+        body: "A$599 a year, renewed automatically: every Tuesday free for the year (normally A$30 each), plus one AI+IP class (A$365). Twenty Tuesdays pays for it, and the class is on top.",
         cta: "About membership",
       },
       compareTitle: "Tuesday or Thursday?",
@@ -3317,10 +3340,10 @@ export const copy = {
     },
 
     my: {
-      meta: { title: "My signup · Vibe Thursday" },
-      eyebrow: "§ My signup",
-      title: "Check it, change the date, or cancel.",
-      lede: "Enter the name and WeChat ID you signed up with to see which Thursdays you are down for.",
+      meta: { title: "Mine · Vibe Thursday" },
+      eyebrow: "§ Mine",
+      title: "Your sign-ups, your card and who you are here, on one page.",
+      lede: "Enter the name and WeChat ID you signed up with to see your sessions, change or cancel them, and write your card.",
       nameLabel: "Name",
       wechatLabel: "WeChat ID",
       wechatHint: "Exactly as you entered it when signing up; capitals do not matter.",
@@ -3339,6 +3362,17 @@ export const copy = {
       feePaid: "Paid",
       feePay: "Pay",
       memberBadge: "Co-creator member",
+      rolesTitle: "Who you are here",
+      roleMentor: "Mentor",
+      roleBuilder: "Co-builder",
+      roleNone: "Signed up. Come to a Tuesday and settle on a project with someone, and the organiser will mark you a co-builder.",
+      cardTitle: "Your card",
+      cardPublished: "On the members wall.",
+      cardDraft: "Written as a draft, not public yet.",
+      cardNone: "No card yet. Write one so people know what you are building and looking for.",
+      cardView: "See my card",
+      cardEdit: "Edit / publish",
+      cardCreate: "Write my card",
       dinnerAddTitle: "Stay for dinner: A${price} incl. GST, a main and a coffee",
       dinnerAddPick: "Pick a main",
       dinnerAddCta: "Add dinner and pay",

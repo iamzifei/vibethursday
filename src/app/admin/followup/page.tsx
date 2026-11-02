@@ -6,13 +6,13 @@ import { isSessionDate } from "@/lib/checkin";
 import { listDeskRows } from "@/lib/db";
 import { buildDesk } from "@/lib/desk";
 import { ACTION_LABEL, ACTION_ORDER, followUps } from "@/lib/followup";
-import { deskSession, feeFor, formatSession } from "@/lib/sessions";
+import { deskSession, feeFor, formatSession, sessionForDay } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "会后跟进 · 后台", robots: { index: false, follow: false } };
 
-type PageProps = { searchParams: Promise<{ s?: string }> };
+type PageProps = { searchParams: Promise<{ s?: string; day?: string }> };
 
 /**
  * After a session (2026-11-02, followup.ts): the people who came, grouped by
@@ -27,8 +27,8 @@ export default async function FollowUpPage({ searchParams }: PageProps) {
       </main>
     );
   }
-  const { s } = await searchParams;
-  const session = s && isSessionDate(s) ? s : deskSession();
+  const { s, day } = await searchParams;
+  const session = s && isSessionDate(s) ? s : (sessionForDay(day) ?? deskSession());
   const items = followUps(buildDesk(await listDeskRows(session), feeFor(session) !== null), session);
 
   return (

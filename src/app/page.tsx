@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SydneySkyline } from "@/components/SydneySkyline";
 import { SessionCompare } from "@/components/SessionCompare";
 import { SignupForm } from "@/components/SignupForm";
+import { DaySwitch } from "@/components/DaySwitch";
 import { SceneImage } from "@/components/SceneImage";
 import { StickyCta } from "@/components/StickyCta";
 import { dinnerConfig } from "@/lib/dinner";
@@ -298,6 +299,8 @@ export default async function Page({ searchParams }: PageProps) {
           <div className="shell stack-8">
             <div className="stack-4">
               <span className="eyebrow">{c.signup.eyebrow}</span>
+              {/* Thursday or Tuesday, one tap either way (2026-11-02). */}
+              {tuesdayOpen && <DaySwitch lang={lang} copy={c.daySwitch} current="thursday" />}
               {/* Title, then one line on where people go — no second line
                   restating the title (2026-10-05 tidy-up). */}
               <h2>{c.signup.title}</h2>

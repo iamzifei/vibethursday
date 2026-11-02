@@ -302,6 +302,19 @@ export function sessionName(isoDate: string, lang: Lang): string {
 }
 
 /**
+ * The session an admin link with `?day=tue` or `?day=thu` means (2026-11-02):
+ * the next Build Tuesday from today, or the Thursday in focus (today's until
+ * it is over, so the after-session pages still find it). Lets the admin menu
+ * keep Tuesday and Thursday apart with fixed links. Null for anything else.
+ */
+export function sessionForDay(day: unknown): string | null {
+  if (day === "thu") return focusSession().date;
+  if (day !== "tue") return null;
+  const today = sydneyToday().toISOString().slice(0, 10);
+  return SPECIAL_SESSIONS.map((item) => item.date).filter((date) => date >= today).sort()[0] ?? null;
+}
+
+/**
  * The session the organiser's check-in desk (/admin, /admin/door) is set up
  * for: a special session on its own day, otherwise `focusSession`.
  *

@@ -4,7 +4,7 @@ import { KeepAwake } from "@/components/KeepAwake";
 import { staffRole } from "@/lib/staff";
 import { checkinCode, isSessionDate } from "@/lib/checkin";
 import { requestOrigin } from "@/lib/request-origin";
-import { deskSession, formatSession } from "@/lib/sessions";
+import { deskSession, formatSession, sessionForDay } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "签到 · Vibe Thursday", robots: { 
  * it carries the whole signup list (James 2026-10-01). Organiser-only, like
  * /admin, so the code is not one more public link.
  */
-type PageProps = { searchParams: Promise<{ s?: string }> };
+type PageProps = { searchParams: Promise<{ s?: string; day?: string }> };
 
 export default async function DoorPage({ searchParams }: PageProps) {
   // The organiser or the helper at the door (2026-11-02).
@@ -39,8 +39,8 @@ export default async function DoorPage({ searchParams }: PageProps) {
   // The Tuesday on a Build Tuesday, otherwise the Thursday in focus — or any
   // date given as ?s=, so a code can be printed ahead and taped to the door
   // (2026-11-02). It still only works on that day.
-  const requested = (await searchParams).s;
-  const session = requested && isSessionDate(requested) ? requested : deskSession();
+  const { s: requested, day } = await searchParams;
+  const session = requested && isSessionDate(requested) ? requested : (sessionForDay(day) ?? deskSession());
   const url = `${await requestOrigin()}/checkin?s=${session}&k=${checkinCode(session)}`;
   // Dark on white, never inverted: plenty of scanners fail on a light-on-dark code.
   const qr = await QRCode.toString(url, {

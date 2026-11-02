@@ -32,6 +32,9 @@ export const NAV_LINKS = [
   { href: "/works", label: "works" },
   // 2026-11-01: the guide took /play's slot — it is the community's one rules page.
   { href: "/guide", label: "guide" },
+  // 2026-11-02: one page for "what did I sign up for, my card, am I a member".
+  // Those used to be three pages a newcomer had to find on their own.
+  { href: "/my", label: "my" },
   // Not in the bar: "/wharf" (since 2026-10-11, linked from the archive),
   // "/support" (since 2026-10-15, in the home page footer), "/play" (footer
   // since 2026-11-01).
@@ -45,6 +48,19 @@ export const SUPPORT_LINK = { href: "/support", label: "support" } as const;
 
 /** The sign-up CTA, which is the bar's one accented item. */
 export const NAV_CTA = { href: "/#signup", label: "cta" } as const;
+
+/** The bar's sign-up button on the Tuesday pages: Tuesday's own form. */
+export const NAV_CTA_TUESDAY = { href: "/tuesday#signup", label: "ctaTuesday" } as const;
+
+/**
+ * Which sign-up the bar offers on a page (2026-11-02). Everywhere it was
+ * "sign up for Thursday", so someone reading about Tuesday had to scroll past
+ * the button to find Tuesday's form. On /tuesday and below it now goes there.
+ */
+export function navCtaFor(path: string): { href: string; label: "cta" | "ctaTuesday" } {
+  const tuesday = path === "/tuesday" || path.startsWith("/tuesday/");
+  return tuesday ? { ...NAV_CTA_TUESDAY } : { ...NAV_CTA };
+}
 
 /**
  * Puts the current language on an internal href, ahead of any fragment.

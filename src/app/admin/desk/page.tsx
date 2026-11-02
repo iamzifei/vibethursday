@@ -6,20 +6,22 @@ import { isSessionDate } from "@/lib/checkin";
 import { capFor } from "@/lib/capacity";
 import { listDeskRows } from "@/lib/db";
 import { buildDesk, deskStats, filterDesk, maskWechat, type DeskEntry, type PayState } from "@/lib/desk";
-import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
+import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, sessionForDay, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
 import { feeLabel, payLabel } from "@/lib/tuesday-fee";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "签到台 · 后台", robots: { index: false, follow: false } };
 
-type PageProps = { searchParams: Promise<{ s?: string; q?: string; show?: string }> };
+type PageProps = { searchParams: Promise<{ s?: string; day?: string; q?: string; show?: string }> };
 
 const PAY_LABEL: Record<PayState, string> = {
   free: "",
   member: "共创会员 · 免费",
   mentor: "导师团 · 免费",
-  paid: "已付",
+  paid: "网上已付",
+  // Tapped "mark paid" at the desk (2026-11-02): still to be checked against a transfer.
+  marked: "手动标已付 · 待核",
   waived: "免收",
   claimed: "说已转账 · 待核",
   owing: "未付",
@@ -60,7 +62,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
   // Tuesday, though /admin's focus is still on Thursday until the day itself.
   const upcomingTuesday = SPECIAL_SESSIONS.map((item) => item.date).filter((date) => date >= today).sort()[0];
   const focus = [deskSession(), upcomingTuesday].filter(Boolean).sort()[0] as string;
-  const session = params.s && isSessionDate(params.s) ? params.s : focus;
+  const session = params.s && isSessionDate(params.s) ? params.s : (sessionForDay(params.day) ?? focus);
   const query = (params.q ?? "").trim().slice(0, 50);
   const show = params.show === "arrived" || params.show === "waiting" || params.show === "owing" ? params.show : "all";
 
@@ -104,7 +106,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
           {entry.mentor && entry.pay !== "mentor" && <span className="pill pill--live">导师团</span>}
           {entry.builder && <span className="pill pill--live">共建者</span>}
           {entry.pay !== "free" && (
-            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" ? " pill--warn" : " pill--live"}`}>
+            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" || entry.pay === "marked" ? " pill--warn" : " pill--live"}`}>
               {PAY_LABEL[entry.pay]}
               {entry.pay === "claimed" && entry.claimed_at ? ` ${entry.claimed_at}` : ""}
             </span>
@@ -143,7 +145,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
             </form>
           </>
         )}
-        {(entry.pay === "paid" || entry.pay === "waived") && (
+        {(entry.pay === "paid" || entry.pay === "marked" || entry.pay === "waived") && (
           <form method="post" action="/api/admin/tuesday-fee">
             <input type="hidden" name="session" value={session} />
             <input type="hidden" name="signupId" value={entry.id} />
@@ -165,7 +167,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
         <div className="tagger-top">
           <span className="eyebrow">后台 · 签到台</span>
           <span className="tagger-top__links">
-            <Link href="/admin/door">门口签到码</Link>
+            <Link href={`/admin/door?s=${session}`}>门口签到码</Link>
             {role === "admin" && <Link href="/admin">回后台</Link>}
           </span>
         </div>
@@ -173,6 +175,10 @@ export default async function DeskPage({ searchParams }: PageProps) {
           {formatSession(session, "zh")}
           {tuesday ? " · Build Tuesday" : ""}
         </h1>
+        {/* "周二签到台" with no Tuesday on the calendar falls back to Thursday: say so. */}
+        {params.day === "tue" && !params.s && !tuesday && (
+          <p className="alert" role="status">还没有排上的周二场次，下面显示的是周四。</p>
+        )}
         {session !== today && (
           <p className="alert" role="status">这不是今天的场次。签到按钮照样能用，但请确认你看的是对的那一天。</p>
         )}
@@ -202,7 +208,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
           {fee !== null && (
             <>
               <li>
-                看付款：绿色（已付 / 共创会员 / 免收）不用管。<strong>黄色「未付」</strong>：门票 {feeLabel(fee)}，共 {payLabel(fee)}。点「付款码」让对方扫码刷卡，付完自动变已付；对方当场转账的，看到到账截图后点「标已付」。
+                看付款：绿色（网上已付 / 共创会员 / 免收）不用管。<strong>黄色「未付」</strong>：门票 {feeLabel(fee)}，共 {payLabel(fee)}。点「付款码」让对方扫码刷卡，付完自动变已付；对方当场转账的，看到到账截图后点「标已付」。手动标的会显示黄色「手动标已付 · 待核」，主办人对账后才算数。
               </li>
               <li>「说已转账 · 待核」= 对方在网站上点过「我已转账」，钱还没核。由主办人散场后核，现场不用追。</li>
               <li>想入共创会员的：一年周二免门票，链接是 vibethursday.com/join，让对方自己付，不用你处理。</li>

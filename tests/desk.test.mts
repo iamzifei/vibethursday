@@ -29,6 +29,7 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
   mentor: false,
   builder: false,
   fee_status: null,
+  paid_via: null,
   claimed_at: null,
   bring: null,
   topic: null,
@@ -41,7 +42,8 @@ test("★ on a paid Tuesday each person is member / paid / waived / says-paid / 
   const desk = buildDesk(
     [
       row({ id: "1", member: true }),
-      row({ id: "2", fee_status: "paid" }),
+      // Spec change 2026-11-02: "paid" is a card payment; a hand mark is "marked".
+      row({ id: "2", fee_status: "paid", paid_via: "card" }),
       row({ id: "3", fee_status: "waived" }),
       row({ id: "4", claimed_at: "11-03 09:10" }),
       row({ id: "5" }),
@@ -104,9 +106,12 @@ test("★ the desk is organiser-only, and its buttons come back to it", () => {
 });
 
 // Spec change 2026-11-02 (admin frame): the jump bar became the sidebar.
-test("the admin navigation leads with the desk", async () => {
+test("the admin navigation leads with the overview, then each day's desk", async () => {
+  // Spec change 2026-11-02: the menu is split into a Tuesday and a Thursday block.
   const { ADMIN_NAV } = await import("../src/lib/admin-nav.ts");
-  assert.deepEqual(ADMIN_NAV[0].links.slice(0, 2).map((link) => link.href), ["/admin", "/admin/desk"]);
+  assert.equal(ADMIN_NAV[0].links[0].href, "/admin");
+  assert.equal(ADMIN_NAV[1].links[0].href, "/admin/desk?day=tue");
+  assert.equal(ADMIN_NAV[2].links[0].href, "/admin/desk?day=thu");
 });
 
 test("the room's check-in page ends with the day's one rule, never someone's own payment status", () => {
