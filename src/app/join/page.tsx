@@ -146,6 +146,9 @@ export default async function JoinPage({ searchParams }: PageProps) {
                   <h1>一年的 Build Tuesday，再加一次 AI+IP 课。</h1>
                   <p className="body-lg" style={{ margin: 0 }}>{MEMBERSHIP.priceLabel} 一年，刷卡付款，付完马上生效，每年自动续费。</p>
                 </div>
+                {!alreadyMember && (
+                  <a className="btn btn--primary btn--block" href="#join-form" style={{ fontSize: "1.15rem" }}>加入 · {MEMBERSHIP.priceLabel} / 年</a>
+                )}
                 <SceneImage id="scene-2" alt="Vibe Thursday 现场：有人站着分享，大家围着长桌听（现场照片转绘，人物已替换）" eager />
                 {perks}
                 {error && <p className="alert" role="alert">{error}</p>}

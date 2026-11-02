@@ -5043,8 +5043,6 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vip-stats div { display: flex; flex-direction: column-reverse; gap: var(--space-1); }
 .vip-stats dt { color: var(--fg3); font-size: 0.8rem; }
 .vip-stats dd { margin: 0; color: var(--accent); font-size: 1.4rem; font-weight: 700; white-space: nowrap; }
-.vip-photos { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
-.vip-photos img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-md); }
 .vip-speaker { display: flex; flex-direction: column; gap: var(--space-1); }
 .vip-speaker p { margin: 0; color: var(--fg2); line-height: 1.7; }
 .vip-speaker__label { color: var(--fg3) !important; font-size: 0.8rem; }
@@ -5078,14 +5076,6 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .vip-faq p { margin: var(--space-2) 0 0; color: var(--fg2); line-height: 1.7; }
 
 .vip-signup { width: 100%; margin-top: var(--space-8); scroll-margin-top: 80px; }
-
-/* Phones only: the offer stays one tap away. Room left at the bottom so the
-   bar never covers the form's last button. */
-.vip-sticky { position: fixed; left: var(--space-4); right: var(--space-4); bottom: calc(var(--space-4) + env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: 999px; background: var(--accent); color: var(--bg-primary); text-decoration: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); font-size: 0.9rem; }
-.vip-sticky strong { white-space: nowrap; font-size: 1rem; }
-.vip-sticky:hover { color: var(--bg-primary); }
-@media (min-width: 720px) { .vip-sticky { display: none; } }
-@media (max-width: 719px) { body:has(.vip-sticky) footer { padding-bottom: 96px; } }
 
 /* ── Venue screen (/screen, 2026-10-22): two slides take turns on a landscape TV ── */
 .screen { position: relative; min-height: 100dvh; overflow: hidden; }

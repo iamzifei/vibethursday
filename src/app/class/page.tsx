@@ -5,6 +5,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WeChatMark } from "@/components/WeChatMark";
 import { Celebration } from "@/components/Celebration";
+import { SceneImage } from "@/components/SceneImage";
+import { StickyCta } from "@/components/StickyCta";
+import { CLASS_SCENES } from "@/lib/scenes";
 import { currentAccount } from "@/lib/account";
 import { getCopy } from "@/lib/content";
 import { COURSE, IP_COURSE, looksLikeCourseRef } from "@/lib/course";
@@ -88,14 +91,10 @@ const REFRESH: { icon: IconName; text: string }[] = [
   { icon: "list", text: "复训日期、主题及预约安排提前通知" },
 ];
 
-
-/** Past Thursdays, faces already covered. */
-const PROOF_PHOTOS = ["session-03-3", "session-04-5", "session-07-2"];
-
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
   { q: "365 包含什么？", a: "11 月 15 日这一天的课，加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
-  { q: "我是共创会员，要付钱吗？", a: "不用，这门课已经包含在你的会员里。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
+  { q: "我是共创会员，要付钱吗？", a: "不用，共创会员可免费参加一次。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
   { q: "安排会变吗？", a: "上面是首期的拟定安排，具体时间和安排以最终通知为准。" },
 ];
 
@@ -283,9 +282,14 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       <li><Icon name="pin" />{IP_COURSE.placeLabel}</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">共创会员已包含这门课，报名免费</p>
+                    <p className="vip-offer__left">共创会员可免费参加一次</p>
                   </div>
                 </header>
+
+                <figure className="stack-2" style={{ margin: 0 }}>
+                  <SceneImage id="class-1" alt="上一期课程现场，教室坐满" eager />
+                  <figcaption className="hint">{CLASS_SCENES[0].zh}（现场照片转绘，人物的脸都换掉了）</figcaption>
+                </figure>
 
                 <section className="vip-section">
                   <SectionHead n="01" title="课程安排" lead="2026 年 11 月 15 日（周日）· 悉尼 St Leonards" />
@@ -335,20 +339,20 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="04" title="不是新开的网课，是每周都在的线下圈子" />
+                  <SectionHead n="04" title="不是新开的网课，是每周都在的线下圈子" lead="上一期 10 月 25 日的现场，照片转绘，人物的脸都换掉了。" />
+                  <div className="scene-strip" role="region" aria-label="上一期课程现场" tabIndex={0}>
+                    {CLASS_SCENES.slice(1).map((scene) => (
+                      <figure key={scene.id}>
+                        <SceneImage id={scene.id} alt="" sizes="(min-width: 720px) 330px, 85vw" />
+                        <figcaption className="hint">{scene.zh}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
                   <dl className="vip-stats">
                     <div><dt>已办周四聚会</dt><dd>11 场</dd></div>
                     <div><dt>每场到场</dt><dd>40–70 人</dd></div>
                   </dl>
-                  <div className="vip-photos">
-                    {PROOF_PHOTOS.slice(0, 2).map((name) => (
-                      <picture key={name}>
-                        <source type="image/avif" srcSet={`/photos/${name}-800.avif`} />
-                        <img src={`/photos/${name}-800.jpg`} width={800} height={450} alt="往期周四聚会现场" loading="lazy" />
-                      </picture>
-                    ))}
-                  </div>
-                  <p className="vip-note">截至 10 月；照片里的脸都遮过了。</p>
+                  <p className="vip-note">截至 10 月。</p>
                   <div className="vip-speaker">
                     <p className="vip-speaker__label">主讲之一</p>
                     <p className="vip-speaker__name">James</p>
@@ -369,19 +373,16 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 {/* Phones: the price and the way in, always one tap away. */}
-                <a className="vip-sticky" href="#class-signup">
-                  <span>AUD $365 + GST · 含一年课程会员权益</span>
-                  <strong>报名</strong>
-                </a>
+                <StickyCta href="#class-signup" label="AUD $365 + GST · 共创会员免费一次" cta="报名" />
 
-                <div className="card card--accent stack-6 vip-signup">
-                <h2 id="class-signup">报名</h2>
+                <div className="card card--accent stack-6 vip-signup" id="class-signup">
+                <h2>报名</h2>
                 <p className="body-lg">
                   时间：{IP_COURSE.dateLabel}，{IP_COURSE.timeLabel}
                   <br />
                   地点：{IP_COURSE.placeLabel}
                   <br />
-                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；共创会员免费
+                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；共创会员可免费参加一次
                   <br />
                   席位有限，报满即止
                 </p>
