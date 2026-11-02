@@ -19,6 +19,7 @@ const PAY_LABEL: Record<PayState, string> = {
   free: "",
   member: "共创会员 · 免费",
   mentor: "导师团 · 免费",
+  volunteer: "志愿者 · 免费",
   paid: "网上已付",
   // Tapped "mark paid" at the desk (2026-11-02): still to be checked against a transfer.
   marked: "手动标已付 · 待核",

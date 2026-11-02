@@ -5,6 +5,7 @@ import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { MEMBERSHIP } from "@/lib/course";
 import { feeToPay } from "@/lib/tuesday-fee";
+import { siteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,16 @@ export default async function PayLinksPage() {
     },
   ];
 
+  // The site's own quick forms (2026-11-02): a nickname and a WeChat ID, then
+  // pay. These register the person themselves; nothing to do by hand after.
+  const origin = siteUrl();
+  const forms = [
+    { id: "quick-tue", title: "周二快速报名（填名字、微信号 → 直接刷卡）", url: `${origin}/quick?d=tue` },
+    { id: "quick-thu", title: "周四快速报名（填名字、微信号 → 报上，免费）", url: `${origin}/quick?d=thu` },
+    { id: "join", title: "共创会员（填名字、微信号 → 直接刷卡）", url: `${origin}/join#join-form` },
+  ];
+  const formCodes = await Promise.all(forms.map((form) => QRCode.toDataURL(form.url, { width: 480, margin: 1 })));
+
   const codes = await Promise.all(
     links.map((link) => (link.url ? QRCode.toDataURL(link.url, { width: 480, margin: 1 }) : Promise.resolve(""))),
   );
@@ -71,9 +82,23 @@ export default async function PayLinksPage() {
         </p>
       </div>
 
+      <h2 className="h3" style={{ margin: 0 }}>一、网站上的快速报名（推荐）</h2>
+      <p className="body-sm" style={{ margin: 0 }}>对方只填名字和微信号，付完自动登记，你不用再手动处理。</p>
+      {forms.map((form, index) => (
+        <section className="card stack-3" key={form.id} id={form.id} style={{ padding: "var(--space-6)" }}>
+          <h3 className="h3" style={{ margin: 0 }}>{form.title}</h3>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a data URL made on the server */}
+          <img src={formCodes[index]} alt={`${form.title}的二维码`} width={240} height={240} style={{ background: "#fff", borderRadius: "8px" }} />
+          <p className="body-sm mono" style={{ overflowWrap: "anywhere", margin: 0 }}>{form.url}</p>
+          <CopyLinkButton url={form.url} label="复制链接" copiedLabel="已复制" failedLabel="复制失败，长按上面的链接复制" />
+        </section>
+      ))}
+
+      <h2 className="h3" style={{ margin: 0 }}>二、Stripe 直接付款链接</h2>
+      <p className="body-sm" style={{ margin: 0 }}>不经过网站，付完要你按卡片下面的步骤手动登记。</p>
       {links.map((link, index) => (
         <section className="card stack-3" key={link.id} id={link.id} style={{ padding: "var(--space-6)" }}>
-          <h2 className="h3" style={{ margin: 0 }}>{link.title}</h2>
+          <h3 className="h3" style={{ margin: 0 }}>{link.title}</h3>
           <p className="body" style={{ margin: 0 }}>{link.amount}</p>
           {link.url ? (
             <>

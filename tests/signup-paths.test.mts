@@ -61,7 +61,7 @@ test("/my is in the bar", () => {
 
 const row = (over: Partial<DeskRow>): DeskRow => ({
   id: "1", name: "A", wechat: null, booked: true, waitlisted: false, checked_in_at: null, source: null,
-  member: false, mentor: false, builder: false, fee_status: null, paid_via: null, claimed_at: null,
+  member: false, mentor: false, volunteer: false, builder: false, fee_status: null, paid_via: null, claimed_at: null,
   bring: null, topic: null, building: null, sessions: [], ...over,
 });
 

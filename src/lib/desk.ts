@@ -35,6 +35,8 @@ export type DeskRow = {
   member: boolean;
   /** On the 导师团: free on Tuesdays (2026-11-02). */
   mentor: boolean;
+  /** A 志愿者 who helps run the day: free on Tuesdays (2026-11-02). */
+  volunteer: boolean;
   /** A 共建者 on some project. */
   builder: boolean;
   fee_status: "pending" | "paid" | "waived" | null;
@@ -51,7 +53,7 @@ export type DeskRow = {
   sessions: string[];
 };
 
-export type PayState = "free" | "member" | "mentor" | "paid" | "marked" | "waived" | "claimed" | "owing" | "ask";
+export type PayState = "free" | "member" | "mentor" | "volunteer" | "paid" | "marked" | "waived" | "claimed" | "owing" | "ask";
 
 export type DeskEntry = DeskRow & {
   arrived: boolean;
@@ -63,6 +65,7 @@ function payState(row: DeskRow, paidSession: boolean): PayState {
   if (!paidSession) return "free";
   if (row.member) return "member";
   if (row.mentor) return "mentor";
+  if (row.volunteer) return "volunteer";
   if (!row.booked) return "ask";
   // Marked by hand is its own state (2026-11-02): it still needs checking
   // against a transfer, where a card payment does not.
@@ -147,6 +150,7 @@ const IDENTITY: Record<PayState, string> = {
   free: "已报名",
   member: "共创会员",
   mentor: "导师团",
+  volunteer: "志愿者",
   paid: "网上已付",
   marked: "手动标已付",
   waived: "免收",

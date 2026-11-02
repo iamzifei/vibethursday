@@ -21,8 +21,9 @@ import { PERSON_ROLE_KINDS, ROLE_LABEL } from "../src/lib/person-roles.ts";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("two roles, named as the organiser names them", () => {
-  assert.deepEqual([...PERSON_ROLE_KINDS], ["builder", "mentor"]);
+test("three roles, named as the organiser names them", () => {
+  // Spec change 2026-11-02: 志愿者 added (free on Tuesdays, not on public cards).
+  assert.deepEqual([...PERSON_ROLE_KINDS], ["builder", "mentor", "volunteer"]);
   assert.equal(ROLE_LABEL.builder, "共建者");
   assert.equal(ROLE_LABEL.mentor, "导师团");
 });

@@ -73,6 +73,9 @@ test("★ schema init is only idempotent DDL: nothing it runs can fail or change
     "ALTER TABLE signups ALTER COLUMN email DROP N",
     "UPDATE signups SET waitlist_since = waitlist_",
     "UPDATE signups SET sessions = ARRAY(SELECT d ",
+    // Spec change 2026-11-02: the role check gains 'volunteer'. Dropped and
+    // re-added in one statement, so a second run ends where the first did.
+    "ALTER TABLE person_roles DROP CONSTRAINT IF E",
   ]);
 });
 

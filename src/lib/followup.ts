@@ -36,7 +36,7 @@ export function followUps(desk: readonly DeskEntry[], session: string): { entry:
         const at = Date.parse(`${date}T00:00:00Z`);
         return isSpecialSession(date) && at <= end && end - at <= 30 * DAY;
       }).length;
-      if (!entry.member && !entry.mentor && recentTuesdays >= 2) actions.push("membership");
+      if (!entry.member && !entry.mentor && !entry.volunteer && recentTuesdays >= 2) actions.push("membership");
       if (entry.sessions.filter((date) => date < session).length === 0) actions.push("first");
       return { entry, actions };
     })

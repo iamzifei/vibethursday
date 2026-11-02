@@ -27,6 +27,7 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
   source: null,
   member: false,
   mentor: false,
+  volunteer: false,
   builder: false,
   fee_status: null,
   paid_via: null,

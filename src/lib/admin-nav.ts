@@ -29,7 +29,7 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin/followup?day=tue", label: "周二会后跟进", hint: "需求、项目、该推会员的" },
       { href: "/admin/paylinks", label: "直接付款链接", hint: "30 和 599 的链接、二维码" },
       { href: "/admin/members", label: "共创会员", hint: "名单与手动登记" },
-      { href: "/admin/roles", label: "共建者与导师团", hint: "加、去身份" },
+      { href: "/admin/roles", label: "共建者、导师团、志愿者", hint: "加、去身份" },
     ],
   },
   {

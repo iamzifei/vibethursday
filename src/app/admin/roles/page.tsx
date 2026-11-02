@@ -6,12 +6,13 @@ import { PERSON_ROLE_KINDS, ROLE_LABEL, type PersonRoleKind } from "@/lib/person
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "共建者与导师团 · 后台", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "共建者、导师团与志愿者 · 后台", robots: { index: false, follow: false } };
 
 type PageProps = { searchParams: Promise<{ q?: string; err?: string }> };
 
 const ABOUT: Record<PersonRoleKind, string> = {
   mentor: "主办人定向邀请、有专业能力或行业认知的人。来周二免费，名片上显示「导师团」。",
+  volunteer: "帮忙办活动的人（签到台、门口）。来周二免费；只在后台可见，名片上不显示。",
   builder: "来周二、确定一起做某个项目的人，交付方或需求方都算。名片上显示「共建者」；备注写做哪个项目。",
 };
 
@@ -79,7 +80,7 @@ export default async function RolesPage({ searchParams }: PageProps) {
         )}
       </section>
 
-      {(["mentor", "builder"] as const).map((role) => (
+      {(["mentor", "volunteer", "builder"] as const).map((role) => (
         <section className="stack-3" id={role} key={role}>
           <h2 className="h3" style={{ margin: 0 }}>{ROLE_LABEL[role]} · {holders(role).length} 人</h2>
           <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>{ABOUT[role]}</p>

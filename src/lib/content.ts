@@ -1797,6 +1797,7 @@ export const copy = {
       // 2026-11-02: /my is the one "mine" page — sign-ups, card and identity.
       rolesTitle: "我的身份",
       roleMentor: "导师团",
+      roleVolunteer: "志愿者",
       roleBuilder: "共建者",
       roleNone: "普通报名。来周二做项目、定下一起做的，主办人会把你标成共建者。",
       cardTitle: "我的名片",
@@ -3364,6 +3365,7 @@ export const copy = {
       memberBadge: "Co-creator member",
       rolesTitle: "Who you are here",
       roleMentor: "Mentor",
+      roleVolunteer: "Volunteer",
       roleBuilder: "Co-builder",
       roleNone: "Signed up. Come to a Tuesday and settle on a project with someone, and the organiser will mark you a co-builder.",
       cardTitle: "Your card",

@@ -387,10 +387,11 @@ export default async function MyPage({ searchParams }: PageProps) {
       {extras && (
         <div className="stack-3 card" style={{ padding: "var(--space-4)" }}>
           <h2 className="h3" style={{ margin: 0 }}>{t.rolesTitle}</h2>
-          {member || extras.mentor || extras.builder ? (
+          {member || extras.mentor || extras.volunteer || extras.builder ? (
             <p style={{ margin: 0, display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               {member && <span className="chip chip--stage">{t.memberBadge}</span>}
               {extras.mentor && <span className="chip chip--stage">{t.roleMentor}</span>}
+              {extras.volunteer && <span className="chip chip--stage">{t.roleVolunteer}</span>}
               {extras.builder && <span className="chip chip--stage">{t.roleBuilder}</span>}
             </p>
           ) : (

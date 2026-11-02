@@ -836,12 +836,18 @@ export function ensureSchema(): Promise<void> {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS person_roles (
         signup_id   bigint NOT NULL REFERENCES signups(id) ON DELETE CASCADE,
-        role        text NOT NULL CHECK (role IN ('builder', 'mentor')),
+        role        text NOT NULL CHECK (role IN ('builder', 'mentor', 'volunteer')),
         note        text,
         created_at  timestamptz NOT NULL DEFAULT now(),
         PRIMARY KEY (signup_id, role)
       )
     `);
+    // 志愿者 (2026-11-02): helps run the day, free on Tuesdays like a mentor.
+    // Older databases have the two-role check: replace it, in one statement so
+    // it is atomic. Safe to repeat; the table is a few dozen rows.
+    await pool.query(
+      `ALTER TABLE person_roles DROP CONSTRAINT IF EXISTS person_roles_role_check, ADD CONSTRAINT person_roles_role_check CHECK (role IN ('builder', 'mentor', 'volunteer'))`,
+    );
   })().catch((error) => {
     // Clear the cache so a transient failure (database still booting) is
     // retried on the next request instead of being remembered forever.
@@ -4458,8 +4464,8 @@ export async function releaseExpiredHolds(): Promise<void> {
         WHERE f.signup_id = g.id AND f.status = 'pending'
           AND f.hold_until IS NOT NULL AND f.hold_until < now()
           AND f.session = ANY(g.sessions)
-          -- Nor a 导师团 member (2026-11-02): free on Tuesdays like a 共创会员.
-          AND NOT EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor')
+          -- Nor a 导师团 member or a 志愿者 (2026-11-02): free on Tuesdays like a 共创会员.
+          AND NOT EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role IN ('mentor', 'volunteer'))
           AND NOT EXISTS (
             SELECT 1 FROM course_orders o
              WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
@@ -4777,7 +4783,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
                WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
-            ) OR EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS member,
+            ) OR EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role IN ('mentor', 'volunteer')) AS member,
             f.id::text AS fee_id, f.ref, f.status, ${PAID_VIA_SQL} AS paid_via,
             to_char(f.claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
             to_char(f.paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
@@ -5154,6 +5160,7 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS member,
             EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'mentor') AS mentor,
+            EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'volunteer') AS volunteer,
             EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role = 'builder') AS builder,
             f.status AS fee_status,
             ${PAID_VIA_SQL} AS paid_via,
@@ -5311,12 +5318,12 @@ export async function removePersonRole(signupId: string, role: PersonRoleKind): 
 }
 
 /**
- * Whether Build Tuesday is free for this person: a 共创会员, or on the 导师团
- * (2026-11-02). Every place that waives the fee asks this, not isMember.
+ * Whether Build Tuesday is free for this person: a 共创会员, on the 导师团, or a
+ * 志愿者 (2026-11-02). Every place that waives the fee asks this, not isMember.
  */
 export async function isTuesdayFree(signupId: string): Promise<boolean> {
   await ensureSchema();
-  const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role = 'mentor'`, [signupId]);
+  const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role IN ('mentor', 'volunteer')`, [signupId]);
   return Boolean(mentor.rowCount) || (await isMember(signupId));
 }
 
@@ -5328,6 +5335,7 @@ export async function isTuesdayFree(signupId: string): Promise<boolean> {
 export async function getMyExtras(signupId: string): Promise<{
   card: { slug: string; published: boolean } | null;
   mentor: boolean;
+  volunteer: boolean;
   builder: boolean;
 }> {
   await ensureSchema();
@@ -5337,7 +5345,7 @@ export async function getMyExtras(signupId: string): Promise<{
   );
   const roles = await getPool().query<{ role: string }>(`SELECT role FROM person_roles WHERE signup_id = $1::bigint`, [signupId]);
   const has = (role: string) => roles.rows.some((row) => row.role === role);
-  return { card: card.rows[0] ?? null, mentor: has("mentor"), builder: has("builder") };
+  return { card: card.rows[0] ?? null, mentor: has("mentor"), volunteer: has("volunteer"), builder: has("builder") };
 }
 
 /** Signups matching a name or WeChat ID, for adding someone to a role. */
