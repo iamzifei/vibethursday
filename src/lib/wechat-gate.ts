@@ -63,7 +63,7 @@ export function isPhoneBrowser(userAgent: string | null | undefined): boolean {
  * these rather than the whole site, so reading an FAQ or the member wall never
  * takes a detour through WeChat.
  */
-export const WX_LOGIN_PATHS = ["/", "/tuesday", "/my", "/go", "/checkin", "/badge", "/login", "/class"] as const;
+export const WX_LOGIN_PATHS = ["/", "/tuesday", "/my", "/go", "/checkin", "/badge", "/login", "/class", "/join"] as const;
 
 export type GateInput = {
   /** Whether WECHAT_APPID and WECHAT_SECRET are both set. */

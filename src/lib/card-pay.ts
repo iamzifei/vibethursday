@@ -1,4 +1,5 @@
-import { attachCheckout, getDinnerByRef, getSessionFeeByRef, markPaidByCard, type DinnerOrder, type SessionFee } from "./db";
+import { MEMBERSHIP } from "./course";
+import { attachCheckout, getCourseOrderByRef, getDinnerByRef, getSessionFeeByRef, markPaidByCard, type CourseOrderByRef, type DinnerOrder, type SessionFee } from "./db";
 import { dinnerConfig } from "./dinner";
 import { feeFor, formatSession } from "./sessions";
 import { CHECKOUT_HOLD_MINUTES, checkoutSettled, createCheckout, expireCheckoutPage, getCheckout, stripeEnabled, type PayKind } from "./stripe-pay";
@@ -11,8 +12,9 @@ import { feeToPay } from "./tuesday-fee";
  */
 
 /** What a reference costs right now, GST included, or null when it is not payable. */
-export function amountFor(kind: PayKind, row: SessionFee | DinnerOrder): number | null {
+export function amountFor(kind: PayKind, row: SessionFee | DinnerOrder | CourseOrderByRef): number | null {
   if (row.status !== "pending") return null;
+  if (kind === "member") return (row as CourseOrderByRef).course === MEMBERSHIP.id ? MEMBERSHIP.amount : null;
   if (kind === "tuesday") {
     const fee = row as SessionFee;
     const price = feeFor(fee.session);
@@ -43,9 +45,14 @@ export async function settleIfPaid(kind: PayKind, row: { ref: string; status: st
  * this reference if there is one (so nobody pays twice), a new one otherwise,
  * or back to the payment page when there is nothing to pay.
  */
+/** The page a payment of this kind is shown on, by its reference. */
+export function payPagePath(kind: PayKind): string {
+  return kind === "member" ? "/join" : kind === "tuesday" ? "/tuesday/pay" : "/dinner/pay";
+}
+
 export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string): Promise<string> {
-  const back = `${origin}/${kind === "tuesday" ? "tuesday" : "dinner"}/pay?ref=${ref}`;
-  const row = kind === "tuesday" ? await getSessionFeeByRef(ref) : await getDinnerByRef(ref);
+  const back = `${origin}${payPagePath(kind)}?ref=${ref}`;
+  const row = kind === "member" ? await getCourseOrderByRef(ref) : kind === "tuesday" ? await getSessionFeeByRef(ref) : await getDinnerByRef(ref);
   if (!row) return back;
 
   if (row.stripe_session) {
@@ -68,14 +75,22 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
   const amount = amountFor(kind, row);
   if (amount === null) return back;
 
-  const when = formatSession(row.session, "zh");
+  // A membership has no session; its course id stands in, so the metadata
+  // still says what was bought.
+  const session = "session" in row ? row.session : (row as CourseOrderByRef).course;
+  const when = "session" in row ? formatSession(row.session, "zh") : "";
   const checkout = await createCheckout({
     kind,
     ref,
-    signupId: row.signup_id,
-    session: row.session,
+    signupId: row.signup_id ?? "",
+    session,
     amount,
-    title: kind === "tuesday" ? `Build Tuesday · ${when}（含 GST）` : `Vibe Thursday 散场聚餐 · ${when}（含 GST）`,
+    title:
+      kind === "member"
+        ? `${MEMBERSHIP.title} · 一年（含 GST）`
+        : kind === "tuesday"
+          ? `Build Tuesday · ${when}（含 GST）`
+          : `Vibe Thursday 散场聚餐 · ${when}（含 GST）`,
     successUrl: `${back}&paid=1`,
     cancelUrl: back,
     idempotencyKey: `checkout-${ref}-${row.stripe_session ?? "first"}`,

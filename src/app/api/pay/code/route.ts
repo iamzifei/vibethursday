@@ -29,6 +29,8 @@ export async function POST(request: Request) {
   const code = form?.get("code");
   const kind = typeof ref === "string" ? kindOfRef(ref) : null;
   if (typeof ref !== "string" || !kind) return NextResponse.redirect(new URL("/", origin), 303);
+  // Codes are for a Tuesday or a dinner seat only; a membership is not comped this way.
+  if (kind === "member") return NextResponse.redirect(new URL(`/join?ref=${ref}`, origin), 303);
 
   const back = new URL(`/${kind === "tuesday" ? "tuesday" : "dinner"}/pay`, origin);
   back.searchParams.set("ref", ref);

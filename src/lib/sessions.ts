@@ -144,7 +144,9 @@ export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
   { date: "2026-10-13", kind: "tuesday", endHour: 12, cap: 15 },
   // Twelve from 20 October: the room seats about that many (James 2026-10-15).
-  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: 12, cap: 12, fee: 30 })),
+  // A whole day from 3 November, 10:30–15:30 (James 2026-11-02), so a date is
+  // offered until 15:00 — someone can still sign up for the afternoon workshop.
+  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: date >= "2026-11-03" ? 15 : 12, cap: 12, fee: 30 })),
 ];
 
 /** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays). */

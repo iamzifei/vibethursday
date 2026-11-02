@@ -17,8 +17,7 @@ import { langHref } from "@/lib/nav";
 import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
 import { LANG_PARAM } from "@/lib/content";
-import { bookableSessions, formatSession, isSpecialSession, sydneyToday } from "@/lib/sessions";
-import { IP_COURSE } from "@/lib/course";
+import { bookableSessions, formatSession, isSpecialSession } from "@/lib/sessions";
 
 
 type PageProps = {
@@ -127,7 +126,6 @@ export default async function Page({ searchParams }: PageProps) {
   }
 
   // Shown until the class date has passed (Sydney calendar date).
-  const showClassPromo = sydneyToday().toISOString().slice(0, 10) <= IP_COURSE.date;
 
   // The document is declared zh-CN in the layout, so the English view
   // re-declares its own language here for screen-reader pronunciation.
@@ -246,16 +244,8 @@ export default async function Page({ searchParams }: PageProps) {
               ))}
             </dl>
 
-            {/* The paid class, one quiet card under the facts until the day it
-                runs. Cyan, not lime: lime is the sign-up button's colour, and
-                the first screen's job is still the free Thursday. */}
-            {showClassPromo && (
-              <Link className="card class-promo rise rise-3" href={langHref("/class", lang)}>
-                <span className="eyebrow">{c.hero.classPromo.label}</span>
-                <span style={{ color: "var(--fg1)", fontWeight: 600 }}>{c.hero.classPromo.text}</span>
-                <span className="body-sm" style={{ color: "var(--spark)" }}>{c.hero.classPromo.cta}</span>
-              </Link>
-            )}
+            {/* No class promotion here (James 2026-11-02): Thursday is free and
+                sells nothing; the class is in the nav for whoever wants it. */}
 
             <div className="stack-3 rise rise-4">
               {nextSession && (

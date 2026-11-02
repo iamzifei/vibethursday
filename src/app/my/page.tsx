@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
+import { TuesdayVenue } from "@/components/TuesdayVenue";
 import { getDinnerFor, getMySignup, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup } from "@/lib/db";
 import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
@@ -275,8 +276,15 @@ export default async function MyPage({ searchParams }: PageProps) {
                 {(() => {
                   const fee = fees.get(entry.session);
                   if (!fee) return null;
-                  if (fee.member) return <p className="field-hint">{t.feeMember}</p>;
-                  if (fee.status === "paid" || fee.status === "waived") return <p className="field-hint">{t.feePaid}</p>;
+                  // Members and anyone paid or let in free see where it is (2026-11-02).
+                  if (fee.member || fee.status === "paid" || fee.status === "waived") {
+                    return (
+                      <>
+                        <p className="field-hint">{fee.member ? t.feeMember : t.feePaid}</p>
+                        {entry.position === null && <TuesdayVenue lang={lang} />}
+                      </>
+                    );
+                  }
                   if (fee.claimed) return <p className="field-hint">{t.feeClaimed}</p>;
                   return (
                     <p className="body-sm" style={{ margin: 0 }}>

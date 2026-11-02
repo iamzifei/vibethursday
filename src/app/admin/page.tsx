@@ -11,7 +11,7 @@ import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
-import { COURSE, IP_COURSE } from "@/lib/course";
+import { COURSE, IP_COURSE, MEMBERSHIP } from "@/lib/course";
 import { dinnerConfig } from "@/lib/dinner";
 import {
   countCheckins,
@@ -104,7 +104,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // duplicate or a no-show gets cleaned off this morning's sheet.
   const orderSession = desk;
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders, oldCourseOrders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, orders, deskQuestions, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -127,6 +127,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // The 10/25 membership class is no longer on sale (2026-11-01), but an
       // order still waiting for its transfer must stay markable as paid here.
       listCourseOrders(COURSE.id).then((rows) => rows.filter((o) => o.status === "pending")).catch(() => []),
+      // The 共创会员 bought by card on /join (2026-11-02). Settled by Stripe,
+      // so this list is for reading, not marking.
+      listCourseOrders(MEMBERSHIP.id).catch(() => []),
     ]);
 
   // Thursday's opening shares (2026-10-15): the next Thursday's volunteers,
@@ -1355,6 +1358,45 @@ export default async function AdminPage({ searchParams }: PageProps) {
                           ))}
                       </div>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* 共创会员 bought by card (2026-11-02): the reference matches the one
+          on Stripe (client reference, metadata.ref, description). */}
+      <section className="stack-4" id="membership">
+        <div className="group-head">
+          <h2 className="h3">{MEMBERSHIP.title}（/join · 刷卡）</h2>
+          <span className="body-sm" style={{ color: "var(--fg3)" }}>
+            已付 {memberOrders.filter((o) => o.status === "paid").length} · 未付 {memberOrders.filter((o) => o.status === "pending").length}
+          </span>
+        </div>
+        {memberOrders.length === 0 ? (
+          <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人买。</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">付款编号</th>
+                  <th scope="col">名字</th>
+                  <th scope="col">微信号</th>
+                  <th scope="col">状态</th>
+                  <th scope="col">下单时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                {memberOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="mono">{order.ref}</td>
+                    <td>{order.name}{order.signup_id ? "" : " ·新"}</td>
+                    <td className="mono">{order.wechat}</td>
+                    <td>{order.status === "paid" ? `已付 ${order.paid_at ?? ""}` : order.status === "pending" ? "未付（没付完或放弃了）" : order.status}</td>
+                    <td className="mono">{order.created_at}</td>
                   </tr>
                 ))}
               </tbody>

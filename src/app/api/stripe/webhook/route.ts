@@ -36,12 +36,13 @@ export async function POST(request: Request) {
   const session = event.data?.object;
   const kind = session?.metadata?.kind as PayKind | undefined;
   const ref = session?.metadata?.ref;
-  if (!session || (kind !== "tuesday" && kind !== "dinner") || !ref) return new Response("ignored");
+  if (!session || (kind !== "tuesday" && kind !== "dinner" && kind !== "member") || !ref) return new Response("ignored");
 
   try {
     if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && checkoutSettled(session.payment_status)) {
       await markPaidByCard(kind, ref);
-    } else if (event.type === "checkout.session.expired") {
+    } else if (event.type === "checkout.session.expired" && kind !== "member") {
+      // A membership holds no place, so an expired page releases nothing.
       await expireCheckout(kind, session.id);
     }
   } catch (error) {

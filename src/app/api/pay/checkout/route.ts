@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkoutUrlFor } from "@/lib/card-pay";
+import { checkoutUrlFor, payPagePath } from "@/lib/card-pay";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
@@ -10,7 +10,7 @@ const MAX_BODY = 2 * 1024;
 export const dynamic = "force-dynamic";
 
 /**
- * "Pay by card" on the Tuesday and dinner payment pages (2026-10-19). A plain
+ * "Pay by card" on the Tuesday, dinner and membership pages (2026-10-19; membership 2026-11-02). A plain
  * form post, answered with a redirect to Stripe's Checkout page — or back to
  * the payment page, which explains why there was nothing to pay.
  */
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const kind = typeof ref === "string" ? kindOfRef(ref) : null;
   if (typeof ref !== "string" || !kind) return NextResponse.redirect(new URL("/", origin), 303);
 
-  const back = new URL(`/${kind === "tuesday" ? "tuesday" : "dinner"}/pay`, origin);
+  const back = new URL(payPagePath(kind), origin);
   back.searchParams.set("ref", ref);
   if (!stripeEnabled()) return NextResponse.redirect(back, 303);
 

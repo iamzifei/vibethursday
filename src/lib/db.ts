@@ -666,6 +666,9 @@ export function ensureSchema(): Promise<void> {
     // When the person tapped "I've transferred" (2026-10-12). Only their word
     // for it: "paid" is still set by hand on /admin once the money shows up.
     await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS claimed_at timestamptz`);
+    // The Checkout page opened for a 共创会员 bought by card (2026-11-02,
+    // course.ts MEMBERSHIP). Classes paid by transfer leave it NULL.
+    await pool.query(`ALTER TABLE course_orders ADD COLUMN IF NOT EXISTS stripe_session text`);
 
     // ── The organiser's notes on people (2026-10-13, person-profile.ts) ──
     // Read only by /admin pages. Kept off `signups` so nothing in the signup
@@ -3008,12 +3011,21 @@ export async function createCourseOrder(input: {
 }
 
 /** One order by its payment reference, for the "how to pay" view. */
-export async function getCourseOrderByRef(
-  ref: string,
-): Promise<{ ref: string; status: CourseOrder["status"]; course: string; name: string; claimed: boolean } | null> {
+export type CourseOrderByRef = {
+  ref: string;
+  status: CourseOrder["status"];
+  course: string;
+  name: string;
+  claimed: boolean;
+  signup_id: string | null;
+  stripe_session: string | null;
+};
+
+export async function getCourseOrderByRef(ref: string): Promise<CourseOrderByRef | null> {
   await ensureSchema();
-  const result = await getPool().query<{ ref: string; status: CourseOrder["status"]; course: string; name: string; claimed: boolean }>(
-    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed FROM course_orders WHERE ref = $1`,
+  const result = await getPool().query<CourseOrderByRef>(
+    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed, signup_id::text AS signup_id, stripe_session
+       FROM course_orders WHERE ref = $1`,
     [ref],
   );
   return result.rows[0] ?? null;
@@ -4296,6 +4308,26 @@ export async function isMember(signupId: string): Promise<boolean> {
 }
 
 /**
+ * Whether a WeChat ID already holds a paid membership within the year — for
+ * /join, which must not sell a second year to someone who typed their ID
+ * rather than being recognised (2026-11-02). Matched like isMember.
+ */
+export async function isMemberWechat(wechat: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query<{ member: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM course_orders o
+        WHERE o.status = 'paid'
+          AND o.course IN (${MEMBER_COURSES_SQL})
+          AND o.paid_at > now() - interval '1 year'
+          AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace($1, '\\s+', '', 'g'))
+     ) AS member`,
+    [wechat],
+  );
+  return result.rows[0]?.member ?? false;
+}
+
+/**
  * The fee row for one person and one Tuesday, created on first ask. Signing up
  * twice keeps the first reference.
  *
@@ -4377,8 +4409,16 @@ export async function releaseExpiredHolds(): Promise<void> {
 }
 
 /** The Checkout page opened for a payment, and the hold stretched to outlast it. */
-export async function attachCheckout(kind: "tuesday" | "dinner", ref: string, stripeSession: string, holdMinutes: number): Promise<boolean> {
+export async function attachCheckout(kind: "tuesday" | "dinner" | "member", ref: string, stripeSession: string, holdMinutes: number): Promise<boolean> {
   await ensureSchema();
+  if (kind === "member") {
+    // No hold and no cap: the page is simply remembered, so it is reused.
+    const result = await getPool().query(
+      `UPDATE course_orders SET stripe_session = $2 WHERE ref = $1 AND status = 'pending'`,
+      [ref, stripeSession],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
   const table = kind === "tuesday" ? "session_fees" : "dinner_orders";
   // Only while the place is still theirs: a hold that lapsed while Stripe was
   // being asked for the page has already been given away.
@@ -4399,8 +4439,16 @@ export async function attachCheckout(kind: "tuesday" | "dinner", ref: string, st
  * money arrived, so the place is theirs, even if that makes one over the cap.
  * Returns false when there was nothing to settle (already paid, or no row).
  */
-export async function markPaidByCard(kind: "tuesday" | "dinner", ref: string): Promise<boolean> {
+export async function markPaidByCard(kind: "tuesday" | "dinner" | "member", ref: string): Promise<boolean> {
   await ensureSchema();
+  if (kind === "member") {
+    // The money arrived, so it is paid whatever the row said before.
+    const result = await getPool().query(
+      `UPDATE course_orders SET status = 'paid', paid_at = now() WHERE ref = $1 AND status <> 'paid'`,
+      [ref],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");

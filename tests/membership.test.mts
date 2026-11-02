@@ -15,10 +15,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { COURSE, IP_COURSE, MEMBERSHIP_COURSES, newCourseRef } from "../src/lib/course.ts";
+import { COURSE, IP_COURSE, MEMBERSHIP, MEMBERSHIP_COURSES, newCourseRef } from "../src/lib/course.ts";
 
-test("only the $599 class is a membership", () => {
-  assert.deepEqual([...MEMBERSHIP_COURSES], [COURSE.id]);
+// Spec change 2026-11-02 (James): the 共创会员 is also sold on its own (/join),
+// and that order counts too. The A$365 class still never does.
+test("only the $599 class and the membership on its own are memberships", () => {
+  assert.deepEqual([...MEMBERSHIP_COURSES], [COURSE.id, MEMBERSHIP.id]);
   assert.ok(!(MEMBERSHIP_COURSES as readonly string[]).includes(IP_COURSE.id));
 });
 

@@ -8,6 +8,7 @@ import { feeFor, formatSession } from "@/lib/sessions";
 import { feeLabel, looksLikeFeeRef, payLabel, tuesdayPaymentInfo } from "@/lib/tuesday-fee";
 import { settleIfPaid } from "@/lib/card-pay";
 import { minutesLeft, stripeEnabled } from "@/lib/stripe-pay";
+import { TuesdayVenue } from "@/components/TuesdayVenue";
 
 export const dynamic = "force-dynamic";
 
@@ -126,7 +127,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                       </details>
                     )}
                     <p className="body">
-                      共创会员周二免费，<a href="/class">了解会员</a>。
+                      共创会员周二免费，<a href="/join">了解会员</a>。
                     </p>
                   </>
                 ) : fee.claimed_at ? (
@@ -168,16 +169,14 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                       </button>
                     </form>
                     <p className="body">
-                      备注编号别填错，我们靠它对账。共创会员周二免费，<a href="/class">了解会员</a>。
+                      备注编号别填错，我们靠它对账。共创会员周二免费，<a href="/join">了解会员</a>。
                     </p>
                   </>
                 )}
 
-                <p className="body">
-                  时间：{formatSession(fee.session, "zh")}上午 10:30–12:00
-                  <br />
-                  地点：Chatswood Lemon Grove 三楼 56 号铺（427–441 Victoria Ave，Westfield 正门对面），火车站出来走主街约 100 米，泰椰奶花旁边大门进，扶梯上 3 楼 · <Link href="/tuesday">看路线图</Link>
-                </p>
+                {/* The address is what paying gets you (2026-11-02): shown once
+                    paid or let in free, never before. */}
+                {(fee.status === "paid" || fee.status === "waived") && <TuesdayVenue lang="zh" />}
               </>
             )}
           </div>

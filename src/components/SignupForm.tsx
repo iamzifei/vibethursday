@@ -15,6 +15,7 @@ import {
 import { LANG_PARAM } from "@/lib/lang";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { WeChatMark } from "@/components/WeChatMark";
+import { TuesdayVenue } from "@/components/TuesdayVenue";
 import { formatSession } from "@/lib/sessions";
 import type { DinnerOffer } from "@/lib/dinner";
 
@@ -568,7 +569,13 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             <span className="body-sm" style={{ color: "var(--fg3)" }}>{copy.successPassHint}</span>
           </div>
         )}
-        {receipt?.fee?.member && <p>{copy.feeMember}</p>}
+        {receipt?.fee?.member && (
+          <>
+            <p>{copy.feeMember}</p>
+            {/* Members come free, so the address shows straight away (2026-11-02). */}
+            {!receipt.waitlisted && <TuesdayVenue lang={lang} />}
+          </>
+        )}
         {receipt?.fee && !receipt.fee.member && (
           <div className="stack-3">
             <p style={{ margin: 0 }}>

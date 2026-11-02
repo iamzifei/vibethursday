@@ -28,12 +28,37 @@ export const COURSE = {
 } as const;
 
 /**
- * The classes whose paid order makes someone a 共创会员 for a year (member
- * badge, Tuesdays free). Only the $599 one (James 2026-11-01): until then any
- * paid order counted, which would have made every A$365 AI+IP student a member.
+ * The 共创会员 on its own (2026-11-02): A$599 + GST for a year of free Build
+ * Tuesdays and one AI+IP class. Sold at Tuesday and by a link James sends, on
+ * /join (not in the nav), and paid by card on Stripe — unlike the classes,
+ * which are bank transfers. Stored as a `course_orders` row like a class so
+ * every membership check reads one table. References start CM (`newMemberRef`)
+ * so card payment can tell them from a class's bank-transfer reference.
+ *
+ * Same name as the $599 sold before (`COURSE`): that one already gave the
+ * same year of Tuesdays and the AI+IP class, plus the 10/25 class itself, so
+ * its buyers have nothing to swap — both count, each for a year from payment.
+ */
+export const MEMBERSHIP = {
+  id: "vt-cocreator",
+  title: "Vibe Thursday 共创会员",
+  /** Before GST, in Australian dollars. */
+  price: 599,
+  /** What the card is charged: A$599 plus 10% GST. */
+  amount: 658.9,
+  priceLabel: "599 澳元 + GST",
+  payLabel: "658.90 澳元（599 + GST）",
+  /** No real cap: high enough that a membership is never waitlisted. */
+  cap: 100000,
+} as const;
+
+/**
+ * The orders whose payment makes someone a 共创会员 for a year (member badge,
+ * Tuesdays free, the AI+IP class free). The $599 class of 10/25 and the
+ * membership on its own — never the A$365 AI+IP class (James 2026-11-01).
  * `db.ts` reads this in every membership check.
  */
-export const MEMBERSHIP_COURSES = [COURSE.id] as const;
+export const MEMBERSHIP_COURSES = [COURSE.id, MEMBERSHIP.id] as const;
 
 /**
  * The class on sale on /class from 2026-11-01: the AI+IP class, one day.
@@ -60,6 +85,15 @@ export function newCourseRef(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = randomBytes(5);
   return `AI${[...bytes].map((b) => alphabet[b % alphabet.length]).join("")}`;
+}
+
+/** A membership reference: like a class's, but CM, so it is paid by card. */
+export function newMemberRef(): string {
+  return `CM${newCourseRef().slice(2)}`;
+}
+
+export function looksLikeMemberRef(value: unknown): value is string {
+  return typeof value === "string" && /^CM[A-HJ-NP-Z2-9]{5}$/.test(value);
 }
 
 export function looksLikeCourseRef(value: unknown): value is string {

@@ -10,8 +10,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * becomes theirs the moment Stripe says the card went through; a hold nobody
  * paid for is released and the place goes back on offer.
  *
- * The class (the year-long membership) is not paid this way: it stays a bank
- * transfer. Members still come to Tuesdays free — no payment is asked of them.
+ * The classes are not paid this way: they stay a bank transfer. The 共创会员
+ * on its own is (2026-11-02, kind "member"), with no hold — it has no cap.
+ * Members still come to Tuesdays free — no payment is asked of them.
  *
  * Talks to Stripe's REST API with fetch rather than the SDK: two calls and one
  * signature check do not justify a dependency. Keys come from STRIPE_SECRET_KEY
@@ -38,16 +39,18 @@ export const PROMOTION_HOLD_MINUTES = 24 * 60;
 export const CHECKOUT_MINUTES = 30;
 export const CHECKOUT_HOLD_MINUTES = CHECKOUT_MINUTES + 3;
 
-export type PayKind = "tuesday" | "dinner";
+/** What a card payment is for. "member": the 共创会员 (2026-11-02, course.ts MEMBERSHIP). */
+export type PayKind = "tuesday" | "dinner" | "member";
 
 export function stripeEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return Boolean(env.STRIPE_SECRET_KEY);
 }
 
-/** Which payment a reference belongs to, from its prefix (TU / DN). */
+/** Which payment a reference belongs to, from its prefix (TU / DN / CM). */
 export function kindOfRef(ref: string): PayKind | null {
   if (/^TU[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "tuesday";
   if (/^DN[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "dinner";
+  if (/^CM[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "member";
   return null;
 }
 

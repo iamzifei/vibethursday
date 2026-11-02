@@ -103,18 +103,8 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
               ) : (
                 <p className="body-lg">{t.noSession}</p>
               )}
-              <p className="body-sm">
-                <a href={t.mapsUrl} target="_blank" rel="noopener noreferrer">
-                  {t.mapsLabel} ↗
-                </a>
-              </p>
-              <figure className="stack-2" style={{ margin: 0, maxWidth: "420px" }}>
-                <a className="class-poster" href="/tuesday/directions.jpg">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/tuesday/directions.webp" width={874} height={1284} alt={t.directionsAlt} loading="lazy" />
-                </a>
-                <figcaption className="hint">{t.directionsCaption}</figcaption>
-              </figure>
+              {/* No map or directions here (2026-11-02): the address is shown
+                  only to people who have paid — see tuesday-venue.ts. */}
             </div>
 
             <div className="stack-4">

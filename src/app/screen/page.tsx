@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { KeepAwake } from "@/components/KeepAwake";
 import { requestOrigin } from "@/lib/request-origin";
-import { SCREEN_LINKS, SCREEN_CLASS, SCREEN_SCHEDULE } from "@/lib/screen";
+import { SCREEN_LINKS, SCREEN_SCHEDULE, SCREEN_TUESDAY } from "@/lib/screen";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +24,10 @@ function qrSvg(url: string): Promise<string> {
  */
 export default async function ScreenPage() {
   const origin = await requestOrigin();
-  const [checkinQr, signupQr, memberQr] = await Promise.all([
+  const [checkinQr, signupQr, tuesdayQr] = await Promise.all([
     qrSvg(`${origin}${SCREEN_LINKS.checkin}`),
     qrSvg(`${origin}${SCREEN_LINKS.signup}`),
-    qrSvg(`${origin}${SCREEN_LINKS.member}`),
+    qrSvg(`${origin}${SCREEN_LINKS.tuesday}`),
   ]);
 
   return (
@@ -63,18 +63,17 @@ export default async function ScreenPage() {
       </section>
       </div>
       <div className="screen__slide screen__slide--b">
-        {/* Text only since 2026-11-01: there is no poster for this class on the site. */}
         <section className="screen__intro">
-          <p className="eyebrow">§ {SCREEN_CLASS.when}</p>
-          <h1>{SCREEN_CLASS.title}</h1>
-          <p className="screen__price">{SCREEN_CLASS.price}</p>
+          <p className="eyebrow">§ {SCREEN_TUESDAY.when}</p>
+          <h1>{SCREEN_TUESDAY.title}</h1>
+          <p className="screen__price">{SCREEN_TUESDAY.price}</p>
           <ul className="screen__points">
-            {SCREEN_CLASS.points.map((point) => <li key={point}>{point}</li>)}
+            {SCREEN_TUESDAY.points.map((point) => <li key={point}>{point}</li>)}
           </ul>
         </section>
         <figure className="screen__codes">
-          <div className="door-qr screen__qr" aria-label="课程介绍二维码" dangerouslySetInnerHTML={{ __html: memberQr }} />
-          <figcaption><strong>扫码看课程安排</strong>vibethursday.com/vip</figcaption>
+          <div className="door-qr screen__qr" aria-label="周二报名二维码" dangerouslySetInnerHTML={{ __html: tuesdayQr }} />
+          <figcaption><strong>扫码报周二</strong>vibethursday.com/tuesday</figcaption>
         </figure>
       </div>
     </main>

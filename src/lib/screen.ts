@@ -15,22 +15,24 @@ export const SCREEN_SCHEDULE: { time: string; title: string; note: string }[] = 
 export const SCREEN_LINKS = {
   checkin: "/go",
   signup: "/#signup",
-  member: "/vip",
+  tuesday: "/tuesday",
 } as const;
 
 /**
- * The class slide: the same class, price and items as /vip (2026-11-01, the
- * AI+IP class; until then the $599 membership, no longer on sale).
+ * The second slide: Build Tuesday (2026-11-02). Thursday sells nothing — it
+ * is free and points people on (James 2026-11-02).
+ * Until then this slide sold the class, which made a free morning look like a
+ * sales pitch. People who build things are sent to Tuesday; the class is on
+ * the site for whoever looks for it, not on the screen.
  */
-export const SCREEN_CLASS = {
-  title: "澳洲 AI+IP 实战课",
-  when: "11 月 15 日（周日）9:00–15:00 · St Leonards",
-  price: "365 澳元 + GST",
+export const SCREEN_TUESDAY = {
+  title: "Build Tuesday · 周二动手局",
+  when: "每周二 10:30–15:30 · Chatswood · 12 人闭门会",
+  price: "30 澳元 + GST · 共创会员免费",
   points: [
-    "Nick｜商业 IP 定位",
-    "Lankey｜IP 打造",
-    "特邀嘉宾｜实战分享",
-    "James｜AI 应用",
-    "含一年复训：全年不少于 6 次；共创会员免费",
+    "上午｜带项目的人、会技术的人，聊项目和 AI 技术",
+    "中午｜边吃边聊老板的需求",
+    "下午｜workshop，当场动手做",
+    "适合在做东西的人，也欢迎带着真实需求的老板",
   ],
 };

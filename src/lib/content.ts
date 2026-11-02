@@ -665,7 +665,7 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–12:00 · Chatswood Lemon Grove 三楼", "带着真实业务需求的老板，或在做东西、想要具体反馈的人", "闭门会：一到两个真实需求或项目，大家一起拆、给反馈", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
+          cells: ["每周二 10:30–15:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手", "12 人，先报名占座", "30 澳元 + GST，共创会员免费"],
           cta: "报周二",
         },
       },
@@ -919,7 +919,7 @@ export const copy = {
     footer: {
       tagline: "每周四见。",
       // 2026-11-01：两个场次都写上。
-      location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · Chatswood Lemon Grove 三楼 · 闭门会",
+      location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · Chatswood · 闭门会，付款后显示地址",
       supportLink: "这个活动的开销",
       consultLink: "约 James 一对一咨询",
       // The label on the GitHub mark. It is never shown — the mark carries the
@@ -1532,10 +1532,10 @@ export const copy = {
       titleDay: "今天见。",
       titleAfter: "这一场结束了，谢谢来。",
       when: "10:30 开门 · 10:45 开始 · 12:00 结束",
-      // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。地址不写死：场地可能换，群里发。
+      // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。不写地址（2026-11-02）：地址只给付了钱的人看。
       sharesTitle: "今天开场分享",
       tuesdayTitle: "今天：Build Tuesday",
-      tuesdayWhen: "10:30 – 12:00 · Chatswood Lemon Grove 三楼 56 号铺（Westfield 正门对面）· 带上电脑和充电器",
+      tuesdayWhen: "10:30 – 15:30 · 上午项目和技术，中午边吃边聊需求，下午 workshop · 带上电脑和充电器",
       tuesdayCheckin: "到了点这里签到",
       tuesdayCheckinLater: "10 点起这里会出现签到链接。",
       tuesdayNotSignedUp: "还没报名？现在报也来得及：",
@@ -1702,40 +1702,35 @@ export const copy = {
     },
 
     // /tuesday：Build Tuesday（周二动手局）。2026-10-04 定：周四太挤，给在做东西的人
-    // 单开一个上午，小房间、打开电脑互相看，不上台。目的是把周四的人分一部分过来。
+    // 单开一个上午。2026-11-02 James 定：改成一整天三段（项目和技术 / 午饭聊需求 /
+    // workshop），地址只给付了钱的人看（tuesday-venue.ts），这里只写 Chatswood。
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood，周二上午的闭门会：每场一位老板带着真实业务需求、或一位在做东西的人带着项目来，十来个人一起梳理、给反馈。30 澳元 + GST，共创会员免费。Vibe Thursday 的姊妹场。",
+        description: "悉尼 Chatswood 的周二闭门会，10:30–15:30：上午带项目的人一起聊项目和 AI 技术，中午边吃边聊老板的需求，下午当场动手做。30 澳元 + GST 一次，共创会员免费。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
-      title: "带一个真需求来，一起把它拆清楚。",
-      lede: "周二是限定人数的闭门会。每场请一位老板带着真实的业务需求来，或者一位在做东西的人带着自己的项目来，十来个人围着它一起梳理、给反馈。",
+      title: "带项目来，或者带需求来，当天就开始做。",
+      lede: "周二是限定人数的闭门会，一天分三段：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手。不用回去再约，趁着当场的热情先把东西做出来。",
       factsTitle: "时间和地点",
       facts: [
-        { label: "时间", value: "上午 10:30–12:00" },
-        { label: "地点", value: "Chatswood Lemon Grove 三楼 56 号铺（427–441 Victoria Ave），Westfield 正门对面。火车站出来走到主街，约 100 米，泰椰奶花旁边的大门进，扶梯上 3 楼" },
+        { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
+        { label: "地点", value: "Chatswood。付款后，付款页和「查我的报名」里会显示具体地址和路线" },
         { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元 + GST，报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
+        { label: "费用", value: "30 澳元 + GST 一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
       ],
-      mapsUrl: "https://maps.google.com/?q=Lemon+Grove+427-441+Victoria+Ave+Chatswood+NSW+2067",
-      mapsLabel: "在地图上看",
-      // 2026-10-19：周二场地定在 Lemon Grove，附一张从火车站走过去的图。
-      directionsAlt: "从 Chatswood 火车站到 Lemon Grove 三楼 56 号铺的路线图：出站走到主街，约 100 米到泰椰奶花旁边的大门，进门扶梯上 3 楼",
-      directionsCaption: "怎么走：点开看大图",
       whoTitle: "给谁",
       who: [
-        // 2026-11-01：周二改成「磨需求」，带需求的老板排第一。
-        "有真实业务需求的老板：想用 AI 省人、省时间，或者想做一个智能体、网站、预约报价客户管理这类工具，但不知道该怎么做、要花多少。",
-        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。带着做了一半的项目来，说清卡在哪。",
+        "在做东西的人：写代码的、独立开发、一人公司、用 AI 搭产品或工作流的，不管是不是科班。带着项目来，说清做到哪、卡在哪。",
+        "会 AI、会技术，想找真实需求、组队做项目的人。",
+        "有真实业务需求的老板：想用 AI 省人、省时间，或者想做个工具但不知道怎么做、要花多少。上午先看看做产品是怎么回事，中午一起吃饭聊你的需求。",
         "只想随便看看、还没想好要做什么的，更适合周四。",
       ],
       formatTitle: "怎么进行",
       format: [
-        // 2026-11-01 James 定：从 11-03 起每场围绕真实需求或项目展开。
-        "每场一到两个案例。老板讲现在怎么做、花多少时间和钱、想要什么结果；做东西的人讲做了什么、卡在哪、想听什么意见。",
-        "在场的人一起拆：能不能做、怎么做、大概要多久。散场前把需求写清楚，说好谁来跟进。",
-        "哪一场还没有现成的需求，大家就带自己的产品或需求来，一起共创交流。",
+        "10:30–12:00 项目和技术：带项目的人讲做了什么、卡在哪，会技术的人一起讨论 AI 和技术。老板也可以看看做产品的思路，给自己的需求找个样子。",
+        "12:00–13:30 午饭（各自点）：边吃边聊老板的需求。想聊需求的老板、想接需求的人，自然会留下来。",
+        "13:30–15:30 workshop：趁热当场动手，把项目往前推一步，或者把老板的需求做出第一个样子，不用回去再重新对接。",
         "James 主持，帮你把方案把关。",
       ],
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
@@ -1744,7 +1739,7 @@ export const copy = {
       thursdayNote: "周四照常办。同一周的周二和周四只能报一场，报了周二会自动退掉那周的周四。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
-      signupLede: "名额只有 12 个，先报名占座，再转账；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
+      signupLede: "名额只有 12 个，先报名占座，再付款，付完会显示地址；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
       noSession: "这一场已经结束了。下一场定了日子会放在这里。",
     },
 
@@ -2387,7 +2382,7 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–12:00 · Lemon Grove level 3, Chatswood", "Business owners with a real need, or people building something who want specific feedback", "Closed session: one or two real needs or projects, worked through together", "12, sign up to hold a place", "A$30 + GST; members free"],
+          cells: ["Tuesdays 10:30–15:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: projects and tech in the morning, business owners' needs over lunch, a hands-on workshop after", "12, sign up to hold a place", "A$30 + GST; members free"],
           cta: "Sign up for Tuesday",
         },
       },
@@ -2622,7 +2617,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · Lemon Grove level 3, Chatswood · closed session",
+      location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · Chatswood · closed session, address shown once paid",
       supportLink: "What this costs",
       consultLink: "Book a one-to-one with James",
       sourceLink: "This site's source on GitHub",
@@ -3105,7 +3100,7 @@ export const copy = {
       titleAfter: "That one is done — thanks for coming.",
       sharesTitle: "Opening shares today",
       tuesdayTitle: "Today: Build Tuesday",
-      tuesdayWhen: "10:30 – 12:00 · Lemon Grove, Level 3, Shop 56, Chatswood (opposite Westfield) · bring your laptop and charger",
+      tuesdayWhen: "10:30 – 15:30 · projects and tech in the morning, needs over lunch, a workshop after · bring your laptop and charger",
       tuesdayCheckin: "Here? Check in",
       tuesdayCheckinLater: "The check-in link appears here from 10am.",
       tuesdayNotSignedUp: "Not signed up? There is still time: ",
@@ -3257,33 +3252,30 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, a closed Tuesday-morning session: each time a business owner brings a real need, or a builder brings a project, and about a dozen people work through it together. A$30 + GST; members free. A sister session of Vibe Thursday.",
+        description: "Chatswood, Sydney, a closed Tuesday session, 10:30–15:30: projects and AI tech in the morning, business owners' needs over lunch, a hands-on workshop in the afternoon. A$30 + GST; members free. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
-      title: "Bring a real need, and work it through together.",
-      lede: "Tuesday is a closed session with limited places. Each time, a business owner brings a real need, or someone building something brings their project, and about a dozen people work through it together and give feedback.",
+      title: "Bring a project or a real need, and start on it the same day.",
+      lede: "Tuesday is a closed session with limited places, in three parts: projects and tech in the morning, business owners' needs over lunch, and a workshop in the afternoon. No following up later and losing the momentum — start building while everyone is still in the room.",
       factsTitle: "When and where",
       facts: [
-        { label: "Time", value: "10:30am–12:00" },
-        { label: "Where", value: "Lemon Grove, Level 3, Shop 56, 427–441 Victoria Ave, Chatswood — opposite the main entrance of Westfield. From the station, walk along the mall about 100 m to the entrance next to the bubble tea shop, then take the escalator to level 3" },
+        { label: "Time", value: "10:30–15:30, in three parts; the morning alone is fine" },
+        { label: "Where", value: "Chatswood. Once you have paid, the exact address and directions show on the payment page and under \"My signup\"" },
         { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
-        { label: "Cost", value: "A$30 + GST, paid by card within 30 minutes of signing up, which locks in your place; members free" },
+        { label: "Cost", value: "A$30 + GST for the whole day, paid by card within 30 minutes of signing up, which locks in your place; members free" },
       ],
-      mapsUrl: "https://maps.google.com/?q=Lemon+Grove+427-441+Victoria+Ave+Chatswood+NSW+2067",
-      mapsLabel: "Open in Maps",
-      directionsAlt: "Directions from Chatswood station to Lemon Grove, level 3, shop 56: walk along the mall about 100 m to the entrance next to the bubble tea shop, then the escalator to level 3",
-      directionsCaption: "How to get there — tap for the full image",
       whoTitle: "Who it is for",
       who: [
-        "Business owners with a real need: you want AI to save people or time, or you want an agent, a website, or a tool for bookings, quotes or customers, but are not sure how or what it would take.",
-        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not. Bring a half-done project and say where you are stuck.",
+        "People who build things: developers, indie hackers, one-person companies, anyone putting together a product or workflow with AI — trained as an engineer or not. Bring your project and say where you are stuck.",
+        "People who know AI and tech and want real needs to work on, and a team to build them with.",
+        "Business owners with a real need: you want AI to save people or time, or you want a tool but are not sure how or what it would take. See how products get made in the morning, then talk through your need over lunch.",
         "If you mostly want to look around and have nothing particular in mind yet, Thursday will suit you better.",
       ],
       formatTitle: "How it runs",
       format: [
-        "One or two cases each time. A business owner explains how it is done now, what it costs in time and money, and what result they want; a builder explains what they made, where they are stuck, and what they want an opinion on.",
-        "Everyone works through it: can it be done, how, and roughly how long. Before we wrap up, the need is written down clearly and we agree who follows up.",
-        "When there is no ready-made need that week, everyone brings their own product or need and we work on them together.",
+        "10:30–12:00, projects and tech: people with projects show what they made and where they are stuck; people who know the tech dig into AI and tools together. Business owners get to see how a product gets thought through.",
+        "12:00–13:30, lunch (everyone orders their own): business owners' needs, talked through over food. The owners who want to talk and the people who want to take the work on tend to stay.",
+        "13:30–15:30, workshop: start on it there and then — move a project forward, or build a first version of an owner's need, instead of arranging it all again later.",
         "James hosts and checks the plan with you.",
       ],
       compareTitle: "Tuesday or Thursday?",
@@ -3291,7 +3283,7 @@ export const copy = {
       thursdayNote: "Thursday runs as usual. One morning per week: signing up for a Tuesday gives up that week's Thursday.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
-      signupLede: "There are only 12 places: sign up to hold one, then pay. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
+      signupLede: "There are only 12 places: sign up to hold one, then pay, and the address shows. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
       noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 
