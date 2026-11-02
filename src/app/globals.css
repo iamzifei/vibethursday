@@ -5702,3 +5702,40 @@ h4, .h4 { font-size: var(--text-lg); font-weight: var(--weight-semibold); line-h
 
 /* Menu rows at thumb size in the phone sheet. */
 .admin-sheet .admin-nav a { padding-block: 0.75rem; }
+
+/* ── Blog: layout, table of contents, illustrations, related (2026-11-03) ──
+   Phone first: one column; the table of contents is a folded <details> under
+   the cover. From 1100px a sticky sidebar holds it instead. No script, and
+   nothing here loads before the reader scrolls to it. */
+.blog-layout { display: block; }
+.blog-post { max-width: 720px; margin-inline: auto; min-width: 0; }
+.blog-post h2[id] { scroll-margin-top: 80px; }
+#faq, #related { scroll-margin-top: 80px; }
+
+.blog-toc__title { margin: 0 0 var(--space-2); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.08em; color: var(--fg3); }
+.blog-toc__list { margin: 0; padding-left: 1.3em; display: grid; gap: var(--space-1); font-size: var(--text-sm); line-height: 1.5; }
+.blog-toc__list a { color: var(--fg2); text-decoration: none; display: inline-block; padding-block: 6px; }
+.blog-toc__list a:hover { color: var(--accent); }
+
+.blog-toc--fold { border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--bg-secondary); padding: 0 var(--space-4); }
+.blog-toc--fold > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: var(--weight-semibold); color: var(--fg1); }
+.blog-toc--fold > nav { padding-bottom: var(--space-3); }
+.blog-toc--side { display: none; }
+
+@media (min-width: 1100px) {
+  .blog-layout { display: grid; grid-template-columns: 220px minmax(0, 720px); gap: var(--space-12); justify-content: center; align-items: start; }
+  .blog-post { margin-inline: 0; }
+  .blog-toc--side { display: block; position: sticky; top: 88px; max-height: calc(100vh - 120px); overflow-y: auto; }
+  .blog-toc--fold { display: none; }
+}
+
+.blog-figure { margin: var(--space-2) 0; }
+.blog-figure img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); }
+
+.blog-related { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.blog-related__card { display: grid; grid-template-columns: 30% 1fr; gap: var(--space-3); align-items: center; padding: var(--space-2); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--bg-secondary); color: var(--fg1); text-decoration: none; }
+.blog-related__card:hover { border-color: var(--accent-muted); color: var(--fg1); }
+.blog-related__card img { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius-md); }
+.blog-related__text { display: grid; gap: 2px; min-width: 0; }
+.blog-related__title { font-weight: var(--weight-semibold); line-height: 1.4; }
+.blog-related__desc { font-size: var(--text-xs); color: var(--fg3); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

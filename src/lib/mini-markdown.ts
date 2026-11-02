@@ -4,7 +4,9 @@
  * `**bold**` (a label such as 「做了什么」), `- ` and `1. ` lists, fenced code
  * blocks kept verbatim, and paragraphs with inline `**bold**`. The blog
  * (2026-11-02) added `### ` headings and `[text](/path)` links — to a site
- * path or an https URL only, so a link can never run script.
+ * path or an https URL only, so a link can never run script. 2026-11-03 added
+ * `![alt](/blog/name.webp)` on a line of its own: an illustration, from the
+ * blog's own folder only, so a post can never pull in an outside image.
  *
  * Deliberately not a markdown library: the text is ours, the subset is fixed,
  * and output is React elements built from these blocks — never HTML strings —
@@ -18,7 +20,8 @@ export type Block =
   | { type: "label"; text: string }
   | { type: "p"; parts: Inline[] }
   | { type: "ul" | "ol"; items: Inline[][] }
-  | { type: "code"; text: string };
+  | { type: "code"; text: string }
+  | { type: "img"; src: string; alt: string };
 
 /** A link target this site will render: a path on the site, or https. */
 function safeHref(href: string): boolean {
@@ -49,6 +52,35 @@ export function parseInline(line: string): Inline[] {
   return parts;
 }
 
+/** An illustration line: `![alt](/blog/name.webp)`, our own folder only. */
+const IMAGE_LINE = /^!\[([^\]]+)\]\((\/blog\/[a-z0-9-]+\.(?:webp|jpg|png))\)$/;
+
+/**
+ * A heading's anchor (2026-11-03, the blog's table of contents): lower-case,
+ * punctuation dropped, spaces to hyphens; CJK characters are kept, so the id
+ * reads like the heading in the address bar.
+ */
+export function headingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+/** The `## ` headings of a body, with unique ids — the same ids MiniMarkdown renders. */
+export function tableOfContents(source: string): { id: string; text: string }[] {
+  const seen = new Map<string, number>();
+  return parseMiniMarkdown(source)
+    .filter((block): block is { type: "h2"; text: string } => block.type === "h2")
+    .map((block) => {
+      const base = headingId(block.text) || "section";
+      const n = (seen.get(base) ?? 0) + 1;
+      seen.set(base, n);
+      return { id: n === 1 ? base : `${base}-${n}`, text: block.text };
+    });
+}
+
 export function parseMiniMarkdown(source: string): Block[] {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
@@ -65,6 +97,12 @@ export function parseMiniMarkdown(source: string): Block[] {
       while (i < lines.length && !lines[i].startsWith("```")) body.push(lines[i++]);
       i++; // the closing fence
       blocks.push({ type: "code", text: body.join("\n") });
+      continue;
+    }
+    const image = IMAGE_LINE.exec(line.trim());
+    if (image && !image[2].includes("..")) {
+      blocks.push({ type: "img", src: image[2], alt: image[1] });
+      i++;
       continue;
     }
     if (line.startsWith("### ")) {

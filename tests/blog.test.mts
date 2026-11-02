@@ -102,3 +102,96 @@ test("only the blog's images are cached for a month, never its pages", () => {
   assert.doesNotMatch(config, /cards\|blog\)\/:path\*/);
   assert.match(config, /source: "\/blog\/:file\(/);
 });
+
+// ── 2026-11-03: illustrations, table of contents, related posts ──────────────
+
+test("an image line is an illustration, but only from /blog/ and never an outside URL", async () => {
+  const { parseMiniMarkdown } = await import("../src/lib/mini-markdown.ts");
+  assert.deepEqual(parseMiniMarkdown("![桌上的笔记本](/blog/x-1.webp)"), [{ type: "img", src: "/blog/x-1.webp", alt: "桌上的笔记本" }]);
+  // Anything else stays text: no remote images, no other folders.
+  for (const line of ["![a](https://evil.example/x.png)", "![a](/scenes/x.webp)", "![a](/blog/../x.webp)"]) {
+    assert.equal(parseMiniMarkdown(line)[0].type, "p", line);
+  }
+});
+
+test("second-level headings get stable, unique ids for the table of contents", async () => {
+  const { headingId, tableOfContents } = await import("../src/lib/mini-markdown.ts");
+  assert.equal(headingId("普通人怎么开始用 AI？"), "普通人怎么开始用-ai");
+  const toc = tableOfContents("## 第一步\n段落\n## 第一步\n### 小节\n## Why AI?");
+  assert.deepEqual(toc.map((item) => item.id), ["第一步", "第一步-2", "why-ai"]);
+});
+
+test("related posts share tags first, never include the post itself", async () => {
+  const { relatedPosts, blogPosts } = await import("../src/lib/blog.ts");
+  const posts = blogPosts();
+  const post = posts[0];
+  const related = relatedPosts(post.slug, 3);
+  assert.equal(related.length, Math.min(3, posts.length - 1));
+  assert.ok(!related.some((other) => other.slug === post.slug));
+  const shared = (slug: string) => posts.find((p) => p.slug === slug)!.tags.filter((tag) => post.tags.includes(tag)).length;
+  for (let i = 1; i < related.length; i++) assert.ok(shared(related[i - 1].slug) >= shared(related[i].slug), "ordered by shared tags");
+});
+
+test("the post page carries a table of contents and related posts without client script", () => {
+  const page = readFileSync(path.join(process.cwd(), "src/app/blog/[slug]/page.tsx"), "utf8");
+  assert.match(page, /tableOfContents\(/);
+  assert.match(page, /relatedPosts\(/);
+  assert.doesNotMatch(page, /"use client"/);
+});
+
+test("an edited post can say when: updated becomes dateModified", async () => {
+  const { parsePost } = await import("../src/lib/blog.ts");
+  const post = parsePost("---\nslug: a\ntitle: t\ndescription: d\ndate: 2026-11-02\nupdated: 2026-11-03\ntags: x\ncover_alt: c\n---\nbody");
+  assert.equal(post.updated, "2026-11-03");
+  assert.equal(parsePost("---\nslug: a\ntitle: t\ndescription: d\ndate: 2026-11-02\ntags: x\ncover_alt: c\n---\nbody").updated, "2026-11-02");
+});
+
+test("every illustration a post uses exists, at the size the page declares", async () => {
+  const { blogPosts } = await import("../src/lib/blog.ts");
+  const { parseMiniMarkdown } = await import("../src/lib/mini-markdown.ts");
+  const { existsSync } = await import("node:fs");
+  for (const post of blogPosts()) {
+    for (const block of parseMiniMarkdown(post.body)) {
+      if (block.type === "img") assert.ok(existsSync(path.join(process.cwd(), "public", block.src)), `${post.slug}: missing ${block.src}`);
+    }
+  }
+});
+
+test("★ every site link in every post goes to a page that exists (2026-11-03)", async () => {
+  // A link to /sessions/2026-10-29 went into three drafts while that page was
+  // a 404 (no write-up, no check-ins). Links are checked here, not trusted.
+  const { blogPosts } = await import("../src/lib/blog.ts");
+  const { parseMiniMarkdown } = await import("../src/lib/mini-markdown.ts");
+  const { copy } = await import("../src/lib/content.ts");
+  const slugs = new Set(blogPosts().map((post) => post.slug));
+  // Session pages exist for written-up sessions, and for sessions with
+  // check-ins (database). The second kind cannot be known here, so those dates
+  // are listed once they have been checked live: 2026-10-22 returned 200 on
+  // 2026-11-03, while 2026-10-29 returned 404 and must not be linked.
+  const LIVE_FROM_CHECKINS = ["2026-10-22"];
+  const sessions = new Set([...copy.zh.gallery.sessions.map((session: { date: string }) => session.date), ...LIVE_FROM_CHECKINS]);
+  const home = read("src/app/page.tsx");
+  const hrefs = blogPosts().flatMap((post) =>
+    parseMiniMarkdown(post.body).flatMap((block) => {
+      const runs = block.type === "p" ? [block.parts] : block.type === "ul" || block.type === "ol" ? block.items : [];
+      return runs.flat().filter((part) => part.href?.startsWith("/")).map((part) => ({ post: post.slug, href: part.href! }));
+    }),
+  );
+  assert.ok(hrefs.length > 20, "expected internal links across the posts");
+  for (const { post, href } of hrefs) {
+    const [route, hash] = href.split("#");
+    if (route.startsWith("/blog/")) assert.ok(slugs.has(route.slice(6)), `${post}: ${href} is not a post`);
+    else if (route.startsWith("/sessions/")) assert.ok(sessions.has(route.slice(10)), `${post}: ${href} has no session page`);
+    else if (route === "/" || route === "") assert.ok(!hash || home.includes(`id="${hash}"`), `${post}: ${href}`);
+    else assert.ok(existsSync(path.join(process.cwd(), "src/app", route, "page.tsx")), `${post}: ${href} has no page`);
+  }
+});
+
+test("every post receives links from at least two other posts", async () => {
+  const { blogPosts } = await import("../src/lib/blog.ts");
+  const posts = blogPosts();
+  for (const post of posts) {
+    const inbound = posts.filter((other) => other.slug !== post.slug && other.body.includes(`(/blog/${post.slug})`)).length;
+    assert.ok(inbound >= 2, `${post.slug} has ${inbound} inbound links`);
+  }
+});

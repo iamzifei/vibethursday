@@ -6,9 +6,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { MiniMarkdown } from "@/components/MiniMarkdown";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { BLOG_AUTHOR, blogPost, blogPosts, splitFaq } from "@/lib/blog";
+import { BLOG_AUTHOR, blogPost, blogPosts, relatedPosts, splitFaq } from "@/lib/blog";
 import { getCopy } from "@/lib/content";
-import { parseMiniMarkdown } from "@/lib/mini-markdown";
+import { parseMiniMarkdown, tableOfContents } from "@/lib/mini-markdown";
 import { siteUrl } from "@/lib/site";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     authors: [{ name: BLOG_AUTHOR.name, url: BLOG_AUTHOR.url }],
     alternates: { canonical: `/blog/${post.slug}` },
     // The whole openGraph object replaces the layout's, so siteName and locale are repeated here.
-    openGraph: { type: "article", url: `/blog/${post.slug}`, siteName: "Vibe Thursday", locale: "zh_CN", title: post.title, description: post.description, images: [image], publishedTime: post.date, authors: [BLOG_AUTHOR.url] },
+    openGraph: { type: "article", url: `/blog/${post.slug}`, siteName: "Vibe Thursday", locale: "zh_CN", title: post.title, description: post.description, images: [image], publishedTime: post.date, modifiedTime: post.updated, authors: [BLOG_AUTHOR.url] },
     twitter: { card: "summary_large_image", title: post.title, description: post.description, images: [image], creator: "@JamesAI" },
   };
 }
@@ -55,7 +55,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     description: post.description,
     image: `${base}/blog/${post.slug}.webp`,
     datePublished: post.date,
-    dateModified: post.date,
+    dateModified: post.updated,
     inLanguage: "zh-Hans",
     keywords: post.tags.join(","),
     author: { "@type": "Person", name: BLOG_AUTHOR.name, url: BLOG_AUTHOR.url },
@@ -77,26 +77,52 @@ export default async function BlogPostPage({ params }: PageProps) {
     ],
   };
 
-  const others = blogPosts().filter((other) => other.slug !== post.slug).slice(0, 3);
+  // The sidebar contents (2026-11-03): the `## ` headings, plus the FAQ.
+  const toc = [...tableOfContents(body), ...(faq.length > 0 ? [{ id: "faq", text: "常见问题" }] : [])];
+  const related = relatedPosts(post.slug, 3);
+
+  // One list, drawn twice: folded under the cover on a phone, and as a
+  // sticky sidebar on a wide screen. Plain links and a <details>, no script.
+  const tocList = (
+    <ol className="blog-toc__list">
+      {toc.map((item) => (
+        <li key={item.id}><a href={`#${item.id}`}>{item.text}</a></li>
+      ))}
+    </ol>
+  );
 
   return (
     <div lang={c.htmlLang}>
       <JsonLd data={faqPage ? [article, faqPage, crumbs] : [article, crumbs]} />
       <SiteHeader lang="zh" copy={c} path="/blog" />
       <main id="main">
-        <article className="section">
-          <div className="shell stack-6 blog-post" style={{ maxWidth: "720px" }}>
+        <div className="section">
+          <div className="shell blog-layout">
+          {toc.length > 1 && (
+            <aside className="blog-toc blog-toc--side" aria-label="文章目录">
+              <p className="blog-toc__title">目录</p>
+              {tocList}
+            </aside>
+          )}
+          <article className="stack-6 blog-post">
             <p style={{ margin: 0 }}><Link href="/blog">← 博客</Link></p>
             <h1 style={{ margin: 0 }}>{post.title}</h1>
             <p className="body-sm blog-post__byline" style={{ margin: 0 }}>
               <a href={BLOG_AUTHOR.url} target="_blank" rel="noopener noreferrer author">{BLOG_AUTHOR.name}</a>
               {" · "}
               <time dateTime={post.date}>{post.date}</time>
+              {post.updated !== post.date && <>{" · 更新于 "}<time dateTime={post.updated}>{post.updated}</time></>}
               {" · "}
               {post.tags.join(" · ")}
             </p>
             <Image src={`/blog/${post.slug}.webp`} alt={post.coverAlt} width={1536} height={1024} className="blog-post__cover" priority sizes="(max-width: 760px) 100vw, 720px" />
-            <MiniMarkdown blocks={parseMiniMarkdown(body)} />
+            {toc.length > 1 && (
+              <details className="blog-toc blog-toc--fold">
+                <summary>目录 · {toc.length} 节</summary>
+                <nav aria-label="文章目录（手机）">{tocList}</nav>
+              </details>
+            )}
+            <MiniMarkdown blocks={parseMiniMarkdown(body)} source={body} />
 
             {faq.length > 0 && (
               <section className="stack-3" aria-labelledby="faq">
@@ -120,16 +146,28 @@ export default async function BlogPostPage({ params }: PageProps) {
               </div>
             </div>
 
-            {others.length > 0 && (
-              <nav className="stack-2" aria-label="更多文章">
-                <h2 className="h4" style={{ margin: 0 }}>接着读</h2>
-                <ul className="stack-2">
-                  {others.map((other) => <li key={other.slug}><Link href={`/blog/${other.slug}`}>{other.title}</Link></li>)}
+            {related.length > 0 && (
+              <nav className="stack-3" aria-labelledby="related">
+                <h2 className="h3" id="related">相关文章</h2>
+                <ul className="blog-related">
+                  {related.map((other) => (
+                    <li key={other.slug}>
+                      <Link className="blog-related__card" href={`/blog/${other.slug}`}>
+                        <Image src={`/blog/${other.slug}.webp`} alt="" width={1536} height={1024} sizes="(max-width: 760px) 30vw, 200px" loading="lazy" />
+                        <span className="blog-related__text">
+                          <span className="blog-related__title">{other.title}</span>
+                          <span className="blog-related__desc">{other.description}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
+                <Link href="/blog">看全部文章 →</Link>
               </nav>
             )}
+          </article>
           </div>
-        </article>
+        </div>
       </main>
       <SiteFooter lang="zh" copy={c} />
     </div>

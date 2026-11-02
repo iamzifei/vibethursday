@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import type { Block, Inline } from "@/lib/mini-markdown";
+import { tableOfContents, type Block, type Inline } from "@/lib/mini-markdown";
 
 /** Inline runs as React text: bold and links where marked, never HTML. */
 export function InlineText({ parts }: { parts: Inline[] }) {
@@ -20,14 +20,30 @@ export function InlineText({ parts }: { parts: Inline[] }) {
   );
 }
 
-/** The mini-markdown blocks of a long-form page (the blog, 2026-11-02). */
-export function MiniMarkdown({ blocks }: { blocks: Block[] }) {
+/**
+ * The mini-markdown blocks of a long-form page (the blog, 2026-11-02).
+ * `source`, when given, numbers the `## ` headings with the same ids the
+ * table of contents links to (tableOfContents), so the two cannot disagree.
+ */
+export function MiniMarkdown({ blocks, source }: { blocks: Block[]; source?: string }) {
+  const ids = source ? tableOfContents(source).map((item) => item.id) : [];
+  let h2 = 0;
   return (
     <>
       {blocks.map((block, index) => {
         switch (block.type) {
           case "h2":
-            return <h2 key={index} className="h3">{block.text}</h2>;
+            return <h2 key={index} className="h3" id={ids[h2++]}>{block.text}</h2>;
+          case "img":
+            // Illustrations are generated at 1536×1024; the size is declared so
+            // the page does not jump as they load, and they load lazily — they
+            // are never the first thing on screen (the cover is).
+            return (
+              <figure key={index} className="blog-figure">
+                {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized webp from our own folder */}
+                <img src={block.src} alt={block.alt} width={1536} height={1024} loading="lazy" decoding="async" />
+              </figure>
+            );
           case "h3":
             return <h3 key={index} className="h4">{block.text}</h3>;
           case "label":

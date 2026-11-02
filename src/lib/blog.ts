@@ -21,6 +21,8 @@ export type BlogPost = {
   title: string;
   description: string;
   date: string;
+  /** When the post was last edited (2026-11-03); the publish date if never. */
+  updated: string;
   tags: string[];
   coverAlt: string;
   /** The markdown after the frontmatter, FAQ included. */
@@ -46,6 +48,7 @@ export function parsePost(source: string): BlogPost {
     title: field("title"),
     description: field("description"),
     date: field("date"),
+    updated: fields.get("updated") || field("date"),
     tags: field("tags").split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
     coverAlt: field("cover_alt"),
     body: match[2].trim(),
@@ -78,4 +81,22 @@ export function blogPosts(): BlogPost[] {
 
 export function blogPost(slug: string): BlogPost | null {
   return blogPosts().find((post) => post.slug === slug) ?? null;
+}
+
+/**
+ * Posts to read next (2026-11-03): the most shared tags first, then the newest.
+ * Shown at the end of every post as 「相关文章」, so every article links to
+ * others and none is left without internal links.
+ */
+export function relatedPosts(slug: string, count = 3): BlogPost[] {
+  const posts = blogPosts();
+  const post = posts.find((item) => item.slug === slug);
+  if (!post) return [];
+  const shared = (other: BlogPost) => other.tags.filter((tag) => post.tags.includes(tag)).length;
+  return posts
+    .filter((other) => other.slug !== slug)
+    .map((other, order) => ({ other, score: shared(other), order }))
+    .sort((a, b) => b.score - a.score || a.order - b.order)
+    .slice(0, count)
+    .map((item) => item.other);
 }

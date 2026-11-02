@@ -5,8 +5,10 @@
  *   node scripts/blog-import.mjs <drafts dir> <covers dir>
  *
  * Every `*.md` in the drafts directory not starting with "_" becomes an entry
- * in src/lib/blog-posts.ts (the markdown, verbatim). The `cover_prompt` line is
- * dropped: it is how the image was made, not part of the post. Covers are
+ * in src/lib/blog-posts.ts (the markdown, verbatim). The `cover_prompt` and
+ * `figure_prompt` lines are dropped: they are how the images were made, not
+ * part of the post. In-body illustrations (2026-11-03) are expected as
+ * `<covers dir>/<slug>-1.png` and written to public/blog/<slug>-1.webp. Covers are
  * expected as `<covers dir>/<slug>.png` and written to public/blog/<slug>.webp,
  * at most 1600px wide (never enlarged), through ImageMagick (`magick`).
  */
@@ -26,7 +28,7 @@ mkdirSync(path.join(root, "public/blog"), { recursive: true });
 
 for (const file of readdirSync(drafts).filter((name) => name.endsWith(".md") && !name.startsWith("_")).sort()) {
   const text = readFileSync(path.join(drafts, file), "utf8").replace(/\r\n/g, "\n");
-  const source = text.split("\n").filter((line) => !line.startsWith("cover_prompt:")).join("\n");
+  const source = text.split("\n").filter((line) => !line.startsWith("cover_prompt:") && !line.startsWith("figure_prompt:")).join("\n");
   const slug = /^slug: (.+)$/m.exec(source)?.[1].trim();
   if (!slug) throw new Error(`${file}: no slug`);
   const png = path.join(covers, `${slug}.png`);
@@ -37,6 +39,15 @@ for (const file of readdirSync(drafts).filter((name) => name.endsWith(".md") && 
     execFileSync("magick", [png, "-resize", "1200x630^", "-gravity", "center", "-extent", "1200x630", "-quality", "82", path.join(root, "public/blog", `${slug}-og.jpg`)]);
   } else {
     console.warn(`${slug}: no cover at ${png}`);
+  }
+  // In-body illustrations: every `![alt](/blog/<name>.webp)` line needs <name>.png.
+  for (const [, name] of source.matchAll(/^!\[[^\]]+\]\(\/blog\/([a-z0-9-]+)\.webp\)$/gm)) {
+    const figure = path.join(covers, `${name}.png`);
+    if (existsSync(figure)) {
+      execFileSync("magick", [figure, "-resize", "1200x>", "-quality", "70", path.join(root, "public/blog", `${name}.webp`)]);
+    } else {
+      console.warn(`${slug}: no illustration at ${figure}`);
+    }
   }
   sources.push(source);
 }

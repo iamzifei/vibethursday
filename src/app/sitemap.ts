@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/guide/how-we-run`, changeFrequency: "monthly" as const, priority: 0.6 },
     // The blog (2026-11-02): the index and every post.
     { url: `${base}/blog`, changeFrequency: "weekly" as const, priority: 0.7 },
-    ...blogPosts().map((post) => ({ url: `${base}/blog/${post.slug}`, lastModified: new Date(`${post.date}T00:00:00Z`), changeFrequency: "monthly" as const, priority: 0.6 })),
+    ...blogPosts().map((post) => ({ url: `${base}/blog/${post.slug}`, lastModified: new Date(`${post.updated}T00:00:00Z`), changeFrequency: "monthly" as const, priority: 0.6 })),
     ...works.map((work) => everyLanguage(`/works/${work.key}`, { changeFrequency: "monthly", priority: 0.5 })),
     ...[...dates]
       .sort()
