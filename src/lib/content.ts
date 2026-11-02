@@ -602,7 +602,7 @@ export const copy = {
       successRecapWechat: "微信号",
       successRecapEmail: "邮箱",
       successRecapHint: "换手机认领名片时，照这里原样填。",
-      successSwitched: "同一周只能报一场：{date} 已经帮你退掉了，位子让给了别人。",
+      successSwitched: "{date} 已经帮你取消了，位子让给了别人。",
       // The highest-intent screen on the site, and claiming a card needs exactly
       // the signup that was just created. Anywhere else this ask is a chore.
       successClaimBody: "顺手认领成员名片：已经预填好，当天还能当桌牌用。",
@@ -1805,8 +1805,8 @@ export const copy = {
       addLabel: "选一个周四",
       addSubmit: "报这一场",
       doneCancel: "已取消 {date}。",
-      // 同一周只能报一场（2026-10-05）：改到周二会退掉那周的周四，反之亦然。
-      doneGave: "同一周只能报一场，{date} 已经退掉，位子让给了别人。",
+      // 改期时原来那一场让出去（2026-11-02 起同一周的周二周四可以都报，这里只剩改期）。
+      doneGave: "改期前报的 {date} 已经取消，位子让给了别人。",
       doneBooked: "报上了：{date}。",
       doneWaitlist: "{date} 的座位满了，你在候补第 {n} 位——收到通知再来，没收到的话请改到下一场。",
       failed: "没改成，再试一次；还不行就在群里找 James。",
@@ -2353,7 +2353,7 @@ export const copy = {
       successRecapWechat: "WeChat ID",
       successRecapEmail: "Email",
       successRecapHint: "Claiming your card on another device? Type these exactly as shown.",
-      successSwitched: "One morning per week: we have given up {date} for you, so someone else can have the place.",
+      successSwitched: "We have given up {date} for you, so someone else can have the place.",
       successClaimBody: "Claim your member card while you're here — it's prefilled, and doubles as your name badge on the day.",
       successClaimCta: "Claim my card",
       successSupportBody: "Separately: I cover the venue myself — ",
@@ -3356,7 +3356,7 @@ export const copy = {
       addLabel: "Pick a Thursday",
       addSubmit: "Sign me up",
       doneCancel: "Cancelled {date}.",
-      doneGave: "One morning per week: {date} has been given up, so someone else can have the place.",
+      doneGave: "{date}, which you moved from, has been given up so someone else can have the place.",
       doneBooked: "You are booked for {date}.",
       doneWaitlist: "{date}'s seats are taken — you are #{n} on the waitlist. Come once you hear from me; if you do not, please move to the next one.",
       failed: "That did not go through. Try again, or message James in the group.",
