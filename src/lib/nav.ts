@@ -13,34 +13,40 @@ import { LANG_PARAM, type Lang } from "./lang.ts";
  * nowhere.
  */
 export const NAV_LINKS = [
-  // Reordered 2026-11-02 (home page refactor): the three things that cost
-  // money first, then what has accumulated from the Thursdays, then the rules.
-  // "/#what" left the bar: it is an anchor on the home page, reached by
-  // scrolling — the same reason "流程" left before it.
+  // Regrouped 2026-11-02: nine flat links no longer fitted one row (the CTA
+  // was wrapping into a vertical column of characters). The bar now shows
+  // three groups instead of nine peers:
+  //   "events"    — the things you sign up or pay for, inline in the bar;
+  //   "community" — what has accumulated from the Thursdays, behind one
+  //                 "社区" dropdown (a list under one heading on phones);
+  //   "account"   — "我的", on the right next to the language menu, where
+  //                 people look for their own account.
+  // The order of the array is still the order inside each group, and the
+  // paid things still come first (tests pin /tuesday, /join, /class).
   //
   // Build Tuesday, in the bar since 2026-10-15: people could not find how to
   // sign up for it, or tell it apart from Thursday.
-  { href: "/tuesday", label: "tuesday" },
+  { href: "/tuesday", label: "tuesday", group: "events" },
   // The 共创会员 (2026-11-02): Tuesday's membership, so right after Tuesday.
-  { href: "/join", label: "member" },
+  { href: "/join", label: "member", group: "events" },
   // The AI+IP class, in the bar since 2026-10-12.
-  { href: "/class", label: "class" },
-  // The session archive, then the wall and the works: the parts of this site
-  // that get thicker every week.
-  { href: "/sessions", label: "sessions" },
-  // 2026-11-02: articles from the public Thursdays and the common questions.
-  { href: "/blog", label: "blog" },
-  { href: "/members", label: "members" },
-  { href: "/works", label: "works" },
+  { href: "/class", label: "class", group: "events" },
+  // The session archive, then the articles, the wall and the works: the parts
+  // of this site that get thicker every week.
+  { href: "/sessions", label: "sessions", group: "community" },
+  { href: "/blog", label: "blog", group: "community" },
+  { href: "/members", label: "members", group: "community" },
+  { href: "/works", label: "works", group: "community" },
   // 2026-11-01: the guide took /play's slot — it is the community's one rules page.
-  { href: "/guide", label: "guide" },
+  { href: "/guide", label: "guide", group: "community" },
   // 2026-11-02: one page for "what did I sign up for, my card, am I a member".
-  // Those used to be three pages a newcomer had to find on their own.
-  { href: "/my", label: "my" },
+  { href: "/my", label: "my", group: "account" },
   // Not in the bar: "/wharf" (since 2026-10-11, linked from the archive),
   // "/support" (since 2026-10-15, in the home page footer), "/play" (footer
   // since 2026-11-01).
 ] as const;
+
+export type NavGroup = (typeof NAV_LINKS)[number]["group"];
 
 /** The pixel game, moved from the bar to the footer on 2026-11-01. */
 export const PLAY_LINK = { href: "/play", label: "play" } as const;

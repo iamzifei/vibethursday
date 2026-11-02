@@ -29,6 +29,7 @@ export function SiteHeader({ lang, copy, path }: Props) {
   const items: NavItem[] = NAV_LINKS.map((link) => ({
     href: langHref(link.href, lang),
     label: copy.nav[link.label],
+    group: link.group,
   }));
 
   const cta = navCtaFor(path);
@@ -38,6 +39,7 @@ export function SiteHeader({ lang, copy, path }: Props) {
       brand={copy.nav.brand}
       brandHref={langHref("/", lang)}
       items={items}
+      communityLabel={copy.nav.groupCommunity}
       cta={{ href: langHref(cta.href, lang), label: copy.nav[cta.label] }}
       langSwitch={<LangSwitch current={lang} path={path} label={copy.nav.language} />}
       menuLabel={copy.nav.menu}

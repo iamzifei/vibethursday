@@ -19,10 +19,22 @@ const at = (needle: string) => {
   return i;
 };
 
-test("order: picture, form, what-this-is, the five rules, who you meet", () => {
-  const order = ["<SceneImage", 'id="signup"', 'id="what"', 'id="rules"', 'id="gathered"'].map(at);
+// Spec change 2026-11-02 (site simplification, James): "what this is", the
+// house rules section, "what has accumulated" and "who it is for" left the home
+// page; three ways in come before the form, three steps after it, and the run
+// of show and the rules are folded inside the steps.
+test("order: picture, three ways in, form, first-time steps, photos", () => {
+  const order = ["<SceneImage", 'id="paths"', 'id="signup"', 'id="schedule"', 'id="rules"', "c.gallery.title"].map(at);
   assert.deepEqual(order, [...order].sort((a, b) => a - b));
   assert.ok(at("c.rules.items") > at('id="rules"'));
+});
+
+test("Thursday is the default way in, and the only card drawn as the main one", () => {
+  for (const lang of ["zh", "en"] as const) {
+    const items = getCopy(lang).paths.items;
+    assert.equal(items[0].href, "#signup");
+    assert.deepEqual(items.map((item) => Boolean(item.tag)), [true, false, false]);
+  }
 });
 
 test("the copy the new layout reads exists in every language", async () => {

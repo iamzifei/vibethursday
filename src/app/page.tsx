@@ -15,7 +15,7 @@ import { capFor, SESSION_CAP } from "@/lib/capacity";
 import { getCopy, resolveLang } from "@/lib/content";
 import { JsonLd } from "@/components/JsonLd";
 import { eventSeriesJsonLd, faqJsonLd, organizationJsonLd, pageAlternates } from "@/lib/seo";
-import { listWharfQuestions, signupCountsBySession } from "@/lib/db";
+import { signupCountsBySession } from "@/lib/db";
 import { langHref } from "@/lib/nav";
 import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
@@ -58,12 +58,6 @@ export default async function Page({ searchParams }: PageProps) {
   // Full sessions are marked, not hidden: picking one joins its waitlist
   // (`capacity.ts`). A failed count must not take this page down, so it reads
   // as "nothing is full".
-  // Started together rather than one after the other: two round trips to the
-  // database became one on the home page (2026-09-28 review). The Wharf read is
-  // awaited inside its own try below; the no-op catch only stops an early
-  // rejection from being reported as unhandled before that await is reached.
-  const wharfRead = listWharfQuestions();
-  wharfRead.catch(() => {});
   const counts = await signupCountsBySession().catch(() => new Map<string, number>());
   // Who this browser is, when its remember cookie says (e.g. WeChat login).
   const knownProfile = await knownProfileFromCookie();
@@ -91,48 +85,6 @@ export default async function Page({ searchParams }: PageProps) {
   // signed up is shown anywhere on the site (James 2026-10-24).
   const nextFull = nextSession ? (counts.get(nextSession.value) ?? 0) >= SESSION_CAP : false;
 
-  /**
-   * The three questions in the Wharf block.
-   *
-   * This is the only database read on the home page, and it is wrapped because
-   * of what this page is: the address people are given, the one a stranger
-   * opens first, and until now the only page that still rendered completely
-   * with Postgres down. A block of questions is worth having; it is not worth
-   * the front door going with it, so a failure here costs the three rows and
-   * nothing else — the heading, the explanation and the link all still render.
-   *
-   * `listWallMembers` is the same call the member wall makes, and it is the
-   * privacy boundary: published, unhidden cards only.
-   */
-  let featured: { slug: string; name: string; text: string }[] = [];
-
-  try {
-    // The same rows the Wharf itself shows, not a second derivation of them:
-    // two pages disagreeing about what is on the board is exactly the drift
-    // that is invisible until somebody notices.
-    const questions = (await wharfRead).filter(
-      (question) => question.lane === "question",
-    );
-
-    // A question asked twice shows once, and a row of three characters or
-    // fewer says nothing to a stranger.
-    const seen = new Set<string>();
-    featured = questions
-      .filter((question) => {
-        const key = question.text.trim().toLowerCase();
-        if (key.length < 4 || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, 3)
-      .map((question) => ({
-        slug: question.slug,
-        name: question.name,
-        text: question.text,
-      }));
-  } catch (error) {
-    console.error("[home] the wharf block could not be loaded", error);
-  }
 
   // Shown until the class date has passed (Sydney calendar date).
 
@@ -196,12 +148,12 @@ export default async function Page({ searchParams }: PageProps) {
 
             {/* The main button before the three fact cards, not after: at 390px
                 the cards pushed it below the first screen (2026-09-28 review). */}
+            {/* One button (2026-11-02): the second one ("what is this?") made a
+                first-time visitor choose before they knew anything. The three
+                ways in are the next thing on the page. */}
             <div className="rise rise-3" style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
               <a className="btn btn--primary" href="#signup">
                 {c.hero.cta}
-              </a>
-              <a className="btn btn--secondary" href="#what">
-                {c.hero.ctaSecondary}
               </a>
             </div>
 
@@ -294,6 +246,38 @@ export default async function Page({ searchParams }: PageProps) {
           <SceneImage id="scene-1" alt={c.hero.sceneAlt} eager />
         </div>
 
+        {/* ── Three ways in (2026-11-02) ───────────────────────────────
+            One main path and two side ones. Thursday is the default because
+            that is what the sign-up data says people come for; it is the only
+            card drawn as the primary. Plain <a>, not <Link>: see the WeChat
+            note on the old teaser cards — a full page load always works there. */}
+        <section className="section section--tight" id="paths">
+          <div className="shell stack-6">
+            <div className="stack-3">
+              <span className="eyebrow">{c.paths.eyebrow}</span>
+              <h2>{c.paths.title}</h2>
+            </div>
+
+            <div className="paths">
+              {c.paths.items.map((item) => (
+                <a
+                  key={item.key}
+                  className={`path-card${item.tag ? " path-card--main" : ""}`}
+                  href={item.href.startsWith("#") ? item.href : langHref(item.href, lang)}
+                >
+                  <SceneImage id={item.scene} alt="" sizes="(min-width: 720px) 300px, 34vw" />
+                  <span className="path-card__text">
+                    {item.tag && <span className="path-card__tag">{item.tag}</span>}
+                    <span className="path-card__title">{item.title}</span>
+                    <span className="path-card__body">{item.body}</span>
+                    <span className="path-card__cta">{item.cta} →</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
 
         <section className="section" id="signup">
           <div className="shell stack-8">
@@ -371,172 +355,62 @@ export default async function Page({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {/* ── What ─────────────────────────────────────────────────── */}
-        <section className="section" id="what">
+        {/* ── First time: three steps (2026-11-02) ─────────────────────
+            Replaces "what this is", the five rules, "what has accumulated",
+            "who it is for" and the six-slot run of show — five sections a
+            first-time visitor had to read through. The run of show and the
+            rules are still here, folded; the community pages are in the nav.
+            `id="schedule"` stays because the changelog links to it, and
+            `id="rules"` because the form's "you agree to the rules" does. */}
+        <section className="section" id="schedule">
           <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.what.eyebrow}</span>
-              <h2>{c.what.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.what.lede}
-              </p>
+            <div className="stack-3">
+              <span className="eyebrow">{c.howto.eyebrow}</span>
+              <h2>{c.howto.title}</h2>
             </div>
 
-            <div className="grid-auto">
-              {c.what.points.map((point) => (
-                <div className="card stack-3" key={point.title}>
-                  <h3 className="h3">{point.title}</h3>
-                  <p className="body-sm">{point.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── The five rules (after "what this is" since 2026-11-02) ── */}
-        <section className="section" id="rules">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.rules.eyebrow}</span>
-              <h2>{c.rules.title}</h2>
-            </div>
-
-            <ol className="stack-4" style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {c.rules.items.map((item, index) => (
-                <li className="rule" key={item}>
-                  <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
-                  <span>{item}</span>
+            <ol className="first-steps">
+              {c.howto.steps.map((step, index) => (
+                <li className="first-step" key={step.title}>
+                  <span className="first-step__num" aria-hidden="true">{index + 1}</span>
+                  <span className="stack-1">
+                    <span className="first-step__title">{step.title}</span>
+                    <span className="first-step__body">{step.body}</span>
+                  </span>
                 </li>
               ))}
             </ol>
 
-            {/* The full set lives on /guide (2026-11-01); these five are the excerpt. */}
-            <Link className="body-sm" href={langHref("/guide", lang)} style={{ color: "var(--spark)" }}>
-              {c.rules.more}
-            </Link>
-          </div>
-        </section>
-
-        {/* ── What has accumulated ─────────────────────────────────
-            Second on the page, straight after "what this is", because "who
-            would I actually meet" is the whole decision for two different
-            readers: someone deciding whether to come, and someone looking for
-            a cofounder, a first customer or a partner. The wall, the Wharf and
-            the works used to be three sections here. They are the same kind
-            of thing — the parts of this site that get thicker every week — so
-            they now share one, and the run of show and the sign-up arrive two
-            screens sooner. The three real questions stay: three lines of
-            somebody's actual problem make the case that no copy about the
-            feature can. */}
-        <section className="section" id="gathered">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.gathered.eyebrow}</span>
-              <h2>{c.gathered.title}</h2>
-              <p className="body-lg" style={{ maxWidth: "62ch" }}>
-                {c.gathered.lede}
-              </p>
-            </div>
-
-            {featured.length > 0 ? (
-              <div className="wharf-rows">
-                {featured.map((entry) => (
-                  <Link
-                    key={entry.slug}
-                    href={langHref(`/members/${entry.slug}`, lang)}
-                    className="wharf-row"
-                  >
-                    <span className="wharf-row__q">{entry.text}</span>
-                    <span className="wharf-row__who">{entry.name}</span>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-
-            {/* Two cards side by side: the wall and the works. The Wharf and
-                the pixel game cards left on 2026-11-02; both pages are still
-                linked (the Wharf from the archive, the game from the footer).
-                The buttons are plain links, not <Link>: in WeChat's Android
-                browser a client-side navigation from here reportedly did
-                nothing (2026-10-18), and a full page load always works. */}
-            <div className="grid-2">
-              <div className="card stack-3 teaser">
-                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.membersTeaser.eyebrow}</span>
-                <h3 className="h3">{c.membersTeaser.title}</h3>
-                <p className="body-sm">{c.membersTeaser.lede}</p>
-                <div className="teaser__cta">
-                  <a className="btn btn--primary" href={langHref("/members", lang)}>
-                    {c.membersTeaser.cta}
-                  </a>
-                  <a className="btn btn--secondary" href={langHref("/claim", lang)}>
-                    {c.membersTeaser.ctaSecondary}
-                  </a>
+            <div className="stack-3">
+              <details className="disclosure">
+                <summary className="h3" style={{ fontSize: "var(--text-lg)" }}>{c.howto.scheduleFold}</summary>
+                <div className="faq-answer">
+                  {c.schedule.slots.map((slot) => (
+                    <div className="slot" key={slot.time}>
+                      <span className="slot__time">{slot.time}</span>
+                      <div className="stack-2">
+                        <span className="slot__title">{slot.title}</span>
+                        <span className="slot__note">{slot.note}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </details>
 
-              <div className="card stack-3 teaser">
-                <span className="eyebrow" style={{ color: "var(--fg3)" }}>{c.worksTeaser.eyebrow}</span>
-                <h3 className="h3">{c.worksTeaser.title}</h3>
-                <p className="body-sm">{c.worksTeaser.lede}</p>
-                <div className="teaser__cta">
-                  <a className="btn btn--secondary" href={langHref("/works", lang)}>
-                    {c.worksTeaser.cta}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Who ──────────────────────────────────────────────────── */}
-        <section className="section">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.who.eyebrow}</span>
-              <h2>{c.who.title}</h2>
-            </div>
-
-            <ul
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "var(--space-2)",
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-              }}
-            >
-              {c.who.groups.map((group) => (
-                <li className="pill" key={group} style={{ textTransform: "none", letterSpacing: 0 }}>
-                  {group}
-                </li>
-              ))}
-            </ul>
-
-            <p className="body-sm" style={{ maxWidth: "62ch", color: "var(--fg3)" }}>
-              {c.who.note}
-            </p>
-          </div>
-        </section>
-
-        {/* ── Run of show ──────────────────────────────────────────── */}
-        <section className="section" id="schedule">
-          <div className="shell stack-8">
-            <div className="stack-4">
-              <span className="eyebrow">{c.schedule.eyebrow}</span>
-              <h2>{c.schedule.title}</h2>
-            </div>
-
-            <div>
-              {c.schedule.slots.map((slot) => (
-                <div className="slot" key={slot.time}>
-                  <span className="slot__time">{slot.time}</span>
-                  <div className="stack-2">
-                    <span className="slot__title">{slot.title}</span>
-                    <span className="slot__note">{slot.note}</span>
-                  </div>
-                </div>
-              ))}
+              <details className="disclosure" id="rules">
+                <summary className="h3" style={{ fontSize: "var(--text-lg)" }}>{c.howto.rulesFold}</summary>
+                <ol className="stack-4 faq-answer" style={{ listStyle: "none", margin: 0 }}>
+                  {c.rules.items.map((item, index) => (
+                    <li className="rule" key={item}>
+                      <span className="rule__num">{String(index + 1).padStart(2, "0")}</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="body-sm faq-answer">
+                  <Link href={langHref("/guide", lang)}>{c.rules.more}</Link>
+                </p>
+              </details>
             </div>
           </div>
         </section>
@@ -679,8 +553,6 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
           </div>
         </section>
-
-        {/* ── House rules ──────────────────────────────────────────── */}
 
         {/* ── FAQ ──────────────────────────────────────────────────── */}
         <section className="section">

@@ -47,7 +47,6 @@ function code(file: string): string {
 }
 
 const wharfPage = code("src/app/wharf/page.tsx");
-const homePage = code("src/app/page.tsx");
 const sessionsPage = code("src/app/sessions/page.tsx");
 
 // ── The promise the sign-up form made ───────────────────────────────
@@ -61,7 +60,8 @@ test("the Wharf can only read published, unhidden cards", () => {
   // joins members and applies the same WHERE.
   for (const [name, source] of [
     ["/wharf", wharfPage],
-    ["the home page's Wharf block", homePage],
+    // Spec change 2026-11-02 (site simplification): the home page no longer
+    // shows any Wharf questions, so it has no rows to check here.
     ["/sessions", sessionsPage],
   ] as const) {
     assert.ok(

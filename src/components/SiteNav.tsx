@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-export type NavItem = { href: string; label: string };
+import type { NavGroup } from "@/lib/nav";
+
+export type NavItem = { href: string; label: string; group?: NavGroup };
 
 type Props = {
   brand: string;
   brandHref: string;
   /** The section and page links, already carrying `?lang=` where needed. */
   items: NavItem[];
+  /** Names the "community" group: the dropdown's button and the phone menu's heading. */
+  communityLabel: string;
   cta: NavItem;
   /** The 简/繁/EN control, rendered by a Server Component and passed in. */
   langSwitch: ReactNode;
@@ -22,6 +26,10 @@ type Props = {
 
 /**
  * The bar every page opens with.
+ *
+ * The links come in three groups (see NAV_LINKS): the sign-up pages inline,
+ * the community pages behind one dropdown, and "我的" on the right with the
+ * site-wide controls. Nine flat peers stopped fitting one row on 2026-11-02.
  *
  * Two renderings of the same links: an inline row on a wide screen, and a
  * panel behind a button below 980px. They are separate markup rather than one
@@ -39,6 +47,7 @@ export function SiteNav({
   brand,
   brandHref,
   items,
+  communityLabel,
   cta,
   langSwitch,
   menuLabel,
@@ -76,8 +85,36 @@ export function SiteNav({
   // path alone, or nothing ever matches the current page.
   const isCurrent = (href: string) => {
     const path = href.split(/[?#]/)[0];
-    return path !== "/" && pathname === path;
+    return path !== "/" && (pathname === path || pathname.startsWith(`${path}/`));
   };
+
+  const events = items.filter((item) => item.group === "events");
+  const community = items.filter((item) => item.group === "community");
+  // Anything without a group lands with the account links rather than vanishing.
+  const account = items.filter((item) => item.group !== "events" && item.group !== "community");
+
+  const link = (item: NavItem) => (
+    <Link
+      className="nav__link"
+      key={item.href}
+      href={item.href}
+      aria-current={isCurrent(item.href) ? "page" : undefined}
+    >
+      {item.label}
+    </Link>
+  );
+
+  const row = (item: NavItem) => (
+    <Link
+      className="nav__row"
+      key={item.href}
+      href={item.href}
+      aria-current={isCurrent(item.href) ? "page" : undefined}
+      onClick={() => setOpen(false)}
+    >
+      {item.label}
+    </Link>
+  );
 
   return (
     <header className="nav">
@@ -99,16 +136,21 @@ export function SiteNav({
         </Link>
 
         <nav className="nav__wide" aria-label={menuLabel}>
-          {items.map((item) => (
-            <Link
-              className="nav__link"
-              key={item.href}
-              href={item.href}
-              aria-current={isCurrent(item.href) ? "page" : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {events.map(link)}
+
+          {community.length > 0 && (
+            <NavDropdown
+              label={communityLabel}
+              items={community}
+              isCurrent={isCurrent}
+              pathname={pathname}
+            />
+          )}
+
+          {/* "我的" sits apart, on the right with the controls that act on the
+              whole site — where people look for their own account. */}
+          <span className="nav__divider" aria-hidden="true" />
+          {account.map(link)}
 
           <div className="nav__lang">{langSwitch}</div>
 
@@ -151,17 +193,19 @@ export function SiteNav({
 
       <div className="nav__panel" id="site-menu" hidden={!open}>
         <nav className="shell nav__panel-inner" aria-label={menuLabel}>
-          {items.map((item) => (
-            <Link
-              className="nav__row"
-              key={item.href}
-              href={item.href}
-              aria-current={isCurrent(item.href) ? "page" : undefined}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {events.map(row)}
+
+          {/* On a phone the dropdown becomes a heading: a menu inside a menu
+              is one tap too many, and there is room to just list them. */}
+          {community.length > 0 && (
+            <>
+              <span className="nav__heading">{communityLabel}</span>
+              {community.map(row)}
+            </>
+          )}
+
+          {account.length > 0 && <span className="nav__heading" aria-hidden="true" />}
+          {account.map(row)}
 
           <div className="nav__panel-foot">
             <Link
@@ -181,5 +225,96 @@ export function SiteNav({
         </nav>
       </div>
     </header>
+  );
+}
+
+type DropdownProps = {
+  label: string;
+  items: NavItem[];
+  isCurrent: (href: string) => boolean;
+  pathname: string;
+};
+
+/**
+ * The "社区" dropdown in the wide bar.
+ *
+ * A disclosure (a button that shows a list of links), not an ARIA `menu`:
+ * these are page links, and the menu role would take away the Tab key and
+ * the link semantics a screen reader announces. Opens on click rather than
+ * hover, so it works the same on a tablet; closes on Escape, on a click
+ * outside, and on navigation.
+ */
+function NavDropdown({ label, items, isCurrent, pathname }: DropdownProps) {
+  const [open, setOpen] = useState(false);
+  const [shownFor, setShownFor] = useState(pathname);
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  // Same render-time reset as the phone panel: the back button is not a click.
+  if (pathname !== shownFor) {
+    setShownFor(pathname);
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      // Back to the button, so a keyboard user is not dropped at the top of the page.
+      button.current?.focus();
+    };
+
+    // `mousedown`, not `click`, for the same reason as LangSwitch.
+    const onDown = (event: MouseEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("mousedown", onDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousedown", onDown);
+    };
+  }, [open]);
+
+  // The button carries the accent when you are on any page inside it, so the
+  // bar still says where you are with the page itself out of sight.
+  const inside = items.some((item) => isCurrent(item.href));
+
+  return (
+    <div className="nav__drop" ref={root}>
+      <button
+        ref={button}
+        className={`nav__link nav__drop-trigger${inside ? " nav__link--inside" : ""}`}
+        type="button"
+        aria-expanded={open}
+        aria-controls="nav-community"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {label}
+        <svg className="langs__chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="nav__drop-menu" id="nav-community">
+          {items.map((item) => (
+            <Link
+              className="langs__opt"
+              key={item.href}
+              href={item.href}
+              aria-current={isCurrent(item.href) ? "page" : undefined}
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

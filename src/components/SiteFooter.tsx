@@ -1,9 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { currentVersion } from "@/lib/changelog";
 import type { Copy, Lang } from "@/lib/content";
 import { CHAT_URL } from "@/lib/go";
-import { langHref, NAV_LINKS, PLAY_LINK, SUPPORT_LINK } from "@/lib/nav";
+import { langHref, NAV_CTA, NAV_LINKS, PLAY_LINK, SUPPORT_LINK, type NavGroup } from "@/lib/nav";
 import { FOOTER_SLOGAN, SOURCE_URL } from "@/lib/site";
 
 type Props = {
@@ -35,32 +36,51 @@ type Props = {
 export function SiteFooter({ lang, copy, support = false, consult = true }: Props) {
   return (
     <footer className="section" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-      <div className="shell footer__bar">
-        <div className="stack-3">
+      <div className="shell footer__top">
+        <div className="stack-3 footer__about">
           <span className="h3 hl">{copy.footer.tagline}</span>
 
           <span className="body-sm mono" style={{ color: "var(--fg3)" }}>
             {copy.footer.location}
           </span>
+        </div>
 
-          {/* A second way to every page, for the reader who has scrolled to
-              the bottom rather than reached for the bar at the top.
+        {/* A second way to every page, for the reader who has scrolled to the
+            bottom rather than reached for the bar at the top. Three columns
+            under the same groups as the bar (2026-11-02), instead of one long
+            run of fifteen links.
 
-              ⚠️ `/support` is filtered out unless this page asked for it. The
-              member wall deliberately carries no money link, for the same
-              reason its cards carry no donation marker, and a site map in the
-              footer must not be the thing that quietly puts one under every
-              card on it. */}
-          <nav className="footer__map" aria-label={copy.nav.siteMap}>
-            {[...NAV_LINKS, PLAY_LINK, ...(support ? [SUPPORT_LINK] : [])].map((link) => (
+            ⚠️ `/support` is left out unless this page asked for it. The member
+            wall deliberately carries no money link, for the same reason its
+            cards carry no donation marker, and a site map in the footer must
+            not be the thing that quietly puts one under every card on it. */}
+        <nav className="footer__map" aria-label={copy.nav.siteMap}>
+          <FooterColumn title={copy.nav.groupEvents}>
+            <Link href={langHref(NAV_CTA.href, lang)}>{copy.nav.cta}</Link>
+            {linksIn("events").map((link) => (
               <Link key={link.href} href={langHref(link.href, lang)}>
                 {copy.nav[link.label]}
               </Link>
             ))}
+          </FooterColumn>
 
+          <FooterColumn title={copy.nav.groupCommunity}>
+            {[...linksIn("community"), PLAY_LINK].map((link) => (
+              <Link key={link.href} href={langHref(link.href, lang)}>
+                {copy.nav[link.label]}
+              </Link>
+            ))}
             {/* `/go` is the link pinned in the group; the footer is where
                 somebody who came in another way finds the same page. */}
             <Link href={langHref("/go", lang)}>{copy.go.footerLink}</Link>
+          </FooterColumn>
+
+          <FooterColumn title={copy.nav.groupMore}>
+            {linksIn("account").map((link) => (
+              <Link key={link.href} href={langHref(link.href, lang)}>
+                {copy.nav[link.label]}
+              </Link>
+            ))}
 
             {/* Until 2026-10-19 the booking link only showed on /go after a
                 Thursday, so anyone wanting a one-to-one on any other day had
@@ -76,31 +96,51 @@ export function SiteFooter({ lang, copy, support = false, consult = true }: Prop
               {copy.footer.botLink}
             </a>
 
-            {/* Down here rather than in the bar at the top. The nav is for the
-                five things somebody comes to this site to do; this is for the
-                reader who got to the bottom and wants to know whether the thing
-                is still moving. The version number is the answer in one word. */}
+            {support && (
+              <Link href={langHref(SUPPORT_LINK.href, lang)}>{copy.nav[SUPPORT_LINK.label]}</Link>
+            )}
+
+            {/* Here rather than in the bar: for the reader who wants to know
+                whether the thing is still moving. The version number is the
+                answer in one word. */}
             <Link href={langHref("/changelog", lang)}>
               {copy.changelog.footerLink} <span className="mono">v{currentVersion()}</span>
             </Link>
-          </nav>
-        </div>
+          </FooterColumn>
+        </nav>
+      </div>
 
+      <div className="shell footer__bar">
         <span className="body-sm footer__meta">
           <Slogan text={FOOTER_SLOGAN} />
-
-          <a
-            className="footer__source"
-            href={SOURCE_URL}
-            rel="noopener noreferrer"
-            target="_blank"
-            aria-label={copy.footer.sourceLink}
-          >
-            <GitHubMark />
-          </a>
         </span>
+
+        <a
+          className="footer__source"
+          href={SOURCE_URL}
+          rel="noopener noreferrer"
+          target="_blank"
+          aria-label={copy.footer.sourceLink}
+        >
+          <GitHubMark />
+        </a>
       </div>
     </footer>
+  );
+}
+
+/** The bar's links in one group, in the bar's order. */
+function linksIn(group: NavGroup) {
+  return NAV_LINKS.filter((link) => link.group === group);
+}
+
+/** One column of the footer's site map: a quiet heading and a list. */
+function FooterColumn({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="footer__col">
+      <span className="footer__heading">{title}</span>
+      {children}
+    </div>
   );
 }
 
