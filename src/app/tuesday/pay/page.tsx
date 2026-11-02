@@ -135,6 +135,10 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                         </div>
                       </details>
                     )}
+                    {/* Paid somewhere the site does not see (2026-11-02): a way to the organiser. */}
+                    <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
+                      {c.signup.payMissing} <a href={c.signup.payMissingHref}>{c.signup.payMissingCta} →</a>
+                    </p>
                     <MemberUpsell copy={{ title: "常来周二的话，办共创会员更划算", body: "599 澳元 + GST 一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办好后回到这一页刷新，这一场就不用付了。", cta: "了解共创会员" }} />
                   </>
                 ) : fee.claimed_at ? (

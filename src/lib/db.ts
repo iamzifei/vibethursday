@@ -9,7 +9,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
-import { MEMBERSHIP, MEMBERSHIP_COURSES } from "./course.ts";
+import { MEMBERSHIP, MEMBERSHIP_COURSES, newMemberRef } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
 import type { DeskRow } from "./desk.ts";
@@ -5103,4 +5103,92 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
     [session],
   );
   return result.rows;
+}
+
+
+/* ── The 共创会员 register (2026-11-02, membership-admin.ts) ────────────── */
+
+export type MembershipRow = {
+  id: string;
+  course: string;
+  name: string;
+  wechat: string;
+  ref: string;
+  stripe_session: string | null;
+  note: string | null;
+  /** YYYY-MM-DD, Sydney. */
+  paid_on: string;
+  /** The day the year (plus the grace week isMember allows) is counted to, without the grace. */
+  expires_on: string;
+  active: boolean;
+};
+
+/** Every paid membership order, newest first, with whether it still counts. */
+export async function listMemberships(): Promise<MembershipRow[]> {
+  await ensureSchema();
+  const result = await getPool().query<MembershipRow>(
+    `SELECT id::text AS id, course, name, wechat, ref, stripe_session, note,
+            to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS paid_on,
+            to_char((paid_at AT TIME ZONE 'Australia/Sydney') + interval '1 year', 'YYYY-MM-DD') AS expires_on,
+            (paid_at > now() - interval '${MEMBER_WINDOW}') AS active
+       FROM course_orders
+      WHERE status = 'paid' AND course IN (${MEMBER_COURSES_SQL}) AND paid_at IS NOT NULL
+      ORDER BY paid_at DESC`,
+  );
+  return result.rows;
+}
+
+/**
+ * Records a membership paid outside the site. "already" when this WeChat ID
+ * is already a current member; an unpaid /join order for them is completed
+ * rather than duplicated. The paid date is the day they paid (Sydney), so the
+ * year runs from then.
+ */
+export async function addManualMembership(input: { name: string; wechat: string; paidOn: string; note: string }): Promise<"added" | "already"> {
+  await ensureSchema();
+  const wechat = input.wechat.trim();
+  const note = `手动登记：${input.note}`;
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    // The same lock createCourseOrder takes, so a /join checkout and this
+    // cannot both make an order for one person at once.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`course:${MEMBERSHIP.id}`]);
+    const current = await client.query(
+      `SELECT 1 FROM course_orders
+        WHERE status = 'paid' AND course IN (${MEMBER_COURSES_SQL}) AND paid_at > now() - interval '${MEMBER_WINDOW}'
+          AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($1, '\\s+', '', 'g'))`,
+      [wechat],
+    );
+    if (current.rowCount) {
+      await client.query("ROLLBACK");
+      return "already";
+    }
+    const paidAt = `${input.paidOn} 12:00 Australia/Sydney`;
+    const open = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM course_orders
+        WHERE course = $1 AND status <> 'cancelled'
+          AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($2, '\\s+', '', 'g'))`,
+      [MEMBERSHIP.id, wechat],
+    );
+    if (open.rows[0]) {
+      await client.query(
+        `UPDATE course_orders SET status = 'paid', paid_at = $2::timestamptz, note = $3 WHERE id = $1::bigint`,
+        [open.rows[0].id, paidAt, note],
+      );
+    } else {
+      await client.query(
+        `INSERT INTO course_orders (course, name, wechat, ref, status, paid_at, note)
+         VALUES ($1, $2, $3, $4, 'paid', $5::timestamptz, $6)`,
+        [MEMBERSHIP.id, input.name, wechat, newMemberRef(), paidAt, note],
+      );
+    }
+    await client.query("COMMIT");
+    return "added";
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }

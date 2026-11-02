@@ -661,6 +661,12 @@ export const copy = {
       },
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
       feeDueCta: "去付款",
+      // 一键直接打开刷卡页（2026-11-02）。
+      feeDueCardCta: "刷卡付款 {amount}（支持 Apple Pay / Google Pay）",
+      // 付过钱但网站没记录的人（线下转账、别的渠道）：给一条找主办人的路。
+      payMissing: "已经付过 599 会员费或这一场的门票，但这里没认出来？加 James 微信说一声，核对后帮你改。",
+      payMissingCta: "加 James 微信",
+      payMissingHref: "/#contact",
       dinnerDue: "聚餐占座：去付款，付了才算占上。",
       // 刷卡付款开启时（2026-10-19）：先给 {minutes} 分钟付款，过时自动释放。
       feeDueHold: "最后一步：{minutes} 分钟内付款 {amount}，付完位子才锁定，过时自动释放给别人。",
@@ -2427,6 +2433,10 @@ export const copy = {
       },
       feeDue: "One step left: transfer {amount} to confirm your place.",
       feeDueCta: "Pay now",
+      feeDueCardCta: "Pay {amount} by card (Apple Pay / Google Pay)",
+      payMissing: "Already paid the membership or this session, but it isn't showing here? Message James on WeChat and he'll fix it.",
+      payMissingCta: "Message James on WeChat",
+      payMissingHref: "/#contact",
       dinnerDue: "Dinner seat: pay to hold it.",
       feeDueHold: "One step left: pay {amount} within {minutes} minutes. Your place is locked in once paid, and released to someone else if not.",
       dinnerDueHold: "Your dinner seat is held for {minutes} minutes. It is locked in once paid, and released if not.",

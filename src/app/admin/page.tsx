@@ -32,6 +32,8 @@ import {
   listRoster,
   listSignups,
   listWharfQuestions,
+  listProgress,
+  listMemberships,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { barSheet, canOrder, orderCode } from "@/lib/order";
@@ -147,6 +149,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const feeTuesdays = [...new Set([desk, ...upcomingSpecialSessions().map((special) => special.date)])].filter(
     (date) => feeFor(date) !== null,
   );
+  // The overview tiles (2026-11-02): counts only, each failing soft.
+  const [progressEntries, memberships] = await Promise.all([
+    listProgress().catch(() => []),
+    listMemberships().catch(() => []),
+  ]);
   const tuesdayFees = await Promise.all(
     feeTuesdays.map(async (session) => ({ session, rows: await listTuesdayFeeDesk(session).catch(() => []) })),
   );
@@ -447,19 +454,32 @@ export default async function AdminPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {/* Four groups in the order a week actually runs. Sticky, and it scrolls
-          sideways on a phone rather than wrapping into two rows. */}
-      <nav className="admin-jump" aria-label="后台分组">
-        <a href="/admin/desk">签到台</a>
-        <a href="#week">本周</a>
-        <a href="#after">散场后</a>
-        <a href="#community">社群</a>
-        <a href="#data">数据与工具</a>
-        {/* Their own pages, not sections of this one (2026-10-13). */}
-        <a href="/admin/tag">标注来的人</a>
-        <a href="/admin/people">所有人画像</a>
-        <a href="/admin/progress">作品进展</a>
-      </nav>
+      {/* What is waiting on the organiser, each a link to where it is dealt
+          with. Highlighted only when it needs doing. */}
+      {(() => {
+        const nextFee = tuesdayFees[0];
+        const owing = nextFee ? nextFee.rows.filter((row) => !row.member && row.status !== "paid" && row.status !== "waived").length : 0;
+        const pendingPhotos = photos.filter((p) => p.status === "pending").length;
+        const drafts = progressEntries.filter((entry) => !entry.confirmed).length;
+        const tiles: { href: string; n: number; label: string; warn: boolean }[] = [
+          { href: "#waitlist", n: waitlistBySession.get(desk) ?? 0, label: "候补（本场）", warn: false },
+          ...(nextFee ? [{ href: "#tuesday-fees", n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
+          { href: "#photos", n: pendingPhotos, label: "照片待审", warn: pendingPhotos > 0 },
+          { href: "/admin/progress", n: drafts, label: "作品进展草稿", warn: drafts > 0 },
+          { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
+        ];
+        return (
+          <nav className="admin-tiles" aria-label="待办">
+            {tiles.map((tile) => (
+              <a key={tile.href} className={tile.warn ? "admin-tile admin-tile--warn" : "admin-tile"} href={tile.href}>
+                <strong>{tile.n}</strong>
+                <span>{tile.label}</span>
+              </a>
+            ))}
+          </nav>
+        );
+      })()}
+
 
       <section className="stack-8 admin-group" id="week">
         <h2 className="eyebrow">① 本周</h2>

@@ -290,6 +290,10 @@ export default async function MyPage({ searchParams }: PageProps) {
                     <p className="body-sm" style={{ margin: 0 }}>
                       {fill(t.feeDue, { amount: `A$${feeToPay(feeFor(entry.session)!)}` })} ·{" "}
                       <a href={`/tuesday/pay?ref=${fee.ref}`}>{t.feePay} →</a>
+                      {/* Paid somewhere the site does not see (2026-11-02). */}
+                      <span className="field-hint" style={{ display: "block" }}>
+                        {c.signup.payMissing} <a href={c.signup.payMissingHref}>{c.signup.payMissingCta} →</a>
+                      </span>
                     </p>
                   );
                 })()}

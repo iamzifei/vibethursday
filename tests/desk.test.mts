@@ -98,10 +98,10 @@ test("★ the desk is organiser-only, and its buttons come back to it", () => {
   }
 });
 
-test("the admin home leads with the desk", () => {
-  const admin = read("src/app/admin/page.tsx");
-  const nav = admin.indexOf('className="admin-jump"');
-  assert.ok(nav > 0 && admin.indexOf('/admin/desk', nav) > nav, "the desk is in the jump bar");
+// Spec change 2026-11-02 (admin frame): the jump bar became the sidebar.
+test("the admin navigation leads with the desk", async () => {
+  const { ADMIN_NAV } = await import("../src/lib/admin-nav.ts");
+  assert.deepEqual(ADMIN_NAV[0].links.slice(0, 2).map((link) => link.href), ["/admin", "/admin/desk"]);
 });
 
 test("the room's check-in page ends with the day's one rule, never someone's own payment status", () => {

@@ -584,9 +584,22 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
                 {(receipt.payHold ? copy.feeDueHold.replace("{minutes}", String(receipt.payHold)) : copy.feeDue).replace("{amount}", receipt.fee.amount)}
               </strong>
             </p>
-            <a className="btn btn--primary btn--block" href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
+            {receipt.payHold ? (
+              // Card payment on (2026-11-02): straight to Stripe in one tap.
+              // The route falls back to the payment page on any failure.
+              <form method="post" action="/api/pay/checkout">
+                <input type="hidden" name="ref" value={receipt.fee.ref} />
+                <button className="btn btn--primary btn--block" type="submit">
+                  {copy.feeDueCardCta.replace("{amount}", receipt.fee.amount)}
+                </button>
+              </form>
+            ) : null}
+            <a className={receipt.payHold ? "body-sm" : "btn btn--primary btn--block"} href={`/tuesday/pay?ref=${receipt.fee.ref}`}>
               {copy.feeDueCta} →
             </a>
+            <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
+              {copy.payMissing} <a href={copy.payMissingHref}>{copy.payMissingCta} →</a>
+            </p>
             <MemberUpsell copy={copy.memberUpsell} />
           </div>
         )}
