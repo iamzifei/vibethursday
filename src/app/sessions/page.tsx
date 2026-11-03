@@ -8,6 +8,7 @@ import { archiveTotals, buildArchive } from "@/lib/archive";
 import { getCopy, resolveLang } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
 import { countBookings, countCheckins, countSignups, listWallMembers, listWharfQuestions } from "@/lib/db";
+import { sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -66,7 +67,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
     countBookings(),
   ]);
 
-  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings, lang === "en" ? "en" : "zh");
+  const rows = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings, lang === "en" ? "en" : "zh", sydneyToday().toISOString().slice(0, 10));
   const totals = archiveTotals(
     rows,
     wall.length,

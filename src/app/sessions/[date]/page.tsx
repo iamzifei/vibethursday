@@ -79,7 +79,7 @@ export default async function SessionPage({ params, searchParams }: PageProps) {
     listApprovedSessionPhotos(date),
   ]);
 
-  const row = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings, lang === "en" ? "en" : "zh").find(
+  const row = buildArchive(c.gallery.sessions, wall, questions, attendance, bookings, lang === "en" ? "en" : "zh", sydneyToday().toISOString().slice(0, 10)).find(
     (candidate) => candidate.date === date,
   );
 
