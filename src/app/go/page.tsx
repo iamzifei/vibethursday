@@ -142,8 +142,8 @@ export default async function GoPage({ searchParams }: PageProps) {
   // card of its own at the top: what and when, and the same check-in link the
   // Thursday gets, in the same 10:00–13:00 window. Until 13:00, like the link.
   const hour = sydneyHour();
-  // The card stays up for the whole Tuesday, which runs to 15:30 (2026-11-02).
-  const tuesdayToday = isSpecialSession(today) && hour < 16;
+  // The card stays up until the Tuesday ends at 12:30 (2026-11-04).
+  const tuesdayToday = isSpecialSession(today) && hour < 13;
   const tuesdayCheckin = tuesdayToday && checkinLinkOpen(true, hour, true);
   const tuesdayMine = mine ? mine.sessions.includes(today) || mine.waitlist.some((entry) => entry.session === today) : null;
 

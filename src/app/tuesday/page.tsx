@@ -15,7 +15,7 @@ import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
 import { LANG_PARAM } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
-import { formatSession, upcomingSpecialSessions } from "@/lib/sessions";
+import { formatSession, upcomingBookableSpecialSessions } from "@/lib/sessions";
 
 // The form shows which Tuesdays are full, so this reads the database per request.
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
   const t = c.tuesday;
 
   const counts = await signupCountsBySession().catch(() => new Map<string, number>());
-  const sessions = upcomingSpecialSessions().map(({ date }) => {
+  const sessions = upcomingBookableSpecialSessions().map(({ date }) => {
     const full = (counts.get(date) ?? 0) >= capFor(date);
     return {
       value: date,

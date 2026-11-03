@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.10",
+    date: "2026-11-04",
+    kind: "minor",
+    scope: "room",
+    zh: "Build Tuesday 改回只开上午，10:30–12:30：提前排好两个项目或需求当场拆，其余时间各自推进，散场前点名配对；午饭自愿，不再有下午 workshop。报名改成前一天晚上 8 点截止。",
+    en: "Build Tuesday is back to mornings only, 10:30–12:30: two projects or needs lined up in advance and taken apart on the spot, your own work the rest of the time, and match-ups before you leave; lunch is optional and there is no afternoon workshop. Signups now close at 8pm the night before.",
+    link: { href: "/tuesday", zh: "看周二 →", en: "See Tuesday →" },
+  },
+  {
     version: "5.9",
     date: "2026-11-02",
     kind: "minor",

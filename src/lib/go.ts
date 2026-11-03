@@ -105,8 +105,8 @@ export const CHECKIN_LINK_UNTIL = 13;
  * whole day) and is unchanged; this only decides whether /go hands out the link.
  */
 export function checkinLinkOpen(isSessionDay: boolean, sydneyHour: number, tuesday = false): boolean {
-  // A Build Tuesday runs to 15:30 (2026-11-02): people coming for the
-  // afternoon workshop check in too.
-  const until = tuesday ? 16 : CHECKIN_LINK_UNTIL;
+  // A Build Tuesday runs 10:30–12:30 (2026-11-04), so the same 10:00–13:00
+  // window as a Thursday. (3 November ran to 15:30; that is in the past.)
+  const until = tuesday ? 13 : CHECKIN_LINK_UNTIL;
   return isSessionDay && sydneyHour >= CHECKIN_LINK_FROM && sydneyHour < until;
 }

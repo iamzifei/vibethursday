@@ -24,15 +24,17 @@ test("★ on a Tuesday the screen shows Tuesday's day and the membership, not Th
   const tuesday = screenFor(true);
   assert.match(thursday.title, /每周四/);
   assert.match(tuesday.title, /周二|Tuesday/);
-  assert.deepEqual(tuesday.schedule.map((slot) => slot.time), ["10:30", "12:00", "13:30"]);
+  assert.deepEqual(tuesday.schedule.map((slot) => slot.time), ["10:30", "10:45", "12:00"]);
   assert.equal(tuesday.second.href, SCREEN_LINKS.join, "Tuesday's close is the 共创会员");
   assert.equal(thursday.second.href, SCREEN_LINKS.tuesday, "Thursday still only points on to Tuesday");
   assert.ok(!JSON.stringify(thursday.schedule).includes("点饮品"), "no ordering on the site any more");
 });
 
-test("the check-in link on /go stays open through Tuesday's afternoon", async () => {
+// Spec change 2026-11-04: Tuesday is mornings only again (10:30–12:30), so its
+// check-in link closes at 13:00 like a Thursday's. Was open to 16:00.
+test("the check-in link on /go closes at 13:00 on a Tuesday too", async () => {
   const { checkinLinkOpen } = await import("../src/lib/go.ts");
   assert.equal(checkinLinkOpen(true, 13), false, "a Thursday closes at 13:00");
-  assert.equal(checkinLinkOpen(true, 15, true), true, "a Tuesday is still open at 15:00");
-  assert.equal(checkinLinkOpen(true, 16, true), false);
+  assert.equal(checkinLinkOpen(true, 12, true), true, "a Tuesday is still open at 12:00");
+  assert.equal(checkinLinkOpen(true, 13, true), false);
 });

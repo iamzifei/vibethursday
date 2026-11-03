@@ -5,7 +5,7 @@ import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
-import { bookableSessions, feeFor, isSpecialSession, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { bookableSessions, feeFor, isSpecialSession, sydneyToday, upcomingBookableSpecialSessions } from "@/lib/sessions";
 import { admission, capFor } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -181,6 +181,12 @@ export async function POST(request: Request) {
   // otherwise be stored as "no session" while the person was told they were in.
   const sessionRaw = clean(body.firstSession, 10);
   const firstSession = sessionRaw && bookableSessions(12).includes(sessionRaw) ? sessionRaw : null;
+  // A date the form offered that has since closed (a Tuesday past its 20:00
+  // cut-off the night before, or a session that has ended) is refused out
+  // loud. Nulling it would show the normal success screen with nothing booked.
+  if (sessionRaw && !firstSession) {
+    return NextResponse.json({ error: "session_closed" }, { status: 409 });
+  }
 
   // Whitelisted the same way the session date is: this column is read back as
   // counts to decide whether a second session is worth running, and a free
@@ -434,7 +440,7 @@ export async function POST(request: Request) {
   let tuesday: { session: string; left: number } | undefined;
   if (waitlisted && firstSession) {
     try {
-      for (const special of upcomingSpecialSessions()) {
+      for (const special of upcomingBookableSpecialSessions()) {
         if (special.date === firstSession) continue;
         // Matched like the booking itself, so someone already down for the
         // Tuesday is not told to move there.

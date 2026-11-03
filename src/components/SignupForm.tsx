@@ -471,7 +471,9 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             ? copy.errorEmail
             : result?.error === "failed_bot_check"
               ? copy.errorRobot
-              : copy.errorGeneric,
+              : result?.error === "session_closed"
+                ? copy.errorClosed
+                : copy.errorGeneric,
         );
         setTurnstileToken(null);
         return;

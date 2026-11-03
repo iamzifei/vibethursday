@@ -37,14 +37,14 @@ test("the layout's fallback title and description stay in step with the home pag
   assert.ok(layout.includes(copy.zh.meta.description), "layout description");
 });
 
-test("★ Build Tuesday reads like its model: own pace in the morning, mentors as guides, workshop after", () => {
+// Spec change 2026-11-04: the afternoon workshop is gone and the day ends at 12:30.
+test("★ Build Tuesday reads like its model: own pace, mentors as guides", () => {
   const tuesday = JSON.stringify(copy.zh.tuesday);
   assert.match(tuesday, /按自己的节奏/);
   assert.match(tuesday, /导师团/);
   assert.match(tuesday, /陪跑/);
-  assert.match(tuesday, /workshop/);
-  // Settled facts unchanged.
-  assert.match(tuesday, /10:30–15:30/);
+  assert.doesNotMatch(tuesday, /workshop/);
+  assert.match(tuesday, /10:30–12:30/);
   // Spec change 2026-11-02: the price is shown before GST, without "+ GST".
   assert.match(tuesday, /30 澳元/);
 });

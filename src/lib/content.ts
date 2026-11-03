@@ -126,7 +126,7 @@ export const copy = {
           key: "tuesday",
           tag: "",
           title: "带着项目来动手",
-          body: "每周二全天，12 人闭门会，导师团在旁边陪你把东西做出来。30 澳元一次。",
+          body: "每周二上午，12 人闭门会，导师团在旁边陪你把东西做出来。30 澳元一次。",
           cta: "看周二",
           href: "/tuesday",
           scene: "scene-5",
@@ -660,7 +660,7 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–15:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：上午聊项目和技术，中午边吃边聊老板的需求，下午当场动手", "12 人，先报名占座", "30 澳元，共创会员免费"],
+          cells: ["每周二 10:30–12:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：两个案例当场拆，各自推进项目，散场前配对", "12 人，前一天晚上 8 点截止报名", "30 澳元，共创会员免费"],
           cta: "报周二",
         },
       },
@@ -706,6 +706,8 @@ export const copy = {
       // 点了「小班」：先把预期说清楚，之后私信过去才不突兀（2026-10-05）。
       interestThanksClass: "记下了。课程是收费的，安排和报名在 vibethursday.com/class，有新课我会先私信你。",
       errorEmail: "这个邮箱地址看起来不太对。",
+      // 周二前一晚 20:00 截止（2026-11-04）：表单开着过了点再提交，明说，不假装报上了。
+      errorClosed: "这一场的报名已经截止了。刷新页面，选下一场。",
     },
 
     faq: {
@@ -1567,7 +1569,7 @@ export const copy = {
       // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。不写地址（2026-11-02）：地址只给付了钱的人看。
       sharesTitle: "今天开场分享",
       tuesdayTitle: "今天：Build Tuesday",
-      tuesdayWhen: "10:30 – 15:30 · 上午项目和技术，中午边吃边聊需求，下午 workshop · 带上电脑和充电器",
+      tuesdayWhen: "10:30 – 12:30 · 两个案例当场拆，各自推进项目，散场前配对 · 带上电脑和充电器",
       tuesdayCheckin: "到了点这里签到",
       tuesdayCheckinLater: "10 点起这里会出现签到链接。",
       tuesdayNotSignedUp: "还没报名？现在报也来得及：",
@@ -1738,37 +1740,39 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood 的周二闭门会，10:30–15:30：上午带项目的人一起聊项目和 AI 技术，中午边吃边聊老板的需求，下午当场动手做。30 澳元一次，共创会员免费。Vibe Thursday 的姊妹场。",
+        description: "悉尼 Chatswood 的周二闭门会，10:30–12:30：提前排好的两个项目或需求当场拆，带项目的人和导师团一起推进，散场前配对。30 澳元一次，共创会员免费。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "带项目来，或者带需求来，当天就开始做。",
-      lede: "12 人闭门会。上午按自己的节奏推进项目，导师团在旁边陪跑；中午聊老板的需求；下午 workshop 当场动手。",
-      chips: ["每周二 10:30–15:30", "Chatswood", "12 人", "30 澳元 · 会员免费"],
+      lede: "12 人闭门会，一个上午。提前排好两个案例，导师团当场拆；其余时间按自己的节奏推进项目；散场前点名配对。",
+      chips: ["每周二 10:30–12:30", "Chatswood", "12 人", "30 澳元 · 会员免费"],
       cta: "报名周二",
       ctaMember: "会员全年免费 →",
       sceneAlt: "往期活动现场：一张长桌，大家打开电脑做东西（现场照片转绘，人物已替换）",
       factsTitle: "时间、地点和费用",
       facts: [
-        { label: "时间", value: "10:30–15:30，上午、中午、下午三段，可以只来上午" },
+        { label: "时间", value: "10:30–12:30，只开上午；想一起吃午饭的自愿留下" },
         { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
-        { label: "人数", value: "12 人，满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元一次，包全天；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
+        { label: "人数", value: "12 人，前一天晚上 8 点截止报名；满了进候补（收到通知再来）" },
+        { label: "费用", value: "30 澳元一次；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
       ],
       whoTitle: "给谁",
       who: [
         "在做东西的人：独立开发、一人公司、用 AI 搭产品或工作流的",
         "会 AI、会技术，想找真实需求、组队做项目的人",
-        "有真实需求的老板：上午看看产品怎么做，中午聊你的需求",
+        "有真实需求的老板：看看产品怎么做，把你的需求拿来当案例拆",
       ],
       // 2026-11-02：参考 Alpha School 的说法——上午专注、按自己的节奏，导师当 guide
       // 陪跑不讲课，下午 workshop。时间和流程本身没变。
-      formatTitle: "一天三段：上午专注，下午动手",
+      // 2026-11-04 James 定：11-03 跑下来午饭控不住时间、下午 workshop 没开起来，
+      // 有孩子的 14:30 前要走。改回只开上午 10:30–12:30，前一晚 20:00 截止报名。
+      formatTitle: "一个上午：两个案例，当场配对",
       format: [
-        { time: "10:30–12:00", title: "专注推进", body: "每人按自己的节奏推进手上的项目。导师团和共建者在旁边陪跑：不讲课，卡住了随时找他们，会技术的一起拆。" },
-        { time: "12:00–13:30", title: "午饭聊需求", body: "各自点餐，边吃边聊老板的需求，想接的人自然留下。" },
-        { time: "13:30–15:30", title: "workshop", body: "趁热当场动手，把项目往前推一步，或做出需求的第一个样子。" },
+        { time: "10:30–10:45", title: "一句话开场", body: "先扫码签到。每人一句：在做什么、今天卡在哪。" },
+        { time: "10:45–12:00", title: "两个案例 + 各自推进", body: "提前排好的两个项目或需求，每个 20 分钟，讲完导师团和懂行的人当场拆。其余时间按自己的节奏推进项目，导师团在旁边陪跑，卡住了随时问。" },
+        { time: "12:00–12:30", title: "配对收尾", body: "每人一分钟说卡点，主持人当场点名谁和谁散场接着聊。想一起吃午饭的自愿留下。" },
       ],
-      stickyLabel: "周二全天 · 30 澳元",
+      stickyLabel: "周二上午 · 30 澳元",
       // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
       memberUpsell: {
         title: "常来周二？办共创会员更划算",
@@ -1781,7 +1785,7 @@ export const copy = {
       thursdayNote: "周四照常办，同一周的周二和周四可以都报。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
-      signupLede: "名额只有 12 个，先报名占座，再付款，付完会显示地址；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
+      signupLede: "名额只有 12 个，前一天晚上 8 点截止。先报名占座，再付款，付完会显示地址；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
       noSession: "这一场已经结束了。下一场定了日子会放在这里。",
     },
 
@@ -2428,7 +2432,7 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–15:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: projects and tech in the morning, business owners' needs over lunch, a hands-on workshop after", "12, sign up to hold a place", "A$30; members free"],
+          cells: ["Tuesdays 10:30–12:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: two cases taken apart on the spot, your own project the rest of the time, matched up before you leave", "12; signups close at 8pm the night before", "A$30; members free"],
           cta: "Sign up for Tuesday",
         },
       },
@@ -2463,6 +2467,7 @@ export const copy = {
       interestThanks: "Noted — thanks.",
       interestThanksClass: "Noted. The classes are paid — the current one and its signup are at vibethursday.com/class, and I'll message you first about new ones.",
       errorEmail: "That email address does not look right.",
+      errorClosed: "Signups for that date have closed. Refresh the page and pick the next one.",
     },
 
     faq: {
@@ -3176,7 +3181,7 @@ export const copy = {
       titleAfter: "That one is done — thanks for coming.",
       sharesTitle: "Opening shares today",
       tuesdayTitle: "Today: Build Tuesday",
-      tuesdayWhen: "10:30 – 15:30 · projects and tech in the morning, needs over lunch, a workshop after · bring your laptop and charger",
+      tuesdayWhen: "10:30 – 12:30 · two cases taken apart, your own project, matched up before you leave · bring your laptop and charger",
       tuesdayCheckin: "Here? Check in",
       tuesdayCheckinLater: "The check-in link appears here from 10am.",
       tuesdayNotSignedUp: "Not signed up? There is still time: ",
@@ -3326,33 +3331,33 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, a closed Tuesday session, 10:30–15:30: projects and AI tech in the morning, business owners' needs over lunch, a hands-on workshop in the afternoon. A$30; members free. A sister session of Vibe Thursday.",
+        description: "Chatswood, Sydney, a closed Tuesday morning, 10:30–12:30: two projects or needs lined up in advance and taken apart on the spot, people building alongside mentors, and matched up before you leave. A$30; members free. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
       title: "Bring a project or a real need, and start on it the same day.",
-      lede: "Twelve people, behind closed doors. Work on your own project at your own pace in the morning, with mentors alongside as guides; owners' needs over lunch; a hands-on workshop after.",
-      chips: ["Tuesdays 10:30–15:30", "Chatswood", "12 places", "A$30 · members free"],
+      lede: "Twelve people, behind closed doors, one morning. Two cases lined up in advance and taken apart by the mentors; your own project at your own pace the rest of the time; matched up before you leave.",
+      chips: ["Tuesdays 10:30–12:30", "Chatswood", "12 places", "A$30 · members free"],
       cta: "Sign up for Tuesday",
       ctaMember: "Free all year for members →",
       sceneAlt: "A past session: one long table, laptops open (redrawn from a photo; faces replaced)",
       factsTitle: "Time, place and cost",
       facts: [
-        { label: "Time", value: "10:30–15:30, in three parts; the morning alone is fine" },
+        { label: "Time", value: "10:30–12:30, mornings only; stay for lunch if you like" },
         { label: "Where", value: "Chatswood. Once you have signed up and paid, the address and a directions map show on the payment page and under \"My signup\"" },
-        { label: "Places", value: "12, then a waitlist (come only once you are told there is room)" },
-        { label: "Cost", value: "A$30 for the whole day, paid by card within 30 minutes of signing up, which locks in your place; members free" },
+        { label: "Places", value: "12; signups close at 8pm the night before; then a waitlist (come only once you are told there is room)" },
+        { label: "Cost", value: "A$30, paid by card within 30 minutes of signing up, which locks in your place; members free" },
       ],
       whoTitle: "Who it is for",
       who: [
         "People building things: indie developers, one-person companies, anyone making a product or workflow with AI",
         "People who know AI and tech and want real needs to work on, with a team",
-        "Business owners with a real need: see how products get made in the morning, talk through yours at lunch",
+        "Business owners with a real need: see how products get made, and bring yours to be taken apart as a case",
       ],
-      formatTitle: "Three parts: focus in the morning, build in the afternoon",
+      formatTitle: "One morning: two cases, matched up on the spot",
       format: [
-        { time: "10:30–12:00", title: "Focused work", body: "Move your own project on at your own pace. Mentors and builders are alongside as guides, not lecturers: ask when you are stuck, and the tech people dig in." },
-        { time: "12:00–13:30", title: "Needs over lunch", body: "Everyone orders their own; owners' needs get talked through over food." },
-        { time: "13:30–15:30", title: "Workshop", body: "Start on it there and then: move a project on, or build a first version of a need." },
+        { time: "10:30–10:45", title: "One line each", body: "Check in first. Then one line each: what you are building and where you are stuck today." },
+        { time: "10:45–12:00", title: "Two cases, then your own work", body: "Two projects or needs lined up in advance, 20 minutes each, taken apart by the mentors and anyone who has done it before. The rest of the time, move your own project on and ask when you are stuck." },
+        { time: "12:00–12:30", title: "Match-ups", body: "A minute each on what is blocking you, and the host names who should keep talking to whom. Lunch afterwards for anyone who wants it." },
       ],
       stickyLabel: "Tuesday · A$30",
       memberUpsell: {
@@ -3365,7 +3370,7 @@ export const copy = {
       thursdayNote: "Thursday runs as usual, and you can come to both in the same week.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
-      signupLede: "There are only 12 places: sign up to hold one, then pay, and the address shows. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
+      signupLede: "There are only 12 places, and signups close at 8pm the night before: sign up to hold one, then pay, and the address shows. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
       noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 

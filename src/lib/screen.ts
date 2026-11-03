@@ -28,12 +28,12 @@ export const SCREEN_LINKS = {
  */
 export const SCREEN_TUESDAY = {
   title: "Build Tuesday · 周二动手局",
-  when: "每周二 10:30–15:30 · Chatswood · 12 人闭门会",
+  when: "每周二 10:30–12:30 · Chatswood · 12 人闭门会",
   price: "30 澳元 · 共创会员免费",
   points: [
-    "上午｜按自己的节奏推进项目，导师团陪跑",
-    "中午｜边吃边聊老板的需求",
-    "下午｜workshop，当场动手做",
+    "提前排好两个案例，导师团当场拆",
+    "其余时间推进自己的项目，卡住随时问",
+    "散场前点名配对：谁和谁接着聊",
     "适合在做东西的人，也欢迎带着真实需求的老板",
   ],
 };
@@ -65,12 +65,12 @@ export function screenFor(tuesday: boolean): ScreenDay {
   }
   return {
     eyebrow: "§ Build Tuesday · 周二动手局",
-    title: "今天周二：上午专注推进，下午动手做。",
+    title: "今天周二：两个案例，散场前配对。",
     lead: "按自己的节奏推进手上的项目，导师团和共建者在旁边陪跑，不讲课。卡住了随时问。",
     schedule: [
-      { time: "10:30", title: "专注推进", note: "先扫码签到；每人推进自己的项目，会技术的一起拆" },
-      { time: "12:00", title: "午饭聊需求", note: "各自点餐，边吃边聊老板的需求" },
-      { time: "13:30", title: "workshop", note: "趁热当场动手，把项目往前推一步" },
+      { time: "10:30", title: "一句话开场", note: "先扫码签到；每人一句：在做什么、卡在哪" },
+      { time: "10:45", title: "两个案例", note: "每个 20 分钟，讲完当场拆；其余时间推进自己的项目" },
+      { time: "12:00", title: "配对收尾", note: "每人一分钟说卡点，点名谁和谁接着聊；12:30 结束" },
     ],
     signupCaption: "下周二也能报 · 12 人闭门",
     second: {

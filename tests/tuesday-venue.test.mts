@@ -8,8 +8,8 @@
  * It is defined once, in `tuesday-venue.ts`, so it cannot leak back into the
  * public copy by being typed there again.
  *
- * The session also runs as three parts from 10:30 to 15:30 now: projects and
- * tech in the morning, business owners' needs over lunch, a workshop after.
+ * Since 2026-11-04 the session is mornings only, 10:30–12:30 (it ran as a
+ * whole day to 15:30 on 3 November).
  */
 
 import { test } from "node:test";
@@ -60,13 +60,14 @@ test("members and paid people see it on the confirmation and on /my", () => {
   assert.match(read("src/app/my/page.tsx"), /TuesdayVenue/);
 });
 
-test("Tuesday runs 10:30–15:30 in three parts", () => {
+// Spec change 2026-11-04 (was 10:30–15:30 from 2026-11-02): mornings only.
+test("Tuesday runs 10:30–12:30 in three parts", () => {
   assert.equal(TUESDAY_VENUE.start, "10:30");
-  assert.equal(TUESDAY_VENUE.end, "15:30");
+  assert.equal(TUESDAY_VENUE.end, "12:30");
   for (const lang of ["zh", "en"] as const) {
     const t = copy[lang].tuesday;
     assert.equal(t.format.length >= 3, true);
     const time = t.facts.find((fact) => fact.label === (lang === "zh" ? "时间" : "Time"));
-    assert.ok(time && time.value.includes("15:30"), `${lang} time fact`);
+    assert.ok(time && time.value.includes("12:30"), `${lang} time fact`);
   }
 });

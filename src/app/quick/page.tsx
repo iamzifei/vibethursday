@@ -57,7 +57,7 @@ export default async function QuickPage({ searchParams }: PageProps) {
               <h1 className="h2" style={{ margin: 0 }}>{day === "tue" ? "报名周二 Build Tuesday" : "报名周四 Vibe Thursday"}</h1>
               {session && (
                 <p className="body-lg" style={{ margin: 0 }}>
-                  {formatSession(session, "zh")} · {day === "tue" ? "10:30–15:30" : "10:30 开始"} · Chatswood ·{" "}
+                  {formatSession(session, "zh")} · {day === "tue" ? "10:30–12:30" : "10:30 开始"} · Chatswood ·{" "}
                   {fee !== null ? `${feeLabel(fee)}，填完直接刷卡` : "免费"}
                 </p>
               )}

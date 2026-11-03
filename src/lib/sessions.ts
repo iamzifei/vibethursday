@@ -132,6 +132,13 @@ export type SpecialSession = {
    * as the first two Tuesdays were.
    */
   fee?: number;
+  /**
+   * Sydney hour on the evening before at which signups close (James
+   * 2026-11-04: 20:00). Absent = bookable until `endHour` on the day, as
+   * before. Only booking closes: the session stays live for the admin, /go
+   * and walk-ins at the door, which go through `openSpecialSessions`.
+   */
+  closesEveHour?: number;
 };
 
 /**
@@ -144,9 +151,19 @@ export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
   { date: "2026-10-13", kind: "tuesday", endHour: 12, cap: 15 },
   // Twelve from 20 October: the room seats about that many (James 2026-10-15).
-  // A whole day from 3 November, 10:30–15:30 (James 2026-11-02), so a date is
-  // offered until 15:00 — someone can still sign up for the afternoon workshop.
-  ...PAID_TUESDAYS.map((date) => ({ date, kind: "tuesday" as const, endHour: date >= "2026-11-03" ? 15 : 12, cap: 12, fee: 30 })),
+  // 3 November ran as a whole day, 10:30–15:30 (James 2026-11-02). It did not
+  // work: lunch could not be kept to time and the afternoon never started.
+  // From 10 November mornings only, 10:30–12:30, and signups close at 20:00
+  // the night before (James 2026-11-04), so the host knows the room and can
+  // line up the cases.
+  ...PAID_TUESDAYS.map((date) => ({
+    date,
+    kind: "tuesday" as const,
+    endHour: date >= "2026-11-10" ? 13 : date === "2026-11-03" ? 15 : 12,
+    cap: 12,
+    fee: 30,
+    ...(date >= "2026-11-10" ? { closesEveHour: 20 } : {}),
+  })),
 ];
 
 /** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays). */
@@ -175,6 +192,25 @@ export function openSpecialSessions(today: string, hour: number): SpecialSession
 }
 
 /**
+ * Special sessions someone can still sign up for: `openSpecialSessions` minus
+ * any past its evening-before cut-off (`closesEveHour`). Pure, like that one.
+ */
+export function bookableSpecialSessions(today: string, hour: number): SpecialSession[] {
+  return openSpecialSessions(today, hour).filter((session) => {
+    if (session.closesEveHour === undefined) return true;
+    const eve = new Date(`${session.date}T00:00:00Z`);
+    eve.setUTCDate(eve.getUTCDate() - 1);
+    const eveDate = eve.toISOString().slice(0, 10);
+    return today < eveDate || (today === eveDate && hour < session.closesEveHour);
+  });
+}
+
+/** `bookableSpecialSessions` against the real Sydney clock. */
+export function upcomingBookableSpecialSessions(): SpecialSession[] {
+  return bookableSpecialSessions(sydneyToday().toISOString().slice(0, 10), sydneyHour());
+}
+
+/**
  * How far ahead a special session is offered. Tuesdays are weekly from
  * 2026-10-20 and listed months ahead; offering all of them would put nine
  * Tuesdays in every signup dropdown. Fourteen days: the next two Tuesdays
@@ -196,7 +232,7 @@ export function upcomingSpecialSessions(): SpecialSession[] {
  * as "no session" while telling the person they were in.
  */
 export function bookableSessions(count = 6): string[] {
-  return [...nextThursdays(count), ...upcomingSpecialSessions().map((session) => session.date)].sort();
+  return [...nextThursdays(count), ...upcomingBookableSpecialSessions().map((session) => session.date)].sort();
 }
 
 /**

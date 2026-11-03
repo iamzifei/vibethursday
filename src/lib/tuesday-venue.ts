@@ -14,7 +14,7 @@
  */
 export const TUESDAY_VENUE = {
   start: "10:30",
-  end: "15:30",
+  end: "12:30",
   zh: {
     address: "Chatswood Lemon Grove 三楼 56 号铺（427–441 Victoria Ave，Westfield 正门对面）",
     directions: "火车站出来走主街约 100 米，泰椰奶花旁边的大门进，扶梯上 3 楼",
