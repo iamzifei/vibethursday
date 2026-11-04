@@ -55,3 +55,30 @@ test("weekday helpers read the date as a calendar day, not a moment", () => {
   assert.ok(isTuesday("2026-10-06"));
   assert.ok(!isTuesday("2026-10-08"));
 });
+
+test("★ a past Thursday with bookings but no check-ins still has a row (2026-11-04)", () => {
+  // 2026-10-29 happened (three blog posts quote it) but nobody used the
+  // check-in page that morning and it was never written up, so the archive had
+  // no row for it and /sessions/2026-10-29 was a 404. Bookings prove a
+  // Thursday was on; once it is in the past it belongs in the record.
+  const rows = buildArchive(
+    [thursday("2026-10-22")],
+    [],
+    [],
+    new Map(),
+    new Map([["2026-10-22", 60], ["2026-10-27", 5], ["2026-10-29", 40], ["2026-11-05", 30]]),
+    "zh",
+    "2026-11-04",
+  );
+  const dates = rows.map((row) => row.date);
+  assert.ok(dates.includes("2026-10-29"), "past booked Thursday is listed");
+  assert.ok(!dates.includes("2026-11-05"), "a future Thursday is not in the record yet");
+  assert.ok(!dates.includes("2026-10-27"), "a booked Tuesday still needs check-ins to appear");
+  const row = rows.find((r) => r.date === "2026-10-29")!;
+  assert.equal(row.index, 2);
+  assert.equal(row.attended, null);
+  assert.equal(row.title, null);
+
+  // Without a `today`, nothing changes for existing callers.
+  assert.ok(!buildArchive([], [], [], new Map(), new Map([["2026-10-29", 40]])).some((r) => r.date === "2026-10-29"));
+});

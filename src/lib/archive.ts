@@ -131,6 +131,13 @@ export function buildArchive(
   bookings: ReadonlyMap<string, number> = new Map(),
   /** Picks the alt text of photos kept outside `content.ts` (EXTRA_SESSION_PHOTOS). */
   altLang: "zh" | "en" = "zh",
+  /**
+   * Sydney's today (YYYY-MM-DD). When given, a Thursday before today that
+   * people booked is a row even with no check-ins and no write-up: nobody
+   * opened the check-in page on 2026-10-29, so that morning had no row and
+   * its page was a 404 (2026-11-04). Tuesdays still need check-ins.
+   */
+  today?: string,
 ): ArchiveRow[] {
   const written = [...sessions]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -140,7 +147,10 @@ export function buildArchive(
     }));
 
   // A session that only the check-in table knows about yet.
-  const unwritten = [...attendance.keys()]
+  const booked = today
+    ? [...bookings.keys()].filter((date) => isThursday(date) && date < today && !attendance.has(date))
+    : [];
+  const unwritten = [...attendance.keys(), ...booked]
     .filter((date) => !sessions.some((session) => session.date === date))
     .map((date) => ({ date, title: null, note: null, poster: null, photos: (EXTRA_SESSION_PHOTOS[date] ?? []).map((photo) => ({ ...photo, alt: photo.alt[altLang] })) }));
 

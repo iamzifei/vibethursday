@@ -160,6 +160,8 @@ test("every illustration a post uses exists, at the size the page declares", asy
 test("★ every site link in every post goes to a page that exists (2026-11-03)", async () => {
   // A link to /sessions/2026-10-29 went into three drafts while that page was
   // a 404 (no write-up, no check-ins). Links are checked here, not trusted.
+  // Since 2026-11-04 a past Thursday with bookings has a page too (see
+  // `buildArchive`'s `today`), so the three links point at it again.
   const { blogPosts } = await import("../src/lib/blog.ts");
   const { parseMiniMarkdown } = await import("../src/lib/mini-markdown.ts");
   const { copy } = await import("../src/lib/content.ts");
@@ -167,8 +169,9 @@ test("★ every site link in every post goes to a page that exists (2026-11-03)"
   // Session pages exist for written-up sessions, and for sessions with
   // check-ins (database). The second kind cannot be known here, so those dates
   // are listed once they have been checked live: 2026-10-22 returned 200 on
-  // 2026-11-03, while 2026-10-29 returned 404 and must not be linked.
-  const LIVE_FROM_CHECKINS = ["2026-10-22"];
+  // 2026-11-03. 2026-10-29 has bookings but no check-ins, which gives it a
+  // page from 2026-11-04 on — re-check it live after that deploy.
+  const LIVE_FROM_CHECKINS = ["2026-10-22", "2026-10-29"];
   const sessions = new Set([...copy.zh.gallery.sessions.map((session: { date: string }) => session.date), ...LIVE_FROM_CHECKINS]);
   const home = read("src/app/page.tsx");
   const hrefs = blogPosts().flatMap((post) =>
