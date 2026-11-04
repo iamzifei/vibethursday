@@ -700,7 +700,7 @@ export const copy = {
       // 成功页一问（选填）。只看大家想要哪种，不报名、不收钱。
       interestTitle: "以后还想来哪种？选填，点一下就行。",
       interestOptions: [
-        { value: "tuesday", label: "周二闭门会：带着需求或项目来，一起拆" },
+        { value: "tuesday", label: "周二线上：看 James 用 AI 现场做产品" },
         // 写明收费（James 10-05 改了 10-04 的决定）：先过滤只想要免费的人，也让之后私信时
         // 预期一致。不写价格——还没定。
         { value: "class", label: "收费小班：有人带着一步步做" },
@@ -2464,7 +2464,7 @@ export const copy = {
       dinnerSkipped: "You're on Thursday's waitlist, so dinner can be booked once you have a place.",
       interestTitle: "What else would you come to? Optional — one tap.",
       interestOptions: [
-        { value: "tuesday", label: "Build Tuesday: bring a need or a project, work through it together" },
+        { value: "tuesday", label: "Online Tuesday: watch James build a product with AI" },
         { value: "class", label: "A paid small class, walked through step by step" },
         { value: "none", label: "Neither — Thursday is enough" },
       ],
