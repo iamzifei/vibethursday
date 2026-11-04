@@ -3,8 +3,6 @@ import { cookies } from "next/headers";
 import QRCode from "qrcode";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
-import { MEMBERSHIP } from "@/lib/course";
-import { feeToPay } from "@/lib/tuesday-fee";
 import { siteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -12,16 +10,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "直接付款链接 · 后台", robots: { index: false, follow: false } };
 
 /**
- * Two fixed card-payment links, with a QR code each (2026-11-02): a Build
- * Tuesday ticket and the 共创会员. For people who sign up through the
- * organiser rather than through the site: send them the link or show the
- * code, they pay, and the organiser does the sign-up for them afterwards.
+ * Sign-up links with a QR code each, for people who sign up through the
+ * organiser: send the link or show the code; the site's own forms register
+ * the person themselves.
  *
- * The links are Stripe Payment Links set in the environment (PAYLINK_TUESDAY,
- * PAYLINK_MEMBER), not written here: this repository is public. A payment made
- * through them is not tied to anyone on the site — the webhook ignores it,
- * because it carries none of this site's references — so the organiser
- * registers the person by hand, which is what the steps under each code say.
+ * Until 2026-11-05 this page also handed out two Stripe Payment Links (a
+ * Tuesday ticket and a yearly membership). Both were removed when Tuesdays
+ * went online with no single ticket and the membership became one 4-week
+ * payment (review 2026-11-05). The /join form is the only way to sell it now.
  */
 export default async function PayLinksPage() {
   if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
@@ -32,57 +28,27 @@ export default async function PayLinksPage() {
     );
   }
 
-  const links = [
-    {
-      id: "tuesday",
-      title: "Build Tuesday 门票",
-      amount: `${feeToPay(30)} 澳元（含 GST）`,
-      url: process.env.PAYLINK_TUESDAY?.trim() ?? "",
-      env: "PAYLINK_TUESDAY",
-      after: [
-        "对方付款时会填名字、微信号和哪个周二。",
-        "到 Stripe 后台的付款记录里看这三项。",
-        "在「周二报名与收费」或周二签到台找到他（没报名就先帮他在 /tuesday 报上），点「标已付」。",
-      ],
-    },
-    {
-      id: "member",
-      title: `共创会员 · ${MEMBERSHIP.weeks} 周一期`,
-      amount: `${MEMBERSHIP.amount.toFixed(2)} 澳元（含 GST），一次性付款`,
-      url: process.env.PAYLINK_MEMBER?.trim() ?? "",
-      env: "PAYLINK_MEMBER",
-      after: [
-        "对方付款时会填名字和微信号。",
-        "到「共创会员」页手动登记，备注写「付款链接 + 日期」。微信号要和他报名时填的一样，网站才认得他是会员。",
-        "这条链接的续费，网站不会自动延长会员期，明年到期时要在「共创会员」页再登记一次。",
-      ],
-    },
-  ];
-
   // The site's own quick forms (2026-11-02): a nickname and a WeChat ID, then
   // pay. These register the person themselves; nothing to do by hand after.
   const origin = siteUrl();
   const forms = [
-    { id: "quick-tue", title: "周二快速报名（填名字、微信号 → 直接刷卡）", url: `${origin}/quick?d=tue` },
+    { id: "quick-tue", title: "周二快速报名（线上，只对共创会员和导师团；不收费）", url: `${origin}/quick?d=tue` },
     { id: "quick-thu", title: "周四快速报名（填名字、微信号 → 报上，免费）", url: `${origin}/quick?d=thu` },
     { id: "join", title: "共创会员（填名字、微信号 → 直接刷卡）", url: `${origin}/join#join-form` },
   ];
   const formCodes = await Promise.all(forms.map((form) => QRCode.toDataURL(form.url, { width: 480, margin: 1 })));
 
-  const codes = await Promise.all(
-    links.map((link) => (link.url ? QRCode.toDataURL(link.url, { width: 480, margin: 1 }) : Promise.resolve(""))),
-  );
 
   return (
     <main className="shell section stack-8" style={{ maxWidth: "720px" }}>
       <div className="stack-3">
         <h1 className="h2" style={{ margin: 0 }}>直接付款链接</h1>
         <p className="body">
-          给想通过你直接报名的人：发链接，或者让他扫码。付完以后你帮他登记，下面每张卡写了怎么登记。
+          给想通过你直接报名的人：发链接，或者让他扫码。他自己填完就登记好了，不用你再处理。
         </p>
       </div>
 
-      <h2 className="h3" style={{ margin: 0 }}>一、网站上的快速报名（推荐）</h2>
+      <h2 className="h3" style={{ margin: 0 }}>网站上的快速报名</h2>
       <p className="body-sm" style={{ margin: 0 }}>对方只填名字和微信号，付完自动登记，你不用再手动处理。</p>
       {forms.map((form, index) => (
         <section className="card stack-3" key={form.id} id={form.id} style={{ padding: "var(--space-6)" }}>
@@ -94,27 +60,6 @@ export default async function PayLinksPage() {
         </section>
       ))}
 
-      <h2 className="h3" style={{ margin: 0 }}>二、Stripe 直接付款链接</h2>
-      <p className="body-sm" style={{ margin: 0 }}>不经过网站，付完要你按卡片下面的步骤手动登记。</p>
-      {links.map((link, index) => (
-        <section className="card stack-3" key={link.id} id={link.id} style={{ padding: "var(--space-6)" }}>
-          <h3 className="h3" style={{ margin: 0 }}>{link.title}</h3>
-          <p className="body" style={{ margin: 0 }}>{link.amount}</p>
-          {link.url ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element -- a data URL made on the server */}
-              <img src={codes[index]} alt={`${link.title}的付款二维码`} width={240} height={240} style={{ background: "#fff", borderRadius: "8px" }} />
-              <p className="body-sm mono" style={{ overflowWrap: "anywhere", margin: 0 }}>{link.url}</p>
-              <CopyLinkButton url={link.url} label="复制链接" copiedLabel="已复制" failedLabel="复制失败，长按上面的链接复制" />
-              <ol className="body-sm stack-1" style={{ margin: 0 }}>
-                {link.after.map((step) => <li key={step}>{step}</li>)}
-              </ol>
-            </>
-          ) : (
-            <p className="alert" role="status">还没配置：服务器上缺环境变量 {link.env}。</p>
-          )}
-        </section>
-      ))}
     </main>
   );
 }

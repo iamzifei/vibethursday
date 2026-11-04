@@ -33,6 +33,7 @@ import {
   cohortForPayment,
   cohortOnSale,
   cohortValidUntilSql,
+  PAYMENT_GRACE_MS,
   includesIpClass,
   membershipValidUntil,
   newMemberRef,
@@ -40,6 +41,7 @@ import {
 import { feeFor, isOnlineSession, SPECIAL_SESSIONS } from "../src/lib/sessions.ts";
 import { TUESDAY_ONLINE } from "../src/lib/tuesday-venue.ts";
 import { copy } from "../src/lib/content.ts";
+import { CHECKOUT_MINUTES } from "../src/lib/stripe-pay.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
@@ -69,7 +71,10 @@ test("★ bought any time before cohort 1 ends: valid to the end of 1 December (
   const end = sydney("2026-12-02T00:00:00");
   assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-05T15:00:00"))?.getTime(), end.getTime());
   assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-20T09:00:00"))?.getTime(), end.getTime(), "joining mid-cohort");
-  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-01T11:00:00"))?.getTime(), end.getTime(), "on the last morning");
+  // Review 2026-11-05: sales close at the start of the last Tuesday, and a
+  // Checkout opened just before still counts if paid within the hour.
+  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-30T23:59:00"))?.getTime(), end.getTime(), "the night before the last Tuesday");
+  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-01T00:45:00"))?.getTime(), end.getTime(), "a Checkout opened before the close, paid just after");
   assert.equal(cohortForPayment(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-11-10");
 });
 
@@ -92,10 +97,27 @@ test("★ only the old memberships include the free AI+IP class", () => {
   assert.equal(includesIpClass(MEMBERSHIP.id), false);
 });
 
-test("cohort 1 is on sale until 12:00 on 1 December; after that the next cohort is not set", () => {
+test("★ cohort 1 is on sale until the start of 1 December; after that the next cohort is not set (review 2026-11-05)", () => {
+  // Before: on sale until 12:00 on the last Tuesday, so a Checkout opened at
+  // 11:50 and paid at 12:10 took the full price for a cohort already over.
   assert.equal(cohortOnSale(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-11-10");
-  assert.equal(cohortOnSale(sydney("2026-12-01T11:59:00"))?.tuesdays[0], "2026-11-10");
-  assert.equal(cohortOnSale(sydney("2026-12-01T12:00:00")), null);
+  assert.equal(cohortOnSale(sydney("2026-11-30T23:59:00"))?.tuesdays[0], "2026-11-10");
+  assert.equal(cohortOnSale(sydney("2026-12-01T00:00:00")), null);
+  assert.equal(cohortOnSale(sydney("2026-12-01T11:50:00")), null);
+});
+
+test("★ a payment counts for the cohort that was on sale when its Checkout opened (review 2026-11-05)", () => {
+  // Before: a payment counted for any cohort not yet over, so once a second
+  // cohort is listed, someone sold cohort 2 on the morning of cohort 1's last
+  // Tuesday would have been recorded as cohort 1 and lost access at midnight.
+  // The rule: the first cohort whose sale had not closed an hour before the
+  // payment, the hour covering a Checkout page's whole life.
+  assert.ok(PAYMENT_GRACE_MS > (CHECKOUT_MINUTES * 60 + 90) * 1000, "the grace outlasts any Checkout page");
+  assert.equal(cohortForPayment(sydney("2026-12-01T00:30:00"))?.tuesdays[0], "2026-11-10");
+  assert.equal(cohortForPayment(sydney("2026-12-01T10:00:00")), null, "nothing was on sale then");
+  for (const at of ["2026-11-05T15:00:00", "2026-11-30T23:59:00"]) {
+    assert.equal(cohortForPayment(sydney(at)), cohortOnSale(sydney(at)), `sold and recorded as the same cohort at ${at}`);
+  }
 });
 
 test("the SQL cohort end is built from the same list, from constants only", () => {
@@ -241,7 +263,7 @@ test(
     const pool = getPool();
 
     // The SQL cohort end matches the code's, for times either side of each boundary.
-    for (const at of ["2026-11-05T15:00:00", "2026-12-01T23:59:00", "2026-12-02T00:01:00", "2027-03-01T10:00:00"]) {
+    for (const at of ["2026-11-05T15:00:00", "2026-12-01T00:59:00", "2026-12-01T01:01:00", "2026-12-01T23:59:00", "2027-03-01T10:00:00"]) {
       const instant = sydney(at);
       const row = (await pool.query<{ until: Date | null }>(`SELECT ${cohortValidUntilSql("$1::timestamptz")} AS until`, [instant])).rows[0];
       assert.equal(row.until?.getTime() ?? null, membershipValidUntil(MEMBERSHIP.id, instant)?.getTime() ?? null, at);

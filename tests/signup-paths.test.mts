@@ -129,11 +129,15 @@ test("Turnstile shows only when a click is needed, so its green tick is not read
 
 // ── 6. Direct payment links for people the organiser signs up himself ──────
 
-test("the admin has a page with both direct payment links and their QR codes, organiser only", async () => {
+test("the admin pay-links page is organiser only and hands out no Stripe Payment Link", async () => {
+  // spec change 2026-11-05: Tuesday online / 4-week membership. The Tuesday
+  // ticket link sold something that no longer exists, and the member link is a
+  // yearly subscription while the membership is now one 4-week payment
+  // (review 2026-11-05). Only the site's own forms are offered.
   const page = read("src/app/admin/paylinks/page.tsx");
   assert.match(page, /isAdminSession/);
-  assert.match(page, /PAYLINK_TUESDAY/);
-  assert.match(page, /PAYLINK_MEMBER/);
+  assert.doesNotMatch(page, /process\.env\.PAYLINK_TUESDAY/);
+  assert.doesNotMatch(page, /process\.env\.PAYLINK_MEMBER/);
   assert.match(page, /QRCode\.toDataURL/);
   // The links are configuration, not code: nothing from Stripe is written into this public repo.
   assert.doesNotMatch(page, /buy\.stripe\.com/);

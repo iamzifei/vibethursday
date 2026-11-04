@@ -137,23 +137,41 @@ export function cohortEnd(cohort: Cohort): Date {
 }
 
 /**
- * The cohort a 4-week payment belongs to: the first one that had not yet
- * ended when it was paid. Buying any time before cohort 1 ends joins cohort 1.
- * Null when every listed cohort was over.
+ * When /join stops selling a cohort: midnight at the start of its last
+ * Tuesday, Sydney time. Nobody pays full price for a cohort on its final day
+ * (review 2026-11-05: selling until noon took full price for a cohort that had
+ * just ended), and the next cohort, if listed, goes on sale from then.
  */
-export function cohortForPayment(paidAt: Date): Cohort | null {
-  return MEMBERSHIP_COHORTS.find((cohort) => paidAt.getTime() < cohortEnd(cohort).getTime()) ?? null;
+function saleClose(cohort: Cohort): Date {
+  return sydneyMidnight(lastTuesday(cohort));
 }
 
 /**
- * The cohort /join is selling right now: the first whose last Tuesday has not
- * yet finished (12:00 Sydney, when the online session ends). Null when no
- * upcoming cohort is set — /join then says so and takes no payment.
+ * How long after a cohort's sale closes a payment still counts for it: one
+ * hour, longer than a Checkout page can live (CHECKOUT_MINUTES in
+ * stripe-pay.ts, 30 minutes plus a little; the tests check this). It covers
+ * someone who opened the page just before the close and paid just after.
+ */
+export const PAYMENT_GRACE_MS = 60 * 60 * 1000;
+
+/**
+ * The cohort a 4-week payment belongs to: the one that was on sale when its
+ * Checkout page was opened, i.e. the first whose sale had not closed more than
+ * PAYMENT_GRACE_MS before the payment. Using the same boundary as
+ * `cohortOnSale` means what the page sold and what is recorded never differ.
+ * Null when nothing was on sale.
+ */
+export function cohortForPayment(paidAt: Date): Cohort | null {
+  return MEMBERSHIP_COHORTS.find((cohort) => paidAt.getTime() < saleClose(cohort).getTime() + PAYMENT_GRACE_MS) ?? null;
+}
+
+/**
+ * The cohort /join is selling right now: the first whose sale has not closed
+ * (see `saleClose`). Null when no upcoming cohort is set — /join then says so
+ * and takes no payment.
  */
 export function cohortOnSale(now: Date = new Date()): Cohort | null {
-  return (
-    MEMBERSHIP_COHORTS.find((cohort) => now.getTime() < sydneyMidnight(lastTuesday(cohort)).getTime() + 12 * 60 * 60 * 1000) ?? null
-  );
+  return MEMBERSHIP_COHORTS.find((cohort) => now.getTime() < saleClose(cohort).getTime()) ?? null;
 }
 
 /**
@@ -190,9 +208,16 @@ export function includesIpClass(course: string): boolean {
  * constants above only — never from input.
  */
 export function cohortValidUntilSql(paidAt: string): string {
-  const ends = MEMBERSHIP_COHORTS.map((cohort) => `'${nextDay(lastTuesday(cohort))} 00:00 ${SYDNEY}'::timestamptz`);
-  if (ends.length === 0) return "NULL::timestamptz";
-  return `CASE ${ends.map((end) => `WHEN ${paidAt} < ${end} THEN ${end}`).join(" ")} END`;
+  // Same rule as cohortForPayment: counts for a cohort if paid before its sale
+  // closed plus the grace hour; valid to the end of its last Tuesday.
+  const graceSeconds = PAYMENT_GRACE_MS / 1000;
+  const whens = MEMBERSHIP_COHORTS.map((cohort) => {
+    const close = `('${lastTuesday(cohort)} 00:00 ${SYDNEY}'::timestamptz + interval '${graceSeconds} seconds')`;
+    const end = `'${nextDay(lastTuesday(cohort))} 00:00 ${SYDNEY}'::timestamptz`;
+    return `WHEN ${paidAt} < ${close} THEN ${end}`;
+  });
+  if (whens.length === 0) return "NULL::timestamptz";
+  return `CASE ${whens.join(" ")} END`;
 }
 
 /** A cohort's dates for people: "11 月 10 日、17 日、24 日和 12 月 1 日" / "10, 17, 24 Nov and 1 Dec". */
