@@ -1,5 +1,5 @@
 // Relative, not "@/": the tests load this through Node's type stripper.
-import { MEMBERSHIP } from "./course.ts";
+import { MEMBERSHIP, YEARLY_MEMBERSHIP_ID } from "./course.ts";
 
 /**
  * The 共创会员 register on /admin/members (2026-11-02).
@@ -42,7 +42,9 @@ export type MembershipSource = "card" | "class" | "manual";
 
 /** Where a paid membership order came from. */
 export function membershipSource(row: { course: string; stripe_session: string | null; note: string | null }): MembershipSource {
-  if (row.course !== MEMBERSHIP.id) return "class";
+  // Both the yearly membership and the 4-week one (2026-11-05) are bought on
+  // /join or entered here; anything else is the 10/25 class, paid by transfer.
+  if (row.course !== MEMBERSHIP.id && row.course !== YEARLY_MEMBERSHIP_ID) return "class";
   if (row.note?.startsWith("手动登记")) return "manual";
   if (row.stripe_session) return "card";
   return "manual";

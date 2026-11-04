@@ -5,7 +5,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { QuickBotCheck } from "@/components/QuickBotCheck";
 import { getCopy } from "@/lib/content";
 import { quickSession } from "@/lib/quick-signup";
-import { bookableSessions, feeFor, formatSession, isSpecialSession } from "@/lib/sessions";
+import { bookableSessions, feeFor, formatSession, isOnlineSession, isSpecialSession } from "@/lib/sessions";
+import { TUESDAY_ONLINE } from "@/lib/tuesday-venue";
 import { feeLabel } from "@/lib/tuesday-fee";
 
 type PageProps = {
@@ -43,6 +44,8 @@ export default async function QuickPage({ searchParams }: PageProps) {
   const doneText =
     params.done === "booked" ? `报上了：${formatSession(doneSession ?? "", "zh")} 的周四上午 10:30，Chatswood。到了扫桌上的码签到。`
     : params.done === "free" ? `报上了：${formatSession(doneSession ?? "", "zh")} 的周二，门票已经结清或不用付。地址在「我的」页里。`
+    : params.done === "online" ? `报上了：${formatSession(doneSession ?? "", "zh")} 的线上周二，10:30–12:00。${TUESDAY_ONLINE.zh.howToJoin}`
+    : params.done === "onlineJoin" ? `报上了：${formatSession(doneSession ?? "", "zh")} 的线上周二。${c.signup.onlineMembersOnly}`
     : params.done === "waitlist" ? `${formatSession(doneSession ?? "", "zh")} 已经满了，你在候补名单上。有人取消会通知你，收到通知再来。`
     : null;
 
@@ -57,8 +60,10 @@ export default async function QuickPage({ searchParams }: PageProps) {
               <h1 className="h2" style={{ margin: 0 }}>{day === "tue" ? "报名周二 Build Tuesday" : "报名周四 Vibe Thursday"}</h1>
               {session && (
                 <p className="body-lg" style={{ margin: 0 }}>
-                  {formatSession(session, "zh")} · {day === "tue" ? "10:30–12:30" : "10:30 开始"} · Chatswood ·{" "}
-                  {fee !== null ? `${feeLabel(fee)}，填完直接刷卡` : "免费"}
+                  {formatSession(session, "zh")} ·{" "}
+                  {isOnlineSession(session)
+                    ? "10:30–12:00 · 线上 · 共创会员参加"
+                    : <>{day === "tue" ? "10:30–12:30" : "10:30 开始"} · Chatswood · {fee !== null ? `${feeLabel(fee)}，填完直接刷卡` : "免费"}</>}
                 </p>
               )}
             </div>

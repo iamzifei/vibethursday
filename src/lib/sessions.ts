@@ -139,13 +139,28 @@ export type SpecialSession = {
    * and walk-ins at the door, which go through `openSpecialSessions`.
    */
   closesEveHour?: number;
+  /**
+   * Run online rather than in a room (2026-11-05): no fee, no address, no
+   * check-in at a door. Open to 共创会员 and the 导师团 only; before each one
+   * James adds them to a WeChat group for that session and posts the Zoom
+   * link there — the site itself never shows a link.
+   */
+  online?: true;
 };
 
 /**
- * Weekly from 20 October 2026, $30 + GST each. Listed to mid-December; the
- * Christmas and New Year weeks are not scheduled yet.
+ * In a room in Chatswood, weekly from 20 October 2026, $30 + GST each. Kept
+ * with their fee so past sessions' payments still read correctly.
  */
-const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03", "2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01", "2026-12-08", "2026-12-15"];
+const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03"];
+
+/**
+ * Online from 10 November 2026 (2026-11-05), 10:30–12:00 Sydney time: James
+ * builds a real product live with AI. No ticket — a 共创会员 or the 导师团 gets
+ * in. Listed to mid-December; the Christmas and New Year weeks are not
+ * scheduled yet.
+ */
+const ONLINE_TUESDAYS = ["2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01", "2026-12-08", "2026-12-15"];
 
 export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
@@ -153,22 +168,34 @@ export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   // Twelve from 20 October: the room seats about that many (James 2026-10-15).
   // 3 November ran as a whole day, 10:30–15:30 (James 2026-11-02). It did not
   // work: lunch could not be kept to time and the afternoon never started.
-  // From 10 November mornings only, 10:30–12:30, and signups close at 20:00
-  // the night before (James 2026-11-04), so the host knows the room and can
-  // line up the cases.
   ...PAID_TUESDAYS.map((date) => ({
     date,
     kind: "tuesday" as const,
-    endHour: date >= "2026-11-10" ? 13 : date === "2026-11-03" ? 15 : 12,
+    endHour: date === "2026-11-03" ? 15 : 12,
     cap: 12,
     fee: 30,
-    ...(date >= "2026-11-10" ? { closesEveHour: 20 } : {}),
+  })),
+  // Online: over by 12:00. No room, so the cap only stops a runaway list. Signups
+  // still close at 20:00 the night before (James 2026-11-04), which is when
+  // the WeChat group for the morning is put together.
+  ...ONLINE_TUESDAYS.map((date) => ({
+    date,
+    kind: "tuesday" as const,
+    endHour: 12,
+    cap: 200,
+    closesEveHour: 20,
+    online: true as const,
   })),
 ];
 
-/** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays). */
+/** The fee for a date before GST, or null when it is free (every Thursday, the first two Tuesdays, every online Tuesday). */
 export function feeFor(date: string): number | null {
   return SPECIAL_SESSIONS.find((session) => session.date === date)?.fee ?? null;
+}
+
+/** Whether a date is an online Build Tuesday (from 2026-11-10). */
+export function isOnlineSession(date: string): boolean {
+  return SPECIAL_SESSIONS.some((session) => session.date === date && session.online === true);
 }
 
 /** Whether a date is one of the special sessions above. */

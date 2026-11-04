@@ -20,10 +20,11 @@ import { TUESDAY_VENUE } from "../src/lib/tuesday-venue.ts";
 const NEXT = "2026-11-10";
 const dates = (list: { date: string }[]) => list.map((s) => s.date);
 
-test("from 10 November a Tuesday ends at 12:30 and closes for signups at 20:00 the night before", () => {
+// Spec change 2026-11-05: Tuesday online / 4-week membership — over by 12:00.
+test("from 10 November a Tuesday ends at 12:00 and closes for signups at 20:00 the night before", () => {
   const session = SPECIAL_SESSIONS.find((s) => s.date === NEXT);
   assert.ok(session);
-  assert.equal(session.endHour, 13);
+  assert.equal(session.endHour, 12);
   assert.equal(session.closesEveHour, 20);
 });
 
@@ -40,8 +41,9 @@ test("after the cut-off the next Tuesday is still offered", () => {
 });
 
 test("the session itself stays live on the day for the admin and /go (only booking closes)", () => {
-  assert.ok(dates(openSpecialSessions(NEXT, 12)).includes(NEXT));
-  assert.ok(!dates(openSpecialSessions(NEXT, 13)).includes(NEXT));
+  // Spec change 2026-11-05: Tuesday online / 4-week membership — ends at 12:00.
+  assert.ok(dates(openSpecialSessions(NEXT, 11)).includes(NEXT));
+  assert.ok(!dates(openSpecialSessions(NEXT, 12)).includes(NEXT));
 });
 
 test("the /go check-in link follows the shorter Tuesday", () => {

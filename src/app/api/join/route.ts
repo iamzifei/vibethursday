@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentAccount } from "@/lib/account";
 import { checkoutUrlFor } from "@/lib/card-pay";
-import { MEMBERSHIP, newMemberRef, parseCourseForm } from "@/lib/course";
+import { cohortOnSale, MEMBERSHIP, newMemberRef, parseCourseForm } from "@/lib/course";
 import { createCourseOrder, getSignupProfile, isMember, isMemberWechat, reopenMembershipOrder } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
@@ -17,8 +17,11 @@ export const dynamic = "force-dynamic";
  * its own CM reference, then sends the person straight to Stripe. A plain
  * form post answered with a 303, so it works in WeChat's browser.
  *
+ * Since 2026-11-05 it buys one 4-week cohort, paid once (no subscription).
+ * With no upcoming cohort set (`cohortOnSale`) nothing is sold at all.
+ *
  * Someone who is already a member is turned back rather than charged twice —
- * including everyone who bought the $599 class, which covers the same year.
+ * including everyone who bought the $599 class or the yearly membership.
  * The same WeChat ID twice keeps one order and one reference.
  */
 export async function POST(request: Request) {
@@ -35,6 +38,9 @@ export async function POST(request: Request) {
 
   if (!fromThisSite(bounded, origin)) return new Response("Forbidden", { status: 403 });
   if (!checkRateLimit(`join:${clientIp(bounded)}`, 10).allowed) return back({ err: "rate" });
+
+  // No cohort on sale: the page offers no form, so this is a stale tab.
+  if (!cohortOnSale()) return back({ err: "closed" });
 
   const data = await bounded.formData().catch(() => null);
   if (!data) return back({ err: "missing" });
@@ -71,9 +77,9 @@ export async function POST(request: Request) {
       note: null,
       ref: newMemberRef(),
     });
-    // A paid row for someone who is no longer a member is a lapsed year (the
-    // subscription was cancelled): one row per WeChat ID, so it is reopened
-    // and paid again rather than showing "welcome" without a charge.
+    // A paid row for someone who is no longer a member is an earlier cohort
+    // that has ended: one row per WeChat ID, so it is reopened and paid again
+    // (for the cohort on sale now) rather than showing "welcome" without a charge.
     if (order.status === "paid") await reopenMembershipOrder(order.ref);
     if (!stripeEnabled()) return back({ ref: order.ref });
     return NextResponse.redirect(await checkoutUrlFor(order.ref, "member", origin), 303);

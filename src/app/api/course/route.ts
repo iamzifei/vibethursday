@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentAccount } from "@/lib/account";
 import { IP_COURSE, newCourseRef, parseCourseForm } from "@/lib/course";
-import { createCourseOrder, getSignupProfile, isMember } from "@/lib/db";
+import { createCourseOrder, getSignupProfile, hasYearMembership } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
@@ -58,8 +58,9 @@ export async function POST(request: Request) {
         name = profile.name;
         wechat = profile.wechat;
         signupId = account.signupId;
-        // A 共创会员's membership already covers this class (2026-11-01).
-        member = await isMember(account.signupId);
+        // A yearly 共创会员's membership already covers this class (2026-11-01);
+        // the 4-week membership sold from 2026-11-05 does not.
+        member = await hasYearMembership(account.signupId);
       }
     } catch (error) {
       console.error("[course] could not read the recognised signup", error);

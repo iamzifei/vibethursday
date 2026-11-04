@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { COURSE, MEMBERSHIP, MEMBERSHIP_COURSES, looksLikeMemberRef, newMemberRef } from "../src/lib/course.ts";
+import { COURSE, MEMBERSHIP, MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID, looksLikeMemberRef, newMemberRef } from "../src/lib/course.ts";
 import { kindOfRef, toCents } from "../src/lib/stripe-pay.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -102,7 +102,10 @@ test(
 
 /* ── A yearly subscription (James 2026-11-02): renews by itself ─────────── */
 
-test("★ the membership Checkout is a yearly subscription at A$658.90, tagged with its reference", async () => {
+// Spec change 2026-11-05: Tuesday online / 4-week membership — /join no longer
+// asks for a subscription (tests/online-tuesday.test.mts). This only checks
+// that the Checkout helper still builds a correct one when asked.
+test("★ a recurring Checkout is a yearly subscription at A$658.90, tagged with its reference", async () => {
   const { createCheckout } = await import("../src/lib/stripe-pay.ts");
   const sent: string[] = [];
   const realFetch = globalThis.fetch;
@@ -148,8 +151,10 @@ test(
     const stamp = Date.now();
     const refs: string[] = [];
     try {
+      // Spec change 2026-11-05: Tuesday online / 4-week membership — only the
+      // yearly membership bought before then has a subscription that renews.
       const order = await createCourseOrder({
-        course: MEMBERSHIP.id, cap: MEMBERSHIP.cap, signupId: null, name: "Rex", wechat: `rex-${stamp}`,
+        course: YEARLY_MEMBERSHIP_ID, cap: MEMBERSHIP.cap, signupId: null, name: "Rex", wechat: `rex-${stamp}`,
         industry: null, bizFocus: [], note: null, ref: newMemberRef(),
       });
       refs.push(order.ref);

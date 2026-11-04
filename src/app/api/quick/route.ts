@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { checkoutUrlFor } from "@/lib/card-pay";
 import { admission, capFor } from "@/lib/capacity";
-import { findMySignup, getOrCreateSessionFee, isTuesdayFree, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
+import { canJoinOnlineTuesday, findMySignup, getOrCreateSessionFee, isTuesdayFree, saveSignupWithResult, sessionHeadcount } from "@/lib/db";
 import { REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { parseQuick, quickSession } from "@/lib/quick-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { isTurnstileConfigured, verifyTurnstile } from "@/lib/turnstile";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
-import { bookableSessions, isSpecialSession } from "@/lib/sessions";
+import { bookableSessions, isOnlineSession, isSpecialSession } from "@/lib/sessions";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { newFeeRef } from "@/lib/tuesday-fee";
 
@@ -106,6 +106,9 @@ export async function POST(request: Request) {
 
     if (waitlisted) return done({ done: "waitlist" });
     if (!isSpecialSession(session)) return done({ done: "booked" });
+    // Online Tuesday (2026-11-10 on): nothing to pay. A 共创会员 or the
+    // 导师团 is told how to get in; anyone else is pointed at /join.
+    if (isOnlineSession(session)) return done({ done: (await canJoinOnlineTuesday(id)) ? "online" : "onlineJoin" });
     if (await isTuesdayFree(id)) return done({ done: "free" });
 
     const fee = await getOrCreateSessionFee(session, id, newFeeRef(), stripeEnabled() ? HOLD_MINUTES : null, []);

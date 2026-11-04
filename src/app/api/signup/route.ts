@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, bookDinner, isTuesdayFree } from "@/lib/db";
+import { bindOpenid, cancelSession, getMySignup, getOrCreateSessionFee, getSignupProfile, publishCardForSignup, recordLogin, saveSignupWithResult, sessionHeadcount, setBizFocus, setShareTopic, setSignupInterest, setTuesdayBring, bookDinner, isTuesdayFree, canJoinOnlineTuesday } from "@/lib/db";
 import { dinnerConfig, newDinnerRef } from "@/lib/dinner";
 import { feeToPay, newFeeRef, type FeeReceipt } from "@/lib/tuesday-fee";
 import { HOLD_MINUTES, stripeEnabled } from "@/lib/stripe-pay";
 import { parseInterest } from "@/lib/signup-interest";
-import { bookableSessions, feeFor, isSpecialSession, sydneyToday, upcomingBookableSpecialSessions } from "@/lib/sessions";
+import { bookableSessions, feeFor, isOnlineSession, isSpecialSession, sydneyToday, upcomingBookableSpecialSessions } from "@/lib/sessions";
 import { admission, capFor } from "@/lib/capacity";
 import { readRememberToken, REMEMBER_COOKIE, rememberCookieOptions, rememberToken } from "@/lib/my-signup";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -397,6 +397,20 @@ export async function POST(request: Request) {
     }
   }
 
+  // An online Build Tuesday (from 2026-11-10): no fee. Whether this person
+  // may join — a 共创会员 or the 导师团 — decides whether the confirmation
+  // tells them how to get in (a WeChat group James sets up before it starts)
+  // or points them at /join. Only when the name matched, like `fee` above:
+  // otherwise typing a WeChat ID would reveal whether someone is a member.
+  let online: { entitled: boolean } | undefined;
+  if (firstSession && isOnlineSession(firstSession) && !waitlisted && profileUpdated) {
+    try {
+      online = { entitled: await canJoinOnlineTuesday(signupId) };
+    } catch (error) {
+      console.error("[signup] booked, but could not check who may join the online Tuesday", error);
+    }
+  }
+
   if (publishCard && profileUpdated) {
     try {
       await publishCardForSignup(signupId);
@@ -459,7 +473,7 @@ export async function POST(request: Request) {
   // `remembered`: the cookie below is about to be set, so the confirmation can
   // offer its one-tap question (/api/signup/interest reads only that cookie).
   const remembered = profileUpdated && exactName;
-  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, classSignup: classSignup && profileUpdated, fee, dinner, payHold });
+  const response = NextResponse.json({ ok: true, waitlisted, upcoming, tuesday, remembered, switched, classSignup: classSignup && profileUpdated, fee, online, dinner, payHold });
 
   // "This phone remembers you": the next /my or /go from this browser shows
   // their Thursdays without typing. Behind the same gate as `upcoming` — only

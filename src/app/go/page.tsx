@@ -13,7 +13,7 @@ import { feedbackCode } from "@/lib/feedback";
 import { CHAT_URL, checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
 import { checkinCode } from "@/lib/checkin";
-import { focusSession, formatSession, isSpecialSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
+import { focusSession, formatSession, isOnlineSession, isSpecialSession, nextThursdays, sydneyHour, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{ lang?: string }>;
@@ -144,7 +144,11 @@ export default async function GoPage({ searchParams }: PageProps) {
   const hour = sydneyHour();
   // The card stays up until the Tuesday ends at 12:30 (2026-11-04).
   const tuesdayToday = isSpecialSession(today) && hour < 13;
-  const tuesdayCheckin = tuesdayToday && checkinLinkOpen(true, hour, true);
+  // Online from 2026-11-10: nobody walks into a room, so no check-in link and
+  // no "sign up now" (signups closed the evening before) — just when it is
+  // and how people get in.
+  const tuesdayOnline = tuesdayToday && isOnlineSession(today);
+  const tuesdayCheckin = tuesdayToday && !tuesdayOnline && checkinLinkOpen(true, hour, true);
   const tuesdayMine = mine ? mine.sessions.includes(today) || mine.waitlist.some((entry) => entry.session === today) : null;
 
   // Where, read from the home page's venue card, so a venue change is one edit
@@ -165,8 +169,10 @@ export default async function GoPage({ searchParams }: PageProps) {
             {tuesdayToday && (
               <div className="card card--accent stack-3">
                 <h2 className="h3" style={{ margin: 0 }}>{t.tuesdayTitle}</h2>
-                <p className="body" style={{ margin: 0 }}>{t.tuesdayWhen}</p>
-                {tuesdayCheckin ? (
+                <p className="body" style={{ margin: 0 }}>{tuesdayOnline ? t.tuesdayOnlineWhen : t.tuesdayWhen}</p>
+                {tuesdayOnline ? (
+                  <p className="body-sm" style={{ margin: 0 }}>{t.tuesdayOnlineHow}</p>
+                ) : tuesdayCheckin ? (
                   <div>
                     <a className="btn btn--primary" href={withLang(`/checkin?s=${today}&k=${checkinCode(today)}`, lang)}>
                       {t.tuesdayCheckin}
@@ -175,7 +181,7 @@ export default async function GoPage({ searchParams }: PageProps) {
                 ) : (
                   <p className="body-sm" style={{ margin: 0 }}>{t.tuesdayCheckinLater}</p>
                 )}
-                {tuesdayMine !== true && (
+                {!tuesdayOnline && tuesdayMine !== true && (
                   <p className="body-sm" style={{ margin: 0 }}>
                     {t.tuesdayNotSignedUp}
                     <a href={`/tuesday${langSuffix(lang)}#signup`}>{t.tuesdaySignup} →</a>

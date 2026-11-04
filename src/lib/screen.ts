@@ -25,16 +25,18 @@ export const SCREEN_LINKS = {
  * Until then this slide sold the class, which made a free morning look like a
  * sales pitch. People who build things are sent to Tuesday; the class is on
  * the site for whoever looks for it, not on the screen.
+ *
+ * Online from 10 November (2026-11-05): James builds a real product live with
+ * AI, for 共创会员 (4 weeks at a time) and the 导师团. No ticket.
  */
 export const SCREEN_TUESDAY = {
   title: "Build Tuesday · 周二动手局",
-  when: "每周二 10:30–12:30 · Chatswood · 12 人闭门会",
-  price: "30 澳元 · 共创会员免费",
+  when: "每周二 10:30–12:00 · 线上",
+  price: "共创会员参加 · 599 澳元 4 周",
   points: [
-    "提前排好两个案例，导师团当场拆",
-    "其余时间推进自己的项目，卡住随时问",
-    "散场前点名配对：谁和谁接着聊",
-    "适合在做东西的人，也欢迎带着真实需求的老板",
+    "看 James 用 AI 现场做一个真实的产品",
+    "讲哪些产品能赚钱，为什么",
+    "4 周一期，够做出一个产品",
   ],
 };
 
@@ -74,10 +76,10 @@ export function screenFor(tuesday: boolean): ScreenDay {
     ],
     signupCaption: "下周二也能报 · 12 人闭门",
     second: {
-      eyebrow: "共创会员 · 599 澳元一年",
-      title: "常来周二，办共创会员",
-      price: "一年内每周二免门票",
-      points: ["再送一次澳洲 AI+IP 实战课", "名片上有「共创会员」标", "刷卡付款，付完马上生效"],
+      eyebrow: "共创会员 · 599 澳元 4 周",
+      title: "周二线上，办共创会员",
+      price: "一期 4 个周二，看 James 用 AI 做产品",
+      points: ["一次付清，不会再扣款", "名片上有「共创会员」标", "刷卡付款，付完马上生效"],
       href: SCREEN_LINKS.join,
       caption: "扫码了解 · vibethursday.com/join",
     },

@@ -8,7 +8,7 @@ import { SCENES } from "@/lib/scenes";
 import { currentAccount } from "@/lib/account";
 import { settleIfPaid } from "@/lib/card-pay";
 import { getCopy } from "@/lib/content";
-import { MEMBERSHIP, looksLikeMemberRef } from "@/lib/course";
+import { cohortDatesLabel, cohortForPayment, cohortOnSale, MEMBERSHIP, YEARLY_MEMBERSHIP_ID, looksLikeMemberRef } from "@/lib/course";
 import { getCourseOrderByRef, getSignupProfile, isMember } from "@/lib/db";
 import { wechatLoginHref } from "@/lib/login-link";
 import { stripeEnabled } from "@/lib/stripe-pay";
@@ -21,17 +21,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const { ref } = await searchParams;
   return {
     title: "共创会员 · Vibe Thursday",
-    description: "Vibe Thursday 共创会员：599 澳元一年，每年自动续费。一年内每周二 Build Tuesday 免门票，再送一次澳洲 AI+IP 实战课。",
+    description: "Vibe Thursday 共创会员：599 澳元一期 4 周，一次付清。4 个周二上午线上看 James 用 AI 现场做一个真实的产品。",
     ...(ref ? { robots: { index: false } } : {}),
   };
 }
 
 type PageProps = { searchParams: Promise<{ ref?: string; paid?: string; error?: string; err?: string; other?: string }> };
 
-/** What the membership gives, shown before and after paying. */
+/**
+ * What the 4-week membership gives (2026-11-05), shown before and after
+ * paying. No AI+IP class: that was part of the yearly membership only.
+ */
 const PERKS = [
-  "一年内每周二 Build Tuesday 免门票（平时 30 澳元一次）",
-  "送一次澳洲 AI+IP 实战课（365 澳元那门），报名时自动确认，不用付钱",
+  "一期 4 个周二的线上 Build Tuesday，10:30–12:00（悉尼时间）：看 James 用 AI 现场做一个真实的产品，也讲哪些产品能赚钱",
+  "每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里",
   "成员墙和个人页上的「共创会员」标",
 ];
 
@@ -51,12 +54,15 @@ const ERRORS: Record<string, string> = {
   rate: "试太多次了，过一会儿再来。",
   failed: "没保存成功，请再试一次；还不行就私信 James。",
   member: "这个微信号已经是共创会员了，不用再买。",
+  closed: "这一期已经结束，下一期日期待定。",
 };
 
 /**
  * The 共创会员 on its own (2026-11-02, course.ts MEMBERSHIP): what it gives,
- * name and WeChat ID, then straight to Stripe. Back from Stripe — or opened
- * later by its reference — the page settles the payment if the webhook has
+ * name and WeChat ID, then straight to Stripe. Since 2026-11-05 it sells one
+ * 4-week cohort, paid once; with no upcoming cohort set (`cohortOnSale`) the
+ * page says the next date is still to be decided and offers no payment.
+ * Back from Stripe — or opened later by its reference — the page settles the payment if the webhook has
  * not yet, and says whether it went through. Chinese only, like /class.
  */
 export default async function JoinPage({ searchParams }: PageProps) {
@@ -64,7 +70,8 @@ export default async function JoinPage({ searchParams }: PageProps) {
   const c = getCopy("zh");
   const ref = looksLikeMemberRef(params.ref) ? params.ref : null;
   let order = ref ? await getCourseOrderByRef(ref).catch(() => null) : null;
-  if (order && order.course !== MEMBERSHIP.id) order = null;
+  // A yearly order bought before 2026-11-05 still opens here, to show it is paid.
+  if (order && order.course !== MEMBERSHIP.id && order.course !== YEARLY_MEMBERSHIP_ID) order = null;
   if (ref && order && (await settleIfPaid("member", order))) order = await getCourseOrderByRef(ref).catch(() => null);
 
   let knownName: string | null = null;
@@ -82,6 +89,9 @@ export default async function JoinPage({ searchParams }: PageProps) {
     }
   }
   const loginHref = wechatLoginHref("/join", null);
+  const onSale = cohortOnSale();
+  // The cohort a paid 4-week order belongs to, for the welcome line.
+  const paidCohort = order?.status === "paid" && order.course === MEMBERSHIP.id && order.paid_at ? cohortForPayment(new Date(order.paid_at)) : null;
   const error = params.err && Object.hasOwn(ERRORS, params.err) ? ERRORS[params.err] : null;
 
   const perks = (
@@ -104,10 +114,17 @@ export default async function JoinPage({ searchParams }: PageProps) {
                 </div>
                 {order.status === "paid" ? (
                   <>
-                    <p className="body-lg">付款已确认，从今天起一年内有效，到期自动续费。</p>
-                    {perks}
+                    <p className="body-lg">
+                      {order.course === YEARLY_MEMBERSHIP_ID
+                        ? "付款已确认。这是 11 月 5 日前办的一年会员，从付款日起一年内有效。"
+                        : paidCohort
+                          ? `付款已确认。你在第 ${paidCohort.number} 期：${cohortDatesLabel(paidCohort)}，每次周二 10:30–12:00。`
+                          : "付款已确认。"}
+                    </p>
+                    {/* The perks listed are the 4-week ones; a yearly order keeps its own. */}
+                    {order.course !== YEARLY_MEMBERSHIP_ID && perks}
                     <p className="body">
-                      付款编号 <strong className="mono">{order.ref}</strong>，有问题私信 James 时带上它。报周二时用同一个微信号，会自动免费。
+                      付款编号 <strong className="mono">{order.ref}</strong>，有问题私信 James 时带上它。报周二时用同一个微信号，网站就认得你是会员。
                     </p>
                   </>
                 ) : (
@@ -121,7 +138,9 @@ export default async function JoinPage({ searchParams }: PageProps) {
                       <p className="body" style={{ margin: 0 }}>
                         付款编号：<strong className="mono">{order.ref}</strong>
                       </p>
-                      {stripeEnabled() ? (
+                      {!onSale ? (
+                        <p className="body" style={{ margin: 0 }}>这一期已经结束，下一期日期待定，先不用付。</p>
+                      ) : stripeEnabled() ? (
                         <form method="post" action="/api/pay/checkout">
                           <input type="hidden" name="ref" value={order.ref} />
                           <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>
@@ -143,18 +162,23 @@ export default async function JoinPage({ searchParams }: PageProps) {
                     for whoever scrolls, the form never waits behind it. */}
                 <div className="stack-3">
                   <span className="eyebrow">§ {MEMBERSHIP.title}</span>
-                  <h1>一年的 Build Tuesday，再加一次 AI+IP 课。</h1>
-                  <p className="body-lg" style={{ margin: 0 }}>{MEMBERSHIP.priceLabel} 一年，刷卡付款，付完马上生效，每年自动续费。</p>
+                  <h1>4 个周二，看 James 用 AI 做出一个产品。</h1>
+                  <p className="body-lg" style={{ margin: 0 }}>{MEMBERSHIP.priceLabel} 一期 {MEMBERSHIP.weeks} 周，刷卡一次付清，之后不会再扣款。</p>
+                  <p className="body" style={{ margin: 0 }}>
+                    {onSale
+                      ? `第 ${onSale.number} 期：${cohortDatesLabel(onSale)}（都是周二）。这一期结束前办的，都算这一期。`
+                      : "下一期日期待定。定了会写在这里，也会在群里说。"}
+                  </p>
                 </div>
-                {!alreadyMember && (
-                  <a className="btn btn--primary btn--block" href="#join-form" style={{ fontSize: "1.15rem" }}>加入 · {MEMBERSHIP.priceLabel} / 年</a>
+                {!alreadyMember && onSale && (
+                  <a className="btn btn--primary btn--block" href="#join-form" style={{ fontSize: "1.15rem" }}>加入 · {MEMBERSHIP.priceLabel} / {MEMBERSHIP.weeks} 周</a>
                 )}
                 <SceneImage id="scene-2" alt="Vibe Thursday 现场：有人站着分享，大家围着长桌听（现场照片转绘，人物已替换）" eager />
                 {perks}
                 {error && <p className="alert" role="alert">{error}</p>}
                 {alreadyMember ? (
                   <p className="body-lg">✓ {knownName}，你已经是共创会员了，不用再买。</p>
-                ) : (
+                ) : !onSale ? null : (
                   <form method="post" action="/api/join" className="stack-6" id="join-form">
                     {knownName ? (
                       <div className="stack-2">
@@ -182,7 +206,7 @@ export default async function JoinPage({ searchParams }: PageProps) {
                         <div>
                           <label className="label" htmlFor="join-wechat">微信号</label>
                           <input className="field" id="join-wechat" name="wechat" required autoCapitalize="off" autoCorrect="off" maxLength={60} />
-                          <p className="hint">要和报周二时填的一样，周二才会自动免费。微信号在：微信 → 我 → 头像右边「微信号：」后面那串。</p>
+                          <p className="hint">要和报名时填的一样，网站才认得你是会员。微信号在：微信 → 我 → 头像右边「微信号：」后面那串。</p>
                         </div>
                       </>
                     )}
@@ -192,7 +216,7 @@ export default async function JoinPage({ searchParams }: PageProps) {
                   </form>
                 )}
                 <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
-                  之前买过 599 的（10 月 25 日那门课），已经是共创会员，不用再买。不想续费了，私信 James 取消，当年的权益照常用到期满。
+                  之前买过 599 的（10 月 25 日那门课，或 11 月 5 日前办的一年会员），会员照常有效，不用再买。
                 </p>
 
                 <section className="stack-4" aria-labelledby="join-proof">
@@ -213,7 +237,7 @@ export default async function JoinPage({ searchParams }: PageProps) {
                   </div>
                   <p className="hint" style={{ margin: 0 }}>画面由现场照片转绘，人物的脸都换掉了。</p>
                 </section>
-                {!alreadyMember && <StickyCta href="#join-form" label={`共创会员 · ${MEMBERSHIP.priceLabel} / 年`} cta="加入" />}
+                {!alreadyMember && onSale && <StickyCta href="#join-form" label={`共创会员 · ${MEMBERSHIP.priceLabel} / ${MEMBERSHIP.weeks} 周`} cta="加入" />}
               </>
             )}
           </div>

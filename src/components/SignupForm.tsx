@@ -72,6 +72,11 @@ type Receipt = {
   classSignup: boolean;
   /** A paid Build Tuesday: free as a member, or the reference to pay against. */
   fee: { member: true } | { member: false; ref: string; amount: string } | null;
+  /**
+   * An online Build Tuesday (from 2026-11-10): the date, and whether this
+   * person may join (a 共创会员 or the 导师团). Only they are told how to get in.
+   */
+  online: { session: string; entitled: boolean } | null;
   /** A dinner seat taken with this signup: pay against the reference, or waitlisted. */
   dinner: { ref: string; waitlist: boolean } | { skipped: true } | null;
   /** Minutes an unpaid place is held when paying by card; null for no deadline. */
@@ -510,6 +515,7 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
         switched?: string[];
         classSignup?: boolean;
         fee?: { member: boolean; ref?: string; status?: string; amount?: string };
+        online?: { entitled?: boolean };
         dinner?: { ref?: string; status?: string; skipped?: string };
         payHold?: number | null;
       } | null;
@@ -536,6 +542,9 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
           : accepted?.fee && typeof accepted.fee.ref === "string" && accepted.fee.status === "pending"
             ? { member: false, ref: accepted.fee.ref, amount: String(accepted.fee.amount ?? "") }
             : null,
+        online: accepted?.online && sessions.some((option) => option.value === sessionValue)
+          ? { session: sessionValue, entitled: accepted.online.entitled === true }
+          : null,
         dinner: typeof accepted?.dinner?.ref === "string"
           ? { ref: accepted.dinner.ref, waitlist: accepted.dinner.status === "waitlist" }
           : accepted?.dinner?.skipped ? { skipped: true } : null,
@@ -578,6 +587,15 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
             {!receipt.waitlisted && <TuesdayVenue lang={lang} />}
           </>
         )}
+        {/* Online Tuesday (2026-11-10 on): no fee and no address. Members and
+            the 导师团 are told how to get in; anyone else where to join. */}
+        {receipt?.online && !receipt.waitlisted && (receipt.online.entitled ? (
+          <TuesdayVenue lang={lang} session={receipt.online.session} />
+        ) : (
+          <p>
+            {copy.onlineMembersOnly} <a href="/join">{copy.onlineMembersOnlyCta} →</a>
+          </p>
+        ))}
         {receipt?.fee && !receipt.fee.member && (
           <div className="stack-3">
             <p style={{ margin: 0 }}>

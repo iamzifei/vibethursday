@@ -38,13 +38,14 @@ test("the layout's fallback title and description stay in step with the home pag
 });
 
 // Spec change 2026-11-04: the afternoon workshop is gone and the day ends at 12:30.
-test("★ Build Tuesday reads like its model: own pace, mentors as guides", () => {
+// Spec change 2026-11-05: Tuesday online / 4-week membership — watch James
+// build, 10:30–12:00, for members and mentors, no ticket price.
+test("★ Build Tuesday reads like its model: online, watch James build, members and mentors", () => {
   const tuesday = JSON.stringify(copy.zh.tuesday);
-  assert.match(tuesday, /按自己的节奏/);
+  assert.match(tuesday, /线上/);
+  assert.match(tuesday, /看 James/);
   assert.match(tuesday, /导师团/);
-  assert.match(tuesday, /陪跑/);
   assert.doesNotMatch(tuesday, /workshop/);
-  assert.match(tuesday, /10:30–12:30/);
-  // Spec change 2026-11-02: the price is shown before GST, without "+ GST".
-  assert.match(tuesday, /30 澳元/);
+  assert.match(tuesday, /10:30–12:00/);
+  assert.doesNotMatch(tuesday, /30 澳元/);
 });

@@ -141,7 +141,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                     <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
                       {c.signup.payMissing} <a href={c.signup.payMissingHref}>{c.signup.payMissingCta} →</a>
                     </p>
-                    <MemberUpsell copy={{ title: "常来周二的话，办共创会员更划算", body: "599 澳元一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办好后回到这一页刷新，这一场就不用付了。", cta: "了解共创会员" }} />
+                    <MemberUpsell copy={{ title: "周二改线上了，共创会员参加", body: "599 澳元一期 4 个周二，一次付清，不会再扣款。办好后回到这一页刷新，这一场就不用付了。", cta: "了解共创会员" }} />
                   </>
                 ) : fee.claimed_at ? (
                   <div className="stack-3">
@@ -182,7 +182,7 @@ export default async function TuesdayPayPage({ searchParams }: PageProps) {
                       </button>
                     </form>
                     <p className="body">
-                      备注编号别填错，我们靠它对账。共创会员周二免费，<a href="/join">了解共创会员</a>。
+                      备注编号别填错，我们靠它对账。共创会员不用付，<a href="/join">了解共创会员</a>。
                     </p>
                   </>
                 )}

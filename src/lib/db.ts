@@ -9,26 +9,46 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
-import { MEMBERSHIP, MEMBERSHIP_COURSES, newMemberRef } from "./course.ts";
+import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, YEARLY_MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
 import type { DeskRow } from "./desk.ts";
 import type { PersonRoleKind } from "./person-roles.ts";
 
 /**
- * The SQL list of classes that make a 共创会员 (`MEMBERSHIP_COURSES`), for the
- * four membership checks below. Built from constants in this repository, never
- * from input; the quote doubling is only so a stray apostrophe could not break
- * the statement.
+ * The SQL list of orders that make a 共创会员 for a year
+ * (`YEARLY_MEMBERSHIP_COURSES`: the 10/25 class and the yearly membership),
+ * for the membership checks below. Built from constants in this repository,
+ * never from input; the quote doubling is only so a stray apostrophe could
+ * not break the statement.
  */
-const MEMBER_COURSES_SQL = MEMBERSHIP_COURSES.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
+const MEMBER_COURSES_SQL = YEARLY_MEMBERSHIP_COURSES.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
 /**
- * How long one payment keeps someone a member: a year, plus a week's grace
- * (2026-11-02). The yearly subscription renews on the anniversary but its
- * invoice is paid an hour or more later — days, on a card retry — and a
- * paying member must not drop out in between.
+ * How long one yearly payment keeps someone a member: a year, plus a week's
+ * grace (2026-11-02). The yearly subscription renews on the anniversary but
+ * its invoice is paid an hour or more later — days, on a card retry — and a
+ * paying member must not drop out in between. Unchanged by the 4-week
+ * membership of 2026-11-05, which has its own rule below.
  */
 const MEMBER_WINDOW = "1 year 7 days";
+
+/**
+ * Whether a paid order still makes someone a 共创会员, as an SQL condition
+ * on the `course_orders` row reached through `alias` (e.g. "o", or "" for the
+ * table itself). The callers add `status = 'paid'` themselves.
+ *
+ * Two kinds of order (2026-11-05, course.ts):
+ *  - yearly (the 10/25 class, the yearly membership): within a year and a
+ *    week of payment — exactly the rule every check used before;
+ *  - 4-week (`MEMBERSHIP.id`): until the end of the cohort the payment falls
+ *    in (`cohortValidUntilSql`); NULL, so never, once past the last cohort.
+ * `membershipValidUntil` in course.ts is the same rule in code.
+ */
+function memberActiveSql(alias: string): string {
+  const col = (name: string) => (alias ? `${alias}.${name}` : name);
+  return `((${col("course")} IN (${MEMBER_COURSES_SQL}) AND ${col("paid_at")} > now() - interval '${MEMBER_WINDOW}')`
+    + ` OR (${col("course")} = '${MEMBERSHIP.id}' AND now() < ${cohortValidUntilSql(col("paid_at"))}))`;
+}
 
 /**
  * Postgres access.
@@ -1532,7 +1552,7 @@ const MEMBER_COLUMNS = `
   -- matched the same way as isMember. Shown as a badge on the card.
   EXISTS (
     SELECT 1 FROM course_orders o
-     WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+     WHERE o.status = 'paid' AND ${memberActiveSql("o")}
        AND (o.signup_id = g.id
             OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
   ) AS cocreator,
@@ -2786,7 +2806,7 @@ export async function listRoster(session: string): Promise<RosterRow[]> {
             ) AS has_card,
             EXISTS (
               SELECT 1 FROM course_orders o
-               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+               WHERE o.status = 'paid' AND ${memberActiveSql("o")}
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS cocreator,
@@ -3100,12 +3120,14 @@ export type CourseOrderByRef = {
   claimed: boolean;
   signup_id: string | null;
   stripe_session: string | null;
+  /** When it was paid; null until then. Tells /join which cohort a 4-week order is in. */
+  paid_at: Date | null;
 };
 
 export async function getCourseOrderByRef(ref: string): Promise<CourseOrderByRef | null> {
   await ensureSchema();
   const result = await getPool().query<CourseOrderByRef>(
-    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed, signup_id::text AS signup_id, stripe_session
+    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed, signup_id::text AS signup_id, stripe_session, paid_at
        FROM course_orders WHERE ref = $1`,
     [ref],
   );
@@ -4378,6 +4400,28 @@ export async function isMember(signupId: string): Promise<boolean> {
        SELECT 1 FROM course_orders o, signups g
         WHERE g.id = $1::bigint
           AND o.status = 'paid'
+          AND ${memberActiveSql("o")}
+          AND (o.signup_id = g.id
+               OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
+     ) AS member`,
+    [signupId],
+  );
+  return result.rows[0]?.member ?? false;
+}
+
+/**
+ * Whether this person holds a current YEARLY membership (the 10/25 class or
+ * the yearly 共创会员), matched like isMember. Only those include a free AI+IP
+ * class (`includesIpClass` in course.ts); the 4-week membership sold from
+ * 2026-11-05 does not, so the class signup asks this, not isMember.
+ */
+export async function hasYearMembership(signupId: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query<{ member: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM course_orders o, signups g
+        WHERE g.id = $1::bigint
+          AND o.status = 'paid'
           AND o.course IN (${MEMBER_COURSES_SQL})
           AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
           AND (o.signup_id = g.id
@@ -4386,6 +4430,18 @@ export async function isMember(signupId: string): Promise<boolean> {
     [signupId],
   );
   return result.rows[0]?.member ?? false;
+}
+
+/**
+ * Whether this person may join an online Build Tuesday (from 2026-11-10): a
+ * current 共创会员 of either kind, or on the 导师团. Nobody else — there is no
+ * single ticket, and 共建者 are no longer let in free. Every place that shows
+ * how to get into an online Tuesday asks this.
+ */
+export async function canJoinOnlineTuesday(signupId: string): Promise<boolean> {
+  await ensureSchema();
+  const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role = 'mentor'`, [signupId]);
+  return Boolean(mentor.rowCount) || (await isMember(signupId));
 }
 
 /**
@@ -4399,8 +4455,7 @@ export async function isMemberWechat(wechat: string): Promise<boolean> {
     `SELECT EXISTS (
        SELECT 1 FROM course_orders o
         WHERE o.status = 'paid'
-          AND o.course IN (${MEMBER_COURSES_SQL})
-          AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+          AND ${memberActiveSql("o")}
           AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace($1, '\\s+', '', 'g'))
      ) AS member`,
     [wechat],
@@ -4471,7 +4526,7 @@ export async function releaseExpiredHolds(): Promise<void> {
           AND NOT EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role IN ('mentor', 'volunteer'))
           AND NOT EXISTS (
             SELECT 1 FROM course_orders o
-             WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+             WHERE o.status = 'paid' AND ${memberActiveSql("o")}
                AND (o.signup_id = g.id
                     OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
           )`,
@@ -4530,7 +4585,9 @@ export async function renewMembership(subscription: string, periodStart: Date): 
     `UPDATE course_orders SET paid_at = greatest(paid_at, $3::timestamptz)
       WHERE stripe_subscription = $1 AND course = $2 AND status = 'paid'
       RETURNING ref`,
-    [subscription, MEMBERSHIP.id, periodStart],
+    // Only the yearly membership ever had a subscription; the 4-week one
+    // (2026-11-05) is a one-off payment and never renews.
+    [subscription, YEARLY_MEMBERSHIP_ID, periodStart],
   );
   return result.rows[0]?.ref ?? null;
 }
@@ -4783,7 +4840,7 @@ export async function listTuesdayFeeDesk(session: string): Promise<TuesdayFeeRow
     `SELECT g.id::text AS signup_id, g.name, g.wechat,
             EXISTS (
               SELECT 1 FROM course_orders o
-               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+               WHERE o.status = 'paid' AND ${memberActiveSql("o")}
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) OR EXISTS (SELECT 1 FROM person_roles r WHERE r.signup_id = g.id AND r.role IN ('mentor', 'volunteer')) AS member,
@@ -5158,7 +5215,7 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
             c.source,
             EXISTS (
               SELECT 1 FROM course_orders o
-               WHERE o.status = 'paid' AND o.course IN (${MEMBER_COURSES_SQL}) AND o.paid_at > now() - interval '${MEMBER_WINDOW}'
+               WHERE o.status = 'paid' AND ${memberActiveSql("o")}
                  AND (o.signup_id = g.id
                       OR (g.wechat IS NOT NULL AND lower(regexp_replace(o.wechat, '\\s+', '', 'g')) = lower(regexp_replace(g.wechat, '\\s+', '', 'g'))))
             ) AS member,
@@ -5195,21 +5252,27 @@ export type MembershipRow = {
   note: string | null;
   /** YYYY-MM-DD, Sydney. */
   paid_on: string;
-  /** The day the year (plus the grace week isMember allows) is counted to, without the grace. */
+  /**
+   * The last day it counts, Sydney. Yearly orders: the day the year (plus the
+   * grace week isMember allows) is counted to, without the grace. 4-week
+   * orders: their cohort's last Tuesday; empty when paid after every cohort.
+   */
   expires_on: string;
   active: boolean;
 };
 
-/** Every paid membership order, newest first, with whether it still counts. */
+/** Every paid membership order (yearly and 4-week), newest first, with whether it still counts. */
 export async function listMemberships(): Promise<MembershipRow[]> {
   await ensureSchema();
   const result = await getPool().query<MembershipRow>(
     `SELECT id::text AS id, course, name, wechat, ref, stripe_session, note,
             to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD') AS paid_on,
-            to_char((paid_at AT TIME ZONE 'Australia/Sydney') + interval '1 year', 'YYYY-MM-DD') AS expires_on,
-            (paid_at > now() - interval '${MEMBER_WINDOW}') AS active
+            CASE WHEN course = '${MEMBERSHIP.id}'
+                 THEN coalesce(to_char((${cohortValidUntilSql("paid_at")}) AT TIME ZONE 'Australia/Sydney' - interval '1 day', 'YYYY-MM-DD'), '')
+                 ELSE to_char((paid_at AT TIME ZONE 'Australia/Sydney') + interval '1 year', 'YYYY-MM-DD') END AS expires_on,
+            coalesce(${memberActiveSql("")}, false) AS active
        FROM course_orders
-      WHERE status = 'paid' AND course IN (${MEMBER_COURSES_SQL}) AND paid_at IS NOT NULL
+      WHERE status = 'paid' AND (course IN (${MEMBER_COURSES_SQL}) OR course = '${MEMBERSHIP.id}') AND paid_at IS NOT NULL
       ORDER BY paid_at DESC`,
   );
   return result.rows;
@@ -5218,22 +5281,27 @@ export async function listMemberships(): Promise<MembershipRow[]> {
 /**
  * Records a membership paid outside the site. "already" when this WeChat ID
  * is already a current member; an unpaid /join order for them is completed
- * rather than duplicated. The paid date is the day they paid (Sydney), so the
- * year runs from then.
+ * rather than duplicated. The paid date is the day they paid (Sydney): before
+ * 2026-11-05 it is a yearly membership and the year runs from then; from
+ * then on a 4-week one, in the cohort that date falls in.
  */
 export async function addManualMembership(input: { name: string; wechat: string; paidOn: string; note: string }): Promise<"added" | "already" | "checkout_open"> {
   await ensureSchema();
   const wechat = input.wechat.trim();
   const note = `手动登记：${input.note}`;
+  // Which deal the payment was under (2026-11-05): paid before the 4-week
+  // membership went on sale, it is the yearly one and keeps a year; from
+  // then on it is a 4-week order, counted to the end of its cohort.
+  const course = input.paidOn < MEMBERSHIP_4W_FROM ? YEARLY_MEMBERSHIP_ID : MEMBERSHIP.id;
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");
     // The same lock createCourseOrder takes, so a /join checkout and this
     // cannot both make an order for one person at once.
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`course:${MEMBERSHIP.id}`]);
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`course:${course}`]);
     const current = await client.query(
       `SELECT 1 FROM course_orders
-        WHERE status = 'paid' AND course IN (${MEMBER_COURSES_SQL}) AND paid_at > now() - interval '${MEMBER_WINDOW}'
+        WHERE status = 'paid' AND ${memberActiveSql("")}
           AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($1, '\\s+', '', 'g'))`,
       [wechat],
     );
@@ -5248,7 +5316,7 @@ export async function addManualMembership(input: { name: string; wechat: string;
       `SELECT id::text AS id, status, stripe_session FROM course_orders
         WHERE course = $1
           AND lower(regexp_replace(wechat, '\\s+', '', 'g')) = lower(regexp_replace($2, '\\s+', '', 'g'))`,
-      [MEMBERSHIP.id, wechat],
+      [course, wechat],
     );
     const existing = open.rows[0];
     // An unfinished /join whose card page may still be open: that page could
@@ -5269,7 +5337,7 @@ export async function addManualMembership(input: { name: string; wechat: string;
       await client.query(
         `INSERT INTO course_orders (course, name, wechat, ref, status, paid_at, note)
          VALUES ($1, $2, $3, $4, 'paid', $5::timestamptz, $6)`,
-        [MEMBERSHIP.id, input.name, wechat, newMemberRef(), paidAt, note],
+        [course, input.name, wechat, newMemberRef(), paidAt, note],
       );
     }
     await client.query("COMMIT");

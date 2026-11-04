@@ -13,7 +13,7 @@ type PageProps = { searchParams: Promise<{ err?: string; ok?: string; q?: string
 
 const ERRORS: Record<string, string> = {
   name: "名字要填，最多 60 字。",
-  wechat: "微信号要填，要和他报名时填的一样，周二才会自动免费。",
+  wechat: "微信号要填，要和他报名时填的一样，网站才认得他是会员。",
   date: "付款日期不对：不能是未来，也不能是一年前或更早（那样会员已经过期了）。",
   note: "备注要写怎么付的（比如「10-20 转账给主办人」），最多 200 字。",
 };
@@ -65,7 +65,7 @@ export default async function MembersAdminPage({ searchParams }: PageProps) {
         <form method="post" action="/api/admin/membership" className="stack-3" style={{ marginTop: "var(--space-3)" }}>
           <label className="label">名字 <input className="field" name="name" required maxLength={60} /></label>
           <label className="label">微信号（和他报名时填的一样） <input className="field" name="wechat" required maxLength={60} autoCapitalize="off" autoCorrect="off" /></label>
-          <label className="label">付款日期（会员从这天起算一年） <input className="field" type="date" name="date" defaultValue={today} max={today} required /></label>
+          <label className="label">付款日期（11 月 5 日前付的记一年；之后付的记这天所在那一期，4 周） <input className="field" type="date" name="date" defaultValue={today} max={today} required /></label>
           <label className="label">怎么付的 <input className="field" name="note" required maxLength={200} placeholder="比如：10-20 转账给主办人，截图在微信" /></label>
           <button className="btn btn--primary" type="submit">登记</button>
         </form>

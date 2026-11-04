@@ -12,8 +12,8 @@ export const metadata: Metadata = { title: "身份与助理 · 后台", robots: 
 type PageProps = { searchParams: Promise<{ q?: string; err?: string }> };
 
 const ABOUT: Record<PersonRoleKind, string> = {
-  mentor: "主办人定向邀请、有专业能力或行业认知的人。来周二免费，名片上显示「导师团」。",
-  volunteer: "帮忙办活动的人（签到台、门口）。来周二免费；只在后台可见，名片上不显示。",
+  mentor: "主办人定向邀请、有专业能力或行业认知的人。可以参加周二线上（不用办会员），名片上显示「导师团」。",
+  volunteer: "帮忙办活动的人（签到台、门口）。只在后台可见，名片上不显示。",
   builder: "来周二、确定一起做某个项目的人，交付方或需求方都算。名片上显示「共建者」；备注写做哪个项目。",
   assistant: "团队成员。加上以后把下面的「专属登录链接」私发给 TA，点一次就登录；以后打开 vibethursday.com/staff 直接进后台。能做：签到台、门口签到码、帮人签到、标周二已付、候补、问答、照片审核，能看完整微信号。看不到收款金额，不能免收、不能动会员和付款链接。名片上不显示。",
 };

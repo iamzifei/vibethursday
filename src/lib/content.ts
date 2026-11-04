@@ -125,8 +125,8 @@ export const copy = {
         {
           key: "tuesday",
           tag: "",
-          title: "带着项目来动手",
-          body: "每周二上午，12 人闭门会，导师团在旁边陪你把东西做出来。30 澳元一次。",
+          title: "看 James 用 AI 做产品",
+          body: "每周二上午线上，看 James 用 AI 现场做一个真实的产品，也讲哪些产品能赚钱。共创会员参加。",
           cta: "看周二",
           href: "/tuesday",
           scene: "scene-5",
@@ -397,9 +397,9 @@ export const copy = {
           { value: "tech", label: "找机会：工作、项目、合作" },
         ],
         steps: ["你是谁", "你更像哪一类？", "关于你（选填）", "哪一场？"],
-        recommended: "做东西的朋友更推荐周二 Build Tuesday：十来个人，带着需求或项目来，一起拆清楚。周四有空位也欢迎来。",
+        recommended: "做东西的朋友也可以看看周二 Build Tuesday：线上看 James 用 AI 现场做产品，共创会员参加。周四有空位也欢迎来。",
         // 2026-11-01：周二的案例一就是老板的需求。默认仍是周四（免费入口），只提示一句。
-        recommendedBiz: "有一件具体的事，想请几个做过的人当场帮你拆？可以改报周二 Build Tuesday。",
+        recommendedBiz: "想看一个产品从头到尾怎么用 AI 做出来？可以看看周二线上的 Build Tuesday，共创会员参加。",
         bizFocus: "最想让 AI 帮你哪一块？",
         bizFocusOptions: [
           { value: "leads", label: "找客户、获客" },
@@ -643,7 +643,7 @@ export const copy = {
       errorPurpose: "选一下「你更像哪一类」，一个就行。",
       // Build Tuesday（2026-10-04）：周四人太多，在做东西的人分去周二。
       // 下拉里周二那一项的后缀，取代周四的「上午 10:30」。
-      sessionTimeSuffixTuesday: "10:30 · Build Tuesday",
+      sessionTimeSuffixTuesday: "10:30 · 线上 Build Tuesday",
       // 报名表上方的一句分流：周四是什么、不是什么，另外两种去哪。小班还没定，只说「想要的人多就开」。
       hook: "周四是交流局。有具体需求或在做东西的，来周二 Build Tuesday；想有人带着学的，看看我们的收费课程。",
       hookTuesdayCta: "看看 Build Tuesday",
@@ -660,24 +660,28 @@ export const copy = {
         },
         tuesday: {
           name: "周二 Build Tuesday",
-          cells: ["每周二 10:30–12:30 · Chatswood（付款后显示地址）", "带项目的人、会 AI 和技术的人；也欢迎带着真实需求的老板", "闭门会：两个案例当场拆，各自推进项目，散场前配对", "12 人，前一天晚上 8 点截止报名", "30 澳元，共创会员免费"],
+          cells: ["每周二 10:30–12:00 · 线上（Zoom）", "想看产品怎么用 AI 做出来的人：在做东西的、做生意的都合适", "看 James 现场用 AI 做一个真实的产品，再讲哪些产品能赚钱", "共创会员和导师团；前一天晚上 8 点截止报名", "共创会员参加（599 澳元一期 4 周），没有单次票"],
           cta: "报周二",
         },
       },
       // 选了「在做产品」「会技术」但报的是周四时，在目的题下面出现。
-      tuesdayHint: "你在做东西的话，周二的 Build Tuesday 可能更适合：小房间、十来个人，带着需求或项目来，一起拆清楚。",
+      tuesdayHint: "你在做东西的话，也可以看看周二的 Build Tuesday：线上看 James 用 AI 现场做产品，共创会员参加。",
       tuesdayHintCta: "改报周二",
       // 周四进了候补、周二还有位子时，成功页上出现。
-      tuesdayOverflow: "周四满了。{date}的 Build Tuesday 还有位子，在做东西的话可以改到那天：",
+      tuesdayOverflow: "周四满了。{date}的 Build Tuesday（线上，共创会员参加）还有位子：",
       tuesdayOverflowCta: "去改到周二",
       // A paid Build Tuesday (2026-10-14): the one step left after booking.
       feeMember: "这一场你不用付门票。",
-      // 报完周二、还没付的人看到的升单引导（2026-11-02）。
+      // 共创会员升单（2026-11-02）。2026-11-05 起周二线上、没有单次票，共创会员改成
+      // 599 一期 4 周、一次付清。
       memberUpsell: {
-        title: "常来周二的话，办共创会员更划算",
-        body: "599 澳元一年，每年自动续费：一年内每周二免门票，再送一次澳洲 AI+IP 实战课。办了之后，这一场也不用付了。",
+        title: "周二线上，共创会员参加",
+        body: "599 澳元一期 4 个周二，一次付清，不会再扣款。4 周够做出一个产品。",
         cta: "了解共创会员",
       },
+      // 报了线上周二、但不是共创会员也不在导师团的人（2026-11-05）。
+      onlineMembersOnly: "周二线上只对共创会员和导师团开放。还不是会员的话，办了就能来。",
+      onlineMembersOnlyCta: "了解共创会员",
       feeDue: "最后一步：转账 {amount}，位子才算确认。",
       feeDueCta: "去付款",
       // 一键直接打开刷卡页（2026-11-02）。
@@ -744,7 +748,7 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "周四不要钱，不售票，这条不变（周二的闭门会和共创会员是另外的，价格写在各自页面上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
+          a: "周四不要钱，不售票，这条不变（周二线上和共创会员是另外的，价格写在共创会员页上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
           href: "/support",
           linkLabel: "这儿有个入口",
           aTail: "；不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
@@ -928,7 +932,7 @@ export const copy = {
     footer: {
       tagline: "每周四见。",
       // 2026-11-01：两个场次都写上。
-      location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · Chatswood · 闭门会，付款后显示地址",
+      location: "周四 · Chatswood The Avenue · 10:30 开门，免费 / 周二 · 线上 · 共创会员参加",
       supportLink: "这个活动的开销",
       consultLink: "约 James 一对一咨询",
       botLink: "VT Bot：微信里的 AI 助理",
@@ -1459,7 +1463,7 @@ export const copy = {
      * 而且是用两个按钮问的，不是一个默认打勾的框：默认打勾等于没人给过的授权。
      */
     /** The Thursday / Tuesday tabs above each sign-up form (2026-11-02). */
-    daySwitch: { label: "选哪一天报名", thursday: "周四 · 免费 · 来听来聊", tuesday: "周二 · 带项目来做" },
+    daySwitch: { label: "选哪一天报名", thursday: "周四 · 免费 · 来听来聊", tuesday: "周二 · 线上 · 共创会员" },
 
     checkin: {
       meta: { title: "签到 · Vibe Thursday" },
@@ -1574,6 +1578,9 @@ export const copy = {
       tuesdayCheckinLater: "10 点起这里会出现签到链接。",
       tuesdayNotSignedUp: "还没报名？现在报也来得及：",
       tuesdaySignup: "报名周二",
+      // 线上周二（2026-11-10 起）：没有签到，只说时间和怎么进。
+      tuesdayOnlineWhen: "10:30 – 12:00 · 线上 · 看 James 用 AI 做产品",
+      tuesdayOnlineHow: "每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里。",
       keep: "存下这一页。每周都是这个链接，内容自己会换。",
       signedUp: "你报了这一场 ✓",
       // 本周问答（session-questions.ts）：场前显示候选，当天显示今天聊的。
@@ -1734,58 +1741,53 @@ export const copy = {
     },
 
     // /tuesday：Build Tuesday（周二动手局）。2026-10-04 定：周四太挤，给在做东西的人
-    // 单开一个上午。2026-11-02 James 定：一天三段（项目和技术 / 午饭聊需求 / workshop），
-    // 地址只给付了钱的人看（tuesday-venue.ts），这里只写 Chatswood。
-    // 同日改版：手机优先，短、图文并茂，表单前置，底部常驻报名按钮。
+    // 单开一个上午。2026-11-05 James 定：11-10 起改线上，形式是「看 James 做产品」，
+    // 10:30–12:00，不再卖单次票，共创会员（599 一期 4 周）和导师团参加。
+    // 没有会议链接：每周二开始前拉临时微信群，Zoom 链接发在群里。
     tuesday: {
       meta: {
         title: "Build Tuesday · 周二动手局 · Vibe Thursday",
-        description: "悉尼 Chatswood 的周二闭门会，10:30–12:30：提前排好的两个项目或需求当场拆，带项目的人和导师团一起推进，散场前配对。30 澳元一次，共创会员免费。Vibe Thursday 的姊妹场。",
+        description: "Build Tuesday 每周二线上，10:30–12:00（悉尼时间）：看 James 用 AI 现场做一个真实的产品，也讲哪些产品能赚钱、为什么。共创会员和导师团参加，没有单次票。Vibe Thursday 的姊妹场。",
       },
       eyebrow: "§ Build Tuesday · 周二动手局",
-      title: "带项目来，或者带需求来，当天就开始做。",
-      lede: "12 人闭门会，一个上午。提前排好两个案例，导师团当场拆；其余时间按自己的节奏推进项目；散场前点名配对。",
-      chips: ["每周二 10:30–12:30", "Chatswood", "12 人", "30 澳元 · 会员免费"],
+      title: "每周二线上，看 James 用 AI 做一个产品。",
+      lede: "一个上午，线上。James 拿一个真实的产品从头做，边做边讲；也讲为什么有的产品能赚钱、有的不能。共创会员和导师团参加。",
+      chips: ["每周二 10:30–12:00", "线上（Zoom）", "共创会员参加", "4 周一期"],
       cta: "报名周二",
-      ctaMember: "会员全年免费 →",
+      ctaMember: "办共创会员 →",
       sceneAlt: "往期活动现场：一张长桌，大家打开电脑做东西（现场照片转绘，人物已替换）",
-      factsTitle: "时间、地点和费用",
+      factsTitle: "时间、地点和怎么参加",
       facts: [
-        { label: "时间", value: "10:30–12:30，只开上午；想一起吃午饭的自愿留下" },
-        { label: "地点", value: "Chatswood。报名付款后，地址和路线图一起显示在付款页和「查我的报名」里" },
-        { label: "人数", value: "12 人，前一天晚上 8 点截止报名；满了进候补（收到通知再来）" },
-        { label: "费用", value: "30 澳元一次；报名后 30 分钟内刷卡付款，付完锁定位子；共创会员免费" },
+        { label: "时间", value: "10:30–12:00（悉尼时间），只开上午" },
+        { label: "地点", value: "线上（Zoom）。每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里" },
+        { label: "谁能来", value: "共创会员（599 澳元一期 4 周）和导师团；没有单次票" },
+        { label: "报名", value: "前一天晚上 8 点截止，好提前拉群" },
       ],
       whoTitle: "给谁",
       who: [
-        "在做东西的人：独立开发、一人公司、用 AI 搭产品或工作流的",
-        "会 AI、会技术，想找真实需求、组队做项目的人",
-        "有真实需求的老板：看看产品怎么做，把你的需求拿来当案例拆",
+        "想自己用 AI 做产品的人：看一遍完整的过程",
+        "在做东西、卡在某一步的人：看同样的问题怎么过",
+        "做生意的老板：看懂一个产品怎么做出来、钱从哪来",
       ],
-      // 2026-11-02：参考 Alpha School 的说法——上午专注、按自己的节奏，导师当 guide
-      // 陪跑不讲课，下午 workshop。时间和流程本身没变。
-      // 2026-11-04 James 定：11-03 跑下来午饭控不住时间、下午 workshop 没开起来，
-      // 有孩子的 14:30 前要走。改回只开上午 10:30–12:30，前一晚 20:00 截止报名。
-      formatTitle: "一个上午：两个案例，当场配对",
+      formatTitle: "一个上午：看 James 做产品",
       format: [
-        { time: "10:30–10:45", title: "一句话开场", body: "先扫码签到。每人一句：在做什么、今天卡在哪。" },
-        { time: "10:45–12:00", title: "两个案例 + 各自推进", body: "提前排好的两个项目或需求，每个 20 分钟，讲完导师团和懂行的人当场拆。其余时间按自己的节奏推进项目，导师团在旁边陪跑，卡住了随时问。" },
-        { time: "12:00–12:30", title: "配对收尾", body: "每人一分钟说卡点，主持人当场点名谁和谁散场接着聊。想一起吃午饭的自愿留下。" },
+        { time: "10:30–10:40", title: "今天做什么", body: "James 说今天要做的产品：给谁用、解决什么、打算怎么收钱。" },
+        { time: "10:40–11:40", title: "现场做", body: "用 AI 从头做，边做边讲每一步为什么这么做。有问题直接在聊天框里问。" },
+        { time: "11:40–12:00", title: "为什么能赚钱", body: "拆一两个真实的产品：哪些能赚钱、为什么；再答大家的问题。" },
       ],
-      stickyLabel: "周二上午 · 30 澳元",
-      // 共创会员升单（2026-11-02）：周二的收口。599 一年，自动续费。
+      stickyLabel: "周二线上 · 共创会员参加",
       memberUpsell: {
-        title: "常来周二？办共创会员更划算",
-        body: "599 澳元一年，每年自动续费：一年内每周二免门票（平时 30 澳元一次），再送一次澳洲 AI+IP 实战课（365 澳元）。来 20 次周二就回本，还多一门课。",
+        title: "想来周二？办共创会员",
+        body: "599 澳元一期 4 个周二，一次付清，不会再扣款。4 周够做出一个产品，日期写在共创会员页上。",
         cta: "了解共创会员",
       },
       // 周二还是周四（2026-10-19）：很多人不知道该来哪天，周二页也放对比表。
       compareTitle: "来周二还是周四？",
-      compareUnsure: "拿不准就先来周四：免费，人多，先认识大家；手上有东西想给人细看、想要具体反馈，再来周二。",
-      thursdayNote: "周四照常办，同一周的周二和周四可以都报。",
+      compareUnsure: "拿不准就先来周四：免费，线下，先认识大家；想看一个产品从头到尾怎么用 AI 做出来，再办共创会员来周二。",
+      thursdayNote: "周四照常在 Chatswood 线下办，同一周的周二和周四可以都报。",
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
-      signupLede: "名额只有 12 个，前一天晚上 8 点截止。先报名占座，再付款，付完会显示地址；报了来不了的话请在「查我的报名」里取消，把位子让出来。",
+      signupLede: "共创会员和导师团报名，前一天晚上 8 点截止。开始前我会把你拉进当天的临时微信群，Zoom 链接发在群里。还不是会员的，先办共创会员。",
       noSession: "这一场已经结束了。下一场定了日子会放在这里。",
     },
 
@@ -1993,8 +1995,8 @@ export const copy = {
         {
           key: "tuesday",
           tag: "",
-          title: "Bring a project and build",
-          body: "All day Tuesday, 12 people, mentors beside you while you build. A$30 a day.",
+          title: "Watch James build",
+          body: "Tuesday mornings, online: watch James build a real product live with AI, and hear which products make money. For members.",
           cta: "See Tuesday",
           href: "/tuesday",
           scene: "scene-5",
@@ -2241,8 +2243,8 @@ export const copy = {
           { value: "tech", label: "Looking for opportunities: work, projects, partners" },
         ],
         steps: ["You", "Which sounds most like you?", "About you (optional)", "Which morning?"],
-        recommended: "Building things? Build Tuesday is the better fit — about a dozen people working through real needs and projects together. Thursday is welcome too while it has places.",
-        recommendedBiz: "Got one specific thing you want a few people who have done it to work through with you? You can switch to Build Tuesday.",
+        recommended: "Building things? Have a look at Build Tuesday too: online, watching James build a product live with AI, for members. Thursday is welcome too while it has places.",
+        recommendedBiz: "Want to see a product built from start to finish with AI? Have a look at Build Tuesday, online, for members.",
         bizFocus: "What would you most like AI to help with?",
         bizFocusOptions: [
           { value: "leads", label: "Finding customers" },
@@ -2419,7 +2421,7 @@ export const copy = {
       errorNeedContact: "Leave at least one way to reach you — email or WeChat.",
       errorWechatId: "That looks like a WeChat nickname rather than a WeChat ID. To find your ID: open WeChat → Me → the «WeChat ID:» line next to your photo. It is usually 6+ characters starting with a letter; a phone number works too. A nickname cannot be found, so I cannot add you to the group. If it is right as it is, tap submit again.",
       errorPurpose: "Pick which sounds most like you — just one.",
-      sessionTimeSuffixTuesday: "10:30am · Build Tuesday",
+      sessionTimeSuffixTuesday: "10:30am · Build Tuesday (online)",
       hook: "Thursday is for meeting people. If you have a specific need or build things, come to Build Tuesday; if you want to be walked through it, have a look at our paid classes.",
       hookTuesdayCta: "See Build Tuesday",
       compareFold: "How Thursday and Tuesday differ",
@@ -2432,20 +2434,22 @@ export const copy = {
         },
         tuesday: {
           name: "Tuesday · Build Tuesday",
-          cells: ["Tuesdays 10:30–12:30 · Chatswood (address shown once paid)", "People building projects and people who know AI and tech; business owners with a real need welcome too", "Closed session: two cases taken apart on the spot, your own project the rest of the time, matched up before you leave", "12; signups close at 8pm the night before", "A$30; members free"],
+          cells: ["Tuesdays 10:30–12:00 · online (Zoom)", "Anyone who wants to see a product built with AI: people building things and business owners alike", "Watch James build a real product live with AI, then hear which products make money", "Co-creator members and mentors; signups close at 8pm the night before", "Included with membership (A$599 for 4 weeks); no single tickets"],
           cta: "Sign up for Tuesday",
         },
       },
-      tuesdayHint: "If you build things, Build Tuesday may suit you better: a small room, about a dozen people, bringing real needs or projects and working through them together.",
+      tuesdayHint: "If you build things, have a look at Build Tuesday too: online, watching James build a product live with AI, for members.",
       tuesdayHintCta: "Switch to Tuesday",
-      tuesdayOverflow: "Thursday is full. Build Tuesday on {date} still has places — if you build things, you can move to it:",
+      tuesdayOverflow: "Thursday is full. Build Tuesday on {date} (online, for members) still has places:",
       tuesdayOverflowCta: "Move to Tuesday",
       feeMember: "No fee for you this time.",
       memberUpsell: {
-        title: "Coming most Tuesdays? Membership works out cheaper",
-        body: "A$599 a year, renewed automatically: every Tuesday free for the year, plus one AI+IP class. Join and this one is free too.",
+        title: "Online Tuesday is for members",
+        body: "A$599 for one block of four Tuesdays, paid once, nothing more charged later. Four weeks is enough to build a product.",
         cta: "About membership",
       },
+      onlineMembersOnly: "Online Tuesday is for co-creator members and mentors. Not a member yet? Join and you're in.",
+      onlineMembersOnlyCta: "About membership",
       feeDue: "One step left: transfer {amount} to confirm your place.",
       feeDueCta: "Pay now",
       feeDueCardCta: "Pay {amount} by card (Apple Pay / Google Pay)",
@@ -2504,7 +2508,7 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "Thursday is free. No tickets, and that will not change (the Tuesday session and the membership are separate, priced on their own pages). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
+          a: "Thursday is free. No tickets, and that will not change (the online Tuesday and the membership are separate; the price is on the membership page). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
           href: "/support",
           linkLabel: "there is a page for it",
           aTail: ". Chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
@@ -2677,7 +2681,7 @@ export const copy = {
 
     footer: {
       tagline: "See you Thursday.",
-      location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · Chatswood · closed session, address shown once paid",
+      location: "Thursdays · The Avenue, Chatswood · doors 10:30am, free / Tuesdays · online · for members",
       supportLink: "What this costs",
       consultLink: "Book a one-to-one with James",
       botLink: "VT Bot: an AI assistant in WeChat",
@@ -3088,7 +3092,7 @@ export const copy = {
       avatarFailed: "That did not upload. Try another image or another browser.",
     },
 
-    daySwitch: { label: "Which day to sign up for", thursday: "Thursday · free · come and talk", tuesday: "Tuesday · bring a project" },
+    daySwitch: { label: "Which day to sign up for", thursday: "Thursday · free · come and talk", tuesday: "Tuesday · online · members" },
 
     checkin: {
       meta: { title: "Check in · Vibe Thursday" },
@@ -3186,6 +3190,8 @@ export const copy = {
       tuesdayCheckinLater: "The check-in link appears here from 10am.",
       tuesdayNotSignedUp: "Not signed up? There is still time: ",
       tuesdaySignup: "Sign up for Tuesday",
+      tuesdayOnlineWhen: "10:30 – 12:00 · online · watch James build a product with AI",
+      tuesdayOnlineHow: "Before each Tuesday starts, James adds you to a WeChat group for that session and posts the Zoom link there.",
       when: "Doors 10:30 · starts 10:45 · ends 12:00",
       keep: "Keep this page. It is the same link every week; what is on it changes by itself.",
       signedUp: "You are signed up for this one ✓",
@@ -3331,46 +3337,46 @@ export const copy = {
     tuesday: {
       meta: {
         title: "Build Tuesday · Vibe Thursday",
-        description: "Chatswood, Sydney, a closed Tuesday morning, 10:30–12:30: two projects or needs lined up in advance and taken apart on the spot, people building alongside mentors, and matched up before you leave. A$30; members free. A sister session of Vibe Thursday.",
+        description: "Build Tuesday, online every Tuesday, 10:30–12:00 Sydney time: watch James build a real product live with AI, and hear which products make money and why. For co-creator members and mentors; no single tickets. A sister session of Vibe Thursday.",
       },
       eyebrow: "§ Build Tuesday",
-      title: "Bring a project or a real need, and start on it the same day.",
-      lede: "Twelve people, behind closed doors, one morning. Two cases lined up in advance and taken apart by the mentors; your own project at your own pace the rest of the time; matched up before you leave.",
-      chips: ["Tuesdays 10:30–12:30", "Chatswood", "12 places", "A$30 · members free"],
+      title: "Every Tuesday, online: watch James build a product with AI.",
+      lede: "One morning, online. James builds a real product from scratch and talks through it as he goes, and why some products make money and others do not. For co-creator members and mentors.",
+      chips: ["Tuesdays 10:30–12:00", "Online (Zoom)", "For members", "Four weeks a block"],
       cta: "Sign up for Tuesday",
-      ctaMember: "Free all year for members →",
+      ctaMember: "Become a member →",
       sceneAlt: "A past session: one long table, laptops open (redrawn from a photo; faces replaced)",
-      factsTitle: "Time, place and cost",
+      factsTitle: "Time, place and how to join",
       facts: [
-        { label: "Time", value: "10:30–12:30, mornings only; stay for lunch if you like" },
-        { label: "Where", value: "Chatswood. Once you have signed up and paid, the address and a directions map show on the payment page and under \"My signup\"" },
-        { label: "Places", value: "12; signups close at 8pm the night before; then a waitlist (come only once you are told there is room)" },
-        { label: "Cost", value: "A$30, paid by card within 30 minutes of signing up, which locks in your place; members free" },
+        { label: "Time", value: "10:30–12:00 Sydney time, mornings only" },
+        { label: "Where", value: "Online (Zoom). Before each Tuesday starts, James adds you to a WeChat group for that session and posts the Zoom link there" },
+        { label: "Who", value: "Co-creator members (A$599 for four weeks) and mentors; no single tickets" },
+        { label: "Signups", value: "Close at 8pm the night before, so the group can be set up in time" },
       ],
       whoTitle: "Who it is for",
       who: [
-        "People building things: indie developers, one-person companies, anyone making a product or workflow with AI",
-        "People who know AI and tech and want real needs to work on, with a team",
-        "Business owners with a real need: see how products get made, and bring yours to be taken apart as a case",
+        "People who want to build a product with AI themselves: see the whole process once",
+        "People building something and stuck on a step: see the same problem worked through",
+        "Business owners: see how a product gets made and where the money comes from",
       ],
-      formatTitle: "One morning: two cases, matched up on the spot",
+      formatTitle: "One morning: watch James build",
       format: [
-        { time: "10:30–10:45", title: "One line each", body: "Check in first. Then one line each: what you are building and where you are stuck today." },
-        { time: "10:45–12:00", title: "Two cases, then your own work", body: "Two projects or needs lined up in advance, 20 minutes each, taken apart by the mentors and anyone who has done it before. The rest of the time, move your own project on and ask when you are stuck." },
-        { time: "12:00–12:30", title: "Match-ups", body: "A minute each on what is blocking you, and the host names who should keep talking to whom. Lunch afterwards for anyone who wants it." },
+        { time: "10:30–10:40", title: "Today's product", body: "What James is building today: who it is for, what it solves, how it will charge." },
+        { time: "10:40–11:40", title: "Built live", body: "Built from scratch with AI, with why each step is done that way. Ask in the chat as you go." },
+        { time: "11:40–12:00", title: "Why it makes money", body: "One or two real products taken apart: which make money and why. Then your questions." },
       ],
-      stickyLabel: "Tuesday · A$30",
+      stickyLabel: "Tuesday online · for members",
       memberUpsell: {
-        title: "Coming most Tuesdays? Membership works out cheaper",
-        body: "A$599 a year, renewed automatically: every Tuesday free for the year (normally A$30 each), plus one AI+IP class (A$365). Twenty Tuesdays pays for it, and the class is on top.",
+        title: "Want to come on Tuesdays? Become a member",
+        body: "A$599 for one block of four Tuesdays, paid once, nothing more charged later. Four weeks is enough to build a product; the dates are on the membership page.",
         cta: "About membership",
       },
       compareTitle: "Tuesday or Thursday?",
-      compareUnsure: "Not sure? Start with Thursday: free, a bigger room, a good way to meet everyone. Come to Tuesday when you have something you want looked at closely and specific feedback on.",
-      thursdayNote: "Thursday runs as usual, and you can come to both in the same week.",
+      compareUnsure: "Not sure? Start with Thursday: free, in person, a good way to meet everyone. Become a member and come on Tuesday when you want to see a product built from start to finish with AI.",
+      thursdayNote: "Thursday runs as usual in person in Chatswood, and you can come to both in the same week.",
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
-      signupLede: "There are only 12 places, and signups close at 8pm the night before: sign up to hold one, then pay, and the address shows. If you can't make it, cancel under \"My signup\" so someone else can have yours.",
+      signupLede: "For co-creator members and mentors; signups close at 8pm the night before. Before it starts James adds you to that morning's WeChat group, and the Zoom link is posted there. Not a member yet? Join first.",
       noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 

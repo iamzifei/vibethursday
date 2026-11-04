@@ -9,11 +9,11 @@ import { getCopy, LANG_PARAM, resolveLang } from "@/lib/content";
 import { wechatLoginHref } from "@/lib/login-link";
 import { WeChatMark } from "@/components/WeChatMark";
 import { TuesdayVenue } from "@/components/TuesdayVenue";
-import { getDinnerFor, getMySignup, getMyExtras, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup, isTuesdayFree } from "@/lib/db";
+import { getDinnerFor, getMySignup, getMyExtras, getOrCreateSessionFee, isMember, type DinnerOrder, type MySignup, isTuesdayFree, canJoinOnlineTuesday } from "@/lib/db";
 import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
-import { bookableSessions, feeFor, formatSession, isSpecialSession, sessionName, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, formatSession, isOnlineSession, isSpecialSession, sessionName, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -213,6 +213,16 @@ export default async function MyPage({ searchParams }: PageProps) {
       console.error("[my] could not read the Tuesday fees", error);
     }
   }
+  // Online Tuesdays they hold a place on (2026-11-10 on): no fee. Only a
+  // 共创会员 or the 导师团 is told how to get in; anyone else is pointed at
+  // /join. A failed lookup shows the /join line, never the way in.
+  let onlineOk = false;
+  if (upcoming.some((entry) => entry.position === null && isOnlineSession(entry.session))) {
+    onlineOk = await canJoinOnlineTuesday(mine.id).catch((error) => {
+      console.error("[my] could not check who may join the online Tuesday", error);
+      return false;
+    });
+  }
   const choices = bookableSessions(6).filter((session) => !held.has(session));
 
   // The dinner after each Thursday they hold a place on (2026-10-19): what
@@ -289,7 +299,7 @@ export default async function MyPage({ searchParams }: PageProps) {
                     return (
                       <>
                         <p className="field-hint">{fee.member ? t.feeMember : t.feePaid}</p>
-                        {entry.position === null && <TuesdayVenue lang={lang} />}
+                        {entry.position === null && <TuesdayVenue lang={lang} session={entry.session} />}
                       </>
                     );
                   }
@@ -305,6 +315,14 @@ export default async function MyPage({ searchParams }: PageProps) {
                     </p>
                   );
                 })()}
+
+                {entry.position === null && isOnlineSession(entry.session) && (onlineOk ? (
+                  <TuesdayVenue lang={lang} session={entry.session} />
+                ) : (
+                  <p className="body-sm" style={{ margin: 0 }}>
+                    {c.signup.onlineMembersOnly} <a href="/join">{c.signup.onlineMembersOnlyCta} →</a>
+                  </p>
+                ))}
 
                 {dinner && dinners.has(entry.session) && (() => {
                   const seat = dinners.get(entry.session);

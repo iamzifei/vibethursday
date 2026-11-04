@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.11",
+    date: "2026-11-05",
+    kind: "minor",
+    scope: "room",
+    zh: "从 11 月 10 日起，Build Tuesday 改成线上，每周二 10:30–12:00：看主办人用 AI 现场做一个真实的产品，也讲哪些产品能赚钱。不再卖单次票，共创会员和导师团参加；每周二开始前拉一个临时微信群，Zoom 链接发在群里。共创会员改成一期 4 个周二、一次付清，第一期是 11 月 10 日、17 日、24 日和 12 月 1 日。之前办的会员照旧有效。周四不变。",
+    en: "From 10 November Build Tuesday is online, every Tuesday 10:30–12:00: watch the organiser build a real product live with AI, and hear which products make money. There are no single tickets any more; co-creator members and mentors take part, added before each Tuesday to a WeChat group for that session where the Zoom link is posted. The membership is now one block of four Tuesdays, paid once; the first block is 10, 17 and 24 November and 1 December. Earlier memberships carry on as before. Thursday is unchanged.",
+    link: { href: "/tuesday", zh: "看周二 →", en: "See Tuesday →" },
+  },
+  {
     version: "5.10",
     date: "2026-11-04",
     kind: "minor",

@@ -68,6 +68,7 @@ test("Tuesday runs 10:30–12:30 in three parts", () => {
     const t = copy[lang].tuesday;
     assert.equal(t.format.length >= 3, true);
     const time = t.facts.find((fact) => fact.label === (lang === "zh" ? "时间" : "Time"));
-    assert.ok(time && time.value.includes("12:30"), `${lang} time fact`);
+    // Spec change 2026-11-05: Tuesday online / 4-week membership — the public time is 10:30–12:00.
+    assert.ok(time && time.value.includes("12:00"), `${lang} time fact`);
   }
 });

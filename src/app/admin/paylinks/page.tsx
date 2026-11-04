@@ -47,13 +47,13 @@ export default async function PayLinksPage() {
     },
     {
       id: "member",
-      title: "共创会员 · 一年",
-      amount: `${MEMBERSHIP.amount.toFixed(2)} 澳元（含 GST），每年自动续费`,
+      title: `共创会员 · ${MEMBERSHIP.weeks} 周一期`,
+      amount: `${MEMBERSHIP.amount.toFixed(2)} 澳元（含 GST），一次性付款`,
       url: process.env.PAYLINK_MEMBER?.trim() ?? "",
       env: "PAYLINK_MEMBER",
       after: [
         "对方付款时会填名字和微信号。",
-        "到「共创会员」页手动登记，备注写「付款链接 + 日期」。微信号要和他报名时填的一样，周二才会自动免费。",
+        "到「共创会员」页手动登记，备注写「付款链接 + 日期」。微信号要和他报名时填的一样，网站才认得他是会员。",
         "这条链接的续费，网站不会自动延长会员期，明年到期时要在「共创会员」页再登记一次。",
       ],
     },

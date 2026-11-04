@@ -1,7 +1,8 @@
 // Relative, not "@/": the tests load this through Node's type stripper, which
 // does not read tsconfig's path aliases.
 import { type Copy, LANG_PARAM, type Lang } from "./content.ts";
-import { feeFor, FIRST_SESSION_DATE, formatSession } from "./sessions.ts";
+import { feeFor, FIRST_SESSION_DATE, formatSession, isOnlineSession } from "./sessions.ts";
+import { MEMBERSHIP } from "./course.ts";
 import { siteUrl } from "./site.ts";
 
 /**
@@ -242,6 +243,9 @@ export function eventJsonLd(
   const base = siteUrl();
   const { start, end } = sessionTimes(isoDate);
   const dateLabel = options.title ?? formatSession(isoDate, lang);
+  // An online Build Tuesday (from 2026-11-10) happens nowhere in particular
+  // and has no ticket: it comes with the 共创会员, so that is the offer.
+  const online = isOnlineSession(isoDate);
 
   return {
     "@context": "https://schema.org",
@@ -251,13 +255,14 @@ export function eventJsonLd(
     startDate: start,
     endDate: end,
     eventStatus: "https://schema.org/EventScheduled",
-    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    location: place(),
+    eventAttendanceMode: online ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
+    location: online ? { "@type": "VirtualLocation", url: `${base}/tuesday${langQuery(lang)}` } : place(),
     organizer: organizer(),
     // A paid Build Tuesday (2026-10-14) says so. The price is the one the
     // page shows, before GST (2026-11-02): structured data must match it.
-    isAccessibleForFree: feeFor(isoDate) === null,
+    isAccessibleForFree: !online && feeFor(isoDate) === null,
     offers: (() => {
+      if (online) return { ...freeOffer(`${base}/join`), price: MEMBERSHIP.price.toFixed(2) };
       const offer = freeOffer(options.url ?? `${base}/${langQuery(lang)}#signup`);
       const fee = feeFor(isoDate);
       return fee === null ? offer : { ...offer, price: fee.toFixed(2) };

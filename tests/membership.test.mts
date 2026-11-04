@@ -19,8 +19,10 @@ import { COURSE, IP_COURSE, MEMBERSHIP, MEMBERSHIP_COURSES, newCourseRef } from 
 
 // Spec change 2026-11-02 (James): the 共创会员 is also sold on its own (/join),
 // and that order counts too. The A$365 class still never does.
+// Spec change 2026-11-05: Tuesday online / 4-week membership — the yearly
+// membership keeps its id ("vt-cocreator") and the 4-week one is added.
 test("only the $599 class and the membership on its own are memberships", () => {
-  assert.deepEqual([...MEMBERSHIP_COURSES], [COURSE.id, MEMBERSHIP.id]);
+  assert.deepEqual([...MEMBERSHIP_COURSES], [COURSE.id, "vt-cocreator", MEMBERSHIP.id]);
   assert.ok(!(MEMBERSHIP_COURSES as readonly string[]).includes(IP_COURSE.id));
 });
 

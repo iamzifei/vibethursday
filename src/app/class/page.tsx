@@ -94,7 +94,7 @@ const REFRESH: { icon: IconName; text: string }[] = [
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
   { q: "365 包含什么？", a: "11 月 15 日这一天的课，加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
-  { q: "我是共创会员，要付钱吗？", a: "不用，共创会员可免费参加一次。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
+  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种）不用付，可免费参加一次；之后办的 4 周会员不含这门课。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
   { q: "安排会变吗？", a: "上面是首期的拟定安排，具体时间和安排以最终通知为准。" },
 ];
 
@@ -246,7 +246,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       转完点上面的按钮，再把截图发给 James 的微信（<Link href="/#contact">James 的微信二维码在这里</Link>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
                     </p>
                     {course === IP_COURSE && (
-                      <p className="body">已经是共创会员？不用转账：私信 James，他在后台帮你确认。</p>
+                      <p className="body">11 月 5 日前办的共创会员不用转账：私信 James，他在后台帮你确认。</p>
                     )}
                   </>
                 )}
@@ -282,7 +282,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       <li><Icon name="pin" />{IP_COURSE.placeLabel}</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">共创会员可免费参加一次</p>
+                    <p className="vip-offer__left">11 月 5 日前办的共创会员可免费参加一次</p>
                   </div>
                 </header>
 
@@ -373,7 +373,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 {/* Phones: the price and the way in, always one tap away. */}
-                <StickyCta href="#class-signup" label="AUD $365 · 共创会员免费一次" cta="报名" />
+                <StickyCta href="#class-signup" label="AUD $365" cta="报名" />
 
                 <div className="card card--accent stack-6 vip-signup" id="class-signup">
                 <h2>报名</h2>
@@ -382,7 +382,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   地点：{IP_COURSE.placeLabel}
                   <br />
-                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；共创会员可免费参加一次
+                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；11 月 5 日前办的共创会员可免费参加一次
                   <br />
                   席位有限，报满即止
                 </p>

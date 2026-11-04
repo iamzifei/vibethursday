@@ -10,7 +10,7 @@ import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
-import { COURSE, IP_COURSE, MEMBERSHIP } from "@/lib/course";
+import { COURSE, IP_COURSE, MEMBERSHIP, YEARLY_MEMBERSHIP_ID } from "@/lib/course";
 import { dinnerConfig } from "@/lib/dinner";
 import {
   countCheckins,
@@ -123,7 +123,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
       listCourseOrders(COURSE.id).then((rows) => rows.filter((o) => o.status === "pending")).catch(() => []),
       // The 共创会员 bought by card on /join (2026-11-02). Settled by Stripe,
       // so this list is for reading, not marking.
-      listCourseOrders(MEMBERSHIP.id).catch(() => []),
+      // Both kinds since 2026-11-05: the 4-week orders and the yearly ones
+      // bought before then.
+      Promise.all([listCourseOrders(MEMBERSHIP.id), listCourseOrders(YEARLY_MEMBERSHIP_ID)]).then(([a, b]) => [...a, ...b]).catch(() => []),
     ]);
 
   // Thursday's opening shares (2026-10-15): the next Thursday's volunteers,

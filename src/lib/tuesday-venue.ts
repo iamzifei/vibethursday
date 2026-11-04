@@ -37,3 +37,24 @@ export const TUESDAY_VENUE = {
   directionsImage: "/tuesday/directions.jpg",
   directionsThumb: "/tuesday/directions.webp",
 } as const;
+
+/**
+ * The online Build Tuesday (from 2026-11-10): when it runs and how people get
+ * in. There is no meeting link on this site at all (owner, 2026-11-05):
+ * before each Tuesday James adds the people who may join — 共创会员 and the
+ * 导师团 — to a WeChat group for that session and posts the Zoom link there.
+ * `TuesdayVenue` shows this instead of the street address for an online date,
+ * in the same places the address used to appear.
+ */
+export const TUESDAY_ONLINE = {
+  start: "10:30",
+  end: "12:00",
+  zh: {
+    where: "线上（Zoom）",
+    howToJoin: "每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里。",
+  },
+  en: {
+    where: "Online (Zoom)",
+    howToJoin: "Before each Tuesday starts, James adds you to a WeChat group for that session and posts the Zoom link there.",
+  },
+} as const;

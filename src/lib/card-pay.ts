@@ -1,4 +1,4 @@
-import { MEMBERSHIP } from "./course";
+import { cohortDatesLabel, cohortOnSale, MEMBERSHIP } from "./course";
 import { attachCheckout, getCourseOrderByRef, getDinnerByRef, getSessionFeeByRef, markPaidByCard, type CourseOrderByRef, type DinnerOrder, type SessionFee } from "./db";
 import { dinnerConfig } from "./dinner";
 import { feeFor, formatSession } from "./sessions";
@@ -14,7 +14,10 @@ import { feeToPay } from "./tuesday-fee";
 /** What a reference costs right now, GST included, or null when it is not payable. */
 export function amountFor(kind: PayKind, row: SessionFee | DinnerOrder | CourseOrderByRef): number | null {
   if (row.status !== "pending") return null;
-  if (kind === "member") return (row as CourseOrderByRef).course === MEMBERSHIP.id ? MEMBERSHIP.amount : null;
+  // Only a 4-week order (2026-11-05), and only while a cohort is on sale: an
+  // old yearly order left unpaid is no longer sold, and with no next cohort
+  // set there is nothing to buy.
+  if (kind === "member") return (row as CourseOrderByRef).course === MEMBERSHIP.id && cohortOnSale() ? MEMBERSHIP.amount : null;
   if (kind === "tuesday") {
     const fee = row as SessionFee;
     const price = feeFor(fee.session);
@@ -87,15 +90,17 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
     amount,
     title:
       kind === "member"
-        ? `${MEMBERSHIP.title} · 一年（含 GST）`
+        ? `${MEMBERSHIP.title} · ${MEMBERSHIP.weeks} 周（${cohortDatesLabel(cohortOnSale()!)}，含 GST）`
         : kind === "tuesday"
           ? `Build Tuesday · ${when}（含 GST）`
           : `Vibe Thursday 散场聚餐 · ${when}（含 GST）`,
     successUrl: `${back}&paid=1`,
     cancelUrl: back,
     idempotencyKey: `checkout-${ref}-${row.stripe_session ?? "first"}`,
-    // The membership renews itself every year (James 2026-11-02).
-    ...(kind === "member" ? { recurring: "year" as const } : {}),
+    // A one-off payment for every kind, the membership included: since
+    // 2026-11-05 it buys one 4-week cohort and nothing renews. Yearly members
+    // who bought before then keep their existing Stripe subscriptions, whose
+    // renewals the webhook still handles (renewMembership).
   });
   // The hold lapsed while Stripe was answering: the place may already be
   // someone else's, so this page is closed before anyone can pay on it.
