@@ -124,7 +124,14 @@ async function sessions() {
   const found = [];
   const pattern = /date: "(\d{4}-\d{2}-\d{2})",\s*\n\s*title: "([^"]+)",\s*\n\s*note: "([^"]+)"/g;
 
+  // The slice can reach into the English bundle too, which lists the same
+  // dates again. Keep the first (Chinese) entry per date, or every session
+  // after the first would be counted twice and the numbers would point at the
+  // wrong mornings (found 2026-11-05: "09" resolved to the fifth Thursday).
+  const seen = new Set();
   for (const match of gallery.matchAll(pattern)) {
+    if (seen.has(match[1])) continue;
+    seen.add(match[1]);
     found.push({ date: match[1], title: match[2], note: match[3] });
   }
 
