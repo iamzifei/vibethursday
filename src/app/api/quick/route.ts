@@ -108,7 +108,7 @@ export async function POST(request: Request) {
     if (!isSpecialSession(session)) return done({ done: "booked" });
     // Online Tuesday (2026-11-10 on): nothing to pay. A 共创会员 or the
     // 导师团 is told how to get in; anyone else is pointed at /join.
-    if (isOnlineSession(session)) return done({ done: (await canJoinOnlineTuesday(id)) ? "online" : "onlineJoin" });
+    if (isOnlineSession(session)) return done({ done: (await canJoinOnlineTuesday(id, session)) ? "online" : "onlineJoin" });
     if (await isTuesdayFree(id)) return done({ done: "free" });
 
     const fee = await getOrCreateSessionFee(session, id, newFeeRef(), stripeEnabled() ? HOLD_MINUTES : null, []);

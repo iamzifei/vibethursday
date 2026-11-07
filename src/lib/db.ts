@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { admission, bookedOnAnother, capFor, exactSignupName, sameSignupName } from "./capacity.ts";
 import { nameHint } from "./my-signup.ts";
+import { isOpenTrialSession } from "./sessions.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
@@ -4438,7 +4439,9 @@ export async function hasYearMembership(signupId: string): Promise<boolean> {
  * single ticket, and 共建者 are no longer let in free. Every place that shows
  * how to get into an online Tuesday asks this.
  */
-export async function canJoinOnlineTuesday(signupId: string): Promise<boolean> {
+export async function canJoinOnlineTuesday(signupId: string, session?: string): Promise<boolean> {
+  // An open-trial Tuesday (2026-11-06) lets in anyone who signed up for it.
+  if (session && isOpenTrialSession(session)) return true;
   await ensureSchema();
   const mentor = await getPool().query(`SELECT 1 FROM person_roles WHERE signup_id = $1::bigint AND role = 'mentor'`, [signupId]);
   return Boolean(mentor.rowCount) || (await isMember(signupId));

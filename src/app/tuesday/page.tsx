@@ -15,7 +15,7 @@ import { knownProfileFromCookie } from "@/lib/known-profile";
 import { wechatLoginHref } from "@/lib/login-link";
 import { LANG_PARAM } from "@/lib/content";
 import { pageAlternates } from "@/lib/seo";
-import { formatSession, upcomingBookableSpecialSessions } from "@/lib/sessions";
+import { formatSession, isOpenTrialSession, upcomingBookableSpecialSessions } from "@/lib/sessions";
 
 // The form shows which Tuesdays are full, so this reads the database per request.
 export const dynamic = "force-dynamic";
@@ -60,6 +60,9 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
     };
   });
   const next = sessions[0];
+  // The open-trial Tuesday (2026-11-06), while it still takes signups.
+  const trial = sessions.find((session) => isOpenTrialSession(session.value));
+  const trialNote = trial ? t.trialNote.replace("{date}", formatSession(trial.value, lang)) : null;
   const knownProfile = await knownProfileFromCookie();
 
   return (
@@ -76,6 +79,7 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
               <span className="eyebrow">{t.eyebrow}</span>
               <h1>{t.title}</h1>
               <p className="body-lg" style={{ margin: 0 }}>{t.lede}</p>
+              {trialNote && <p className="body" style={{ margin: 0 }}><strong>{trialNote}</strong></p>}
               <ul className="chips">
                 {t.chips.map((chip) => <li key={chip}>{chip}</li>)}
               </ul>
@@ -112,7 +116,8 @@ export default async function TuesdayPage({ searchParams }: PageProps) {
                 {/* Thursday or Tuesday, one tap either way (2026-11-02). */}
                 <DaySwitch lang={lang} copy={c.daySwitch} current="tuesday" />
                 <h2 className="h3">{t.signupTitle}</h2>
-                <p className="body">{t.signupLede}</p>
+                <p className="body">{trialNote ? t.signupLedeTrial : t.signupLede}</p>
+                {trialNote && <p className="body"><strong>{trialNote}</strong></p>}
                 <SignupForm
                   lang={lang}
                   copy={c.signup}

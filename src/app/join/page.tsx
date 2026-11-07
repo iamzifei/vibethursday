@@ -8,6 +8,7 @@ import { SCENES } from "@/lib/scenes";
 import { currentAccount } from "@/lib/account";
 import { settleIfPaid } from "@/lib/card-pay";
 import { getCopy } from "@/lib/content";
+import { formatSession, upcomingOpenTrial } from "@/lib/sessions";
 import { cohortDatesLabel, cohortForPayment, cohortOnSale, MEMBERSHIP, YEARLY_MEMBERSHIP_ID, looksLikeMemberRef } from "@/lib/course";
 import { getCourseOrderByRef, getSignupProfile, isMember } from "@/lib/db";
 import { wechatLoginHref } from "@/lib/login-link";
@@ -68,6 +69,7 @@ const ERRORS: Record<string, string> = {
 export default async function JoinPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const c = getCopy("zh");
+  const trialDate = upcomingOpenTrial();
   const ref = looksLikeMemberRef(params.ref) ? params.ref : null;
   let order = ref ? await getCourseOrderByRef(ref).catch(() => null) : null;
   // A yearly order bought before 2026-11-05 still opens here, to show it is paid.
@@ -214,6 +216,13 @@ export default async function JoinPage({ searchParams }: PageProps) {
                       去付款 {MEMBERSHIP.payLabel}
                     </button>
                   </form>
+                )}
+                {/* Open trial (2026-11-06): one Tuesday free to anyone, while it is upcoming. */}
+                {trialDate && (
+                  <p className="body" style={{ margin: 0 }}>
+                    <strong>{formatSession(trialDate, "zh")}开放试听，不是会员也能先来看一次。</strong>{" "}
+                    <a href="/tuesday#signup">去报名这一天 →</a>
+                  </p>
                 )}
                 <p className="body-sm" style={{ color: "var(--fg3)", margin: 0 }}>
                   之前买过 599 的（10 月 25 日那门课，或 11 月 5 日前办的一年会员），会员照常有效，不用再买。

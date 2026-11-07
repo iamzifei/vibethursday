@@ -405,7 +405,7 @@ export async function POST(request: Request) {
   let online: { entitled: boolean } | undefined;
   if (firstSession && isOnlineSession(firstSession) && !waitlisted && profileUpdated) {
     try {
-      online = { entitled: await canJoinOnlineTuesday(signupId) };
+      online = { entitled: await canJoinOnlineTuesday(signupId, firstSession) };
     } catch (error) {
       console.error("[signup] booked, but could not check who may join the online Tuesday", error);
     }
