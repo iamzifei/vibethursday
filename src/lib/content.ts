@@ -1800,6 +1800,9 @@ export const copy = {
       thursdayLink: "看周四的 Vibe Thursday",
       signupTitle: "报名",
       signupLede: "共创会员和导师团报名，前一天晚上 8 点截止。开始前我会把你拉进当天的临时微信群，Zoom 链接发在群里。还不是会员的，先办共创会员。",
+      signupLedeTrial: "前一天晚上 8 点截止。开始前我会把你拉进当天的临时微信群，Zoom 链接发在群里。",
+      // 2026-11-06：第一期第一个周二开放试听，非会员也能报；报名表「带一个需求」用来挑当天现场做什么。
+      trialNote: "{date}开放试听，不是会员也能来：在这里报名时选这一天，选「带一个需求」写一句你最想让 AI 帮你做掉的事，我从里面挑一个现场做。开课前拉你进临时群。",
       noSession: "这一场已经结束了。下一场定了日子会放在这里。",
     },
 
@@ -3401,6 +3404,8 @@ export const copy = {
       thursdayLink: "See Vibe Thursday",
       signupTitle: "Sign up",
       signupLede: "For co-creator members and mentors; signups close at 8pm the night before. Before it starts James adds you to that morning's WeChat group, and the Zoom link is posted there. Not a member yet? Join first.",
+      signupLedeTrial: "Signups close at 8pm the night before. Before it starts James adds you to that morning's WeChat group, and the Zoom link is posted there.",
+      trialNote: "{date} is an open trial — come even if you are not a member: pick that date when you sign up here, choose \"A need\" and write one line on what you most want AI to do for you; James picks one and builds it live. You'll be added to the WeChat group before it starts.",
       noSession: "This one has finished. The next date will be posted here once it is set.",
     },
 

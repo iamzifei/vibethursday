@@ -198,6 +198,23 @@ export function isOnlineSession(date: string): boolean {
   return SPECIAL_SESSIONS.some((session) => session.date === date && session.online === true);
 }
 
+/**
+ * Online Tuesdays open to anyone who signs up, member or not (2026-11-06):
+ * the first Tuesday of cohort 1, so newcomers can try one morning. Every other
+ * online Tuesday stays members and mentors only.
+ */
+const OPEN_TRIAL_TUESDAYS: readonly string[] = ["2026-11-10"];
+
+/** Whether a date is an open-trial online Tuesday (see OPEN_TRIAL_TUESDAYS). */
+export function isOpenTrialSession(date: string): boolean {
+  return OPEN_TRIAL_TUESDAYS.includes(date) && isOnlineSession(date);
+}
+
+/** The next open-trial Tuesday still taking signups, or null when there is none. */
+export function upcomingOpenTrial(): string | null {
+  return upcomingBookableSpecialSessions().find((session) => isOpenTrialSession(session.date))?.date ?? null;
+}
+
 /** Whether a date is one of the special sessions above. */
 export function isSpecialSession(date: string): boolean {
   return SPECIAL_SESSIONS.some((session) => session.date === date);

@@ -13,7 +13,7 @@ import { getDinnerFor, getMySignup, getMyExtras, getOrCreateSessionFee, isMember
 import { dinnerConfig } from "@/lib/dinner";
 import { feeToPay, newFeeRef } from "@/lib/tuesday-fee";
 import { canChangeSession, myToken, readRememberToken, REMEMBER_COOKIE, verifyMyToken } from "@/lib/my-signup";
-import { bookableSessions, feeFor, formatSession, isOnlineSession, isSpecialSession, sessionName, sydneyToday } from "@/lib/sessions";
+import { bookableSessions, feeFor, formatSession, isOnlineSession, isOpenTrialSession, isSpecialSession, sessionName, sydneyToday } from "@/lib/sessions";
 
 type PageProps = {
   searchParams: Promise<{
@@ -316,7 +316,7 @@ export default async function MyPage({ searchParams }: PageProps) {
                   );
                 })()}
 
-                {entry.position === null && isOnlineSession(entry.session) && (onlineOk ? (
+                {entry.position === null && isOnlineSession(entry.session) && (onlineOk || isOpenTrialSession(entry.session) ? (
                   <TuesdayVenue lang={lang} session={entry.session} />
                 ) : (
                   <p className="body-sm" style={{ margin: 0 }}>
