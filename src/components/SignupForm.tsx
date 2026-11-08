@@ -974,23 +974,26 @@ export function SignupForm({ lang, copy, sessions, dinner = null, turnstileSiteK
           <section className="signup-step stack-4" aria-labelledby={fieldId("step3")}>
             <p className="signup-step__label" id={fieldId("step3")}><span className="signup-step__num">3</span>{copy.fields.steps[2]}</p>
 
+            {/* Asked of everyone since 2026-11-08, not only people who run a
+                business: Thursday is organised around which industries are in
+                the room. A select, because twelve options would be a wall of
+                pills on a phone, and "skip" keeps it optional. */}
+            <div>
+              <label className="label" htmlFor={fieldId("industry")}>
+                {copy.fields.industry}
+              </label>
+              <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
+                <option value="">{copy.fields.industrySkip}</option>
+                {copy.fields.industryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {pickedPurpose === "biz" && (
               <>
-                {/* A select: twelve options would be a wall of pills on a phone,
-                    and "skip" lets someone un-pick. */}
-                <div>
-                  <label className="label" htmlFor={fieldId("industry")}>
-                    {copy.fields.industry}
-                  </label>
-                  <select className="field" id={fieldId("industry")} name="industry" defaultValue="">
-                    <option value="">{copy.fields.industrySkip}</option>
-                    {copy.fields.industryOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 {/* What a hands-on class would have to cover (BIZ_FOCUS). */}
                 <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
                   <legend className="label">{copy.fields.bizFocus}</legend>

@@ -6,6 +6,7 @@ import { buildDesk, deskStats } from "@/lib/desk";
 import { can } from "@/lib/permissions";
 import { deskFocus, feeFor, formatSession, isSpecialSession } from "@/lib/sessions";
 import { staffRole } from "@/lib/staff";
+import { QUESTIONS_ON_GO } from "@/lib/session-questions";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function TodayPage() {
     { href: `/admin/desk?s=${session}`, label: "打开签到台", primary: true, show: can(role, "desk") },
     { href: `/admin/door?s=${session}`, label: "门口签到码（全屏）", show: can(role, "desk") },
     { href: "/admin/waitlist", label: "候补", show: can(role, "waitlist"), badge: stats.waitlisted },
-    { href: "/admin/questions", label: "本周问答", show: can(role, "questions") && !tuesday },
+    { href: "/admin/questions", label: "本周问答", show: can(role, "questions") && !tuesday && QUESTIONS_ON_GO },
     { href: "/admin/photos", label: "照片审核", show: can(role, "photos"), badge: pendingPhotos },
     { href: "/admin", label: "管理员总览", show: can(role, "admin") },
   ];

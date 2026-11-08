@@ -117,7 +117,7 @@ export const copy = {
           key: "thursday",
           tag: "第一次来选这个",
           title: "先来周四坐坐",
-          body: "每周四上午，免费。喝杯咖啡，听大家聊在用 AI 做什么。只听不说也完全可以。",
+          body: "每周四上午，免费。喝杯咖啡，听大家聊在用 AI 做什么。不用上台，轮到你时说一句做哪一行就行。",
           cta: "报名周四",
           href: "#signup",
           scene: "scene-3",
@@ -151,7 +151,7 @@ export const copy = {
       steps: [
         { title: "报个名", body: "只要名字和微信号，一分钟填完。报名只是为了知道订几个位子。" },
         { title: "周四上午到 Chatswood", body: "10:30 开门，在吧台点一杯喝的，打开 vibethursday.com/go 签到。" },
-        { title: "坐下来听、随便问", body: "10:45 开始，12:00 结束。想说就说一句你在做什么，不想说就听。" },
+        { title: "坐下来听、随便问", body: "10:45 开始，12:00 结束。轮到你时说一句你做哪一行，其余时间听、随便问。" },
       ],
       scheduleFold: "看完整流程",
       rulesFold: "五条规矩",
@@ -162,51 +162,47 @@ export const copy = {
       eyebrow: "§ 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
+        // 2026-11-08: Thursday is about how AI is used in each industry, so the
+        // people who run a business or work in one now come first.
+        "想用 AI 带客户、省人手的老板：餐饮、地产、电商、外贸，哪一行都行",
+        // 首场实际来得最多、聊得最深的一类人，之前这张单子上没有。
+        "律师、会计、政府补贴与合规、市场——服务这些行业的，或者在用 AI 改造它们的",
+        "带团队、想把 AI 落到流程里的中层",
+        "公司里的工程师、产品、设计、运营",
         "独立开发者",
         "AI 初创公司的创始人和团队",
         "做 AI 内容的：自媒体、公众号、播客、短视频",
         "自由职业 / 数字游民",
-        "公司里的工程师、产品、设计、运营",
-        "带团队、想把 AI 落到流程里的中层",
-        // 首场实际来得最多、聊得最深的一类人，之前这张单子上没有。
-        "律师、会计、政府补贴与合规、市场——服务这些行业的，或者在用 AI 改造它们的",
       ],
       note: "「做东西」不限于软件——一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。不用等做完，也不用做得好。",
     },
 
     schedule: {
       eyebrow: "§ 流程",
-      title: "每周同一个节奏。",
+      // Kept coarse on purpose: the detailed timings change week to week and
+      // the room does not always run them the same way. Only the doors, the
+      // start and the hard noon finish are promises.
+      title: "大致是这样走。",
       slots: [
         {
-          time: "10:30–10:45",
-          title: "开门 · 取饮品 · 签到",
-          note: "进门先在吧台点单、付钱——中途有人来问单会打断正在说话的人。到了打开 vibethursday.com/go 签到。场地 10:30 才开门，不用来更早。",
+          time: "10:30",
+          title: "开门 · 点单 · 签到",
+          note: "进门先在吧台点单、付钱，打开 vibethursday.com/go 签到，随便坐。场地 10:30 才开门，不用来更早。",
         },
         {
-          time: "10:45–11:00",
-          title: "开场 · 新朋友一句话介绍",
-          note: "先用两分钟说清楚这是个什么局、今天怎么走。然后第一次来的人各说一句：你是谁、在做什么，十几秒就够。来过的人不用再讲一遍。",
+          time: "10:45",
+          title: "每人一句：你做哪一行",
+          note: "轮一圈，每人十几秒：你做哪一行，手上最费时间的是哪件事。说完一圈，屋里有哪些行业大家就都知道了。",
         },
         {
-          time: "11:00–11:20",
-          title: "本周主题",
-          note: "每周一个主题，一段十五分钟左右的分享；有人想给大家看点东西，也在这一段。不是讲座，随时可以打断追问。",
+          time: "11:00 左右",
+          title: "各行各业的真实用法",
+          note: "每周一个主题，请一两位成员讲自己那一行怎么用 AI：省了多少、哪些试过不行。剩下的时间留给提问和认识同行。技术细节带到周二线上。",
         },
         {
-          time: "11:20–11:55",
-          title: "问答：两个问题，聊透",
-          note: "问题提前在群里投票，票最多的两个上。每个问题几个人回应，最后收成一句大家都能带走的做法。没轮到的问题，会后整理好发到群里。",
-        },
-        {
-          time: "11:55–12:00",
-          title: "想认识谁，写下来",
-          note: "一张纸传一圈：你是谁、想认识谁、想聊什么。散场后帮你们约。",
-        },
-        {
-          time: "12:00 之后",
-          title: "接着聊 · 午饭",
-          note: "不强制。想接着聊的一起走，赶时间的 12 点就走。散场后那一段往往是最好的。",
+          time: "12:00",
+          title: "收尾 · 打个分",
+          note: "散场前扫码，花 30 秒打个分。12 点准时结束。",
         },
       ],
     },
@@ -467,7 +463,7 @@ export const copy = {
           { value: "project", label: "带一个项目：做了一半，想听意见" },
           { value: "help", label: "来帮忙拆：听听别人的，给点意见" },
         ],
-        tuesdayBringHint: "每场排一到两个案例，带需求或项目来的，可能会被请上来讲 10 分钟，提前私信你。",
+        tuesdayBringHint: "带需求来的，James 会从里面挑一个，周二线上现场做给你看。",
         tuesdayNeedTopic: "什么需求？一句话",
         tuesdayNeedPlaceholder: "现在怎么做、花多少时间或钱、想要什么结果",
         tuesdayProjectTopic: "什么项目？一句话",
@@ -493,17 +489,17 @@ export const copy = {
           { value: "maybe", label: "做了一半" },
           { value: "listen", label: "这次先听" },
         ],
-        demoIntentHint: "不用做完，不用幻灯片。有东西想给大家看，报名时选开场分享就行。",
+        demoIntentHint: "不用做完。有东西想给大家看，报名时选开场分享就行。",
         // 开场分享（2026-10-15）：周四开场由成员分享，不是主办人一个人讲。报周四的人都会被问到。
-        openingShare: "这周想在开场分享 5 分钟吗？",
+        openingShare: "这周想讲讲你那一行怎么用 AI 吗？",
         openingShareOptions: [
           { value: "yes", label: "想，我来分享" },
           { value: "maybe", label: "可以，看情况" },
           { value: "listen", label: "这次先听" },
         ],
         openingShareTopic: "分享什么？一句话就行",
-        openingShareTopicPlaceholder: "在做的产品、一个踩过的坑、一个好用的 AI 用法……",
-        openingShareHint: "每场开场请 2–3 位成员各讲 5 分钟，不用幻灯片，打开电脑或手机就能讲。选中的会在群里提前告诉你。",
+        openingShareTopicPlaceholder: "你那一行交给 AI 的一件事、省了多少、哪里没走通……",
+        openingShareHint: "每场请一两位成员讲自己那一行交给 AI 的一件事：以前怎么做、现在省了多少、哪些试过不行。选中的会提前私信你，一起准备。",
         // 到场每人一单（2026-10-15）：免费参加，但每人在店里点一份。
         pickOne: "选一样",
         // 散场聚餐（2026-10-15）：可选、付费占座、统一价、几样菜式。
@@ -732,7 +728,7 @@ export const copy = {
       items: [
         {
           q: "我什么都还没做出来，能来吗？",
-          a: "能。上去分享是可选的，来听的人永远比讲的人多。想讲的门槛也很低——不用做完，不用准备幻灯片，做了一半卡住的反而最好聊；手上没产品也行，带一个具体的问题来就够。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
+          a: "能。上去分享是可选的，来听的人永远比讲的人多。想讲的门槛也很低——不用做完，讲你那一行真交给 AI 做过的一件事就行，试过不行的反而最好聊；手上没产品也行，带一个具体的问题来就够。真正的门槛只有一个：你得对这件事有真兴趣，不是来发名片的。",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -760,7 +756,7 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "周四不要钱，不售票，这条不变（周二线上和共创会员是另外的，价格写在共创会员页上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
+          a: "周四不要钱，不售票，这条不变（周二线上和共创会员是另外的，价格写在共创会员页上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。想给这个局搭把手的话，",
           href: "/support",
           linkLabel: "这儿有个入口",
           aTail: "；不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
@@ -855,9 +851,9 @@ export const copy = {
 
       formatTitle: "现场是什么样子",
       format: [
-        "15 分钟的实操分享，不是产品演示。",
-        "两个提前在群里投票选出来的问题，现场聊透，每个都收成一句能带走的做法。",
-        "散场前写下想认识谁，之后是自由交流的时间——多数人是冲这一段来的。",
+        "成员讲自己那一行怎么用 AI：省了多少、哪些试过不行。不是产品演示。",
+        "每人一句自己做哪一行，散场前找到同行。",
+        "技术细节放到周二线上，周四只聊各行各业怎么用。",
         "全程中文。悉尼不缺英文的 AI 活动，缺的是这一个。",
       ],
 
@@ -2002,7 +1998,7 @@ export const copy = {
           key: "thursday",
           tag: "First time? Start here",
           title: "Drop in on a Thursday",
-          body: "Thursday mornings, free. Grab a coffee and hear what people are building with AI. Only listening is completely fine.",
+          body: "Thursday mornings, free. Grab a coffee and hear what people are building with AI. You don't have to present; when it comes round, just say what line of work you're in.",
           cta: "Join Thursday",
           href: "#signup",
           scene: "scene-3",
@@ -2034,7 +2030,7 @@ export const copy = {
       steps: [
         { title: "Sign up", body: "Just your name and WeChat ID, about a minute. It only tells us how many seats to book." },
         { title: "Come to Chatswood on Thursday", body: "Doors at 10:30am. Order a drink at the bar and check in at vibethursday.com/go." },
-        { title: "Sit down, listen, ask anything", body: "Starts 10:45am, ends at noon. Say what you are working on if you like, or just listen." },
+        { title: "Sit down, listen, ask anything", body: "Starts 10:45am, ends at noon. When it comes round to you, say what line of work you are in; the rest of the time, listen and ask anything." },
       ],
       scheduleFold: "See the full run of show",
       rulesFold: "The five rules",
@@ -2045,50 +2041,43 @@ export const copy = {
       eyebrow: "§ Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
+        "Business owners who want AI to bring in customers or save staff time — hospitality, property, e-commerce, trade, any industry",
+        "Lawyers, accountants, grant and compliance people — serving those fields, or rebuilding them with AI",
+        "Team leads getting AI into real workflows",
+        "Engineers, PMs, designers, marketers",
         "Indie developers",
         "AI startup founders and their teams",
         "Creators: newsletters, podcasts, video, social",
         "Freelancers and digital nomads",
-        "Engineers, PMs, designers, marketers",
-        "Team leads getting AI into real workflows",
-        "Lawyers, accountants, grant and compliance people — serving those fields, or rebuilding them with AI",
       ],
       note: "\"Building\" is not limited to software — a content pipeline, an automation, a prompt system, an ad playbook all count. It does not have to be finished, and it does not have to be good.",
     },
 
     schedule: {
       eyebrow: "§ Run of show",
-      title: "Same rhythm every week.",
+      // Kept coarse on purpose, mirroring zh: only the doors, the start and
+      // the noon finish are promises.
+      title: "Roughly how the morning goes.",
       slots: [
         {
-          time: "10:30–10:45am",
-          title: "Doors · pick up your drink · check in",
-          note: "Order and pay at the counter on your way in — a waiter taking orders mid-session cuts across whoever is talking. Check in at vibethursday.com/go when you arrive. The venue does not open before 10:30.",
+          time: "10:30am",
+          title: "Doors · order · check in",
+          note: "Order and pay at the counter on your way in, check in at vibethursday.com/go, and sit anywhere. The venue does not open before 10:30.",
         },
         {
-          time: "10:45–11:00am",
-          title: "Welcome · one line from first-timers",
-          note: "Two minutes on what this is and how the morning runs. Then everyone here for the first time says one line — who you are and what you are working on. Regulars skip it.",
+          time: "10:45am",
+          title: "One line each: your line of work",
+          note: "We go round the room, about ten seconds each: what line of work you are in, and what takes up most of your time. After one round, everyone knows which industries are here.",
         },
         {
-          time: "11:00–11:20am",
-          title: "This week's topic",
-          note: "One topic a week and about fifteen minutes on it; anyone who wants to show something does it here too. Not a lecture — interrupt and ask.",
+          time: "From about 11:00am",
+          title: "Real uses, industry by industry",
+          note: "One topic a week. One or two members show how AI is actually used in their line of work: what it saves, and what did not work. The rest of the time is for questions and finding people in your field. Technical detail goes to Tuesday online.",
         },
         {
-          time: "11:20–11:55am",
-          title: "Q&A: two questions, properly",
-          note: "Questions are voted on in the group beforehand and the top two go up. A few people answer each, and it closes on one line everyone can take away. The ones we do not reach get written up and posted in the group afterwards.",
-        },
-        {
-          time: "11:55am–12:00pm",
-          title: "Who do you want to meet",
-          note: "A sheet goes round: who you are, who you want to meet, what about. Introductions get made afterwards.",
-        },
-        {
-          time: "From 12:00pm",
-          title: "Keep talking · lunch",
-          note: "Entirely optional. Stay on if you want to keep going, leave at twelve if you do not. The hour after we wrap is often the best part.",
+          time: "12:00pm",
+          title: "Wrap up · a quick rating",
+          note: "Scan the code before you leave and take thirty seconds to rate the morning. We finish on time at noon.",
         },
       ],
     },
@@ -2322,7 +2311,7 @@ export const copy = {
           { value: "project", label: "A project: half done, want opinions" },
           { value: "help", label: "Help: listen and give my view" },
         ],
-        tuesdayBringHint: "Each session works through one or two cases; if you bring a need or a project you may be asked to take ten minutes, and you'll hear beforehand.",
+        tuesdayBringHint: "Bring a need and James may pick it to build live, online, on the Tuesday.",
         tuesdayNeedTopic: "What is the need, in a sentence?",
         tuesdayNeedPlaceholder: "How it is done now, what it costs in time or money, what result you want",
         tuesdayProjectTopic: "What is the project, in a sentence?",
@@ -2340,16 +2329,16 @@ export const copy = {
           { value: "maybe", label: "Half built" },
           { value: "listen", label: "Just listening this time" },
         ],
-        demoIntentHint: "Nothing has to be finished and there are no slides. If you have something to show, pick the opening share when you sign up.",
-        openingShare: "Want to share something for 5 minutes at the start?",
+        demoIntentHint: "Nothing has to be finished. If you have something to show, pick the opening share when you sign up.",
+        openingShare: "Want to show how your line of work uses AI this week?",
         openingShareOptions: [
           { value: "yes", label: "Yes, I'll share" },
           { value: "maybe", label: "Maybe" },
           { value: "listen", label: "Just listening this time" },
         ],
         openingShareTopic: "What would you share? One line is enough",
-        openingShareTopicPlaceholder: "Something you're building, a mistake worth avoiding, an AI trick that works…",
-        openingShareHint: "Each Thursday opens with 2–3 members sharing for 5 minutes each. No slides needed. If you're picked, we'll tell you in the group beforehand.",
+        openingShareTopicPlaceholder: "One thing your line of work handed to AI, what it saves, what didn't work…",
+        openingShareHint: "Each Thursday, one or two members show one thing their line of work handed to AI: how it was done before, what it saves now, and what didn't work. If you're picked, you'll hear from us beforehand and we'll prepare it together.",
         pickOne: "Pick one",
         dinner: "Stay for dinner afterwards (A${price} incl. GST: a main and a coffee, {cap} seats)",
         dinnerDish: "Pick a dish",
@@ -2507,7 +2496,7 @@ export const copy = {
       items: [
         {
           q: "I have not built anything yet. Can I come?",
-          a: "Yes. Sharing is optional, and there are always more people listening than speaking. The bar for taking a turn is low too: nothing has to be finished, there are no slides, and something you are stuck half-way through beats something that works. You do not even need a product — one specific question is enough. The only real bar is genuine interest — this is not a networking room.",
+          a: "Yes. Sharing is optional, and there are always more people listening than speaking. The bar for taking a turn is low too: nothing has to be finished — one thing your line of work really handed to AI is enough, and what did not work is often the best part. You do not even need a product — one specific question is enough. The only real bar is genuine interest — this is not a networking room.",
           href: null,
           linkLabel: null,
           aTail: null,
@@ -2535,7 +2524,7 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "Thursday is free. No tickets, and that will not change (the online Tuesday and the membership are separate; the price is on the membership page). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
+          a: "Thursday is free. No tickets, and that will not change (the online Tuesday and the membership are separate; the price is on the membership page). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. If you ever want to help keep it going, ",
           href: "/support",
           linkLabel: "there is a page for it",
           aTail: ". Chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
@@ -2620,9 +2609,9 @@ export const copy = {
 
       formatTitle: "What the room is like",
       format: [
-        "A 15-minute practical talk. Not a product demo.",
-        "Two questions voted on in the group beforehand, talked through properly, each ending on one thing you can take away.",
-        "A sheet for who you want to meet, then unstructured time to meet each other — which is what most people come for.",
+        "Members show how AI is actually used in their line of work: what it saves, and what did not work. Not a product demo.",
+        "Everyone says what line of work they are in, so you can find people in your field before you leave.",
+        "Technical detail goes to Tuesday online; Thursday stays on how each industry uses AI.",
         "The session is run in Mandarin, not English. Sydney is not short of English-language AI events; it was short of this one.",
       ],
 

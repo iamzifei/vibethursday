@@ -25,16 +25,16 @@ export const GUIDE_COPY = {
 
     dayTitle: "一个上午，三段",
     day: [
-      { name: "开场分享", text: "两三位朋友各讲 5 分钟，讲完大家随便问。" },
-      { name: "需求一句话", text: "有想让 AI 帮忙的事，举手说一句，做过的人当场认领。" },
-      { name: "自由聊", text: "去找刚才想认识的那个人。" },
+      { name: "每人一句", text: "轮一圈，说你做哪一行、手上最费时间的是哪件事。" },
+      { name: "行业里的真实用法", text: "一两位成员讲自己那一行怎么用 AI：省了多少、哪些试过不行。" },
+      { name: "找同行", text: "散场前找到同行，加个微信，接着聊。" },
     ],
 
     waysTitle: "四种来法，挑一样就够",
     ways: [
-      { icon: "listen", name: "来听听", text: "什么都不说也没关系。第一次来，先坐下点杯咖啡。" },
+      { icon: "listen", name: "来听听", text: "不用上台，轮到你时说一句做哪一行就行。第一次来，先坐下点杯咖啡。" },
       { icon: "ask", name: "说个需求", text: "「我是做××的，想让 AI 帮我××。」一句话就行。" },
-      { icon: "share", name: "上台 5 分钟", text: "报名时选「想，我来分享」。不用 PPT，打开手机给大家看。" },
+      { icon: "share", name: "讲讲你那一行", text: "报名时选「想，我来分享」。讲你那一行交给 AI 的一件事，选中的会提前私信你。" },
       { icon: "help", name: "帮一把", text: "听到你做过的事，举个手。" },
     ] as { icon: GuideIcon; name: string; text: string }[],
 
@@ -47,11 +47,11 @@ export const GUIDE_COPY = {
       { id: "p5", head: "能帮就举手。", text: "你随口一句，可能帮别人省下一个下午。" },
       { id: "p6", head: "台上不卖东西。", text: "讲做法，不打广告，不拉人报课。" },
       { id: "p7", head: "听到的留在屋里。", text: "别人讲到的客户名字、生意数字，不往外传。" },
-      { id: "p8", head: "做了事的人，我们记得。", text: "每周五在群里点名谢谢上台和帮忙的朋友；周二的小范围研讨，也先请他们。分享多、帮忙多的朋友，还会被请进一个小圈子。" },
+      { id: "p8", head: "做了事的人，我们记得。", text: "每周五在群里点名谢谢上台和帮忙的朋友。分享多、帮忙多的朋友，还会被请进一个小圈子。" },
     ],
 
-    closeTitle: "想上台讲 5 分钟？",
-    closeText: "报名周四时选「想，我来分享」，或者在群里私信主理人。讲你最近真做过的一件事就好。",
+    closeTitle: "想讲讲你那一行怎么用 AI？",
+    closeText: "报名周四时选「想，我来分享」，或者私信主理人。讲你那一行真交给 AI 做过的一件事：以前怎么做，现在省了多少，哪些试过不行。",
     cta: "报名周四",
     tuesdayLink: "周二是什么",
     anchorLabel: (n: string) => `第 ${n} 条的链接`,
@@ -69,16 +69,16 @@ export const GUIDE_COPY = {
 
     dayTitle: "One morning, three parts",
     day: [
-      { name: "Opening shares", text: "Two or three people get five minutes each. Then anyone can ask." },
-      { name: "One-line asks", text: "Want AI to help with something? Say it in a sentence. Someone who has done it puts a hand up." },
-      { name: "Open floor", text: "Go and find the person you wanted to meet." },
+      { name: "One line each", text: "Round the room: what line of work you're in, and what takes up most of your time." },
+      { name: "Real uses, by industry", text: "One or two members show how AI is used in their line of work: what it saves, and what didn't work." },
+      { name: "Find your people", text: "Before you leave, find the people in your field and swap WeChat." },
     ],
 
     waysTitle: "Four ways in. Pick one.",
     ways: [
-      { icon: "listen", name: "Just listen", text: "You don't have to say a word. First time? Grab a coffee and sit down." },
+      { icon: "listen", name: "Just listen", text: "You don't have to present. When it comes round, just say what line of work you're in. First time? Grab a coffee and sit down." },
       { icon: "ask", name: "Ask for something", text: "“I run a ___, I'd like AI to ___.” One sentence is plenty." },
-      { icon: "share", name: "Take five minutes", text: "Pick “Yes, I'll share” when you sign up. No slides, just show us on your phone." },
+      { icon: "share", name: "Show your industry", text: "Pick “Yes, I'll share” when you sign up. Talk about one thing your line of work handed to AI; if you're picked, you'll hear from us beforehand." },
       { icon: "help", name: "Lend a hand", text: "Hear something you've done before? Put your hand up." },
     ] as { icon: GuideIcon; name: string; text: string }[],
 
@@ -91,11 +91,11 @@ export const GUIDE_COPY = {
       { id: "p5", head: "If you can help, put your hand up.", text: "One line from you might save someone an afternoon." },
       { id: "p6", head: "No selling from the front.", text: "Share how you did it. No ads, no course pitches." },
       { id: "p7", head: "What's said in the room stays there.", text: "Client names and business numbers you hear don't leave with you." },
-      { id: "p8", head: "We remember who pitched in.", text: "Every Friday we thank the people who shared and helped, by name, in the group. They're also first to be asked to the small Tuesday sessions, and the ones who share and help most get invited into a smaller circle." },
+      { id: "p8", head: "We remember who pitched in.", text: "Every Friday we thank the people who shared and helped, by name, in the group. The ones who share and help most get invited into a smaller circle." },
     ],
 
-    closeTitle: "Want five minutes at the front?",
-    closeText: "Pick “Yes, I'll share” when you sign up for a Thursday, or message the host in the group. Something you did recently is all it takes.",
+    closeTitle: "Want to show how your industry uses AI?",
+    closeText: "Pick “Yes, I'll share” when you sign up for a Thursday, or message the host. One thing your line of work really handed to AI: how it was done before, what it saves now, and what didn't work.",
     cta: "Sign up for Thursday",
     tuesdayLink: "What's Tuesday?",
     anchorLabel: (n: string) => `Link to point ${n}`,

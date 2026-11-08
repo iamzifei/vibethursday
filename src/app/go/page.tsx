@@ -8,7 +8,7 @@ import { getCopy, LANG_PARAM, resolveLang, type Lang } from "@/lib/content";
 import { getMemberById, getMySignup, getSessionQuestions, listSessionShares, signupCountsBySession } from "@/lib/db";
 import { readRememberToken, REMEMBER_COOKIE } from "@/lib/my-signup";
 import { SESSION_CAP } from "@/lib/capacity";
-import { questionsMode } from "@/lib/session-questions";
+import { QUESTIONS_ON_GO, questionsMode } from "@/lib/session-questions";
 import { feedbackCode } from "@/lib/feedback";
 import { CHAT_URL, checkinLinkOpen, goItems, goPhase, type GoItem } from "@/lib/go";
 import { currentMemberId } from "@/lib/member-auth";
@@ -275,7 +275,7 @@ export default async function GoPage({ searchParams }: PageProps) {
             </ol>
 
             {/* This week's Q&A shortlist, when the organiser has entered one. */}
-            {questions.length > 0 && questionsMode(phase, checkinOpen) === "candidates" && (
+            {QUESTIONS_ON_GO && questions.length > 0 && questionsMode(phase, checkinOpen) === "candidates" && (
               <section className="card stack-3" aria-labelledby="go-questions">
                 <h2 className="h3" id="go-questions" style={{ margin: 0 }}>
                   {t.questionsCandidates}
@@ -291,7 +291,7 @@ export default async function GoPage({ searchParams }: PageProps) {
               </section>
             )}
 
-            {questions.length > 0 && questionsMode(phase, checkinOpen) === "today" && (
+            {QUESTIONS_ON_GO && questions.length > 0 && questionsMode(phase, checkinOpen) === "today" && (
               <section className="card stack-3" aria-labelledby="go-questions" style={{ borderColor: "var(--accent)" }}>
                 <h2 className="h3" id="go-questions" style={{ margin: 0 }}>
                   {/* No vote marked yet: still the candidates, not "today we talk about". */}

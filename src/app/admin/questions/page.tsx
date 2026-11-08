@@ -27,7 +27,7 @@ export default async function QuestionsPage() {
       <div className="stack-2">
         <h1 className="h2" style={{ margin: 0 }}>本周问答</h1>
         <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
-          {formatSession(session, "zh")} · 场前在 /go 显示候选，当天显示今天聊的
+          {formatSession(session, "zh")} · /go 暂时不显示（周四不再有投票问答这一段）
         </p>
       </div>
 
