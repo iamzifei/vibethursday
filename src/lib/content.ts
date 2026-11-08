@@ -151,7 +151,7 @@ export const copy = {
       steps: [
         { title: "报个名", body: "只要名字和微信号，一分钟填完。报名只是为了知道订几个位子。" },
         { title: "周四上午到 Chatswood", body: "10:30 开门，在吧台点一杯喝的，打开 vibethursday.com/go 签到。" },
-        { title: "坐下来听、随便问", body: "10:45 开始，12:00 结束。想说就说一句你在做什么，不想说就听。" },
+        { title: "坐下来听、随便问", body: "10:45 开始，12:00 结束。轮到你时说一句你做哪一行，其余时间听、随便问。" },
       ],
       scheduleFold: "看完整流程",
       rulesFold: "五条规矩",
@@ -176,37 +176,30 @@ export const copy = {
 
     schedule: {
       eyebrow: "§ 流程",
-      title: "每周同一个节奏。",
+      // Kept coarse on purpose: the detailed timings change week to week and
+      // the room does not always run them the same way. Only the doors, the
+      // start and the hard noon finish are promises.
+      title: "大致是这样走。",
       slots: [
         {
-          time: "10:30–10:45",
-          title: "开门 · 取饮品 · 签到",
-          note: "进门先在吧台点单、付钱——中途有人来问单会打断正在说话的人。到了打开 vibethursday.com/go 签到。场地 10:30 才开门，不用来更早。",
+          time: "10:30",
+          title: "开门 · 点单 · 签到",
+          note: "进门先在吧台点单、付钱，打开 vibethursday.com/go 签到，随便坐。场地 10:30 才开门，不用来更早。",
         },
         {
-          time: "10:45–11:00",
-          title: "开场 · 新朋友一句话介绍",
-          note: "先用两分钟说清楚这是个什么局、今天怎么走。然后第一次来的人各说一句：你是谁、在做什么，十几秒就够。来过的人不用再讲一遍。",
+          time: "10:45",
+          title: "每人一句：你做哪一行",
+          note: "轮一圈，每人十几秒：你做哪一行，手上最费时间的是哪件事。说完一圈，屋里有哪些行业大家就都知道了。",
         },
         {
-          time: "11:00–11:20",
-          title: "本周主题",
-          note: "每周一个主题，一段十五分钟左右的分享；有人想给大家看点东西，也在这一段。不是讲座，随时可以打断追问。",
+          time: "11:00 左右",
+          title: "各行各业的真实用法",
+          note: "每周一个主题，请一两位成员讲自己那一行怎么用 AI：省了多少、哪些试过不行。剩下的时间留给提问和认识同行。技术细节带到周二线上。",
         },
         {
-          time: "11:20–11:55",
-          title: "问答：两个问题，聊透",
-          note: "问题提前在群里投票，票最多的两个上。每个问题几个人回应，最后收成一句大家都能带走的做法。没轮到的问题，会后整理好发到群里。",
-        },
-        {
-          time: "11:55–12:00",
-          title: "想认识谁，写下来",
-          note: "一张纸传一圈：你是谁、想认识谁、想聊什么。散场后帮你们约。",
-        },
-        {
-          time: "12:00 之后",
-          title: "接着聊 · 午饭",
-          note: "不强制。想接着聊的一起走，赶时间的 12 点就走。散场后那一段往往是最好的。",
+          time: "12:00",
+          title: "收尾 · 打个分",
+          note: "散场前扫码，花 30 秒打个分。12 点准时结束。",
         },
       ],
     },
@@ -855,9 +848,9 @@ export const copy = {
 
       formatTitle: "现场是什么样子",
       format: [
-        "15 分钟的实操分享，不是产品演示。",
-        "两个提前在群里投票选出来的问题，现场聊透，每个都收成一句能带走的做法。",
-        "散场前写下想认识谁，之后是自由交流的时间——多数人是冲这一段来的。",
+        "成员讲自己那一行怎么用 AI：省了多少、哪些试过不行。不是产品演示。",
+        "每人一句自己做哪一行，散场前找到同行。",
+        "技术细节放到周二线上，周四只聊各行各业怎么用。",
         "全程中文。悉尼不缺英文的 AI 活动，缺的是这一个。",
       ],
 
@@ -2034,7 +2027,7 @@ export const copy = {
       steps: [
         { title: "Sign up", body: "Just your name and WeChat ID, about a minute. It only tells us how many seats to book." },
         { title: "Come to Chatswood on Thursday", body: "Doors at 10:30am. Order a drink at the bar and check in at vibethursday.com/go." },
-        { title: "Sit down, listen, ask anything", body: "Starts 10:45am, ends at noon. Say what you are working on if you like, or just listen." },
+        { title: "Sit down, listen, ask anything", body: "Starts 10:45am, ends at noon. When it comes round to you, say what line of work you are in; the rest of the time, listen and ask anything." },
       ],
       scheduleFold: "See the full run of show",
       rulesFold: "The five rules",
@@ -2058,37 +2051,29 @@ export const copy = {
 
     schedule: {
       eyebrow: "§ Run of show",
-      title: "Same rhythm every week.",
+      // Kept coarse on purpose, mirroring zh: only the doors, the start and
+      // the noon finish are promises.
+      title: "Roughly how the morning goes.",
       slots: [
         {
-          time: "10:30–10:45am",
-          title: "Doors · pick up your drink · check in",
-          note: "Order and pay at the counter on your way in — a waiter taking orders mid-session cuts across whoever is talking. Check in at vibethursday.com/go when you arrive. The venue does not open before 10:30.",
+          time: "10:30am",
+          title: "Doors · order · check in",
+          note: "Order and pay at the counter on your way in, check in at vibethursday.com/go, and sit anywhere. The venue does not open before 10:30.",
         },
         {
-          time: "10:45–11:00am",
-          title: "Welcome · one line from first-timers",
-          note: "Two minutes on what this is and how the morning runs. Then everyone here for the first time says one line — who you are and what you are working on. Regulars skip it.",
+          time: "10:45am",
+          title: "One line each: your line of work",
+          note: "We go round the room, about ten seconds each: what line of work you are in, and what takes up most of your time. After one round, everyone knows which industries are here.",
         },
         {
-          time: "11:00–11:20am",
-          title: "This week's topic",
-          note: "One topic a week and about fifteen minutes on it; anyone who wants to show something does it here too. Not a lecture — interrupt and ask.",
+          time: "From about 11:00am",
+          title: "Real uses, industry by industry",
+          note: "One topic a week. One or two members show how AI is actually used in their line of work: what it saves, and what did not work. The rest of the time is for questions and finding people in your field. Technical detail goes to Tuesday online.",
         },
         {
-          time: "11:20–11:55am",
-          title: "Q&A: two questions, properly",
-          note: "Questions are voted on in the group beforehand and the top two go up. A few people answer each, and it closes on one line everyone can take away. The ones we do not reach get written up and posted in the group afterwards.",
-        },
-        {
-          time: "11:55am–12:00pm",
-          title: "Who do you want to meet",
-          note: "A sheet goes round: who you are, who you want to meet, what about. Introductions get made afterwards.",
-        },
-        {
-          time: "From 12:00pm",
-          title: "Keep talking · lunch",
-          note: "Entirely optional. Stay on if you want to keep going, leave at twelve if you do not. The hour after we wrap is often the best part.",
+          time: "12:00pm",
+          title: "Wrap up · a quick rating",
+          note: "Scan the code before you leave and take thirty seconds to rate the morning. We finish on time at noon.",
         },
       ],
     },
@@ -2620,9 +2605,9 @@ export const copy = {
 
       formatTitle: "What the room is like",
       format: [
-        "A 15-minute practical talk. Not a product demo.",
-        "Two questions voted on in the group beforehand, talked through properly, each ending on one thing you can take away.",
-        "A sheet for who you want to meet, then unstructured time to meet each other — which is what most people come for.",
+        "Members show how AI is actually used in their line of work: what it saves, and what did not work. Not a product demo.",
+        "Everyone says what line of work they are in, so you can find people in your field before you leave.",
+        "Technical detail goes to Tuesday online; Thursday stays on how each industry uses AI.",
         "The session is run in Mandarin, not English. Sydney is not short of English-language AI events; it was short of this one.",
       ],
 
