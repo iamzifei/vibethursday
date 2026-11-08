@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { MAX_QUESTIONS, parseQuestionList, questionsMode } from "../src/lib/session-questions.ts";
+import { MAX_QUESTIONS, QUESTIONS_ON_GO, parseQuestionList, questionsMode } from "../src/lib/session-questions.ts";
+
+test("/go does not show the voted shortlist while Thursday has no voted Q&A slot (2026-11-08)", () => {
+  assert.equal(QUESTIONS_ON_GO, false);
+});
 
 /**
  * This week's Q&A questions (`src/lib/session-questions.ts`).

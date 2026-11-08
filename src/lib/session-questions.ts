@@ -13,6 +13,15 @@ import type { GoPhase } from "./go.ts";
 
 export type SessionQuestion = { text: string; chosen: boolean };
 
+/**
+ * Whether /go shows the shortlist at all.
+ *
+ * Off since 2026-11-08: Thursday no longer has a "two voted questions" slot —
+ * the morning is about how AI is used in each line of work. The admin page,
+ * the storage and the parser are kept so this can be switched back on.
+ */
+export const QUESTIONS_ON_GO = false;
+
 /** More than this is not a shortlist. */
 export const MAX_QUESTIONS = 8;
 

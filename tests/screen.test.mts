@@ -38,3 +38,10 @@ test("the check-in link on /go closes at 13:00 on a Tuesday too", async () => {
   assert.equal(checkinLinkOpen(true, 12, true), true, "a Tuesday is still open at 12:00");
   assert.equal(checkinLinkOpen(true, 13, true), false);
 });
+
+test("the venue screen ends at noon with no lunch slot, like the home page (2026-11-08)", async () => {
+  const { SCREEN_SCHEDULE } = await import("../src/lib/screen.ts");
+  const last = SCREEN_SCHEDULE[SCREEN_SCHEDULE.length - 1];
+  assert.equal(last.time, "12:00");
+  assert.ok(!JSON.stringify(SCREEN_SCHEDULE).includes("午饭"), "no lunch on the screen");
+});

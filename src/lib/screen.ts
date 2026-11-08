@@ -1,14 +1,15 @@
 /**
- * What the venue screen (/screen) shows on a Thursday: the morning in order,
- * as announced in the group on 2026-10-21 — members open with 10-minute
- * shares, then Q&A, and the introductions move to the dinner.
+ * What the venue screen (/screen) shows on a Thursday: the morning in order.
+ * Since 2026-11-08 it matches the home page's coarse run of show — one line
+ * each on your line of work, then real uses industry by industry, and a hard
+ * finish at noon (no lunch slot any more).
  * Kept here, not in the page, so a test can hold the times in order.
  */
 export const SCREEN_SCHEDULE: { time: string; title: string; note: string }[] = [
   { time: "10:30", title: "开门 · 签到", note: "到门口扫码签到，到吧台点一份喝的或吃的" },
-  { time: "10:45", title: "开场分享", note: "2–3 位朋友，每人 10 分钟：在做什么、怎么用 AI" },
-  { time: "11:20", title: "Q&A", note: "带着具体问题来，大家一起出主意" },
-  { time: "12:00", title: "结束", note: "想接着聊的可以留下吃午饭，现场点单" },
+  { time: "10:45", title: "每人一句", note: "你做哪一行，手上最费时间的是哪件事" },
+  { time: "11:00", title: "各行各业的真实用法", note: "一两位成员讲自己那一行怎么用 AI；技术细节带到周二线上" },
+  { time: "12:00", title: "收尾 · 结束", note: "扫码打个分，12 点准时结束" },
 ];
 
 /** Where the codes on the screen lead, relative to the site's origin. */
