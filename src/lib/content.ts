@@ -162,14 +162,17 @@ export const copy = {
       eyebrow: "§ 谁适合来",
       title: "只要你真的在用 AI 做点什么，或者真的想开始。",
       groups: [
+        // 2026-11-08: Thursday is about how AI is used in each industry, so the
+        // people who run a business or work in one now come first.
+        "想用 AI 带客户、省人手的老板：餐饮、地产、电商、外贸，哪一行都行",
+        // 首场实际来得最多、聊得最深的一类人，之前这张单子上没有。
+        "律师、会计、政府补贴与合规、市场——服务这些行业的，或者在用 AI 改造它们的",
+        "带团队、想把 AI 落到流程里的中层",
+        "公司里的工程师、产品、设计、运营",
         "独立开发者",
         "AI 初创公司的创始人和团队",
         "做 AI 内容的：自媒体、公众号、播客、短视频",
         "自由职业 / 数字游民",
-        "公司里的工程师、产品、设计、运营",
-        "带团队、想把 AI 落到流程里的中层",
-        // 首场实际来得最多、聊得最深的一类人，之前这张单子上没有。
-        "律师、会计、政府补贴与合规、市场——服务这些行业的，或者在用 AI 改造它们的",
       ],
       note: "「做东西」不限于软件——一条内容流水线、一个自动化工作流、一套提示词、一个投放打法，都算。不用等做完，也不用做得好。",
     },
@@ -753,7 +756,7 @@ export const copy = {
         },
         {
           q: "要钱吗？",
-          a: "周四不要钱，不售票，这条不变（周二线上和共创会员是另外的，价格写在共创会员页上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。不过它不是零成本：场地会有最低消费或者场地费，每周不一样，通常一两百澳元，目前我先垫着。想搭把手的话，",
+          a: "周四不要钱，不售票，这条不变（周二线上和共创会员是另外的，价格写在共创会员页上）。每人点一杯，咖啡、茶、饮料都行，不一定得是咖啡，各自买单。想给这个局搭把手的话，",
           href: "/support",
           linkLabel: "这儿有个入口",
           aTail: "；不搭把手照样来，也没人会知道谁给了谁没给。另外不接「花钱换讲话时间」那种赞助：台上的时间靠做出东西来换，不靠掏钱换。将来如果有人白提供场地、不要求宣讲时间，那是另一回事。",
@@ -2038,13 +2041,14 @@ export const copy = {
       eyebrow: "§ Who it is for",
       title: "Anyone actually building with AI, or seriously about to start.",
       groups: [
+        "Business owners who want AI to bring in customers or save staff time — hospitality, property, e-commerce, trade, any industry",
+        "Lawyers, accountants, grant and compliance people — serving those fields, or rebuilding them with AI",
+        "Team leads getting AI into real workflows",
+        "Engineers, PMs, designers, marketers",
         "Indie developers",
         "AI startup founders and their teams",
         "Creators: newsletters, podcasts, video, social",
         "Freelancers and digital nomads",
-        "Engineers, PMs, designers, marketers",
-        "Team leads getting AI into real workflows",
-        "Lawyers, accountants, grant and compliance people — serving those fields, or rebuilding them with AI",
       ],
       note: "\"Building\" is not limited to software — a content pipeline, an automation, a prompt system, an ad playbook all count. It does not have to be finished, and it does not have to be good.",
     },
@@ -2520,7 +2524,7 @@ export const copy = {
         },
         {
           q: "Does it cost anything?",
-          a: "Thursday is free. No tickets, and that will not change (the online Tuesday and the membership are separate; the price is on the membership page). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. It is not costless though: a venue charges either a minimum spend or a room fee, usually a hundred or two, and I currently cover it. If you ever want to help carry that, ",
+          a: "Thursday is free. No tickets, and that will not change (the online Tuesday and the membership are separate; the price is on the membership page). Everyone at the table orders a drink — coffee, tea, whatever you like — and that is your own tab. If you ever want to help keep it going, ",
           href: "/support",
           linkLabel: "there is a page for it",
           aTail: ". Chipping in is entirely optional, with nobody able to see who did and who did not. Separately, there is no pay-for-stage-time sponsorship: floor time is earned by building something, not bought. Someone offering a room with no strings attached is a different question.",
