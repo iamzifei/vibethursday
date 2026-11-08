@@ -49,7 +49,7 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin/desk?day=thu", label: "周四签到台", hint: "门口用，手机上看", perm: "desk" },
       { href: "/admin/door?day=thu", label: "周四门口签到码", hint: "平板全屏", perm: "desk" },
       { href: "/admin/waitlist", label: "候补", hint: "有空位时放人", perm: "waitlist" },
-      { href: "/admin/questions", label: "本周问答", hint: "群里投票选出的问题", perm: "questions" },
+      { href: "/admin/questions", label: "本周问答", hint: "/go 暂不显示", perm: "questions" },
       { href: "/admin?view=week", label: "本周：签到名单、海报、分享、聚餐" },
       { href: "/admin/photos", label: "照片审核", hint: "大家上传的现场照片", perm: "photos" },
       { href: "/admin?view=after", label: "周四散场后：反馈" },

@@ -63,7 +63,7 @@ export default async function QuickPage({ searchParams }: PageProps) {
                   {formatSession(session, "zh")} ·{" "}
                   {isOnlineSession(session)
                     ? "10:30–12:00 · 线上 · 共创会员参加"
-                    : <>{day === "tue" ? "10:30–12:30" : "10:30 开始"} · Chatswood · {fee !== null ? `${feeLabel(fee)}，填完直接刷卡` : "免费"}</>}
+                    : <>{day === "tue" ? "10:30–12:30" : "10:30 开门 · 10:45 开始"} · Chatswood · {fee !== null ? `${feeLabel(fee)}，填完直接刷卡` : "免费"}</>}
                 </p>
               )}
             </div>

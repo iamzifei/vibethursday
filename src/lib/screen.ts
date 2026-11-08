@@ -60,7 +60,7 @@ export function screenFor(tuesday: boolean): ScreenDay {
     return {
       eyebrow: "§ Vibe Thursday · 疯狂星期四",
       title: "一群用 AI 做事的人，每周四聚一次。",
-      lead: "这不是课，没有系统教学。手上有东西就打开给大家看，做了一半也行；卡住了，现场问。",
+      lead: "这不是课。每人一句自己做哪一行，再听一两位成员讲他那一行怎么用 AI；技术细节带到周二线上。",
       schedule: SCREEN_SCHEDULE,
       signupCaption: "每周四免费 · 下周也能报",
       second: { eyebrow: SCREEN_TUESDAY.when, title: SCREEN_TUESDAY.title, price: SCREEN_TUESDAY.price, points: SCREEN_TUESDAY.points, href: SCREEN_LINKS.tuesday, caption: "扫码报周二 · vibethursday.com/tuesday" },
