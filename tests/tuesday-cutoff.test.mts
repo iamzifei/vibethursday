@@ -76,7 +76,7 @@ test("★ a date that closed while the form was open is refused, not silently dr
   // normal success screen with nothing booked. With a public 20:00 cut-off an
   // ordinary user hits this by opening the form at 19:55.
   const route = readFileSync(path.join(import.meta.dirname, "../src/app/api/signup/route.ts"), "utf8");
-  assert.match(route, /sessionRaw && !firstSession[\s\S]{0,200}session_closed/);
+  assert.match(route, /resolveSessionChoice\([\s\S]{0,80}if \(closed\)[\s\S]{0,120}session_closed/);
   const form = readFileSync(path.join(import.meta.dirname, "../src/components/SignupForm.tsx"), "utf8");
   assert.match(form, /"session_closed"[\s\S]{0,80}copy\.errorClosed/);
   const content = readFileSync(path.join(import.meta.dirname, "../src/lib/content.ts"), "utf8");

@@ -215,6 +215,19 @@ export function upcomingOpenTrial(): string | null {
   return upcomingBookableSpecialSessions().find((session) => isOpenTrialSession(session.date))?.date ?? null;
 }
 
+/**
+ * What a signup's chosen session means (2026-11-08). "none" (the class card,
+ * or "no morning yet") and an empty value are no session. A date still on
+ * offer is booked. Anything else — a date that closed after the form was
+ * opened, or a crafted value — is refused out loud as closed, so the person
+ * is never shown a success screen with nothing booked.
+ */
+export function resolveSessionChoice(raw: string | null, bookable: readonly string[]): { firstSession: string | null; closed: boolean } {
+  if (!raw || raw === "none") return { firstSession: null, closed: false };
+  if (bookable.includes(raw)) return { firstSession: raw, closed: false };
+  return { firstSession: null, closed: true };
+}
+
 /** Whether a date is one of the special sessions above. */
 export function isSpecialSession(date: string): boolean {
   return SPECIAL_SESSIONS.some((session) => session.date === date);
