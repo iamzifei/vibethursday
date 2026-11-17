@@ -237,12 +237,11 @@ export function cohortDatesLabel(cohort: Cohort, lang: "zh" | "en" = "zh"): stri
 }
 
 /**
- * The class on sale on /class from 2026-11-01: the AI+IP class, one day.
- * Not a membership (see MEMBERSHIP_COURSES); yearly members take it free
- * (`includesIpClass`), so their order is confirmed without a transfer. `COURSE` above stays the 10/25 class
- * because the after-class tools (/class/kit and friends) still belong to it.
+ * The first AI+IP class, 2026-11-15 (on sale on /class 2026-11-01 to 11-15).
+ * Over, but its orders still open on their own date and amount, and having a
+ * paid order for it makes the 12/13 class a refresher (`PAST_CLASS_IDS`).
  */
-export const IP_COURSE = {
+export const IP_COURSE_1115 = {
   id: "2026-11-15-ai-ip",
   title: "澳洲 AI+IP 实战课",
   date: "2026-11-15",
@@ -253,6 +252,46 @@ export const IP_COURSE = {
   /** What to transfer: A$365 plus 10% GST. */
   payLabel: "401.50 澳元（365 + GST）",
   cap: 40,
+} as const;
+
+/**
+ * The class on sale on /class from 2026-11-18: the second AI+IP class, one
+ * full day on 2026-12-13, laid out from the poster James sent that day.
+ * Still includes a year of class-membership benefits (refreshers).
+ *
+ * Who pays what (James 2026-11-18):
+ *   - anyone new: the full price below;
+ *   - a yearly 共创会员 who has never taken a class: free (`includesIpClass`);
+ *   - anyone who has already taken a class (10/25 or 11/15, see
+ *     `PAST_CLASS_IDS`), member or not: this one is a refresher, and they pay
+ *     only the refresher seat fee (`REFRESHER`).
+ * `COURSE` above stays the 10/25 class because the after-class tools
+ * (/class/kit and friends) still belong to it.
+ */
+export const IP_COURSE = {
+  id: "2026-12-13-ai-ip",
+  title: "澳洲 AI+IP 实战课",
+  date: "2026-12-13",
+  dateLabel: "12 月 13 日（周日）",
+  timeLabel: "9:00 到 17:00，含午餐",
+  placeLabel: "唐宴 King Dynasty，Level 1, Building 215-S1, 125 Lang Rd, Moore Park NSW 2021",
+  priceLabel: "699 澳元",
+  /** What to transfer: A$699 plus 10% GST. */
+  payLabel: "768.90 澳元（699 + GST）",
+  cap: 40,
+} as const;
+
+/**
+ * Classes that count as "already taken a class": a paid (or free-confirmed)
+ * order for one of these turns the current class into a refresher. Paid is
+ * the proxy for attended — attendance at a class is not recorded anywhere.
+ */
+export const PAST_CLASS_IDS = [COURSE.id, IP_COURSE_1115.id] as const;
+
+/** The refresher seat fee: GST already included, so the transfer is exactly this. */
+export const REFRESHER = {
+  priceLabel: "40 澳元（含 GST）",
+  payLabel: "40 澳元（复训留位费，含 GST）",
 } as const;
 
 /** A payment reference: easy to read out and type into a bank app. */

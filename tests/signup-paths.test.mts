@@ -102,7 +102,8 @@ test("public prices are shown before GST, with no '+ GST'", () => {
   assert.equal(feeLabel(30), "30 澳元");
   assert.equal(feeLabel(30, "en"), "A$30");
   assert.equal(MEMBERSHIP.priceLabel, "599 澳元");
-  assert.equal(IP_COURSE.priceLabel, "365 澳元");
+  // Spec change 2026-11-18 (James): the 12/13 class is A$699.
+  assert.equal(IP_COURSE.priceLabel, "699 澳元");
   assert.doesNotMatch(SCREEN_TUESDAY.price, /GST/);
   const publicSources = [
     JSON.stringify(copy.zh),
@@ -118,7 +119,7 @@ test("public prices are shown before GST, with no '+ GST'", () => {
 test("where you pay, GST is added and shown", () => {
   assert.equal(payLabel(30), "33 澳元（30 + GST 3）");
   assert.match(MEMBERSHIP.payLabel, /658\.90/);
-  assert.match(IP_COURSE.payLabel, /401\.50/);
+  assert.match(IP_COURSE.payLabel, /768\.90/);
 });
 
 // ── 5. The human check reads as a check, not as "signed up" ────────────────

@@ -10,7 +10,7 @@ import { getCopy } from "@/lib/content";
 import { capacityAlert, capFor, SESSION_CAP } from "@/lib/capacity";
 import { looksLikeWechatId } from "@/lib/wechat-id";
 import { buildRoster, checkinCode } from "@/lib/checkin";
-import { COURSE, IP_COURSE, MEMBERSHIP, YEARLY_MEMBERSHIP_ID } from "@/lib/course";
+import { COURSE, IP_COURSE, IP_COURSE_1115, MEMBERSHIP, YEARLY_MEMBERSHIP_ID } from "@/lib/course";
 import { dinnerConfig } from "@/lib/dinner";
 import {
   countCheckins,
@@ -100,7 +100,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // On a Build Tuesday the desk is that Tuesday (`deskSession`).
   const desk = deskSession();
 
-  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, photos, logins, courseOrders, oldCourseOrders, memberOrders] =
+  const [signups, members, questions, answers, decks, attendance, deskRoster, deskCheckins, feedback, photos, logins, courseOrders, oldCourseOrders, ip1115Orders, memberOrders] =
     await Promise.all([
       listSignups(),
       listAllMembers(),
@@ -121,6 +121,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
       // The 10/25 membership class is no longer on sale (2026-11-01), but an
       // order still waiting for its transfer must stay markable as paid here.
       listCourseOrders(COURSE.id).then((rows) => rows.filter((o) => o.status === "pending")).catch(() => []),
+      // The 11/15 AI+IP class, all of it (2026-11-18): a pending one must stay
+      // markable as paid, and a paid one is what makes its holder a refresher
+      // on the 12/13 class, so this is also where that list can be checked.
+      listCourseOrders(IP_COURSE_1115.id).catch(() => []),
       // The 共创会员 bought by card on /join (2026-11-02). Settled by Stripe,
       // so this list is for reading, not marking.
       // Both kinds since 2026-11-05: the 4-week orders and the yearly ones
@@ -1201,7 +1205,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
             已付 {courseOrders.filter((o) => o.status === "paid").length} · 待付 {courseOrders.filter((o) => o.status === "pending").length} · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {IP_COURSE.cap}
           </span>
         </div>
-        {courseOrders.length + oldCourseOrders.length === 0 ? (
+        {courseOrders.length + oldCourseOrders.length + ip1115Orders.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名。</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -1220,10 +1224,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
               <tbody>
-                {[...courseOrders, ...oldCourseOrders].map((order) => (
+                {[...courseOrders, ...oldCourseOrders, ...ip1115Orders].map((order) => (
                   <tr key={order.id}>
                     <td className="mono">{order.ref}</td>
-                    <td>{order.name}{order.signup_id ? "" : " ·新"}{oldCourseOrders.some((o) => o.id === order.id) ? ` ·${COURSE.title}（599）` : ""}</td>
+                    <td>{order.name}{order.signup_id ? "" : " ·新"}{oldCourseOrders.some((o) => o.id === order.id) ? ` ·${COURSE.title}（599）` : ip1115Orders.some((o) => o.id === order.id) ? " ·11/15 那期（365）" : order.refresher ? " ·复训（40）" : ""}</td>
                     <td className="mono">{order.wechat}</td>
                     <td>
                       {{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}

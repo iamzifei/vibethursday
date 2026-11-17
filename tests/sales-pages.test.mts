@@ -20,9 +20,13 @@ test("/class: the bottom bar is the shared StickyCta pointing at the signup form
   assert.match(page, /className="[^"]*vip-signup[^"]*" id="class-signup"/);
 });
 
-test("/class: a 共创会员 takes the class free, once", () => {
+// Spec change 2026-11-18 (James): from the 12/13 class, a yearly member who
+// has never taken a class comes free; anyone who has, member or not, comes as
+// a refresher and pays the seat fee.
+test("/class: a 共创会员 who has not taken a class comes free; past students come as a refresher", () => {
   const page = read("src/app/class/page.tsx");
-  assert.match(page, /共创会员可免费参加一次/);
+  assert.match(page, /还没上过课的免费/);
+  assert.match(page, /算复训/);
   assert.doesNotMatch(page, /共创会员已包含这门课/);
 });
 

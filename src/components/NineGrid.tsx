@@ -1,0 +1,271 @@
+"use client";
+
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { JPEG_QUALITY, squareFor, tilePlacement, TILE, type Fit } from "@/lib/nine-grid";
+
+/**
+ * The Moments nine-grid tool (/tools/grid, 2026-11-18): drop in one picture,
+ * get nine square JPEGs that WeChat Moments shows as one big picture.
+ *
+ * Everything happens in the browser — the picture is never uploaded, which is
+ * also why this works with no account and no server route.
+ *
+ * Phone first, and WeChat's in-app browser first among phones, because that
+ * is where a link to this page gets opened. That browser supports neither
+ * `navigator.share` with files nor `<a download>`, so the nine pieces are
+ * always shown on the page as real images: long-press, "save image", in
+ * order. The save button is the shortcut where the browser has one (iOS
+ * Safari and Android Chrome: the share sheet saves all nine at once; a
+ * computer: nine downloads).
+ *
+ * Pieces are data: URLs rather than blob: URLs so that long-press saving does
+ * not depend on how a given WebView treats object URLs.
+ */
+
+type Source = { image: HTMLImageElement; width: number; height: number; name: string };
+
+/** WeChat's in-app browser, where only long-press saving works. */
+function inWeChat(): boolean {
+  return typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
+}
+
+/** The user agent never changes, so there is nothing to subscribe to. */
+const noSubscribe = () => () => {};
+
+async function loadImage(file: File): Promise<Source> {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.src = url;
+  try {
+    // Browsers apply the photo's EXIF rotation here (image-orientation:
+    // from-image is the default), so a portrait phone photo stays upright.
+    await image.decode();
+  } finally {
+    // The decoded image stays usable for drawImage after the URL is revoked.
+    URL.revokeObjectURL(url);
+  }
+  return { image, width: image.naturalWidth, height: image.naturalHeight, name: file.name.replace(/\.[^.]+$/, "") };
+}
+
+/** Cuts the nine pieces, row by row, as JPEG data URLs. */
+function cut(source: Source, fit: Fit, position: number, padColour: string): string[] {
+  const square = squareFor(source.width, source.height, fit, position);
+  const canvas = document.createElement("canvas");
+  canvas.width = TILE;
+  canvas.height = TILE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("no 2d context");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  const pieces: string[] = [];
+  for (let index = 0; index < 9; index++) {
+    // JPEG has no transparency: paint the background first so a transparent
+    // PNG comes out on the chosen colour rather than on black.
+    ctx.fillStyle = padColour;
+    ctx.fillRect(0, 0, TILE, TILE);
+    const { dx, dy, dw, dh } = tilePlacement(square, source.width, source.height, index);
+    ctx.drawImage(source.image, dx, dy, dw, dh);
+    pieces.push(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+  }
+  return pieces;
+}
+
+function dataUrlToFile(dataUrl: string, name: string): File {
+  const bytes = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) buffer[i] = bytes.charCodeAt(i);
+  return new File([buffer], name, { type: "image/jpeg" });
+}
+
+export function NineGrid() {
+  const [source, setSource] = useState<Source | null>(null);
+  const [fit, setFit] = useState<Fit>("crop");
+  const [position, setPosition] = useState(0.5);
+  const [padColour, setPadColour] = useState("#ffffff");
+  const [pieces, setPieces] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+
+  // False on the server (no user agent there), the real answer once hydrated.
+  const wechat = useSyncExternalStore(noSubscribe, inWeChat, () => false);
+
+  // Re-cut whenever the picture or a setting changes. Debounced so dragging
+  // the position slider does not cut nine JPEGs on every pixel of movement.
+  useEffect(() => {
+    if (!source) return;
+    const timer = window.setTimeout(() => {
+      try {
+        setPieces(cut(source, fit, position, padColour));
+        setError(null);
+      } catch (err) {
+        console.error("[grid] cut failed", err);
+        setError("切图失败了，换一张图试试。");
+      }
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [source, fit, position, padColour]);
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    setNote(null);
+    setPieces([]);
+    try {
+      const loaded = await loadImage(file);
+      setSource(loaded);
+      setPosition(0.5);
+    } catch {
+      // Typically HEIC on a computer browser that cannot decode it.
+      setSource(null);
+      setError("这张图浏览器打不开。换成 JPG 或 PNG 再试，或者先截个屏再传截图。");
+    }
+  }
+
+  async function saveAll() {
+    if (pieces.length !== 9 || !source) return;
+    setSaving(true);
+    setNote(null);
+    try {
+      const files = pieces.map((piece, i) => dataUrlToFile(piece, `九宫格-${i + 1}.jpg`));
+
+      // Phones: one share sheet saves all nine, in order.
+      if (navigator.canShare?.({ files })) {
+        await navigator.share({ files });
+        setNote("存好后，发朋友圈时按 1→9 的顺序勾选。");
+        return;
+      }
+
+      // Computers: nine downloads. Spaced out, because browsers drop
+      // downloads started in the same instant.
+      for (const [i, piece] of pieces.entries()) {
+        const anchor = document.createElement("a");
+        anchor.href = piece;
+        anchor.download = `九宫格-${i + 1}.jpg`;
+        anchor.click();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      setNote("电脑上会下载 9 张（浏览器问要不要允许下载多个文件，点允许）。没看到下载的话，长按或右键每张图保存。");
+    } catch (err) {
+      // AbortError is the person closing the share sheet, not a failure.
+      if ((err as Error)?.name !== "AbortError") {
+        console.error("[grid] save failed", err);
+        setNote("没能一键保存，长按下面每张图保存也一样。");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const square = source ? source.width === source.height : true;
+  const landscape = source ? source.width > source.height : false;
+
+  return (
+    <div className="grid-tool stack-6">
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(event) => {
+          void onFile(event.target.files?.[0]);
+          // Let the same file be picked again after "换一张".
+          event.target.value = "";
+        }}
+      />
+
+      {!source ? (
+        <button type="button" className="grid-tool__drop" onClick={() => input.current?.click()}>
+          <span className="grid-tool__drop-icon" aria-hidden="true">＋</span>
+          <span className="grid-tool__drop-title">选一张图</span>
+          <span className="body-sm">从相册选，或者拍一张</span>
+        </button>
+      ) : (
+        <>
+          {!square && (
+            <div className="stack-4">
+              <div className="grid-tool__seg" role="radiogroup" aria-label="不是正方形的图怎么处理">
+                {([["crop", "裁成正方形"], ["pad", "留边补齐"]] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={fit === value}
+                    className={fit === value ? "is-on" : undefined}
+                    onClick={() => setFit(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {fit === "crop" ? (
+                <label className="stack-2">
+                  <span className="body-sm">拖动选保留哪一块（{landscape ? "左 ↔ 右" : "上 ↔ 下"}）</span>
+                  <input
+                    className="grid-tool__range"
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={position}
+                    onChange={(event) => setPosition(Number(event.target.value))}
+                  />
+                </label>
+              ) : (
+                <div className="grid-tool__seg" role="radiogroup" aria-label="补边颜色">
+                  {([["#ffffff", "白边"], ["#000000", "黑边"]] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={padColour === value}
+                      className={padColour === value ? "is-on" : undefined}
+                      onClick={() => setPadColour(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="grid-tool__grid" aria-label="切好的九张图，按发朋友圈的顺序排列">
+            {pieces.length === 9
+              ? pieces.map((piece, i) => (
+                  <figure key={i} className="grid-tool__cell">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={piece} alt={`第 ${i + 1} 张`} />
+                    <span className="grid-tool__n mono" aria-hidden="true">{i + 1}</span>
+                  </figure>
+                ))
+              : Array.from({ length: 9 }, (_, i) => <div key={i} className="grid-tool__cell grid-tool__cell--wait" />)}
+          </div>
+
+          {wechat ? (
+            <div className="card card--accent stack-2">
+              <p style={{ margin: 0, fontWeight: 700 }}>微信里请长按保存</p>
+              <p style={{ margin: 0 }}>
+                从第 1 张开始，依次长按每张图 →「保存图片」。想一键存 9 张：点右上角「···」→「在浏览器打开」。
+              </p>
+            </div>
+          ) : (
+            <button type="button" className="btn btn--primary btn--block" onClick={saveAll} disabled={saving || pieces.length !== 9}>
+              {saving ? "正在保存…" : "一键保存 9 张"}
+            </button>
+          )}
+          {note && <p className="body-sm" style={{ margin: 0 }}>{note}</p>}
+
+          <button type="button" className="btn btn--secondary btn--block" onClick={() => input.current?.click()}>
+            换一张图
+          </button>
+        </>
+      )}
+
+      {error && <p className="alert" role="alert">{error}</p>}
+    </div>
+  );
+}

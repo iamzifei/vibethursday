@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentAccount } from "@/lib/account";
 import { IP_COURSE, newCourseRef, parseCourseForm } from "@/lib/course";
-import { createCourseOrder, getSignupProfile, hasYearMembership } from "@/lib/db";
+import { createCourseOrder, getSignupProfile, hasTakenClass, hasYearMembership } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { requestOrigin } from "@/lib/request-origin";
 import { fromThisSite } from "@/lib/same-origin";
@@ -70,6 +70,12 @@ export async function POST(request: Request) {
   if (!name || !wechat) return back({ err: "missing" });
 
   try {
+    // Free only for a yearly member who has never taken a class (James
+    // 2026-11-18). Anyone who has — member or not — takes this one as a
+    // refresher: the order stays pending, and /class shows the refresher fee
+    // rather than the full price (`refresher` on the order).
+    if (member && (await hasTakenClass(signupId, wechat))) member = false;
+
     const order = await createCourseOrder({
       course: IP_COURSE.id,
       cap: IP_COURSE.cap,

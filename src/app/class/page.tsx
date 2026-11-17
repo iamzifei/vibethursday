@@ -10,7 +10,7 @@ import { StickyCta } from "@/components/StickyCta";
 import { CLASS_SCENES } from "@/lib/scenes";
 import { currentAccount } from "@/lib/account";
 import { getCopy } from "@/lib/content";
-import { COURSE, IP_COURSE, looksLikeCourseRef } from "@/lib/course";
+import { COURSE, IP_COURSE, IP_COURSE_1115, looksLikeCourseRef, REFRESHER } from "@/lib/course";
 import { getCourseOrderByRef, getSignupProfile } from "@/lib/db";
 import { wechatLoginHref } from "@/lib/login-link";
 
@@ -56,13 +56,13 @@ const INDUSTRY_OPTIONS = [
   { value: "other", label: "其他" },
 ];
 
-type IconName = "advisor" | "list" | "laptop" | "tool" | "handshake" | "people" | "globe" | "gift" | "calendar" | "pin";
+type IconName = "advisor" | "list" | "laptop" | "tool" | "handshake" | "people" | "globe" | "gift" | "calendar" | "pin" | "camera";
 
 /**
- * The AI+IP class (`IP_COURSE`), laid out from the two posters James sent on
- * 2026-11-02 — headline, the three promises, the day's table, price — without
- * the partner branding or its QR code (payment stays a bank transfer).
- * Only what the posters say: no speaker bios or promises they do not make.
+ * The AI+IP class (`IP_COURSE`, 12/13), laid out from the poster James sent on
+ * 2026-11-18 — headline, the three promises, the three modules, the hands-on
+ * shoot, venue, price — without its QR code (payment stays a bank transfer).
+ * Only what the poster says: no times per module, no promises it does not make.
  */
 const PROMISES = [
   { strong: "用好", em: "AI" },
@@ -70,32 +70,30 @@ const PROMISES = [
   { strong: "让生意", em: "更好做" },
 ];
 
-/** The day, row for row as the poster's table: time, who, what. */
-const SCHEDULE: [string, string, string][] = [
-  ["09:00–09:30", "签到", "登记入场"],
-  ["09:30–10:20", "Nick", "商业 IP 定位"],
-  ["10:20–10:30", "休息", "交流与休息"],
-  ["10:30–11:20", "Lankey", "IP 打造"],
-  ["11:20–12:20", "午餐", "午餐交流"],
-  ["12:20–13:10", "特邀嘉宾", "实战分享"],
-  ["13:10–13:20", "休息", "交流与休息"],
-  ["13:20–14:10", "James", "AI 应用"],
-  ["14:10–15:00", "全体导师", "课后答疑与交流"],
+/** The day's three modules, in the poster's order: who, an optional line about them, what. */
+const MODULES: { who: string; tag?: string; what: string }[] = [
+  { who: "悉尼妈妈 Lankey", what: "个人 IP 打造" },
+  { who: "特邀嘉宾：澳骄哥", tag: "全网 300 万+ 粉丝", what: "自媒体实战分享" },
+  { who: "澳洲 AI 教父 James", what: "AI 应用实战" },
 ];
 
-/** 「含一年课程会员权益」: what A$365 buys besides the day (the 11-01 poster). */
+/** The assistants named on the poster. */
+const ASSISTANTS = ["Nick", "阿利", "楚楚"];
+
+/** 「含一年课程会员权益」: what the price buys besides the day (James 2026-11-18: still included). */
 const REFRESH: { icon: IconName; text: string }[] = [
   { icon: "calendar", text: "全年不少于 6 次复训机会" },
-  { icon: "gift", text: "复训留位费：40 澳元 / 次（含 GST）" },
+  { icon: "gift", text: `复训留位费：${REFRESHER.priceLabel} / 次` },
   { icon: "people", text: "学员群交流" },
   { icon: "list", text: "复训日期、主题及预约安排提前通知" },
 ];
 
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
-  { q: "365 包含什么？", a: "11 月 15 日这一天的课，加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
-  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种）不用付，可免费参加一次；之后办的 4 周会员不含这门课。用报名周四时的微信登录，再点报名，就直接确认了，不用转账。没登录、直接填表的话，报完私信 James，他在后台帮你确认。" },
-  { q: "安排会变吗？", a: "上面是首期的拟定安排，具体时间和安排以最终通知为准。" },
+  { q: "699 包含什么？", a: "12 月 13 日这一整天的课（含午餐），加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
+  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，只付 40 澳元（含 GST）留位费。用上次报课时的微信号报名，页面会自动按复训显示转账金额；对不上的话私信 James。" },
+  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付 40 澳元（含 GST）留位费。之后办的 4 周会员不含这门课。" },
+  { q: "安排会变吗？", a: "具体时间和安排以最终通知为准。" },
 ];
 
 /** Every section opens the same way: a number, the heading, and at most one line. */
@@ -122,6 +120,7 @@ function Icon({ name }: { name: IconName }) {
     gift: <><rect x="4" y="9" width="16" height="11" rx="1" /><path d="M2 9h20M12 9v11M12 9c-2-4-6-4-6-1s6 1 6 1zM12 9c2-4 6-4 6-1s-6 1-6 1z" /></>,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
     pin: <><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z" /><circle cx="12" cy="10" r="2" /></>,
+    camera: <><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></>,
   };
   return (
     <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -144,8 +143,11 @@ export default async function ClassPage({ searchParams }: PageProps) {
 
   const ref = looksLikeCourseRef(params.ref) ? params.ref : null;
   const order = ref ? await getCourseOrderByRef(ref).catch(() => null) : null;
-  // An order from the 10/25 class still opens on its own dates and amount.
-  const course = order?.course === COURSE.id ? COURSE : IP_COURSE;
+  // An order from an earlier class still opens on its own dates and amount.
+  const course = order?.course === COURSE.id ? COURSE : order?.course === IP_COURSE_1115.id ? IP_COURSE_1115 : IP_COURSE;
+  // Someone who has already taken a class pays only the refresher fee for this one.
+  const refresher = course === IP_COURSE && Boolean(order?.refresher);
+  const payLabel = refresher ? REFRESHER.payLabel : course.payLabel;
 
   let knownName: string | null = null;
   if (!order && params.other !== "1") {
@@ -214,7 +216,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     <details>
                       <summary className="body-sm">再看一下转账信息</summary>
                       <div className="stack-2" style={{ marginTop: "var(--space-3)" }}>
-                        <p style={{ margin: 0 }}>转账金额：{course.payLabel} · 转账备注：<strong className="mono">{order.ref}</strong></p>
+                        <p style={{ margin: 0 }}>转账金额：{payLabel} · 转账备注：<strong className="mono">{order.ref}</strong></p>
                         {paymentInfo && <pre className="body" style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{paymentInfo}</pre>}
                       </div>
                     </details>
@@ -223,8 +225,11 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <>
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>
-                        转账金额：<strong>{course.payLabel}</strong>
+                        转账金额：<strong>{payLabel}</strong>
                       </p>
+                      {refresher && (
+                        <p className="body" style={{ margin: 0 }}>你上过之前的课，这一期算复训，只付留位费。</p>
+                      )}
                       <p className="body-lg" style={{ margin: 0 }}>
                         转账备注填：<strong className="mono" style={{ fontSize: "1.4rem" }}>{order.ref}</strong>
                       </p>
@@ -245,8 +250,8 @@ export default async function ClassPage({ searchParams }: PageProps) {
                     <p className="body">
                       转完点上面的按钮，再把截图发给 James 的微信（<Link href="/#contact">James 的微信二维码在这里</Link>），我们核对后会把你拉进学员群。这个页面可以截图保存，备注编号别填错。
                     </p>
-                    {course === IP_COURSE && (
-                      <p className="body">11 月 5 日前办的共创会员不用转账：私信 James，他在后台帮你确认。</p>
+                    {course === IP_COURSE && !refresher && (
+                      <p className="body">11 月 5 日前办的共创会员、还没上过课的不用转账：私信 James，他在后台帮你确认。</p>
                     )}
                   </>
                 )}
@@ -264,25 +269,24 @@ export default async function ClassPage({ searchParams }: PageProps) {
               // with the same space between them. No cards inside cards.
               <>
                 <header className="vip-hero ip-hero">
-                  <span className="eyebrow">§ {IP_COURSE.title}</span>
-                  <h1 className="ip-hero__title">AI 时代，<br />主动出击！</h1>
-                  <p className="ip-hero__course">澳洲 AI+IP 实战课</p>
-                  <p className="ip-hero__tag">澳洲自媒体人的黄埔军校</p>
+                  <span className="eyebrow">§ Vibe Thursday</span>
+                  <h1 className="ip-hero__title">澳洲 AI+IP<br />实战课</h1>
+                  <p className="ip-hero__tag">自媒体人的黄埔军校 · AI 获客类短视频</p>
                   <ul className="ip-promises" aria-label="这门课的三件事">
                     {PROMISES.map((p) => (
                       <li key={p.strong}>{p.strong}<em>{p.em}</em></li>
                     ))}
                   </ul>
                   <div className="vip-offer">
-                    <p className="vip-offer__price">AUD $365</p>
-                    <p className="vip-offer__eq">含一年课程会员权益</p>
+                    <p className="vip-offer__price">AUD $699</p>
+                    <p className="vip-offer__eq">含午餐 · 含一年课程会员权益</p>
                     <ul className="vip-offer__facts">
-                      <li><Icon name="calendar" />2026 年 11 月 15 日（周日）· 悉尼</li>
-                      <li><Icon name="calendar" />9:00 签到 · 15:00 结束</li>
-                      <li><Icon name="pin" />{IP_COURSE.placeLabel}</li>
+                      <li><Icon name="calendar" />2026 年 12 月 13 日（周日）· 悉尼</li>
+                      <li><Icon name="calendar" />09:00–17:00</li>
+                      <li><Icon name="pin" />唐宴 King Dynasty · Moore Park</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">11 月 5 日前办的共创会员可免费参加一次</p>
+                    <p className="vip-offer__left">上过之前课程的同学算复训，只付 40 澳元留位费</p>
                   </div>
                 </header>
 
@@ -292,35 +296,31 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </figure>
 
                 <section className="vip-section">
-                  <SectionHead n="01" title="课程安排" lead="2026 年 11 月 15 日（周日）· 悉尼 St Leonards" />
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="table ip-schedule">
-                      <thead>
-                        <tr>
-                          <th scope="col">时间</th>
-                          <th scope="col">主讲</th>
-                          <th scope="col">课程内容</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {SCHEDULE.map(([time, who, what]) => {
-                          const talk = !["签到", "休息", "午餐"].includes(who);
-                          return (
-                            <tr key={time} className={talk ? "ip-schedule__talk" : undefined}>
-                              <td className="mono">{time}</td>
-                              <td>{who}</td>
-                              <td>{what}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <SectionHead n="01" title="课程表" lead="2026 年 12 月 13 日（周日）09:00–17:00 · 悉尼 Moore Park" />
+                  <ol className="ip-modules">
+                    {MODULES.map((m, i) => (
+                      <li key={m.who}>
+                        <span className="ip-modules__n mono">{String(i + 1).padStart(2, "0")}</span>
+                        <div>
+                          <p className="ip-modules__who">{m.who}</p>
+                          {m.tag && <p className="ip-modules__tag">{m.tag}</p>}
+                          <p className="ip-modules__what">{m.what}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="body" style={{ margin: 0 }}>助教：{ASSISTANTS.join(" · ")}</p>
+                  <div className="card card--accent stack-2">
+                    <h3 className="h3" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", margin: 0 }}>
+                      <Icon name="camera" />实拍实操环节
+                    </h3>
+                    <p style={{ margin: 0 }}>摄影摄像现场拍摄 · 实战拍摄与 AI 剪辑</p>
                   </div>
                   <p className="vip-note">具体时间和安排以最终通知为准。</p>
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $365，包含这一天的课和一年的课程会员权益。" />
+                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $699，包含这一天的课和一年的课程会员权益。" />
                   <ul className="vip-features">
                     {REFRESH.map((item) => (
                       <li key={item.text}>
@@ -334,8 +334,13 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="03" title="上课地点" />
-                  <p className="body-lg" style={{ margin: 0 }}>{IP_COURSE.placeLabel}</p>
+                  <SectionHead n="03" title="上课地点" lead="公共交通便利，方便停车。" />
+                  <p className="body-lg" style={{ margin: 0 }}>
+                    <strong>唐宴 King Dynasty</strong>
+                    <br />
+                    Level 1, Building 215-S1, 125 Lang Rd, Moore Park NSW 2021
+                  </p>
+                  <p className="vip-note">活动协办与餐食赞助：唐宴，赞助精美午餐。</p>
                 </section>
 
                 <section className="vip-section">
@@ -373,7 +378,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 {/* Phones: the price and the way in, always one tap away. */}
-                <StickyCta href="#class-signup" label="AUD $365" cta="报名" />
+                <StickyCta href="#class-signup" label="AUD $699" cta="报名" />
 
                 <div className="card card--accent stack-6 vip-signup" id="class-signup">
                 <h2>报名</h2>
@@ -382,7 +387,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   地点：{IP_COURSE.placeLabel}
                   <br />
-                  费用：{IP_COURSE.priceLabel}（含一年课程会员权益），银行转账；11 月 5 日前办的共创会员可免费参加一次
+                  费用：{IP_COURSE.priceLabel}（含午餐和一年课程会员权益），银行转账
+                  <br />
+                  上过之前课程的同学算复训，付 {REFRESHER.priceLabel} 留位费；11 月 5 日前办的共创会员、还没上过课的免费
                   <br />
                   席位有限，报满即止
                 </p>

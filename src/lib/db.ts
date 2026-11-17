@@ -10,7 +10,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
 import type { CheckinSource } from "./checkin.ts";
-import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, YEARLY_MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID } from "./course.ts";
+import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, PAST_CLASS_IDS, YEARLY_MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
 import type { DeskRow } from "./desk.ts";
@@ -24,6 +24,21 @@ import type { PersonRoleKind } from "./person-roles.ts";
  * not break the statement.
  */
 const MEMBER_COURSES_SQL = YEARLY_MEMBERSHIP_COURSES.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
+
+/** `PAST_CLASS_IDS` as a SQL list: a paid order for one of these makes the current class a refresher. */
+const PAST_CLASSES_SQL = PAST_CLASS_IDS.map((id) => `'${id.replace(/'/g, "''")}'`).join(", ");
+
+/**
+ * SQL condition: the person behind order `o` (by signup or by WeChat ID, the
+ * same matching as isMember) has a paid order for an earlier class.
+ */
+const TOOK_CLASS_SQL = (o: string) => `EXISTS (
+  SELECT 1 FROM course_orders p
+   WHERE p.course IN (${PAST_CLASSES_SQL}) AND p.status = 'paid'
+     AND (p.signup_id = ${o}.signup_id
+          OR (btrim(p.wechat) <> ''
+              AND lower(regexp_replace(p.wechat, '\\s+', '', 'g')) = lower(regexp_replace(${o}.wechat, '\\s+', '', 'g')))))`;
+
 /**
  * How long one yearly payment keeps someone a member: a year, plus a week's
  * grace (2026-11-02). The yearly subscription renews on the anniversary but
@@ -3028,6 +3043,8 @@ export type CourseOrder = {
   paid_at: string | null;
   /** When they said they had transferred. */
   claimed_at: string | null;
+  /** Has a paid order for an earlier class, so this one is a refresher (`PAST_CLASS_IDS`). */
+  refresher: boolean;
 };
 
 /**
@@ -3123,13 +3140,16 @@ export type CourseOrderByRef = {
   stripe_session: string | null;
   /** When it was paid; null until then. Tells /join which cohort a 4-week order is in. */
   paid_at: Date | null;
+  /** Has a paid order for an earlier class, so this one is a refresher (`PAST_CLASS_IDS`). */
+  refresher: boolean;
 };
 
 export async function getCourseOrderByRef(ref: string): Promise<CourseOrderByRef | null> {
   await ensureSchema();
   const result = await getPool().query<CourseOrderByRef>(
-    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed, signup_id::text AS signup_id, stripe_session, paid_at
-       FROM course_orders WHERE ref = $1`,
+    `SELECT ref, status, course, name, claimed_at IS NOT NULL AS claimed, signup_id::text AS signup_id, stripe_session, paid_at,
+            ${TOOK_CLASS_SQL("o")} AS refresher
+       FROM course_orders o WHERE ref = $1`,
     [ref],
   );
   return result.rows[0] ?? null;
@@ -3162,8 +3182,9 @@ export async function listCourseOrders(course: string): Promise<CourseOrder[]> {
     `SELECT id::text AS id, signup_id::text AS signup_id, name, wechat, industry, biz_focus, note, ref, status,
             to_char(created_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS created_at,
             to_char(paid_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS paid_at,
-            to_char(claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at
-       FROM course_orders WHERE course = $1 ORDER BY created_at DESC`,
+            to_char(claimed_at AT TIME ZONE 'Australia/Sydney', 'MM-DD HH24:MI') AS claimed_at,
+            ${TOOK_CLASS_SQL("o")} AS refresher
+       FROM course_orders o WHERE course = $1 ORDER BY created_at DESC`,
     [course],
   );
   return result.rows;
@@ -4431,6 +4452,21 @@ export async function hasYearMembership(signupId: string): Promise<boolean> {
     [signupId],
   );
   return result.rows[0]?.member ?? false;
+}
+
+/**
+ * Whether this person (by signup id, or by WeChat ID when given) already has
+ * a paid order for an earlier class (`PAST_CLASS_IDS`). Such a person takes
+ * the current class as a refresher, and a yearly member who has is no longer
+ * signed up free (James 2026-11-18).
+ */
+export async function hasTakenClass(signupId: string | null, wechat: string): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query<{ took: boolean }>(
+    `SELECT ${TOOK_CLASS_SQL("o")} AS took FROM (SELECT $1::bigint AS signup_id, $2::text AS wechat) o`,
+    [signupId, wechat],
+  );
+  return result.rows[0]?.took ?? false;
 }
 
 /**
