@@ -4,9 +4,9 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { isSessionDate } from "@/lib/checkin";
 import { listDeskRows } from "@/lib/db";
-import { buildDesk } from "@/lib/desk";
+import { buildDesk, deskModeFor, wechatOrNickname } from "@/lib/desk";
 import { ACTION_LABEL, ACTION_ORDER, followUps } from "@/lib/followup";
-import { deskSession, feeFor, formatSession, sessionForDay } from "@/lib/sessions";
+import { deskSession, formatSession, isOnlineSession, sessionForDay } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -29,14 +29,14 @@ export default async function FollowUpPage({ searchParams }: PageProps) {
   }
   const { s, day } = await searchParams;
   const session = s && isSessionDate(s) ? s : (sessionForDay(day) ?? deskSession());
-  const items = followUps(buildDesk(await listDeskRows(session), feeFor(session) !== null), session);
+  const items = followUps(buildDesk(await listDeskRows(session), deskModeFor(session)), session);
 
   return (
     <main className="shell section stack-6">
       <div className="stack-2">
         <h1 className="h2" style={{ margin: 0 }}>会后跟进 · {formatSession(session, "zh")}</h1>
         <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
-          只列签到了的人，按规则分组：带的需求、项目、证书备考、常来但还不是会员、第一次来。一个人可能在几组里。
+          {isOnlineSession(session) ? "线上周二没有签到，列的是报了这一场的人" : "只列签到了的人"}，按规则分组：带的需求、项目、证书备考、常来但还不是会员、第一次来。一个人可能在几组里。
           {" "}<Link href={`/admin/desk?s=${session}`}>回签到台</Link>
           {" · "}<a href={`/api/admin/export?what=followup&session=${session}`}>下载</a>
         </p>
@@ -54,7 +54,7 @@ export default async function FollowUpPage({ searchParams }: PageProps) {
                 <li className="desk-row" key={entry.id}>
                   <div className="desk-row__who">
                     <strong className="desk-row__name">{entry.name}</strong>
-                    <span className="mono desk-row__wechat">{entry.wechat ?? "没填微信号"}</span>
+                    <span className="mono desk-row__wechat">{wechatOrNickname(entry, true)}</span>
                     {entry.topic && <span className="body-sm desk-row__topic">想聊：{entry.topic}</span>}
                     {entry.building && <span className="body-sm desk-row__topic">在做：{entry.building}</span>}
                   </div>

@@ -4,7 +4,7 @@ import { KeepAwake } from "@/components/KeepAwake";
 import { staffRole } from "@/lib/staff";
 import { checkinCode, isSessionDate } from "@/lib/checkin";
 import { requestOrigin } from "@/lib/request-origin";
-import { deskSession, formatSession, sessionForDay } from "@/lib/sessions";
+import { deskSession, formatSession, isOnlineSession, sessionForDay } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function DoorPage({ searchParams }: PageProps) {
         <div className="card stack-3">
           <h1 className="h3">Not authorised</h1>
           <p className="body-sm">
-            Open <code>/admin?key=YOUR_ADMIN_TOKEN</code> once on this device, then come back here.
+            助理请用微信打开 vibethursday.com/staff 登录；主办人先打开一次后台。
           </p>
         </div>
       </main>
@@ -41,6 +41,18 @@ export default async function DoorPage({ searchParams }: PageProps) {
   // (2026-11-02). It still only works on that day.
   const { s: requested, day } = await searchParams;
   const session = requested && isSessionDate(requested) ? requested : (sessionForDay(day) ?? deskSession());
+  // An online Tuesday has no door (2026-11-18): say so rather than draw a
+  // code nobody can use.
+  if (isOnlineSession(session)) {
+    return (
+      <main className="shell section">
+        <div className="card stack-3">
+          <h1 className="h3">{formatSession(session, "zh")} 是线上周二</h1>
+          <p className="body-sm">线上周二没有门口签到。这一场的名单在签到台：<a href={`/admin/desk?s=${session}`}>打开名单 →</a></p>
+        </div>
+      </main>
+    );
+  }
   const url = `${await requestOrigin()}/checkin?s=${session}&k=${checkinCode(session)}`;
   // Dark on white, never inverted: plenty of scanners fail on a light-on-dark code.
   const qr = await QRCode.toString(url, {
@@ -76,7 +88,7 @@ export default async function DoorPage({ searchParams }: PageProps) {
         找不到自己的名字，直接写名字签到 · {formatSession(session, "zh")}
       </p>
       <p className="body-sm door-print-hint" style={{ margin: 0, color: "var(--fg3)" }}>
-        要打印贴门口：用浏览器的「打印」。这个码只在 {formatSession(session, "zh")} 当天有效；别的日子在地址后面加 ?s=日期，比如 ?s=2026-11-10。
+        要打印贴门口：用浏览器的「打印」。这个码只在 {formatSession(session, "zh")} 当天有效；别的日子在地址后面加 ?s=日期，比如 ?s=2026-11-26。
       </p>
     </main>
   );

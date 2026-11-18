@@ -23,16 +23,18 @@ const row = (over: Partial<DeskRow>): DeskRow => ({
 });
 
 test("★ each person who came gets the follow-ups that apply to them", () => {
-  const session = "2026-11-10";
+  // Spec change 2026-11-18: 11-10 became an online Tuesday, where the list is who
+  // booked (nobody checks in). Shifted a week back onto in-person Tuesdays.
+  const session = "2026-11-03";
   const desk = buildDesk(
     [
-      row({ id: "1", bring: "need", topic: "餐馆排班", sessions: ["2026-11-10"] }),
-      row({ id: "2", bring: "project", sessions: ["2026-10-01", "2026-11-10"] }),
-      row({ id: "3", bring: "cert", member: true, sessions: ["2026-11-03", "2026-11-10"] }),
+      row({ id: "1", bring: "need", topic: "餐馆排班", sessions: ["2026-11-03"] }),
+      row({ id: "2", bring: "project", sessions: ["2026-10-01", "2026-11-03"] }),
+      row({ id: "3", bring: "cert", member: true, sessions: ["2026-10-27", "2026-11-03"] }),
       // Two Tuesdays in 30 days, not a member: worth offering the membership.
-      row({ id: "4", sessions: ["2026-10-27", "2026-11-03", "2026-11-10"] }),
+      row({ id: "4", sessions: ["2026-10-20", "2026-10-27", "2026-11-03"] }),
       // Did not come: nothing.
-      row({ id: "5", bring: "need", checked_in_at: null, source: null, sessions: ["2026-11-10"] }),
+      row({ id: "5", bring: "need", checked_in_at: null, source: null, sessions: ["2026-11-03"] }),
     ],
     true,
   );
@@ -47,12 +49,12 @@ test("★ each person who came gets the follow-ups that apply to them", () => {
 test("a builder is not asked to become one; a mentor is not offered the membership", () => {
   const desk = buildDesk(
     [
-      row({ id: "1", bring: "project", builder: true, sessions: ["2026-10-01", "2026-11-10"] }),
-      row({ id: "2", mentor: true, sessions: ["2026-10-27", "2026-11-03", "2026-11-10"] }),
+      row({ id: "1", bring: "project", builder: true, sessions: ["2026-10-01", "2026-11-03"] }),
+      row({ id: "2", mentor: true, sessions: ["2026-10-20", "2026-10-27", "2026-11-03"] }),
     ],
     true,
   );
-  const byId = Object.fromEntries(followUps(desk, "2026-11-10").map((item) => [item.entry.id, item.actions]));
+  const byId = Object.fromEntries(followUps(desk, "2026-11-03").map((item) => [item.entry.id, item.actions]));
   assert.deepEqual(byId["1"] ?? [], []);
   assert.deepEqual(byId["2"] ?? [], []);
 });

@@ -31,11 +31,13 @@ import {
   listProgress,
   listMemberships,
   listPersonRoles,
+  listDeskRows,
 } from "@/lib/db";
+import { buildDesk, deskModeFor, deskStats } from "@/lib/desk";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
 import { botSignupMatches, walkInMatches } from "@/lib/walk-in-match";
 import { BOT_CHECK, BOT_SOURCE } from "@/lib/bot-signup";
-import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
+import { deskSession, feeFor, formatSession, isOnlineSession, isSpecialSession, nextThursdays, sessionForDay, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
 import { waitlistFor } from "@/lib/waitlist-order";
@@ -156,6 +158,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const tuesdayFees = await Promise.all(
     feeTuesdays.map(async (session) => ({ session, rows: await listTuesdayFeeDesk(session).catch(() => []) })),
   );
+  // The next online Tuesday (2026-11-18): who booked, and who of them may be
+  // added to that morning's group — the desk's own rule (desk.ts). Fails soft.
+  const nextTuesday = sessionForDay("tue");
+  const onlineTuesday = nextTuesday && isOnlineSession(nextTuesday)
+    ? { session: nextTuesday, stats: deskStats(buildDesk(await listDeskRows(nextTuesday).catch(() => []), deskModeFor(nextTuesday))) }
+    : null;
 
   // Whatever host this page was actually opened on, so a code scanned off a
   // phone goes back to the same deployment. Read once: the desk's code and the
@@ -326,12 +334,15 @@ export default async function AdminPage({ searchParams }: PageProps) {
     // The one tap on the signup confirmation (signup-interest.ts, 2026-10-04):
     // sizes Build Tuesday and the small class before either is announced.
     {
-      label: "成功页一问：以后还想来（周二动手局 · 带着做的小班 · 都不用）",
+      label: "成功页一问：以后还想来（周二 · 带着做的小班 · 都不用）",
       value: `${signups.filter((row) => row.interest === "tuesday").length} · ${signups.filter((row) => row.interest === "class").length} · ${signups.filter((row) => row.interest === "none").length}`,
     },
     // The form preselects "先来听听", so this is who changed it, not a turnout signal.
     { label: "选了「想讲讲」的（默认是先来听听）", value: wantsToDemo },
     { label: "留了微信号", value: withWechat },
+    // Signed up in the WeChat group through the bot (2026-11-18): often no
+    // WeChat ID, only a group nickname.
+    { label: "在群里找宝儿报名的", value: signups.filter((row) => row.source === BOT_SOURCE).length },
     { label: "周四上午来不了", value: noThursday },
     { label: "工作日晚上能来", value: countSlot("weekday_evening") },
     { label: "周末白天能来", value: countSlot("weekend_day") },
@@ -481,9 +492,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
         // row, Thursday's in another, so neither has to be picked out of a mix.
         const rows: { title: string; tiles: Tile[] }[] = [
           {
-            title: "周二 · Build Tuesday",
+            title: "周二 · 线上 Build Tuesday",
             tiles: [
-              { href: "/admin/desk?day=tue", n: null, label: "周二签到台", warn: false },
+              ...(onlineTuesday
+                ? [
+                    { href: "/admin/desk?day=tue", n: onlineTuesday.stats.booked, label: `周二名单 · ${onlineTuesday.session.slice(5)} 已报`, warn: false },
+                    { href: "/admin/desk?day=tue&show=owing", n: onlineTuesday.stats.noAccess, label: "其中不是会员（不拉进群）", warn: onlineTuesday.stats.noAccess > 0 },
+                  ]
+                : [{ href: "/admin/desk?day=tue", n: null, label: "周二名单", warn: false }]),
               ...(nextFee ? [{ href: adminHref("tuesday-fees"), n: owing, label: `周二未付 · ${nextFee.session.slice(5)}`, warn: owing > 0 }] : []),
               { href: "/admin/members", n: memberships.filter((row) => row.active).length, label: "共创会员（在期）", warn: false },
               { href: "/admin/roles#mentor", n: personRoles.filter((row) => row.role === "mentor").length, label: "导师团 · 点这里加人", warn: false },
@@ -971,9 +987,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           This is everyone who picked that date, not who is new. Past Thursdays are never
           selectable, so someone who signs up the day after a session can only pick the next
           one — which makes them look like a first-timer. Who still needs pulling into the
-          WeChat group is a set difference against{" "}
-          <code>sydney-meetup/data/已处理微信号.txt</code>, and this database does not know
-          who is in the group.
+          WeChat group is a set difference against the organiser&apos;s own list of who has
+          been added, kept outside this site — this database does not know who is in the group.
         </p>
 
         <div className="table-scroll">
@@ -1012,14 +1027,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       {view === "week" && (
       <section className="stack-8 admin-group">
-        <h2 className="eyebrow">分流、聚餐与开场分享</h2>
+        <h2 className="eyebrow">分流与开场分享</h2>
       {/* Build Tuesday: is it taking people off Thursday, or adding a second
           crowd? (2026-10-05). One row per Tuesday, against the Thursday two
           days later. "只报周二" is the number to watch: anyone who moved on /my
           lands there, since a move drops the Thursday. */}
       <section className="stack-4" id="split">
         <div className="group-head">
-          <h2 className="h3">分流 · Build Tuesday</h2>
+          <h2 className="h3">分流 · 线下 Build Tuesday（10-06 到 11-03）</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
             成功页一问：周二 {signups.filter((row) => row.interest === "tuesday").length} · 小班 {signups.filter((row) => row.interest === "class").length} · 都不用 {signups.filter((row) => row.interest === "none").length}
           </span>
@@ -1038,7 +1053,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
               </tr>
             </thead>
             <tbody>
-              {SPECIAL_SESSIONS.map(({ date }) => tuesdaySplit(signups, date)).map((split) => (
+              {/* In-person Tuesdays only (2026-11-18): an online one has no cap, no
+                  waitlist, and is not a second room taking Thursday's crowd. */}
+              {SPECIAL_SESSIONS.filter((special) => !special.online).map(({ date }) => tuesdaySplit(signups, date)).map((split) => (
                 <tr key={split.tuesday}>
                   <td className="mono">{split.tuesday}</td>
                   <td className="mono">{split.tuesdayBooked} / {capFor(split.tuesday)} · {split.tuesdayWaitlist}</td>
@@ -1146,7 +1163,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       {view === "money" && (
       <section className="stack-8 admin-group" id="money">
-        <h2 className="eyebrow">收款：周二、课程、会员</h2>
+        <h2 className="eyebrow">收款：课程、会员{tuesdayFees.length > 0 ? "（还有以前线下周二的收费）" : ""}</h2>
       {/* Build Tuesday's fee (2026-10-14): who is booked, who has paid, who
           is a member. "Paid" is set here by hand once the transfer shows up
           under their reference; members are free and need nothing. */}
@@ -1240,7 +1257,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <div className="group-head">
           <h2 className="h3">{IP_COURSE.title} · {IP_COURSE.date}</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
-            已付 {courseOrders.filter((o) => o.status === "paid").length} · 待付 {courseOrders.filter((o) => o.status === "pending").length} · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {IP_COURSE.cap}
+            {/* 2026-11-18: refreshers (past students, 40) counted apart from full price. A
+                yearly member's free place is saved as "paid" with no transfer, so it is
+                inside 已付 and cannot be told apart here. */}
+            已付 {courseOrders.filter((o) => o.status === "paid").length}（其中复训 {courseOrders.filter((o) => o.status === "paid" && o.refresher).length}，会员免费名额也算在已付里） · 待付 {courseOrders.filter((o) => o.status === "pending").length}（其中复训 {courseOrders.filter((o) => o.status === "pending" && o.refresher).length}） · 候补 {courseOrders.filter((o) => o.status === "waitlist").length} · 上限 {IP_COURSE.cap}
           </span>
         </div>
         {courseOrders.length + oldCourseOrders.length + ip1115Orders.length === 0 ? (
@@ -1318,6 +1338,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <th scope="col">名字</th>
                   <th scope="col">微信号</th>
                   <th scope="col">状态</th>
+                  {/* 2026-11-18: which kind, and the last day it counts — cohort 1 moved to 12/1–12/22 (5.12). */}
+                  <th scope="col">种类 · 有效到</th>
                   <th scope="col">下单时间</th>
                 </tr>
               </thead>
@@ -1328,6 +1350,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td>{order.name}{order.signup_id ? "" : " ·新"}</td>
                     <td className="mono">{order.wechat}</td>
                     <td>{order.status === "paid" ? `已付 ${order.paid_at ?? ""}` : order.status === "pending" ? "未付（没付完或放弃了）" : order.status}</td>
+                    <td>
+                      {(() => {
+                        const held = memberships.find((row) => row.ref === order.ref);
+                        if (!held) return "—";
+                        const kind = held.course === MEMBERSHIP.id ? "4 周一期" : "一年";
+                        return `${kind} · ${held.expires_on || "没有在卖的一期"}${held.active ? "" : "（已过期）"}`;
+                      })()}
+                    </td>
                     <td className="mono">{order.created_at}</td>
                   </tr>
                 ))}
@@ -1482,7 +1512,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
       <section className="stack-4">
         <div className="group-head">
-          <h2 className="h3">AI usage</h2>
+          <h2 className="h3">AI usage（10-05 前的旧数据，报名表已不再问）</h2>
           <span className="body-sm" style={{ color: "var(--fg3)" }}>
             Both questions are optional — {signups.length - answeredModels.length} of{" "}
             {signups.length} left the model question blank, and a blank is not a zero.
@@ -1644,8 +1674,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <th scope="col">WeChat</th>
                 <th scope="col">Demo</th>
                 <th scope="col">Session</th>
-                <th scope="col">AI</th>
-                <th scope="col">Spend</th>
+                {/* Industry replaced the AI and spend columns (2026-11-18): those
+                    questions left the form in 5.3, and every signup is asked
+                    the industry since PR #11. The old answers are still in the
+                    "AI usage" section and the CSV export. */}
+                <th scope="col">行业</th>
+                <th scope="col">开场分享</th>
                 <th scope="col">Building</th>
                 <th scope="col">Source</th>
                 <th scope="col">Lang</th>
@@ -1678,14 +1712,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     {row.first_session ?? "—"}
                     {row.first_session && row.waitlist.includes(row.first_session) ? "（候补）" : ""}
                   </td>
-                  {/* Stripped of the region prefix: the column is narrow, and
-                      the side is already counted in the cards above. */}
-                  <td style={{ whiteSpace: "normal", minWidth: "160px" }}>
-                    {row.ai_models.length > 0
-                      ? row.ai_models.map((model) => model.replace(/^(intl_|cn_)/, "")).join(", ")
-                      : "—"}
-                  </td>
-                  <td className="mono">{row.ai_spend ?? "—"}</td>
+                  <td>{row.industry ? (signupFields.industryOptions.find((option) => option.value === row.industry)?.label ?? row.industry) : "—"}</td>
+                  <td style={{ whiteSpace: "normal", minWidth: "160px" }}>{row.share_topic ?? "—"}</td>
                   {/* The only free-text column, so it is the only one allowed
                       to wrap rather than widen the table indefinitely. */}
                   <td style={{ whiteSpace: "normal", minWidth: "280px" }}>{row.building ?? "—"}</td>

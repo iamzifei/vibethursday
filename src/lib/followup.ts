@@ -1,6 +1,6 @@
 // Relative, not "@/": the tests load this through Node's type stripper.
 import type { DeskEntry } from "./desk.ts";
-import { isSpecialSession } from "./sessions.ts";
+import { isOnlineSession, isSpecialSession } from "./sessions.ts";
 
 /**
  * The follow-up list after a session (2026-11-02): for each person who came,
@@ -14,7 +14,7 @@ export const ACTION_LABEL: Record<FollowUpAction, { title: string; todo: string 
   need: { title: "带了需求", todo: "记进需求台账；找能接的共建者或导师团，散场后拉个小群。" },
   project: { title: "带了项目", todo: "问一句要不要找人一起做（成为共建者）；在作品进展里记一条。" },
   cert: { title: "备考 AWS 证书", todo: "拉进备考组，约下周二一起做模拟题。" },
-  membership: { title: "常来周二、还不是会员", todo: "30 天内来了两次以上周二：介绍共创会员（一年周二免门票）。" },
+  membership: { title: "常来周二、还不是会员", todo: "30 天内来了两次以上周二：介绍共创会员（一期 4 个线上周二，vibethursday.com/join）。" },
   first: { title: "第一次来", todo: "散场后私信说声谢谢，问下次想聊什么。" },
 };
 
@@ -25,8 +25,11 @@ const DAY = 24 * 60 * 60 * 1000;
 
 export function followUps(desk: readonly DeskEntry[], session: string): { entry: DeskEntry; actions: FollowUpAction[] }[] {
   const end = Date.parse(`${session}T00:00:00Z`);
+  // An online Tuesday has no door, so nobody checks in (2026-11-18): the
+  // people to follow up are the ones who booked it and were let in.
+  const online = isOnlineSession(session);
   return desk
-    .filter((entry) => entry.arrived)
+    .filter((entry) => (online ? entry.booked && entry.pay !== "noAccess" : entry.arrived))
     .map((entry) => {
       const actions: FollowUpAction[] = [];
       if (entry.bring === "need") actions.push("need");

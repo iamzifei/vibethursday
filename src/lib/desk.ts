@@ -1,3 +1,5 @@
+import { feeFor, isOnlineSession, isOpenTrialSession } from "./sessions.ts";
+
 /**
  * The check-in desk (2026-11-02): who signed up for one session, who has
  * arrived, and on a paid Build Tuesday who still owes the fee — the three
@@ -16,13 +18,39 @@
  *   page refuses anyone else, and marking a fee paid books the person (past
  *   the cap). A walk-in or someone on the waitlist is "ask": the organiser
  *   settles it, not the desk.
+ * - An online Tuesday (from 2026-11-10) has no fee and no door. The one
+ *   question there is who may be added to that morning's WeChat group: a
+ *   共创会员 or the 导师团, or anyone on an open-trial Tuesday — the same rule
+ *   as `canJoinOnlineTuesday` in db.ts. Everyone else is "noAccess", pointed
+ *   at /join.
  */
+
+/**
+ * What kind of session the desk is showing (2026-11-18):
+ * - "free": a Thursday, nothing to collect;
+ * - "paid": an in-person Tuesday with a fee (up to 2026-11-03);
+ * - "online": an online Tuesday, members and mentors only;
+ * - "trial": an online Tuesday open to anyone who signed up.
+ */
+export type DeskMode = "free" | "paid" | "online" | "trial";
+
+/** The desk mode for a date, from the session calendar. */
+export function deskModeFor(session: string): DeskMode {
+  if (isOnlineSession(session)) return isOpenTrialSession(session) ? "trial" : "online";
+  return feeFor(session) !== null ? "paid" : "free";
+}
 
 /** One person on the desk, as read from the database. */
 export type DeskRow = {
   id: string;
   name: string;
   wechat: string | null;
+  /**
+   * Their WeChat group nickname, for someone who signed up through the group
+   * bot (2026-11-18): those rows often have no WeChat ID, and this is the only
+   * way to tell who they are.
+   */
+  wechat_name?: string | null;
   /** This date is in their sessions. */
   booked: boolean;
   /** This date is in their waitlist. */
@@ -53,7 +81,10 @@ export type DeskRow = {
   sessions: string[];
 };
 
-export type PayState = "free" | "member" | "mentor" | "volunteer" | "paid" | "marked" | "waived" | "claimed" | "owing" | "ask";
+export type PayState =
+  | "free" | "member" | "mentor" | "volunteer" | "paid" | "marked" | "waived" | "claimed" | "owing" | "ask"
+  // Online Tuesdays only (2026-11-18): in on an open trial, or not let in.
+  | "trial" | "noAccess";
 
 export type DeskEntry = DeskRow & {
   arrived: boolean;
@@ -61,8 +92,14 @@ export type DeskEntry = DeskRow & {
   pay: PayState;
 };
 
-function payState(row: DeskRow, paidSession: boolean): PayState {
-  if (!paidSession) return "free";
+function payState(row: DeskRow, mode: DeskMode): PayState {
+  if (mode === "online" || mode === "trial") {
+    // Volunteers are not let in free online: canJoinOnlineTuesday is member or mentor.
+    if (row.member) return "member";
+    if (row.mentor) return "mentor";
+    return mode === "trial" ? "trial" : "noAccess";
+  }
+  if (mode === "free") return "free";
   if (row.member) return "member";
   if (row.mentor) return "mentor";
   if (row.volunteer) return "volunteer";
@@ -80,13 +117,15 @@ function payState(row: DeskRow, paidSession: boolean): PayState {
  * scan for one), then arrived, latest first (the person in front of you is at
  * the top).
  */
-export function buildDesk(rows: readonly DeskRow[], paidSession: boolean): DeskEntry[] {
+export function buildDesk(rows: readonly DeskRow[], session: DeskMode | boolean): DeskEntry[] {
+  // A boolean is the older "is this a paid session" form, kept for callers and tests.
+  const mode: DeskMode = session === true ? "paid" : session === false ? "free" : session;
   return rows
     .map((row) => ({
       ...row,
       arrived: row.checked_in_at !== null,
       walkIn: row.checked_in_at !== null && !row.booked && !row.waitlisted,
-      pay: payState(row, paidSession),
+      pay: payState(row, mode),
     }))
     .sort((a, b) => {
       if (a.arrived !== b.arrived) return a.arrived ? 1 : -1;
@@ -103,6 +142,10 @@ export type DeskStats = {
   notYet: number;
   /** Owing or only said they paid: still to be checked. */
   owing: number;
+  /** Online Tuesdays: booked but neither member nor mentor, so not added to the group. */
+  noAccess: number;
+  /** Online Tuesdays: booked and let in (member, mentor, or an open trial). */
+  canJoin: number;
 };
 
 export function deskStats(entries: readonly DeskEntry[]): DeskStats {
@@ -113,6 +156,10 @@ export function deskStats(entries: readonly DeskEntry[]): DeskStats {
     arrived: entries.filter((entry) => entry.arrived).length,
     notYet: entries.filter((entry) => !entry.arrived).length,
     owing: entries.filter((entry) => entry.pay === "owing" || entry.pay === "claimed").length,
+    // Booked only, both of them: the online pages show "可以进群" and "不是会员"
+    // side by side under "报名", and a waitlisted row is in neither.
+    noAccess: entries.filter((entry) => entry.booked && entry.pay === "noAccess").length,
+    canJoin: entries.filter((entry) => entry.booked && (entry.pay === "member" || entry.pay === "mentor" || entry.pay === "trial")).length,
   };
 }
 
@@ -157,10 +204,12 @@ const IDENTITY: Record<PayState, string> = {
   claimed: "说已转账",
   owing: "未付",
   ask: "没报这一场",
+  trial: "试听",
+  noAccess: "不是会员",
 };
 
 /** The after-event sheet (2026-11-02): who came, as what, and what they wrote when signing up. */
-export const DESK_EXPORT_COLUMNS = ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么"] as const;
+export const DESK_EXPORT_COLUMNS = ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么", "群昵称"] as const;
 
 export function deskExportRow(entry: DeskEntry): string[] {
   const base = entry.pay === "free" && !entry.booked ? (entry.walkIn ? "现场新来" : "候补") : IDENTITY[entry.pay];
@@ -175,7 +224,19 @@ export function deskExportRow(entry: DeskEntry): string[] {
     entry.bring ? (BRING[entry.bring] ?? entry.bring) : "",
     entry.topic ?? "",
     entry.building ?? "",
+    // Bot signups (2026-11-18): often the only way to tell who they are.
+    entry.wechat_name ?? "",
   ];
+}
+
+/**
+ * What to show where a WeChat ID goes: the ID (shortened for the door helper),
+ * else the group nickname of a bot signup, else a plain "none".
+ */
+export function wechatOrNickname(entry: Pick<DeskRow, "wechat" | "wechat_name">, full: boolean): string {
+  if (entry.wechat) return (full ? entry.wechat : maskWechat(entry.wechat)) as string;
+  if (entry.wechat_name) return `群里报名 · 群昵称 ${entry.wechat_name}`;
+  return "没填微信号";
 }
 
 /** A WeChat ID shortened for the door helper: enough to tell two people apart, not to add them. */

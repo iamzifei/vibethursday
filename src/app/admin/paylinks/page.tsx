@@ -7,7 +7,7 @@ import { siteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "直接付款链接 · 后台", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "快速报名链接 · 后台", robots: { index: false, follow: false } };
 
 /**
  * Sign-up links with a QR code each, for people who sign up through the
@@ -33,7 +33,7 @@ export default async function PayLinksPage() {
   const origin = siteUrl();
   const forms = [
     { id: "quick-tue", title: "周二快速报名（线上，只对共创会员和导师团；不收费）", url: `${origin}/quick?d=tue` },
-    { id: "quick-thu", title: "周四快速报名（填名字、微信号 → 报上，免费）", url: `${origin}/quick?d=thu` },
+    { id: "quick-thu", title: "周四快速报名（填名字、微信号 → 报上，免费；也可以在群里找宝儿报名）", url: `${origin}/quick?d=thu` },
     { id: "join", title: "共创会员（填名字、微信号 → 直接刷卡）", url: `${origin}/join#join-form` },
   ];
   const formCodes = await Promise.all(forms.map((form) => QRCode.toDataURL(form.url, { width: 480, margin: 1 })));
@@ -42,14 +42,14 @@ export default async function PayLinksPage() {
   return (
     <main className="shell section stack-8" style={{ maxWidth: "720px" }}>
       <div className="stack-3">
-        <h1 className="h2" style={{ margin: 0 }}>直接付款链接</h1>
+        <h1 className="h2" style={{ margin: 0 }}>快速报名链接</h1>
         <p className="body">
           给想通过你直接报名的人：发链接，或者让他扫码。他自己填完就登记好了，不用你再处理。
         </p>
       </div>
 
       <h2 className="h3" style={{ margin: 0 }}>网站上的快速报名</h2>
-      <p className="body-sm" style={{ margin: 0 }}>对方只填名字和微信号，付完自动登记，你不用再手动处理。</p>
+      <p className="body-sm" style={{ margin: 0 }}>对方只填名字和微信号就登记好了（共创会员要刷卡），你不用再手动处理。</p>
       {forms.map((form, index) => (
         <section className="card stack-3" key={form.id} id={form.id} style={{ padding: "var(--space-6)" }}>
           <h3 className="h3" style={{ margin: 0 }}>{form.title}</h3>

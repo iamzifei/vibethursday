@@ -155,8 +155,9 @@ test("★ the after-event list: who came, as what, and what they wrote", () => {
     [row({ name: "Ann", checked_in_at: "10:35", source: "qr", member: true, bring: "cert", topic: "想考 AWS", building: "做跨境客服" })],
     true,
   );
-  assert.deepEqual(DESK_EXPORT_COLUMNS, ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么"]);
-  assert.deepEqual(deskExportRow(entry), ["Ann", "ann_01", "10:35", "扫码", "共创会员", "备考 AWS 证书", "想考 AWS", "做跨境客服"]);
+  // Spec change 2026-11-18: a last column for the group nickname of a bot signup.
+  assert.deepEqual(DESK_EXPORT_COLUMNS, ["名字", "微信号", "到场", "怎么签的", "身份", "带什么来", "这次想聊", "在做什么", "群昵称"]);
+  assert.deepEqual(deskExportRow(entry), ["Ann", "ann_01", "10:35", "扫码", "共创会员", "备考 AWS 证书", "想考 AWS", "做跨境客服", ""]);
   const [absent] = buildDesk([row({ booked: true })], false);
   assert.deepEqual(deskExportRow(absent).slice(2, 5), ["没来", "", "已报名"]);
 });

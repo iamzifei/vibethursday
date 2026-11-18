@@ -4,6 +4,7 @@ import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
 import { listMemberships, type MembershipRow } from "@/lib/db";
 import { membershipSource, SOURCE_LABEL } from "@/lib/membership-admin";
 import { sydneyToday } from "@/lib/sessions";
+import { MEMBERSHIP } from "@/lib/course";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ const ERRORS: Record<string, string> = {
 /**
  * Every paid 共创会员 in one register (2026-11-02, membership-admin.ts): who,
  * how they paid, from when to when — and a form for someone who paid outside
- * the site, so the site stops charging them for Tuesdays.
+ * the site, so the site lets them into the online Tuesdays (from 2026-11-10,
+ * membership is access to them, not a waived fee).
  */
 export default async function MembersAdminPage({ searchParams }: PageProps) {
   if (!isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value)) {
@@ -49,19 +51,19 @@ export default async function MembersAdminPage({ searchParams }: PageProps) {
         <h1 className="h2" style={{ margin: 0 }}>共创会员 · 在期 {all.filter((row) => row.active).length} 人</h1>
         <p className="body-sm" style={{ margin: 0, color: "var(--fg3)" }}>
           刷卡 {count("card")} · 10-25 课程转账 {count("class")} · 手动登记 {count("manual")}。
-          报周二时按<strong>微信号</strong>认人，认出来就自动免收。
+          报线上周二时按<strong>微信号</strong>认人，认出来就能被拉进那一场的群。
         </p>
       </div>
 
       {params.err && ERRORS[params.err] && <p className="alert" role="alert">{ERRORS[params.err]}</p>}
-      {params.ok === "added" && <p className="alert" role="status">已登记。他下次报周二会自动免收；已经报了的，到付款页刷新一下就变免收。</p>}
+      {params.ok === "added" && <p className="alert" role="status">已登记。他报的线上周二，在周二名单上会显示「共创会员 · 可以进群」。</p>}
       {params.ok === "already" && <p className="alert" role="status">这个微信号已经是在期会员，没有重复登记。</p>}
       {params.ok === "checkout_open" && (
         <p className="alert" role="alert">他在 /join 开过刷卡页还没付完，那一页还可能扣款。先问他有没有在网站上付；没付的话等那一页过期（最多 24 小时）再来登记。</p>
       )}
 
       <details className="card stack-3" open={Boolean(params.err)}>
-        <summary><strong>手动登记一位会员</strong>（在网站以外付过 599 的人）</summary>
+        <summary><strong>手动登记一位会员</strong>（在网站以外付过 {MEMBERSHIP.priceLabel} 的人）</summary>
         <form method="post" action="/api/admin/membership" className="stack-3" style={{ marginTop: "var(--space-3)" }}>
           <label className="label">名字 <input className="field" name="name" required maxLength={60} /></label>
           <label className="label">微信号（和他报名时填的一样） <input className="field" name="wechat" required maxLength={60} autoCapitalize="off" autoCorrect="off" /></label>

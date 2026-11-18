@@ -32,13 +32,13 @@ export const ADMIN_NAV: AdminGroup[] = [
     ],
   },
   {
-    title: "周二 · Build Tuesday",
+    // Online from 2026-11-10 (5.11): no door, no fee — the desk is the list of
+    // who may be added to that morning's WeChat group.
+    title: "周二 · 线上 Build Tuesday",
     links: [
-      { href: "/admin/desk?day=tue", label: "周二签到台", hint: "签到、看付款", perm: "desk" },
-      { href: "/admin/door?day=tue", label: "周二门口签到码", hint: "平板全屏", perm: "desk" },
-      { href: "/admin?view=money#tuesday-fees", label: "周二收费" },
+      { href: "/admin/desk?day=tue", label: "周二名单", hint: "谁报了、谁能拉进群", perm: "desk" },
       { href: "/admin/followup?day=tue", label: "周二会后跟进", hint: "需求、项目、该推会员的" },
-      { href: "/admin/paylinks", label: "直接付款链接", hint: "30 和 599 的链接、二维码" },
+      { href: "/admin/paylinks", label: "快速报名链接", hint: "周二、周四、共创会员的链接和二维码" },
       { href: "/admin/members", label: "共创会员", hint: "名单与手动登记" },
       { href: "/admin/roles", label: "身份与助理", hint: "加助理、导师团、共建者" },
     ],
@@ -48,9 +48,9 @@ export const ADMIN_NAV: AdminGroup[] = [
     links: [
       { href: "/admin/desk?day=thu", label: "周四签到台", hint: "门口用，手机上看", perm: "desk" },
       { href: "/admin/door?day=thu", label: "周四门口签到码", hint: "平板全屏", perm: "desk" },
-      { href: "/admin/waitlist", label: "候补", hint: "有空位时放人", perm: "waitlist" },
+      { href: "/admin/waitlist", label: "周四候补", hint: "有空位时放人", perm: "waitlist" },
       { href: "/admin/questions", label: "本周问答", hint: "/go 暂不显示", perm: "questions" },
-      { href: "/admin?view=week", label: "本周：签到名单、海报、分享、聚餐" },
+      { href: "/admin?view=week", label: "本周：签到名单、海报、开场分享" },
       { href: "/admin/photos", label: "照片审核", hint: "大家上传的现场照片", perm: "photos" },
       { href: "/admin?view=after", label: "周四散场后：反馈" },
       { href: "/admin/followup?day=thu", label: "周四会后跟进" },
@@ -61,7 +61,7 @@ export const ADMIN_NAV: AdminGroup[] = [
     title: "两天共用",
     links: [
       { href: "/live", label: "投屏：今日在场", hint: "签到一个上墙一个" },
-      { href: "/screen", label: "投屏：场地大屏", hint: "周二周四自动切换" },
+      { href: "/screen", label: "投屏：场地大屏", hint: "周四现场用" },
       { href: "/admin/tag", label: "标注来的人" },
       { href: "/admin/people", label: "所有人画像" },
     ],
@@ -71,7 +71,7 @@ export const ADMIN_NAV: AdminGroup[] = [
     links: [
       { href: "/admin/progress", label: "作品进展" },
       { href: "/admin/learn", label: "录播课" },
-      { href: "/admin?view=money", label: "收款：周二、课程、会员" },
+      { href: "/admin?view=money", label: "收款：课程、会员" },
     ],
   },
   {

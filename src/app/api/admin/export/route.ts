@@ -6,8 +6,8 @@ import { COURSE } from "@/lib/course";
 
 import { CHECKIN_COLUMNS, csvCell } from "@/lib/csv";
 import { isSessionDate } from "@/lib/checkin";
-import { feeFor, focusSession } from "@/lib/sessions";
-import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow } from "@/lib/desk";
+import { focusSession } from "@/lib/sessions";
+import { buildDesk, DESK_EXPORT_COLUMNS, deskExportRow, deskModeFor } from "@/lib/desk";
 import { ACTION_LABEL, followUps } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +49,11 @@ const COLUMNS = [
   "interest",
   // What a business owner most wants AI for (signup-profile.ts BIZ_FOCUS).
   "biz_focus",
+  // The group nickname of a bot signup (2026-11-18): often the only name a
+  // row from the WeChat group has. Then what they offered to share on a
+  // Thursday. Appended last, like the ones above.
+  "wechat_name",
+  "share_topic",
 ] as const;
 
 /**
@@ -83,7 +88,7 @@ export async function GET(request: Request) {
 
   const what = new URL(request.url).searchParams.get("what");
 
-  // One session's drinks or check-ins (default: the session in focus).
+  // One session's check-ins or desk sheet (default: the session in focus).
   const sessionParam = new URL(request.url).searchParams.get("session");
   const session = sessionParam && isSessionDate(sessionParam) ? sessionParam : focusSession().date;
 
@@ -95,7 +100,7 @@ export async function GET(request: Request) {
           name: `followup-${session}`,
           lines: await listDeskRows(session).then((rows) => [
             ["名字", "微信号", "要做的", "这次想聊", "在做什么"].join(","),
-            ...followUps(buildDesk(rows, feeFor(session) !== null), session).map(({ entry, actions }) =>
+            ...followUps(buildDesk(rows, deskModeFor(session)), session).map(({ entry, actions }) =>
               [entry.name, entry.wechat ?? "", actions.map((action) => ACTION_LABEL[action].title).join("；"), entry.topic ?? "", entry.building ?? ""]
                 .map((value) => csvCell(value))
                 .join(","),
@@ -107,7 +112,7 @@ export async function GET(request: Request) {
           name: `desk-${session}`,
           lines: await listDeskRows(session).then((rows) => [
             DESK_EXPORT_COLUMNS.join(","),
-            ...buildDesk(rows, feeFor(session) !== null).map((entry) => deskExportRow(entry).map((value) => csvCell(value)).join(",")),
+            ...buildDesk(rows, deskModeFor(session)).map((entry) => deskExportRow(entry).map((value) => csvCell(value)).join(",")),
           ]),
         }
       : what === "checkins"

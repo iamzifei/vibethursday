@@ -6,7 +6,7 @@ import { staffRole } from "@/lib/staff";
 import { isSessionDate } from "@/lib/checkin";
 import { capFor } from "@/lib/capacity";
 import { listDeskRows } from "@/lib/db";
-import { buildDesk, deskStats, filterDesk, maskWechat, type DeskEntry, type PayState } from "@/lib/desk";
+import { buildDesk, deskModeFor, deskStats, filterDesk, wechatOrNickname, type DeskEntry, type PayState } from "@/lib/desk";
 import { deskFocus, deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, sessionForDay, SPECIAL_SESSIONS, sydneyToday } from "@/lib/sessions";
 import { feeLabel, payLabel } from "@/lib/tuesday-fee";
 
@@ -28,13 +28,23 @@ const PAY_LABEL: Record<PayState, string> = {
   claimed: "说已转账 · 待核",
   owing: "未付",
   ask: "没报这一场 · 收款找主办人",
+  trial: "试听 · 可以进群",
+  noAccess: "不是会员 · 不拉进群，引导去 /join",
+};
+
+/** On an online Tuesday the question is "may they join the group", not "are they free" (2026-11-18). */
+const ONLINE_LABEL: Partial<Record<PayState, string>> = {
+  member: "共创会员 · 可以进群",
+  mentor: "导师团 · 可以进群",
 };
 
 const BRING_LABEL: Record<string, string> = { need: "带需求", project: "带项目", help: "来帮忙", cert: "备考 AWS 证书" };
 
 /**
  * The check-in desk (2026-11-02, desk.ts): one phone-sized page for whoever is
- * helping at the door on a Build Tuesday or a Thursday. For one session it
+ * helping at the door on a Build Tuesday or a Thursday. On an online Tuesday
+ * (from 2026-11-10) there is no door: the page is that morning's list of who
+ * may be added to the WeChat group, and the check-in controls are hidden. For one session it
  * answers who booked, who has arrived, and who still owes the fee, and every
  * row has the button that settles it. Nothing else from /admin is on it.
  *
@@ -76,11 +86,14 @@ export default async function DeskPage({ searchParams }: PageProps) {
 
   const fee = feeFor(session);
   const tuesday = isSpecialSession(session);
-  const desk = buildDesk(await listDeskRows(session), fee !== null);
+  const mode = deskModeFor(session);
+  const online = mode === "online" || mode === "trial";
+  const desk = buildDesk(await listDeskRows(session), mode);
   const stats = deskStats(desk);
   const searched = filterDesk(desk, query, !fullWechat);
   const shown = searched.filter((entry) =>
-    show === "arrived" ? entry.arrived
+    online && show === "owing" ? entry.pay === "noAccess"
+    : show === "arrived" ? entry.arrived
     : show === "waiting" ? !entry.arrived
     : show === "owing" ? entry.pay === "owing" || entry.pay === "claimed"
     : true,
@@ -99,9 +112,9 @@ export default async function DeskPage({ searchParams }: PageProps) {
     <li className={`desk-row${entry.arrived ? " desk-row--in" : ""}`} id={`r-${entry.id}`}>
       <div className="desk-row__who">
         <strong className="desk-row__name">{entry.name}</strong>
-        <span className="mono desk-row__wechat">{(fullWechat ? entry.wechat : maskWechat(entry.wechat)) ?? "没填微信号"}</span>
+        <span className="mono desk-row__wechat">{wechatOrNickname(entry, fullWechat)}</span>
         <span className="desk-row__tags">
-          {entry.arrived ? (
+          {online ? null : entry.arrived ? (
             <span className="pill pill--live">✓ {entry.checked_in_at} 已到{entry.walkIn ? " · 现场新来" : ""}</span>
           ) : (
             <span className="pill">未到</span>
@@ -110,8 +123,8 @@ export default async function DeskPage({ searchParams }: PageProps) {
           {entry.mentor && entry.pay !== "mentor" && <span className="pill pill--live">导师团</span>}
           {entry.builder && <span className="pill pill--live">共建者</span>}
           {entry.pay !== "free" && (
-            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" || entry.pay === "marked" ? " pill--warn" : " pill--live"}`}>
-              {PAY_LABEL[entry.pay]}
+            <span className={`pill${entry.pay === "owing" || entry.pay === "claimed" || entry.pay === "ask" || entry.pay === "marked" || entry.pay === "noAccess" ? " pill--warn" : " pill--live"}`}>
+              {(online && ONLINE_LABEL[entry.pay]) || PAY_LABEL[entry.pay]}
               {entry.pay === "claimed" && entry.claimed_at ? ` ${entry.claimed_at}` : ""}
             </span>
           )}
@@ -124,6 +137,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
       </div>
 
       <div className="desk-row__actions">
+        {!online && (
         <form method="post" action="/api/admin/checkin">
           <input type="hidden" name="session" value={session} />
           <input type="hidden" name="signupId" value={entry.id} />
@@ -135,6 +149,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
             {entry.arrived ? "撤销签到" : "签到"}
           </button>
         </form>
+        )}
         {(entry.pay === "owing" || entry.pay === "claimed") && (
           <>
             <Link className="btn btn--secondary btn--sm" href={`/admin/desk/pay?s=${session}&id=${entry.id}`}>付款码</Link>
@@ -171,13 +186,13 @@ export default async function DeskPage({ searchParams }: PageProps) {
         <div className="tagger-top">
           <span className="eyebrow">后台 · 签到台</span>
           <span className="tagger-top__links">
-            <Link href={`/admin/door?s=${session}`}>门口签到码</Link>
+            {!online && <Link href={`/admin/door?s=${session}`}>门口签到码</Link>}
             {role === "admin" && <Link href="/admin">回后台</Link>}
           </span>
         </div>
         <h1 className="h2" style={{ margin: 0 }}>
           {formatSession(session, "zh")}
-          {tuesday ? " · Build Tuesday" : ""}
+          {tuesday ? (online ? " · Build Tuesday（线上）" : " · Build Tuesday") : ""}
         </h1>
         {/* "周二签到台" with no Tuesday on the calendar falls back to Thursday: say so. */}
         {params.day === "tue" && !params.s && !tuesday && (
@@ -195,6 +210,13 @@ export default async function DeskPage({ searchParams }: PageProps) {
         </nav>
       </div>
 
+      {online ? (
+      <dl className="desk-stats">
+        <div><dt>报名</dt><dd>{stats.booked}</dd></div>
+        <div><dt>可以进群</dt><dd>{stats.canJoin}</dd></div>
+        <div className={stats.noAccess > 0 ? "desk-stats--warn" : ""}><dt>不是会员</dt><dd>{stats.noAccess}</dd></div>
+      </dl>
+      ) : (
       <dl className="desk-stats">
         <div><dt>已到</dt><dd>{stats.arrived}</dd></div>
         <div><dt>未到</dt><dd>{stats.notYet}</dd></div>
@@ -203,7 +225,19 @@ export default async function DeskPage({ searchParams }: PageProps) {
         <div><dt>现场新来</dt><dd>{stats.walkIns}</dd></div>
         {fee !== null && <div className={stats.owing > 0 ? "desk-stats--warn" : ""}><dt>未付</dt><dd>{stats.owing}</dd></div>}
       </dl>
+      )}
 
+      {online ? (
+      <details className="card stack-2 desk-howto" open>
+        <summary><strong>线上周二怎么用</strong></summary>
+        <ol className="stack-2 body-sm" style={{ margin: 0 }}>
+          <li>线上周二没有门口，也不用签到。这一页是这一场的名单：谁报了、谁能被拉进这一场的微信群。</li>
+          <li>绿色（共创会员 / 导师团{mode === "trial" ? " / 试听" : ""}）：开始前拉进群，Zoom 链接发在群里。</li>
+          <li>黄色「不是会员」：不拉进群，请对方到 vibethursday.com/join 办共创会员。</li>
+          <li>「群里报名 · 群昵称 …」= 在微信群里找宝儿报的名，没有微信号，照群昵称在群里找人。</li>
+        </ol>
+      </details>
+      ) : (
       <details className="card stack-2 desk-howto" open={stats.arrived === 0}>
         <summary><strong>怎么用（第一次看这里）</strong></summary>
         <ol className="stack-2 body-sm" style={{ margin: 0 }}>
@@ -215,12 +249,13 @@ export default async function DeskPage({ searchParams }: PageProps) {
                 看付款：绿色（网上已付 / 共创会员 / 免收）不用管。<strong>黄色「未付」</strong>：门票 {feeLabel(fee)}，共 {payLabel(fee)}。点「付款码」让对方扫码刷卡，付完自动变已付；对方当场转账的，看到到账截图后点「标已付」。手动标的会显示黄色「手动标已付 · 待核」，主办人对账后才算数。
               </li>
               <li>「说已转账 · 待核」= 对方在网站上点过「我已转账」，钱还没核。由主办人散场后核，现场不用追。</li>
-              <li>想入共创会员的：一年周二免门票，链接是 vibethursday.com/join，让对方自己付，不用你处理。</li>
+              <li>想入共创会员的：链接是 vibethursday.com/join，让对方自己付，不用你处理。</li>
             </>
           )}
           <li>点错了：已到的人那一行有「撤销签到」。</li>
         </ol>
       </details>
+      )}
 
       <form className="wall-search" action="/admin/desk">
         <input type="hidden" name="s" value={session} />
@@ -230,7 +265,10 @@ export default async function DeskPage({ searchParams }: PageProps) {
       </form>
 
       <nav className="desk-switch" aria-label="筛选">
-        {([
+        {(online ? [
+          ["all", `全部 ${searched.length}`],
+          ["owing", `不是会员 ${searched.filter((entry) => entry.pay === "noAccess").length}`],
+        ] : [
           ["all", `全部 ${searched.length}`],
           ["waiting", `未到 ${searched.filter((entry) => !entry.arrived).length}`],
           ["arrived", `已到 ${searched.filter((entry) => entry.arrived).length}`],
@@ -254,7 +292,7 @@ export default async function DeskPage({ searchParams }: PageProps) {
 
       {shown.length === 0 ? (
         <p className="body" style={{ color: "var(--fg3)" }}>
-          {query ? "搜不到。没报名的请对方扫门口的签到码，选「我没报名」。" : "这里还没有人。"}
+          {query ? (online ? "搜不到：这个人没报这一场。" : "搜不到。没报名的请对方扫门口的签到码，选「我没报名」。") : "这里还没有人。"}
         </p>
       ) : (
         <ul className="desk-list">

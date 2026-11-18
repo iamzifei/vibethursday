@@ -1447,6 +1447,8 @@ export type SignupRow = {
   wechat_former: string[];
   /** Their display name in the WeChat group, when the group bot signed them up. */
   wechat_name: string | null;
+  /** What they offered to open a Thursday with (2026-10-15). */
+  share_topic?: string | null;
   /** When each waitlisted session was joined, ISO timestamps keyed by date. */
   waitlist_since: Record<string, string>;
   created_at: string;
@@ -1649,7 +1651,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, wechat_name, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, wechat_name, share_topic, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -5421,7 +5423,7 @@ export async function listDeskRows(session: string): Promise<DeskRow[]> {
   // hold ran out still shows as booked and owing until another page runs it.
   await releaseExpiredHolds();
   const result = await getPool().query<DeskRow>(
-    `SELECT g.id::text AS id, g.name, g.wechat,
+    `SELECT g.id::text AS id, g.name, g.wechat, nullif(g.wechat_name, '') AS wechat_name,
             ($1::date = ANY(g.sessions)) AS booked,
             ($1::date = ANY(g.waitlist)) AS waitlisted,
             to_char(c.created_at AT TIME ZONE 'Australia/Sydney', 'HH24:MI') AS checked_in_at,

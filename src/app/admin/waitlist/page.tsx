@@ -3,9 +3,10 @@ import { NoAccess } from "@/components/admin/NoAccess";
 import { capFor } from "@/lib/capacity";
 import { listSignups } from "@/lib/db";
 import { can } from "@/lib/permissions";
-import { deskFocus, formatSession } from "@/lib/sessions";
+import { formatSession, sessionForDay } from "@/lib/sessions";
 import { staffRole } from "@/lib/staff";
 import { waitlistFor } from "@/lib/waitlist-order";
+import { wechatOrNickname } from "@/lib/desk";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: "候补 · VT 后台", robots: { inde
 type PageProps = { searchParams: Promise<{ msg?: string }> };
 
 /**
- * The waitlist for the session in focus (2026-11-02, moved out of /admin so
+ * The waitlist for the next Thursday (2026-11-02, moved out of /admin so
  * an assistant can use it). One card per person, phone first; "give a place"
  * is one tap while a place is free. Going over the cap is the admin's call
  * alone (the API checks it too).
@@ -24,7 +25,9 @@ export default async function WaitlistPage({ searchParams }: PageProps) {
   if (!can(role, "waitlist")) return <NoAccess />;
 
   const { msg } = await searchParams;
-  const session = deskFocus();
+  // Always the next Thursday (2026-11-18): online Tuesdays have no cap and no
+  // waitlist, so following the desk onto one showed an empty "N / 200".
+  const session = sessionForDay("thu") as string;
   const signups = await listSignups();
   const waiting = waitlistFor(signups, session);
   const booked = signups.filter((row) => row.sessions.includes(session)).length;
@@ -60,7 +63,7 @@ export default async function WaitlistPage({ searchParams }: PageProps) {
             <li className="desk-row" key={row.id}>
               <div className="desk-row__who">
                 <strong className="desk-row__name">{index + 1}. {row.name}</strong>
-                <span className="mono desk-row__wechat">{row.wechat ?? "没填微信号"}</span>
+                <span className="mono desk-row__wechat">{wechatOrNickname(row, true)}</span>
                 {row.building && <span className="body-sm desk-row__topic">{row.building}</span>}
                 <span className="body-sm" style={{ color: "var(--fg3)" }}>进候补：{when(row.waitlist_since[session], row.created_at)}</span>
               </div>
