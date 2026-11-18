@@ -32,8 +32,9 @@ function inWeChat(): boolean {
 /** The user agent never changes, so there is nothing to subscribe to. */
 const noSubscribe = () => () => {};
 
-async function loadImage(file: File): Promise<Source> {
-  const url = URL.createObjectURL(file);
+/** Decodes a picture with the browser's own decoder. */
+async function decode(blob: Blob): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(blob);
   const image = new Image();
   image.src = url;
   try {
@@ -44,7 +45,39 @@ async function loadImage(file: File): Promise<Source> {
     // The decoded image stays usable for drawImage after the URL is revoked.
     URL.revokeObjectURL(url);
   }
-  return { image, width: image.naturalWidth, height: image.naturalHeight, name: file.name.replace(/\.[^.]+$/, "") };
+  return image;
+}
+
+/** An iPhone camera photo (HEIC/HEIF), judged by type or, when the browser leaves the type empty, by name. */
+function looksLikeHeic(file: File): boolean {
+  return /hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+}
+
+/**
+ * Loads the picture, converting an iPhone HEIC photo when the browser cannot
+ * read it (2026-11-18).
+ *
+ * Safari reads HEIC itself, and iOS usually hands the page a JPEG anyway, so
+ * the browser's decoder is always tried first. Chrome, Android and WeChat on
+ * Android cannot, so for those the photo is converted to JPEG on the phone
+ * with libheif (`heic-to`). That library is about 3 MB, so it is fetched only
+ * when a HEIC photo actually needs it — never for a JPEG or PNG. The `csp`
+ * build is used because it needs no `unsafe-eval`.
+ */
+async function loadImage(file: File, onConverting: () => void): Promise<Source> {
+  const name = file.name.replace(/\.[^.]+$/, "");
+  let image: HTMLImageElement;
+  try {
+    image = await decode(file);
+  } catch (error) {
+    if (!looksLikeHeic(file)) throw error;
+    onConverting();
+    const { heicTo } = await import("heic-to/csp");
+    // Near-lossless: this JPEG is only an intermediate, cut again below.
+    const jpeg = await heicTo({ blob: file, type: "image/jpeg", quality: 0.95 });
+    image = await decode(jpeg);
+  }
+  return { image, width: image.naturalWidth, height: image.naturalHeight, name };
 }
 
 /** Cuts the nine pieces, row by row, as JPEG data URLs. */
@@ -87,6 +120,8 @@ export function NineGrid() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  /** Set while a picture is being read; says so when a HEIC photo is being converted. */
+  const [loading, setLoading] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
   // False on the server (no user agent there), the real answer once hydrated.
@@ -113,14 +148,17 @@ export function NineGrid() {
     setError(null);
     setNote(null);
     setPieces([]);
+    setLoading("正在读取图片…");
     try {
-      const loaded = await loadImage(file);
+      const loaded = await loadImage(file, () => setLoading("正在转换 iPhone 照片格式（HEIC），第一次要几秒…"));
       setSource(loaded);
       setPosition(0.5);
-    } catch {
-      // Typically HEIC on a computer browser that cannot decode it.
+    } catch (err) {
+      console.error("[grid] could not read the picture", err);
       setSource(null);
-      setError("这张图浏览器打不开。换成 JPG 或 PNG 再试，或者先截个屏再传截图。");
+      setError("这张图打不开。换成 JPG、PNG 或 HEIC 照片再试，或者先截个屏再传截图。");
+    } finally {
+      setLoading(null);
     }
   }
 
@@ -167,7 +205,7 @@ export function NineGrid() {
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         hidden
         onChange={(event) => {
           void onFile(event.target.files?.[0]);
@@ -176,11 +214,15 @@ export function NineGrid() {
         }}
       />
 
-      {!source ? (
+      {loading ? (
+        <div className="grid-tool__drop" role="status">
+          <span className="grid-tool__drop-title">{loading}</span>
+        </div>
+      ) : !source ? (
         <button type="button" className="grid-tool__drop" onClick={() => input.current?.click()}>
           <span className="grid-tool__drop-icon" aria-hidden="true">＋</span>
           <span className="grid-tool__drop-title">选一张图</span>
-          <span className="body-sm">从相册选，或者拍一张</span>
+          <span className="body-sm">从相册选，或者拍一张；JPG、PNG、iPhone 的 HEIC 都可以</span>
         </button>
       ) : (
         <>
