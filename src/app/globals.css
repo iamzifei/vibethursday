@@ -5759,12 +5759,25 @@ h4, .h4 { font-size: var(--text-lg); font-weight: var(--weight-semibold); line-h
 .grid-tool__seg button { min-height: 44px; border: 0; border-radius: var(--radius-full); background: transparent; color: var(--fg2); font: inherit; font-weight: 600; cursor: pointer; }
 .grid-tool__seg button.is-on { background: var(--accent); color: var(--accent-contrast); }
 .grid-tool__range { width: 100%; min-height: 44px; accent-color: var(--accent); }
-/* Mimics how Moments lays nine pictures out: square cells, a hairline gap. */
-.grid-tool__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
-.grid-tool__cell { position: relative; margin: 0; aspect-ratio: 1; overflow: hidden; background: var(--bg-tertiary); }
+/* A Moments post in WeChat's light mode (2026-11-18). WeChat's own colours,
+   not the site's tokens, because the point is to look like WeChat. Proportions
+   are estimated from the iPhone layout (375pt wide: 40pt avatar, nine-grid
+   about 3 × 80pt cells with about 4pt white gaps), so the gap is set as a
+   share of the grid's width (container query units) and scales with it. */
+.moment {
+  display: flex; gap: 10px; padding: 16px 14px 14px;
+  border-radius: var(--radius-lg); background: #ffffff; color: #191919;
+}
+.moment__avatar { flex: none; width: 42px; height: 42px; border-radius: 6px; background: #d8d8d8; }
+.moment__body { flex: 1; min-width: 0; }
+.moment__name { margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #576b95; }
+.moment__grid-wrap { container-type: inline-size; width: 86%; }
+.moment__time { margin: 10px 0 0; font-size: 13px; color: #b2b2b2; }
+.grid-tool__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; gap: 1.6cqw; background: #ffffff; }
+.grid-tool__cell { position: relative; margin: 0; aspect-ratio: 1; overflow: hidden; background: #ededed; }
 .grid-tool__cell img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .grid-tool__cell--wait { animation: grid-tool-wait 1s ease-in-out infinite alternate; }
-@keyframes grid-tool-wait { from { opacity: 0.4; } to { opacity: 0.8; } }
+@keyframes grid-tool-wait { from { opacity: 0.5; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .grid-tool__cell--wait { animation: none; } }
 /* The number is page chrome, never part of the saved picture. */
 .grid-tool__n {

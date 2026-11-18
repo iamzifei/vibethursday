@@ -275,17 +275,31 @@ export function NineGrid() {
             </div>
           )}
 
-          <div className="grid-tool__grid" aria-label="切好的九张图，按发朋友圈的顺序排列">
-            {pieces.length === 9
-              ? pieces.map((piece, i) => (
-                  <figure key={i} className="grid-tool__cell">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={piece} alt={`第 ${i + 1} 张`} />
-                    <span className="grid-tool__n mono" aria-hidden="true">{i + 1}</span>
-                  </figure>
-                ))
-              : Array.from({ length: 9 }, (_, i) => <div key={i} className="grid-tool__cell grid-tool__cell--wait" />)}
+          {/* A Moments post as it looks in WeChat (light mode): avatar, name,
+              then the nine pictures as square thumbnails on white, with white
+              gaps between them — the gaps are what the big picture is seen
+              through, so the preview shows them. */}
+          <div className="moment" aria-label="朋友圈效果预览">
+            <div className="moment__avatar" aria-hidden="true" />
+            <div className="moment__body">
+              <p className="moment__name">我</p>
+              <div className="moment__grid-wrap">
+                <div className="grid-tool__grid" aria-label="切好的九张图，按发朋友圈的顺序排列">
+                  {pieces.length === 9
+                    ? pieces.map((piece, i) => (
+                        <figure key={i} className="grid-tool__cell">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={piece} alt={`第 ${i + 1} 张`} />
+                          <span className="grid-tool__n mono" aria-hidden="true">{i + 1}</span>
+                        </figure>
+                      ))
+                    : Array.from({ length: 9 }, (_, i) => <div key={i} className="grid-tool__cell grid-tool__cell--wait" />)}
+                </div>
+              </div>
+              <p className="moment__time">1分钟前</p>
+            </div>
           </div>
+          <p className="body-sm" style={{ margin: 0 }}>上面是朋友圈里的样子；左上角的编号只在这里显示，保存的图上没有。</p>
 
           {wechat ? (
             <div className="card card--accent stack-2">
