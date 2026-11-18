@@ -101,7 +101,7 @@ function signed(url: string, method: "GET" | "POST", body: string): Request {
 type Reply = {
   ok: boolean;
   status: string;
-  session: { date: string; kind: string; online: boolean; fee: number | null };
+  session: { date: string; kind: string; online: boolean; fee: number | null; time: string; place: string; placeUrl?: string };
   waitlisted?: boolean;
   position?: number;
   spotsLeft?: number;
@@ -155,6 +155,18 @@ await saveSignup({
 await pool.query("TRUNCATE signups RESTART IDENTITY CASCADE");
 
 const [THU, NEXT_THU] = nextThursdays(2);
+
+/* When and where each kind of session is, as the bot API returns it
+ * (2026-11-18: every session object gained `time`, `place` and, in person,
+ * `placeUrl`; the session assertions below spread these in for that reason). */
+const THU_WHERE = {
+  time: "10:30 开门 · 10:45 开始",
+  place: "The Avenue · 465 Victoria Avenue, Chatswood",
+  placeUrl: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
+};
+const ONLINE_WHERE = { time: "10:30–12:00 线上 · Zoom 链接会在当天的微信群里发", place: "线上（Zoom）" };
+// A Tuesday in a room: Chatswood only, the street address is for people who have paid.
+const ROOM_WHERE = { time: "10:30–12:30", place: "Chatswood" };
 const TUE = fixtureTuesday();
 setSpecials([]);
 
@@ -162,7 +174,7 @@ setSpecials([]);
 let r = await signup({ wechatName: "测试甲" });
 assert.equal(r.ok, true);
 assert.equal(r.status, "booked");
-assert.deepEqual(r.session, { date: THU, kind: "thursday", online: false, fee: null });
+assert.deepEqual(r.session, { date: THU, kind: "thursday", online: false, fee: null, ...THU_WHERE });
 assert.equal(r.spotsLeft, 39);
 let rows = await rowsNamed("测试甲");
 assert.equal(rows.length, 1);
@@ -171,7 +183,7 @@ assert.equal(rows[0].email, null);
 assert.equal(rows[0].source, "wechat-bot");
 assert.equal(rows[0].bot_check, "wechat-bot");
 assert.deepEqual(rows[0].sessions, [THU]);
-check("按群昵称报周四 → booked，wechat 列为空，来源 wechat-bot");
+check("按群昵称报周四 → booked，wechat 列为空，来源 wechat-bot，带时间地点和地图链接");
 
 // 2 ── The same again, however spaced: already, and still one row.
 r = await signup({ wechatName: "测试甲" });
@@ -242,7 +254,7 @@ r = await signup({ wechatName: "测试丙", session: "tuesday" });
 assert.equal(r.status, "members_only");
 assert.equal(r.ok, false);
 assert.equal(r.joinUrl, `${app}/join`);
-assert.deepEqual(r.session, { date: TUE, kind: "tuesday", online: true, fee: null });
+assert.deepEqual(r.session, { date: TUE, kind: "tuesday", online: true, fee: null, ...ONLINE_WHERE });
 assert.equal((await rowsNamed("测试丙")).length, 0, "members_only 不该建行");
 // A real WeChat ID that is not a member: still not booked.
 r = await signup({ wechatName: "测试丙", wechat: "e2e_not_member", session: "tuesday" });
@@ -254,6 +266,7 @@ const mentor = await pool.query(
 await pool.query(`INSERT INTO person_roles (signup_id, role) VALUES ($1, 'mentor')`, [mentor.rows[0].id]);
 r = await signup({ wechatName: "导师群名", name: "测试导师", wechat: "e2e_mentor_01", session: "tuesday" });
 assert.equal(r.status, "booked");
+assert.deepEqual(r.session, { date: TUE, kind: "tuesday", online: true, fee: null, ...ONLINE_WHERE }, "线上周二报上后的时间地点");
 const mentorRow = (await rowsNamed("导师群名"))[0];
 assert.equal(mentorRow.wechat, "e2e_mentor_01");
 assert.equal(mentorRow.source, "signup", "已有的人保留原来的来源");
@@ -261,13 +274,14 @@ assert.deepEqual(mentorRow.sessions, [TUE]);
 // Someone else typing the mentor's WeChat ID: not booked, membership not revealed.
 r = await signup({ wechatName: "冒充者", name: "另一个人", wechat: "e2e_mentor_01", session: "tuesday" });
 assert.equal(r.status, "members_only", "别人填导师的微信号不该被放进来，也不该透露是否会员");
-check("线上会员周二 → members_only（带 /join）；导师用微信号报 → booked；别人冒用其微信号 → members_only");
+check("线上会员周二 → members_only（带 /join）；导师用微信号报 → booked（线上时间地点、无地图链接）；别人冒用其微信号 → members_only");
 
 // 6 ── A paid Tuesday (fixture): booked, with a pay link and the amount.
 setSpecials([{ date: TUE, kind: "tuesday", endHour: 12, cap: 12, fee: 30 }]);
 r = await signup({ wechatName: "测试丁", session: "tuesday" });
 assert.equal(r.status, "booked");
-assert.deepEqual(r.session, { date: TUE, kind: "tuesday", online: false, fee: 30 });
+assert.deepEqual(r.session, { date: TUE, kind: "tuesday", online: false, fee: 30, ...ROOM_WHERE });
+for (const word of ["Lemon Grove", "427–441", "56 号铺"]) assert.ok(!JSON.stringify(r).includes(word), `群里的回答带了付款后才给的地址：${word}`);
 assert.equal(r.amount, 33);
 assert.match(r.payUrl, new RegExp(`^${app}/tuesday/pay\\?ref=TU[A-HJ-NP-Z2-9]{5}$`));
 const firstPay = r.payUrl;
@@ -281,7 +295,7 @@ assert.equal(r.payUrl, firstPay, "再报一次应给同一个付款编号");
 // with no payment reference.
 r = await signup({ wechatName: "冒充者", name: "另一个人", wechat: "e2e_mentor_01", session: "tuesday" });
 assert.equal(r.status, "name_mismatch");
-check("收费周二（fixture）→ booked + payUrl + 金额；再报 → 同一个编号；名字对不上 → name_mismatch");
+check("收费周二（fixture）→ booked + payUrl + 金额 + 时间、只写 Chatswood；再报 → 同一个编号；名字对不上 → name_mismatch");
 
 // 6b ── Someone copying a display name that sits on a signup with a WeChat ID
 // (the mentor's, from case 5): only "already", none of that row's details,
@@ -311,9 +325,21 @@ assert.equal(listed.thursday.spotsLeft, 0, "周四已满");
 assert.equal(listed.tuesdays.length, 1);
 assert.deepEqual(
   { ...listed.tuesdays[0] },
-  { date: TUE, kind: "tuesday", online: false, fee: 30, amount: 33, membersOnly: false, openTrial: false, cap: 12, spotsLeft: 10 },
+  { date: TUE, kind: "tuesday", online: false, fee: 30, amount: 33, membersOnly: false, openTrial: false, cap: 12, spotsLeft: 10, ...ROOM_WHERE },
 );
+assert.equal(listed.thursday.time, THU_WHERE.time);
+assert.equal(listed.thursday.place, THU_WHERE.place);
+assert.equal(listed.thursday.placeUrl, THU_WHERE.placeUrl);
 check("GET /api/bot/sessions → 周四已满、周二带费用与金额、剩 10 位（导师 + 测试丁）");
+
+// 7b ── The list for an online Tuesday: online hours and where the link comes from, no map link.
+setSpecials([{ date: TUE, kind: "tuesday", endHour: 12, cap: 200, online: true }]);
+const listedOnline = await (await GET(signed(`${app}/api/bot/sessions`, "GET", ""))).json();
+assert.equal(listedOnline.tuesdays[0].time, ONLINE_WHERE.time);
+assert.equal(listedOnline.tuesdays[0].place, ONLINE_WHERE.place);
+assert.ok(!("placeUrl" in listedOnline.tuesdays[0]), "线上周二不该带地图链接");
+setSpecials([{ date: TUE, kind: "tuesday", endHour: 12, cap: 12, fee: 30 }]);
+check("GET /api/bot/sessions 线上周二 → 线上时间、Zoom 链接从哪来、没有地图链接");
 
 // 8 ── A date no longer on offer is closed.
 r = await signup({ wechatName: "测试戊", session: "2020-01-02" });
@@ -325,7 +351,7 @@ assert.equal(await thursdaySpotsLeft(), 0, "周四此时是满的");
 let c = await cancel({ wechatName: "测试乙" });
 assert.equal(c.status, "cancelled");
 assert.equal(c.ok, true);
-assert.deepEqual(c.session, { date: THU, kind: "thursday", online: false, fee: null });
+assert.deepEqual(c.session, { date: THU, kind: "thursday", online: false, fee: null, ...THU_WHERE });
 assert.deepEqual((await rowsNamed("测试乙"))[0].sessions, []);
 assert.equal(await thursdaySpotsLeft(), 1, "取消后应空出一个位子");
 check("按群昵称取消 → cancelled，周四空出一位");
@@ -402,4 +428,4 @@ check("没有一行把群昵称写进 wechat 列");
 
 await pool.end();
 console.log(passed.map((label) => `✓ ${label}`).join("\n"));
-console.log(`\n${passed.length}/18 通过`);
+console.log(`\n${passed.length}/19 通过`);

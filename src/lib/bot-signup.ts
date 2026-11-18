@@ -1,6 +1,8 @@
 // Relative imports only: the tests load this through Node's type stripper.
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { isOpenTrialSession, resolveSessionChoice, type SpecialSession } from "./sessions.ts";
+import { TUESDAY_ONLINE, TUESDAY_VENUE } from "./tuesday-venue.ts";
+import { THURSDAY_TIME_ZH, VENUE, VENUE_MAPS_URL, VENUE_SHORT_ADDRESS } from "./venue.ts";
 import { looksLikeWechatId } from "./wechat-id.ts";
 
 /**
@@ -132,6 +134,40 @@ export type ChosenSession = {
   /** An online Tuesday only 共创会员 and the 导师团 may join (not an open trial). */
   membersOnly: boolean;
 };
+
+/**
+ * When and where a session is, as the bot says it in the group (2026-11-18):
+ * added to every session object the bot API returns, so a reply after a
+ * sign-up can carry the time and place.
+ *
+ * Read from the same constants the site's pages are built from (`venue.ts`
+ * for Thursday, `tuesday-venue.ts` for Tuesday), never typed again here.
+ *
+ *   Thursday          the home page's time card and venue, with its map link
+ *   online Tuesday    the hours, "线上", and where the Zoom link comes from
+ *   Tuesday in a room the hours and "Chatswood" only: the street address is
+ *                     for people who have paid (tuesday-venue.ts), and the
+ *                     bot's reply is read by the whole group
+ */
+export type BotWhereWhen = { time: string; place: string; placeUrl?: string };
+
+export function botWhereWhen(session: { kind: "thursday" | "tuesday"; online: boolean }): BotWhereWhen {
+  if (session.kind === "thursday") {
+    return { time: THURSDAY_TIME_ZH, place: `${VENUE.name} · ${VENUE_SHORT_ADDRESS}`, placeUrl: VENUE_MAPS_URL };
+  }
+  if (session.online) {
+    return {
+      time: `${TUESDAY_ONLINE.start}–${TUESDAY_ONLINE.end} 线上 · ${TUESDAY_ONLINE.zh.linkFrom}`,
+      place: TUESDAY_ONLINE.zh.where,
+    };
+  }
+  return { time: `${TUESDAY_VENUE.start}–${TUESDAY_VENUE.end}`, place: VENUE.addressLocality };
+}
+
+/** A session as the bot API returns it: what it is, and when and where. */
+export function botSessionView(session: { date: string; kind: "thursday" | "tuesday"; online: boolean; fee: number | null }) {
+  return { ...session, ...botWhereWhen(session) };
+}
 
 /**
  * Which session a request means, from what is on offer right now.

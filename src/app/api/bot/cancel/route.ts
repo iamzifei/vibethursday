@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { botAuthFailure, botSecret, cancellableByName, feeBlocksCancel, findBotRow, parseBotSignup, pickCancelDate } from "@/lib/bot-signup";
+import { botAuthFailure, botSecret, botSessionView, cancellableByName, feeBlocksCancel, findBotRow, parseBotSignup, pickCancelDate } from "@/lib/bot-signup";
 import { exactSignupName } from "@/lib/capacity";
 import { cancelSession, findSignupByContact, getMySignup, listNamedSignups, sessionFeeFor } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, checkRateLimit, tooMany } from "@/lib/rate-limit";
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     if (!date) return notFound;
 
     const special = SPECIAL_SESSIONS.find((item) => item.date === date);
-    const session = { date, kind: special ? "tuesday" : "thursday", online: special?.online === true, fee: special?.fee ?? null };
+    const session = botSessionView({ date, kind: special ? "tuesday" : "thursday", online: special?.online === true, fee: special?.fee ?? null });
 
     if (feeBlocksCancel(await sessionFeeFor(signupId, date))) {
       return NextResponse.json({ ok: false, status: "paid_contact_organiser", session }, { headers: noStore });

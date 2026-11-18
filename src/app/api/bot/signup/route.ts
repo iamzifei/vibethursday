@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BOT_CHECK, BOT_SOURCE, botAuthFailure, botSecret, chooseBotSession, parseBotSignup } from "@/lib/bot-signup";
+import { BOT_CHECK, BOT_SOURCE, botAuthFailure, botSecret, botSessionView, chooseBotSession, parseBotSignup } from "@/lib/bot-signup";
 import { admission, capFor, sameSignupName } from "@/lib/capacity";
 import {
   canJoinOnlineTuesday,
@@ -90,7 +90,8 @@ export async function POST(request: Request) {
 
   const chosen = choice.session;
   const date = chosen.date;
-  const session = { date, kind: chosen.kind, online: chosen.online, fee: chosen.fee };
+  // With its time and place, for the bot's reply (`botWhereWhen`).
+  const session = botSessionView({ date, kind: chosen.kind, online: chosen.online, fee: chosen.fee });
 
   try {
     const origin = await requestOrigin();

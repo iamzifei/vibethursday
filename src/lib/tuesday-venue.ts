@@ -52,6 +52,9 @@ export const TUESDAY_ONLINE = {
   zh: {
     where: "线上（Zoom）",
     howToJoin: "每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里。",
+    // The same fact in the group bot's voice (`bot-signup.ts`): the bot is
+    // not James, so not "我会拉".
+    linkFrom: "Zoom 链接会在当天的微信群里发",
   },
   en: {
     where: "Online (Zoom)",

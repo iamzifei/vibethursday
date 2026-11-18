@@ -43,6 +43,7 @@ import { ADMIN_VIEW_LABEL, ADMIN_VIEWS, adminHref, adminView } from "@/lib/admin
 
 import { compositionPerSession, countPerSession, tuesdaySplit, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
+import { THURSDAY_TIME_ZH } from "@/lib/venue";
 
 // Always read live data, and keep this page out of any search index.
 export const dynamic = "force-dynamic";
@@ -363,7 +364,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   const poster = {
     session: nextSession,
     date: formatSession(nextSession, "zh"),
-    time: "10:30 开门 · 10:45 开始",
+    time: THURSDAY_TIME_ZH,
     // Found by its map link rather than by index. The venue is one of three
     // fact cards on the home page and the poster must not start announcing
     // the opening time as the address because somebody reordered them.

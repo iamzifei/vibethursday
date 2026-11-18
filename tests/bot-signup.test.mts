@@ -14,6 +14,8 @@ import {
   feeBlocksCancel,
   pickCancelDate,
   botSecret,
+  botSessionView,
+  botWhereWhen,
   chooseBotSession,
   findBotRow,
   parseBotSignup,
@@ -369,4 +371,53 @@ test("★ no path books or cancels for someone other than the caller: one identi
     const source = readFileSync(path.join(process.cwd(), file), "utf8");
     assert.doesNotMatch(source, /onBehalf|forOther|target(Name|Wechat)|people\s*:/i, file);
   }
+});
+
+// ── When and where, for the bot's reply (2026-11-18) ─────────────────────
+
+const THURSDAY_WHERE_WHEN = {
+  time: "10:30 开门 · 10:45 开始",
+  place: "The Avenue · 465 Victoria Avenue, Chatswood",
+  placeUrl: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
+};
+
+test("★ a Thursday carries the home page's time, venue and map link", async () => {
+  const thursday = chooseBotSession("thursday", offer([]));
+  assert.ok(thursday.ok);
+  assert.deepEqual(botWhereWhen(thursday.session), THURSDAY_WHERE_WHEN);
+  // The same words as the home page's cards, so a venue change moves both.
+  const { copy } = await import("../src/lib/content.ts");
+  const [time, place] = copy.zh.hero.facts;
+  assert.ok(time.value.endsWith(THURSDAY_WHERE_WHEN.time), "time card");
+  assert.equal(place.href, THURSDAY_WHERE_WHEN.placeUrl, "map link");
+  assert.ok(THURSDAY_WHERE_WHEN.place.startsWith(place.value.split(" · ")[0]), "venue name");
+  assert.ok(place.linkLabel?.startsWith(THURSDAY_WHERE_WHEN.place.split(" · ")[1]), "address");
+});
+
+test("★ an online Tuesday: its hours, online, and where the Zoom link comes from; no map link", () => {
+  const online = chooseBotSession("tuesday", offer([tuesday("2026-12-01", { online: true, cap: 200, closesEveHour: 20 })]));
+  assert.ok(online.ok);
+  assert.deepEqual(botWhereWhen(online.session), {
+    time: "10:30–12:00 线上 · Zoom 链接会在当天的微信群里发",
+    place: "线上（Zoom）",
+  });
+});
+
+test("★ a Tuesday in a room (fixture): its own hours, and Chatswood only, never the paid-for address", () => {
+  const room = chooseBotSession("2026-11-24", offer([tuesday("2026-11-24", { fee: 30 })]));
+  assert.ok(room.ok);
+  const view = botWhereWhen(room.session);
+  assert.deepEqual(view, { time: "10:30–12:30", place: "Chatswood" });
+  const text = JSON.stringify(view);
+  for (const word of ["Lemon Grove", "427–441", "56 号铺", "Shop 56"]) assert.ok(!text.includes(word), word);
+});
+
+test("botSessionView keeps the session's fields and adds when and where", () => {
+  assert.deepEqual(botSessionView({ date: THURSDAY, kind: "thursday", online: false, fee: null }), {
+    date: THURSDAY,
+    kind: "thursday",
+    online: false,
+    fee: null,
+    ...THURSDAY_WHERE_WHEN,
+  });
 });

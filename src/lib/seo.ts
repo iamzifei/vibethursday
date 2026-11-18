@@ -4,6 +4,7 @@ import { type Copy, LANG_PARAM, type Lang } from "./content.ts";
 import { feeFor, FIRST_SESSION_DATE, formatSession, isOnlineSession } from "./sessions.ts";
 import { MEMBERSHIP } from "./course.ts";
 import { siteUrl } from "./site.ts";
+import { THURSDAY_HOURS, VENUE } from "./venue.ts";
 
 /**
  * What search engines and language models are told about this site, beyond
@@ -42,21 +43,15 @@ import { siteUrl } from "./site.ts";
  */
 
 /**
- * The venue, as structured data.
+ * The venue, as structured data. Defined in `venue.ts`, which the venue card
+ * in `content.ts` is built from too; re-exported here for existing imports.
  *
- * ⚠️ Must say the same thing as the venue card and the "具体在哪" FAQ answer in
- * `content.ts`; a test holds the two together. Kept here rather than derived
- * from the prose because a street address parsed out of a sentence is exactly
- * the kind of thing that silently breaks when the sentence is rewritten.
+ * ⚠️ The "具体在哪" FAQ answer in `content.ts` is prose and still spells the
+ * address out by hand; a test holds it to this. Kept as fields rather than
+ * derived from the prose because a street address parsed out of a sentence is
+ * exactly the kind of thing that silently breaks when the sentence is rewritten.
  */
-export const VENUE = {
-  name: "The Avenue",
-  streetAddress: "465 Victoria Avenue",
-  addressLocality: "Chatswood",
-  addressRegion: "NSW",
-  postalCode: "2067",
-  addressCountry: "AU",
-} as const;
+export { VENUE } from "./venue.ts";
 
 /**
  * Session hours, Sydney time.
@@ -67,8 +62,9 @@ export const VENUE = {
  * month and a schema that says 10:00 under a page that says 10:30 is worse
  * than no schema.
  */
-export const SESSION_START = "10:30";
-export const SESSION_END = "12:00";
+// From `venue.ts`, the same constants the hero's time card is built from.
+export const SESSION_START = THURSDAY_HOURS.doors;
+export const SESSION_END = THURSDAY_HOURS.end;
 
 /** The `?lang=` suffix for a language, empty for the default. */
 function langQuery(lang: Lang): string {

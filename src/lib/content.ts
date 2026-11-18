@@ -20,6 +20,11 @@ import { deepTranslate } from "./traditional.ts";
 // imports — into the browser. Re-exported so every existing import still works.
 export { LANGS, LANG_LABEL, LANG_NAME, LANG_PARAM, resolveLang, type Lang } from "./lang.ts";
 import type { Lang } from "./lang.ts";
+// The venue and Thursday hours, shared with the structured data and the group bot.
+import { THURSDAY_HOURS, THURSDAY_TIME_ZH, VENUE, VENUE_MAPS_URL, VENUE_SHORT_ADDRESS } from "./venue.ts";
+// The online Tuesday's hours and how to get in; only TUESDAY_ONLINE, never the
+// room address in the same module (tests/tuesday-venue.test.mts).
+import { TUESDAY_ONLINE } from "./tuesday-venue.ts";
 
 export const copy = {
   zh: {
@@ -76,14 +81,14 @@ export const copy = {
       subtitle: "悉尼最火的华人 AI 线下聚会 · 每周四上午",
       lede: "一群在做东西的人围一张桌子喝咖啡，聊各自在用 AI 干什么、卡在哪。有东西随时拿出来，只想听也完全没问题。",
       facts: [
-        { label: "时间", value: "每周四 10:30 开门 · 10:45 开始", href: null, linkLabel: null },
+        { label: "时间", value: `每周四 ${THURSDAY_TIME_ZH}`, href: null, linkLabel: null },
         // Fixed for the next few sessions, so the address belongs on the
         // first screen rather than in a message the day before.
         {
           label: "地点",
-          value: "The Avenue · Chatswood",
-          href: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
-          linkLabel: "465 Victoria Avenue, Chatswood →",
+          value: `${VENUE.name} · ${VENUE.addressLocality}`,
+          href: VENUE_MAPS_URL,
+          linkLabel: `${VENUE_SHORT_ADDRESS} →`,
         },
         // This card is already asking "what does it cost", so it is the one
         // place the cost page can be linked without adding any weight to the
@@ -1577,7 +1582,7 @@ export const copy = {
       titleBefore: "这周四见。",
       titleDay: "今天见。",
       titleAfter: "这一场结束了，谢谢来。",
-      when: "10:30 开门 · 10:45 开始 · 12:00 结束",
+      when: `${THURSDAY_TIME_ZH} · ${THURSDAY_HOURS.end} 结束`,
       // Build Tuesday 当天，/go 最上面那张卡（2026-10-05）。不写地址（2026-11-02）：地址只给付了钱的人看。
       sharesTitle: "今天开场分享",
       tuesdayTitle: "今天：Build Tuesday",
@@ -1588,7 +1593,7 @@ export const copy = {
       tuesdaySignup: "报名周二",
       // 线上周二（2026-11-10 起）：没有签到，只说时间和怎么进。
       tuesdayOnlineWhen: "10:30 – 12:00 · 线上 · 看 James 用 AI 做产品",
-      tuesdayOnlineHow: "每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里。",
+      tuesdayOnlineHow: TUESDAY_ONLINE.zh.howToJoin,
       keep: "存下这一页。每周都是这个链接，内容自己会换。",
       signedUp: "你报了这一场 ✓",
       // 本周问答（session-questions.ts）：场前显示候选，当天显示今天聊的。
@@ -1760,14 +1765,14 @@ export const copy = {
       eyebrow: "§ Build Tuesday · 周二动手局",
       title: "每周二线上，看 James 用 AI 做一个产品。",
       lede: "一个上午，线上。James 拿一个真实的产品从头做，边做边讲；也讲为什么有的产品能赚钱、有的不能。共创会员和导师团参加。",
-      chips: ["每周二 10:30–12:00", "线上（Zoom）", "共创会员参加", "4 周一期"],
+      chips: [`每周二 ${TUESDAY_ONLINE.start}–${TUESDAY_ONLINE.end}`, TUESDAY_ONLINE.zh.where, "共创会员参加", "4 周一期"],
       cta: "报名周二",
       ctaMember: "办共创会员 →",
       sceneAlt: "往期活动现场：一张长桌，大家打开电脑做东西（现场照片转绘，人物已替换）",
       factsTitle: "时间、地点和怎么参加",
       facts: [
-        { label: "时间", value: "10:30–12:00（悉尼时间），只开上午" },
-        { label: "地点", value: "线上（Zoom）。每周二开始前，我会拉一个临时微信群，Zoom 链接发在群里" },
+        { label: "时间", value: `${TUESDAY_ONLINE.start}–${TUESDAY_ONLINE.end}（悉尼时间），只开上午` },
+        { label: "地点", value: `${TUESDAY_ONLINE.zh.where}。${TUESDAY_ONLINE.zh.howToJoin.replace(/。$/, "")}` },
         { label: "谁能来", value: "共创会员（599 澳元一期 4 周）和导师团；没有单次票" },
         { label: "报名", value: "前一天晚上 8 点截止，好提前拉群" },
       ],
@@ -1971,9 +1976,9 @@ export const copy = {
         { label: "When", value: "Thursdays · doors 10:30am, starts 10:45am", href: null, linkLabel: null },
         {
           label: "Where",
-          value: "The Avenue · Chatswood",
-          href: "https://maps.google.com/?q=The+Avenue+465+Victoria+Avenue+Chatswood+NSW+2067",
-          linkLabel: "465 Victoria Avenue, Chatswood →",
+          value: `${VENUE.name} · ${VENUE.addressLocality}`,
+          href: VENUE_MAPS_URL,
+          linkLabel: `${VENUE_SHORT_ADDRESS} →`,
         },
         {
           label: "Cost",
@@ -3207,7 +3212,7 @@ export const copy = {
       tuesdayNotSignedUp: "Not signed up? There is still time: ",
       tuesdaySignup: "Sign up for Tuesday",
       tuesdayOnlineWhen: "10:30 – 12:00 · online · watch James build a product with AI",
-      tuesdayOnlineHow: "Before each Tuesday starts, James adds you to a WeChat group for that session and posts the Zoom link there.",
+      tuesdayOnlineHow: TUESDAY_ONLINE.en.howToJoin,
       when: "Doors 10:30 · starts 10:45 · ends 12:00",
       keep: "Keep this page. It is the same link every week; what is on it changes by itself.",
       signedUp: "You are signed up for this one ✓",
@@ -3358,14 +3363,14 @@ export const copy = {
       eyebrow: "§ Build Tuesday",
       title: "Every Tuesday, online: watch James build a product with AI.",
       lede: "One morning, online. James builds a real product from scratch and talks through it as he goes, and why some products make money and others do not. For co-creator members and mentors.",
-      chips: ["Tuesdays 10:30–12:00", "Online (Zoom)", "For members", "Four weeks a block"],
+      chips: [`Tuesdays ${TUESDAY_ONLINE.start}–${TUESDAY_ONLINE.end}`, TUESDAY_ONLINE.en.where, "For members", "Four weeks a block"],
       cta: "Sign up for Tuesday",
       ctaMember: "Become a member →",
       sceneAlt: "A past session: one long table, laptops open (redrawn from a photo; faces replaced)",
       factsTitle: "Time, place and how to join",
       facts: [
-        { label: "Time", value: "10:30–12:00 Sydney time, mornings only" },
-        { label: "Where", value: "Online (Zoom). Before each Tuesday starts, James adds you to a WeChat group for that session and posts the Zoom link there" },
+        { label: "Time", value: `${TUESDAY_ONLINE.start}–${TUESDAY_ONLINE.end} Sydney time, mornings only` },
+        { label: "Where", value: `${TUESDAY_ONLINE.en.where}. ${TUESDAY_ONLINE.en.howToJoin.replace(/\.$/, "")}` },
         { label: "Who", value: "Co-creator members (A$599 for four weeks) and mentors; no single tickets" },
         { label: "Signups", value: "Close at 8pm the night before, so the group can be set up in time" },
       ],

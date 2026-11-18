@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { botAuthFailure, botSecret, chooseBotSession } from "@/lib/bot-signup";
+import { botAuthFailure, botSecret, botWhereWhen, chooseBotSession } from "@/lib/bot-signup";
 import { capFor } from "@/lib/capacity";
 import { sessionHeadcount } from "@/lib/db";
 import { tooMany } from "@/lib/rate-limit";
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
         openTrial: isOpenTrialSession(date),
         cap,
         spotsLeft: Math.max(0, cap - count),
+        ...botWhereWhen(choice.session),
       });
     }
     return NextResponse.json(
