@@ -84,7 +84,9 @@ export const MEMBERSHIP_4W_FROM = "2026-11-05";
  */
 export type Cohort = { number: number; tuesdays: readonly string[] };
 export const MEMBERSHIP_COHORTS: readonly Cohort[] = [
-  { number: 1, tuesdays: ["2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01"] },
+  // Moved to December (James 2026-11-18); was 10, 17, 24 Nov and 1 Dec.
+  // Orders already paid for cohort 1 now run to the end of 22 December.
+  { number: 1, tuesdays: ["2026-12-01", "2026-12-08", "2026-12-15", "2026-12-22"] },
 ];
 
 /**

@@ -29,8 +29,11 @@ test("★ only 10 November is an open trial, and it is an online Tuesday", () =>
   }
 });
 
-test("the trial is the first Tuesday of cohort 1", () => {
-  assert.equal(MEMBERSHIP_COHORTS[0].tuesdays[0], "2026-11-10");
+// Spec change 2026-11-18 (James): cohort 1 moved to December, so the trial
+// is no longer its first Tuesday — it came before it.
+test("the trial came before cohort 1, never inside it", () => {
+  assert.ok("2026-11-10" < MEMBERSHIP_COHORTS[0].tuesdays[0]);
+  assert.ok(!MEMBERSHIP_COHORTS[0].tuesdays.includes("2026-11-10"));
 });
 
 test("upcomingOpenTrial returns a trial date or null, never another Tuesday", () => {

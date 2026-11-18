@@ -51,8 +51,9 @@ const sydney = (isoLocal: string) => new Date(`${isoLocal}+11:00`);
 
 /* ── The cohort ──────────────────────────────────────────────────────────── */
 
-test("the first cohort is the four Tuesdays from 10 November", () => {
-  assert.deepEqual([...MEMBERSHIP_COHORTS[0].tuesdays], ["2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01"]);
+// Spec change 2026-11-18 (James): cohort 1 moved to the first four Tuesdays of December.
+test("the first cohort is the four Tuesdays from 1 December", () => {
+  assert.deepEqual([...MEMBERSHIP_COHORTS[0].tuesdays], ["2026-12-01", "2026-12-08", "2026-12-15", "2026-12-22"]);
   for (const cohort of MEMBERSHIP_COHORTS) {
     assert.equal(cohort.tuesdays.length, 4, "four weeks each");
     for (const date of cohort.tuesdays) assert.equal(new Date(`${date}T00:00:00Z`).getUTCDay(), 2, `${date} is a Tuesday`);
@@ -67,20 +68,20 @@ test("★ a new membership is its own course id, still A$599 + GST, and counts a
   assert.deepEqual([...YEARLY_MEMBERSHIP_COURSES], [COURSE.id, YEARLY_MEMBERSHIP_ID]);
 });
 
-test("★ bought any time before cohort 1 ends: valid to the end of 1 December (Sydney)", () => {
-  const end = sydney("2026-12-02T00:00:00");
+test("★ bought any time before cohort 1 ends: valid to the end of 22 December (Sydney)", () => {
+  const end = sydney("2026-12-23T00:00:00");
   assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-05T15:00:00"))?.getTime(), end.getTime());
   assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-20T09:00:00"))?.getTime(), end.getTime(), "joining mid-cohort");
   // Review 2026-11-05: sales close at the start of the last Tuesday, and a
   // Checkout opened just before still counts if paid within the hour.
-  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-11-30T23:59:00"))?.getTime(), end.getTime(), "the night before the last Tuesday");
-  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-01T00:45:00"))?.getTime(), end.getTime(), "a Checkout opened before the close, paid just after");
-  assert.equal(cohortForPayment(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-11-10");
+  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-21T23:59:00"))?.getTime(), end.getTime(), "the night before the last Tuesday");
+  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-22T00:45:00"))?.getTime(), end.getTime(), "a Checkout opened before the close, paid just after");
+  assert.equal(cohortForPayment(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-12-01");
 });
 
 test("★ a new membership paid after the last cohort has no cohort and makes no member", () => {
-  assert.equal(cohortForPayment(sydney("2026-12-03T10:00:00")), null);
-  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-03T10:00:00")), null);
+  assert.equal(cohortForPayment(sydney("2026-12-24T10:00:00")), null);
+  assert.equal(membershipValidUntil(MEMBERSHIP.id, sydney("2026-12-24T10:00:00")), null);
 });
 
 test("★ old orders are unchanged: a year and a week from payment", () => {
@@ -97,13 +98,13 @@ test("★ only the old memberships include the free AI+IP class", () => {
   assert.equal(includesIpClass(MEMBERSHIP.id), false);
 });
 
-test("★ cohort 1 is on sale until the start of 1 December; after that the next cohort is not set (review 2026-11-05)", () => {
+test("★ cohort 1 is on sale until the start of 22 December; after that the next cohort is not set (review 2026-11-05)", () => {
   // Before: on sale until 12:00 on the last Tuesday, so a Checkout opened at
   // 11:50 and paid at 12:10 took the full price for a cohort already over.
-  assert.equal(cohortOnSale(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-11-10");
-  assert.equal(cohortOnSale(sydney("2026-11-30T23:59:00"))?.tuesdays[0], "2026-11-10");
-  assert.equal(cohortOnSale(sydney("2026-12-01T00:00:00")), null);
-  assert.equal(cohortOnSale(sydney("2026-12-01T11:50:00")), null);
+  assert.equal(cohortOnSale(sydney("2026-11-05T15:00:00"))?.tuesdays[0], "2026-12-01");
+  assert.equal(cohortOnSale(sydney("2026-12-21T23:59:00"))?.tuesdays[0], "2026-12-01");
+  assert.equal(cohortOnSale(sydney("2026-12-22T00:00:00")), null);
+  assert.equal(cohortOnSale(sydney("2026-12-22T11:50:00")), null);
 });
 
 test("★ a payment counts for the cohort that was on sale when its Checkout opened (review 2026-11-05)", () => {
@@ -113,9 +114,9 @@ test("★ a payment counts for the cohort that was on sale when its Checkout ope
   // The rule: the first cohort whose sale had not closed an hour before the
   // payment, the hour covering a Checkout page's whole life.
   assert.ok(PAYMENT_GRACE_MS > (CHECKOUT_MINUTES * 60 + 90) * 1000, "the grace outlasts any Checkout page");
-  assert.equal(cohortForPayment(sydney("2026-12-01T00:30:00"))?.tuesdays[0], "2026-11-10");
-  assert.equal(cohortForPayment(sydney("2026-12-01T10:00:00")), null, "nothing was on sale then");
-  for (const at of ["2026-11-05T15:00:00", "2026-11-30T23:59:00"]) {
+  assert.equal(cohortForPayment(sydney("2026-12-22T00:30:00"))?.tuesdays[0], "2026-12-01");
+  assert.equal(cohortForPayment(sydney("2026-12-22T10:00:00")), null, "nothing was on sale then");
+  for (const at of ["2026-11-05T15:00:00", "2026-12-21T23:59:00"]) {
     assert.equal(cohortForPayment(sydney(at)), cohortOnSale(sydney(at)), `sold and recorded as the same cohort at ${at}`);
   }
 });
@@ -123,7 +124,7 @@ test("★ a payment counts for the cohort that was on sale when its Checkout ope
 test("the SQL cohort end is built from the same list, from constants only", () => {
   const sql = cohortValidUntilSql("o.paid_at");
   assert.match(sql, /^CASE /);
-  assert.match(sql, /'2026-12-02 00:00 Australia\/Sydney'::timestamptz/);
+  assert.match(sql, /'2026-12-23 00:00 Australia\/Sydney'::timestamptz/);
   assert.doesNotMatch(sql, /\$\d/, "no parameters: nothing from input");
 });
 
@@ -263,7 +264,7 @@ test(
     const pool = getPool();
 
     // The SQL cohort end matches the code's, for times either side of each boundary.
-    for (const at of ["2026-11-05T15:00:00", "2026-12-01T00:59:00", "2026-12-01T01:01:00", "2026-12-01T23:59:00", "2027-03-01T10:00:00"]) {
+    for (const at of ["2026-11-05T15:00:00", "2026-12-22T00:59:00", "2026-12-22T01:01:00", "2026-12-22T23:59:00", "2027-03-01T10:00:00"]) {
       const instant = sydney(at);
       const row = (await pool.query<{ until: Date | null }>(`SELECT ${cohortValidUntilSql("$1::timestamptz")} AS until`, [instant])).rows[0];
       assert.equal(row.until?.getTime() ?? null, membershipValidUntil(MEMBERSHIP.id, instant)?.getTime() ?? null, at);
@@ -304,7 +305,7 @@ test(
       assert.equal(await canJoinOnlineTuesday(fresh), true);
 
       const late = await signup("newb");
-      await order(MEMBERSHIP.id, "newb", "'2026-12-03 10:00 Australia/Sydney'::timestamptz");
+      await order(MEMBERSHIP.id, "newb", "'2026-12-24 10:00 Australia/Sydney'::timestamptz");
       assert.equal(await isMember(late), false, "paid after the last cohort: no cohort, no membership");
 
       const mentor = await signup("menta");
@@ -348,7 +349,7 @@ test(
       assert.equal(old?.course, YEARLY_MEMBERSHIP_ID, "paid before the switch: a year");
       assert.equal(old?.expires_on, "2027-11-04");
       assert.equal(fresh?.course, MEMBERSHIP.id, "paid from the switch on: 4 weeks");
-      assert.equal(fresh?.expires_on, "2026-12-01", "the cohort's last Tuesday");
+      assert.equal(fresh?.expires_on, "2026-12-22", "the cohort's last Tuesday");
       assert.equal(fresh?.active, true);
     } finally {
       await pool.query(`DELETE FROM course_orders WHERE wechat = ANY($1::text[])`, [[before, after]]).catch(() => {});

@@ -72,6 +72,15 @@ export type Release = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "5.12",
+    date: "2026-11-18",
+    kind: "minor",
+    scope: "room",
+    zh: "共创会员第一期改到 12 月：12 月 1 日、8 日、15 日和 22 日四个周二。11 月 24 日不开线上周二。已经办了第一期的会员，有效期顺延到 12 月 22 日。",
+    en: "The first membership block moves to December: the Tuesdays of 1, 8, 15 and 22 December. There is no online Tuesday on 24 November. Members who already joined the first block are covered until 22 December.",
+    link: { href: "/join", zh: "看共创会员 →", en: "See membership →" },
+  },
+  {
     version: "5.11",
     date: "2026-11-05",
     kind: "minor",

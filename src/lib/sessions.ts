@@ -157,10 +157,12 @@ const PAID_TUESDAYS = ["2026-10-20", "2026-10-27", "2026-11-03"];
 /**
  * Online from 10 November 2026 (2026-11-05), 10:30–12:00 Sydney time: James
  * builds a real product live with AI. No ticket — a 共创会员 or the 导师团 gets
- * in. Listed to mid-December; the Christmas and New Year weeks are not
- * scheduled yet.
+ * in. Listed to 22 December, the last Tuesday of the first membership cohort;
+ * the New Year weeks are not scheduled yet. 24 November is not held (James
+ * 2026-11-18: cohort 1 moved to December); 17 November, cancelled on the day,
+ * stays listed because it is in the past and signups for it point at it.
  */
-const ONLINE_TUESDAYS = ["2026-11-10", "2026-11-17", "2026-11-24", "2026-12-01", "2026-12-08", "2026-12-15"];
+const ONLINE_TUESDAYS = ["2026-11-10", "2026-11-17", "2026-12-01", "2026-12-08", "2026-12-15", "2026-12-22"];
 
 export const SPECIAL_SESSIONS: readonly SpecialSession[] = [
   { date: "2026-10-06", kind: "tuesday", endHour: 12, cap: 15 },
