@@ -21,6 +21,8 @@ register("./fixtures/alias-hooks.mjs", import.meta.url);
 // A coach route with no key answers 404 before it reads anything; give it one
 // so the test reaches the body. Nothing here ever calls the model.
 process.env.DEEPSEEK_API_KEY ??= "test-key-not-used";
+// Same for the WeChat group bot's endpoint: off (404) without a secret.
+process.env.BOT_SIGNUP_SECRET ??= "test-only-bot-secret-not-used-anywhere-0123456789";
 
 const OVERSIZE = 8 * 1024 * 1024; // above every route's limit, the photo upload's included
 const CHUNK = 16 * 1024;
@@ -144,6 +146,8 @@ const ROUTES: [file: string, method: "POST" | "DELETE"][] = [
   ["src/app/api/admin/waitlist/route.ts", "POST"],
   ["src/app/api/admin/wechat/route.ts", "POST"],
   ["src/app/api/admin/wharf/route.ts", "POST"],
+  ["src/app/api/bot/cancel/route.ts", "POST"],
+  ["src/app/api/bot/signup/route.ts", "POST"],
   ["src/app/api/checkin/route.ts", "POST"],
   ["src/app/api/class-kit/route.ts", "POST"],
   ["src/app/api/claim/route.ts", "POST"],

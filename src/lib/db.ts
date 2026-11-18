@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { admission, bookedOnAnother, capFor, exactSignupName, sameSignupName } from "./capacity.ts";
 import { nameHint } from "./my-signup.ts";
 import { isOpenTrialSession } from "./sessions.ts";
+import { BOT_SOURCE, botAlready, botNameKey, findBotRow } from "./bot-signup.ts";
 import type { SessionQuestion } from "./session-questions.ts";
 import { spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
@@ -758,6 +759,10 @@ export function ensureSchema(): Promise<void> {
     // What they bring to a Build Tuesday (2026-11-01): need / project / help,
     // keyed by session like venue_pledges, so the cases can be lined up.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS tuesday_bring jsonb NOT NULL DEFAULT '{}'::jsonb`);
+    // The person's display name in the WeChat group, for sign-ups made by the
+    // group bot (2026-11-18, bot-signup.ts). Its own column, never `wechat`:
+    // a display name is not something anyone can be found or added by.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS wechat_name text`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS session_shares (
         session     date NOT NULL,
@@ -1183,6 +1188,171 @@ export async function sessionHeadcount(
   return { count: Number(result.rows[0]?.count ?? 0), alreadyIn: result.rows[0]?.already ?? false };
 }
 
+/**
+ * A sign-up from the WeChat group bot when all it knows is a display name
+ * (2026-11-18, bot-signup.ts). No email, no WeChat ID: the person is matched
+ * to an earlier row with the same display name (`findBotRow`), and a repeat
+ * for a session they already hold changes nothing (`botAlready`), unless they
+ * were waiting and there is room now.
+ *
+ * One transaction under an advisory lock on the display name, so two messages
+ * sent a moment apart cannot both insert a row for the same person.
+ */
+export async function saveBotSignup(input: {
+  name: string;
+  wechatName: string;
+  session: string;
+  waitlisted: boolean;
+  botCheck: string;
+}): Promise<{ id: string; already: "booked" | "waitlisted" | null; contactRow: boolean }> {
+  await ensureSchema();
+
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    try {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`bot-signup:${botNameKey(input.wechatName)}`]);
+
+      // Every row that carries a group display name: bot-only rows, and rows
+      // with contact details that got one (a merged bot row, or a bot sign-up
+      // made with a WeChat ID).
+      const rows = await client.query<{ id: string; wechat_name: string | null; sessions: string[]; waitlist: string[]; has_contact: boolean }>(
+        `SELECT id::text AS id, wechat_name,
+                ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) AS d) AS sessions,
+                ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) AS d) AS waitlist,
+                (email IS NOT NULL OR wechat IS NOT NULL) AS has_contact
+           FROM signups
+          WHERE wechat_name IS NOT NULL
+          ORDER BY id`,
+      );
+      // Only a bot-only row is ever written to on a display name. A row with
+      // contact details is only read: if it already holds the session, the
+      // answer is "already" (so a merge does not end in a second booking),
+      // and nothing about that row is changed or handed back.
+      const botOnly = rows.rows.filter((candidate) => !candidate.has_contact);
+      const contact = rows.rows.filter((candidate) => candidate.has_contact);
+      const row = findBotRow(botOnly, input.wechatName, input.session);
+      if (!botAlready(row, input.session)) {
+        const held = findBotRow(contact, input.wechatName, input.session);
+        const heldState = botAlready(held, input.session);
+        if (held && heldState) {
+          await client.query("COMMIT");
+          return { id: held.id, already: heldState, contactRow: true };
+        }
+      }
+      let already = botAlready(row, input.session);
+      // Waiting, and there is room now: moved in, as a repeat of the signup
+      // form does (it recomputes admission on every submit).
+      if (already === "waitlisted" && !input.waitlisted) already = null;
+
+      let id: string;
+      if (row && already) {
+        id = row.id;
+      } else if (row) {
+        id = row.id;
+        // Same three cases as `saveSignupWithResult`: booked goes into
+        // `sessions` and off the waitlist; waitlisted keeps its first join time.
+        await client.query(
+          `UPDATE signups SET
+             first_session  = $2::date,
+             sessions       = CASE WHEN $3::boolean THEN sessions
+                                   ELSE ARRAY(SELECT DISTINCT unnest(sessions || ARRAY[$2::date]) ORDER BY 1) END,
+             waitlist       = CASE WHEN $3::boolean THEN ARRAY(SELECT DISTINCT unnest(waitlist || ARRAY[$2::date]) ORDER BY 1)
+                                   ELSE array_remove(waitlist, $2::date) END,
+             waitlist_since = CASE WHEN $3::boolean
+                                   THEN waitlist_since || jsonb_build_object($2::date::text,
+                                          COALESCE(waitlist_since -> ($2::date::text), to_jsonb(now())))
+                                   ELSE waitlist_since - ($2::date::text) END,
+             wechat_name    = $4,
+             bot_check      = $5,
+             updated_at     = now()
+           WHERE id = $1::bigint`,
+          [id, input.session, input.waitlisted, input.wechatName, input.botCheck],
+        );
+      } else {
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO signups (name, email, wechat, wechat_name, first_session, source, lang, bot_check, sessions, waitlist, waitlist_since)
+           VALUES ($1, NULL, NULL, $2, $3::date, $4, 'zh', $5,
+                   CASE WHEN $6::boolean THEN '{}'::date[] ELSE ARRAY[$3::date] END,
+                   CASE WHEN $6::boolean THEN ARRAY[$3::date] ELSE '{}'::date[] END,
+                   CASE WHEN $6::boolean THEN jsonb_build_object($3::date::text, now()) ELSE '{}'::jsonb END)
+           RETURNING id::text AS id`,
+          [input.name, input.wechatName, input.session, BOT_SOURCE, input.botCheck, input.waitlisted],
+        );
+        id = inserted.rows[0].id;
+      }
+
+      await client.query("COMMIT");
+      return { id, already, contactRow: false };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * The row a signup with this email or WeChat ID would update, without writing
+ * anything: an exact match, the one whose name agrees first (as
+ * `saveSignupWithResult` picks it). For the bot, which has to know whether
+ * someone may join an online Tuesday before it books them.
+ */
+export async function findSignupByContact(name: string, email: string | null, wechat: string | null): Promise<{ id: string; name: string } | null> {
+  if (!email && !wechat) return null;
+  await ensureSchema();
+  // Matched like `saveSignupWithResult`, former WeChat values included.
+  const result = await getPool().query<{ id: string; name: string; former_only: boolean }>(
+    `SELECT id::text AS id, name,
+            NOT (($1::text IS NOT NULL AND lower(email) = lower($1))
+                 OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))) AS former_only
+       FROM signups
+      WHERE ($1::text IS NOT NULL AND lower(email) = lower($1))
+         OR ($2::text IS NOT NULL AND lower(wechat) = lower($2))
+         OR ($2::text IS NOT NULL AND EXISTS (SELECT 1 FROM unnest(wechat_former) AS f WHERE lower(f) = lower($2)))
+      ORDER BY former_only, id LIMIT 6`,
+    [email, wechat],
+  );
+  const rows = result.rows.filter((row) => !row.former_only || sameSignupName(name, row.name));
+  const row = rows.find((candidate) => sameSignupName(name, candidate.name)) ?? rows[0];
+  return row ? { id: row.id, name: row.name } : null;
+}
+
+/**
+ * Every row that carries a group display name, for the bot's cancel to find
+ * the caller's own row (`findBotRow`, `cancellableByName`). Read-only.
+ */
+export async function listNamedSignups(): Promise<{ id: string; wechat_name: string | null; source: string | null; sessions: string[]; waitlist: string[]; has_contact: boolean }[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ id: string; wechat_name: string | null; source: string | null; sessions: string[]; waitlist: string[]; has_contact: boolean }>(
+    `SELECT id::text AS id, wechat_name, source,
+            ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) AS d) AS sessions,
+            ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) AS d) AS waitlist,
+            (email IS NOT NULL OR wechat IS NOT NULL) AS has_contact
+       FROM signups
+      WHERE wechat_name IS NOT NULL
+      ORDER BY id`,
+  );
+  return result.rows;
+}
+
+/** One person's fee for one session, or null when there is none. */
+export async function sessionFeeFor(signupId: string, session: string): Promise<{ status: "pending" | "paid" | "waived"; claimed: boolean } | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ status: "pending" | "paid" | "waived"; claimed: boolean }>(
+    `SELECT status, claimed_at IS NOT NULL AS claimed FROM session_fees WHERE signup_id = $1::bigint AND session = $2::date`,
+    [signupId, session],
+  );
+  return result.rows[0] ?? null;
+}
+
+/** Records a person's group display name on their own row (bot sign-ups with contact details). */
+export async function setWechatName(signupId: string, wechatName: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query(`UPDATE signups SET wechat_name = $2 WHERE id = $1::bigint`, [signupId, wechatName]);
+}
+
 /** Signups per session, for marking full sessions on the form. Only dates that have any. */
 export async function signupCountsBySession(): Promise<Map<string, number>> {
   await ensureSchema();
@@ -1275,6 +1445,8 @@ export type SignupRow = {
   purposes: string;
   /** Values this person used to go by in the WeChat column (`correctWechat`). */
   wechat_former: string[];
+  /** Their display name in the WeChat group, when the group bot signed them up. */
+  wechat_name: string | null;
   /** When each waitlisted session was joined, ISO timestamps keyed by date. */
   waitlist_since: Record<string, string>;
   created_at: string;
@@ -1477,7 +1649,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, wechat_name, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -3607,11 +3779,11 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
 
       // Read what to carry over, then delete the row before writing it onto
       // `keep`, so the unique email/WeChat indexes never see both at once.
-      const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null; openid: string | null }>(
+      const other = await client.query<{ sessions: string[]; waitlist: string[]; since: Record<string, string>; former: string[]; email: string | null; wechat: string | null; openid: string | null; wechat_name: string | null }>(
         `DELETE FROM signups WHERE id = $1::bigint
           RETURNING ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(sessions) d) AS sessions,
                     ARRAY(SELECT to_char(d, 'YYYY-MM-DD') FROM unnest(waitlist) d) AS waitlist,
-                    waitlist_since AS since, wechat_former AS former, email, wechat, wechat_openid AS openid`,
+                    waitlist_since AS since, wechat_former AS former, email, wechat, wechat_openid AS openid, wechat_name`,
         [drop],
       );
       const o = other.rows[0];
@@ -3631,6 +3803,8 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
             -- A WeChat login tied to the dropped row moves with it (deleted
             -- above, so the unique index is free).
             wechat_openid = COALESCE(wechat_openid, $8),
+            -- A group display name from a bot sign-up (2026-11-18) fills a gap.
+            wechat_name = COALESCE(wechat_name, $9),
             -- The earlier of the two join times for a session both rows waited
             -- on. Keys for sessions no longer waited on are dropped at read time.
             waitlist_since = COALESCE((
@@ -3642,7 +3816,7 @@ export async function mergeSignups(keep: string, drop: string): Promise<{ ok: tr
                        GROUP BY k) AS merged), '{}'::jsonb),
             updated_at = now()
           WHERE id = $1::bigint`,
-        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email, JSON.stringify(o.since ?? {}), o.openid ?? null],
+        [keep, o.sessions, o.waitlist, o.former, o.wechat, o.email, JSON.stringify(o.since ?? {}), o.openid ?? null, o.wechat_name ?? null],
       );
 
       await client.query("COMMIT");

@@ -60,3 +60,41 @@ export function walkInMatches(rows: readonly MatchableSignup[], now: Date): Walk
   }
   return out;
 }
+
+/** A signup row with what `botSignupMatches` also reads. `SignupRow` has it all. */
+export type BotMatchableSignup = MatchableSignup & { email: string | null; wechat: string | null; wechat_name: string | null };
+
+export type BotSignupMatch = {
+  bot: { id: string; name: string; wechatName: string };
+  /** Signups with an email or WeChat ID whose name matches, oldest first. */
+  candidates: { id: string; name: string }[];
+};
+
+/**
+ * Pairs a sign-up the WeChat group bot made from a display name alone
+ * (2026-11-18, bot-signup.ts) with a normal signup that is probably the same
+ * person — typically they later signed up on the site with their WeChat ID.
+ *
+ * Like `walkInMatches`, a suggestion only, and the organiser presses merge
+ * (keeping the normal row). Either order counts: the bot row can come first
+ * or second. Shown while either row is under `LOOKBACK_DAYS` old.
+ */
+export function botSignupMatches(rows: readonly BotMatchableSignup[], now: Date, botSource: string): BotSignupMatch[] {
+  const since = now.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
+  const recent = (row: MatchableSignup) => Date.parse(row.created_at) >= since;
+  const withContact = rows
+    .filter((row) => row.email || row.wechat)
+    .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+
+  const out: BotSignupMatch[] = [];
+  for (const bot of rows) {
+    if (bot.source !== botSource || bot.email || bot.wechat || !bot.wechat_name) continue;
+    const wechatName = bot.wechat_name;
+    const candidates = withContact
+      .filter((row) => row.id !== bot.id && (recent(row) || recent(bot)))
+      .filter((row) => sameName(row.name, bot.name) || sameName(row.name, wechatName) || (row.wechat_name !== null && sameName(row.wechat_name, wechatName)))
+      .map((row) => ({ id: row.id, name: row.name }));
+    if (candidates.length > 0) out.push({ bot: { id: bot.id, name: bot.name, wechatName }, candidates });
+  }
+  return out;
+}

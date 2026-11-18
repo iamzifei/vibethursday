@@ -33,7 +33,8 @@ import {
   listPersonRoles,
 } from "@/lib/db";
 import { canGiveFeedback, feedbackCode, isSessionDate, sessionForFeedback, summarise } from "@/lib/feedback";
-import { walkInMatches } from "@/lib/walk-in-match";
+import { botSignupMatches, walkInMatches } from "@/lib/walk-in-match";
+import { BOT_CHECK, BOT_SOURCE } from "@/lib/bot-signup";
 import { deskSession, feeFor, formatSession, isSpecialSession, nextThursdays, SPECIAL_SESSIONS, sydneyToday, upcomingSpecialSessions } from "@/lib/sessions";
 import { requestOrigin } from "@/lib/request-origin";
 import { siteUrl } from "@/lib/site";
@@ -160,6 +161,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // poster's code both hang off it.
   // Door walk-ins that look like an earlier signup (James 2026-10-01).
   const walkIns = walkInMatches(signups, new Date());
+  // Group-bot sign-ups by display name only, that look like a normal signup (2026-11-18).
+  const botPairs = botSignupMatches(signups, new Date(), BOT_SOURCE);
 
   const origin = await requestOrigin();
   const deskUrl = `${origin}/checkin?s=${desk}&k=${checkinCode(desk)}`;
@@ -287,6 +290,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
     (row) =>
       (row.sessions.includes(desk) || row.waitlist.includes(desk)) &&
       row.bot_check !== "verified" &&
+      // Booked by the WeChat group bot (bot-signup.ts): people asking in the
+      // group, not a script filling the room.
+      row.bot_check !== BOT_CHECK &&
       Date.parse(`${row.created_at.replace(" ", "T")}:00Z`) > dayAgo,
   ).length;
   const alert = capacityAlert({ waitlist: deskWaitlist.length, unverifiedLastDay });
@@ -870,6 +876,37 @@ export default async function AdminPage({ searchParams }: PageProps) {
                       <input type="hidden" name="drop" value={match.walkIn.id} />
                       <span className="body-sm">
                         现场 #{match.walkIn.id} {match.walkIn.name} → 原报名 #{candidate.id} {candidate.name}
+                      </span>
+                      <details className="confirm">
+                        <summary className="linkish">合并</summary>
+                        <button className="btn btn--secondary" type="submit">
+                          确认合并
+                        </button>
+                      </details>
+                    </form>
+                  </li>
+                )),
+              )}
+            </ul>
+          </div>
+        )}
+
+        {/* Signed up in the WeChat group by display name only (2026-11-18),
+            and a signup with contact details under a matching name. */}
+        {botPairs.length > 0 && (
+          <div className="card stack-3">
+            <p className="body-sm" style={{ margin: 0 }}>
+              <strong>在群里报名（只有群昵称）的，可能已经留过联系方式：</strong>确认是同一个人再合并，留下的是有联系方式那行。
+            </p>
+            <ul className="stack-2" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {botPairs.flatMap((match) =>
+                match.candidates.map((candidate) => (
+                  <li key={`${match.bot.id}-${candidate.id}`}>
+                    <form method="post" action="/api/admin/merge" style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", alignItems: "center" }}>
+                      <input type="hidden" name="keep" value={candidate.id} />
+                      <input type="hidden" name="drop" value={match.bot.id} />
+                      <span className="body-sm">
+                        群报名 #{match.bot.id} {match.bot.wechatName} → 报名 #{candidate.id} {candidate.name}
                       </span>
                       <details className="confirm">
                         <summary className="linkish">合并</summary>
@@ -1620,6 +1657,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 <tr key={row.id}>
                   <td style={{ color: "var(--fg1)" }}>
                     {row.name} <span className="mono" style={{ color: "var(--fg3)" }}>#{row.id}</span>
+                    {row.wechat_name && (
+                      <span className="body-sm" style={{ display: "block", color: "var(--fg3)" }}>
+                        {row.source === BOT_SOURCE ? "群里报名 · " : ""}群昵称：{row.wechat_name}
+                      </span>
+                    )}
                   </td>
                   <td>{row.email}</td>
                   <td>
