@@ -73,3 +73,38 @@ export function tilePlacement(square: Square, width: number, height: number, ind
     dh: height * scale,
   };
 }
+
+/**
+ * "Opens to the whole picture" (2026-11-18, tested on James's phone that day).
+ *
+ * In a multi-picture post Moments shows only the MIDDLE square of each
+ * picture as its thumbnail. So each piece can be a tall picture instead: its
+ * middle square is the grid piece, and the area above it holds the whole
+ * original photo. The grid still reads as one big picture; tapping any piece
+ * opens to the whole photo.
+ *
+ * 1:6 because the area above the piece must be taller than a phone screen,
+ * or the piece shows under the photo when it is opened (seen at 1:3). WeChat's
+ * viewer shows a tall picture fitted to width from the top, so the photo is
+ * centred in the first screen (9:19.5 — the tallest common phone) on black,
+ * the viewer's own colour, and the piece sits below the fold. No 长图 label
+ * appears in the grid at 1:6 (tested 2026-11-18).
+ */
+export const TALL = {
+  width: TILE,
+  height: TILE * 6,
+  /** The first screen at this width on a 9:19.5 phone. */
+  screen: Math.round((TILE * 19.5) / 9),
+  background: "#000000",
+} as const;
+
+/** Where the grid piece sits in a tall picture: its middle square. */
+export const TALL_PIECE_TOP = (TALL.height - TILE) / 2;
+
+/** Where the whole photo goes in a tall picture: fitted, centred in the first screen. */
+export function tallPhotoPlacement(width: number, height: number): Placement {
+  const scale = Math.min(TALL.width / width, TALL.screen / height);
+  const dw = width * scale;
+  const dh = height * scale;
+  return { dx: (TALL.width - dw) / 2, dy: (TALL.screen - dh) / 2, dw, dh };
+}

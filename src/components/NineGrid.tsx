@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { JPEG_QUALITY, squareFor, tilePlacement, TILE, type Fit } from "@/lib/nine-grid";
+import { JPEG_QUALITY, squareFor, TALL, TALL_PIECE_TOP, tallPhotoPlacement, tilePlacement, TILE, type Fit } from "@/lib/nine-grid";
 
 /**
  * The Moments nine-grid tool (/tools/grid, 2026-11-18): drop in one picture,
@@ -80,25 +80,52 @@ async function loadImage(file: File, onConverting: () => void): Promise<Source> 
   return { image, width: image.naturalWidth, height: image.naturalHeight, name };
 }
 
-/** Cuts the nine pieces, row by row, as JPEG data URLs. */
-function cut(source: Source, fit: Fit, position: number, padColour: string): string[] {
+/**
+ * Cuts the nine pieces, row by row, as JPEG data URLs.
+ *
+ * `tall`: each piece is a 1:6 picture whose middle square is the grid piece
+ * and whose first screen is the whole photo, so tapping a piece in Moments
+ * opens to the whole photo (`TALL` in nine-grid.ts). Otherwise each piece is
+ * just the square.
+ */
+function cut(source: Source, fit: Fit, position: number, padColour: string, tall: boolean): string[] {
   const square = squareFor(source.width, source.height, fit, position);
   const canvas = document.createElement("canvas");
   canvas.width = TILE;
-  canvas.height = TILE;
+  canvas.height = tall ? TALL.height : TILE;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("no 2d context");
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
+  // Where the square piece goes on the canvas: the top, or the middle of a tall one.
+  const pieceTop = tall ? TALL_PIECE_TOP : 0;
+  const photo = tallPhotoPlacement(source.width, source.height);
+
   const pieces: string[] = [];
   for (let index = 0; index < 9; index++) {
+    if (tall) {
+      ctx.fillStyle = TALL.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // The whole photo, on the pad colour in case it is a transparent PNG.
+      ctx.fillStyle = padColour;
+      ctx.fillRect(photo.dx, photo.dy, photo.dw, photo.dh);
+      ctx.drawImage(source.image, photo.dx, photo.dy, photo.dw, photo.dh);
+    }
+
+    // The grid piece, clipped to its square so nothing spills above or below.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, pieceTop, TILE, TILE);
+    ctx.clip();
     // JPEG has no transparency: paint the background first so a transparent
     // PNG comes out on the chosen colour rather than on black.
     ctx.fillStyle = padColour;
-    ctx.fillRect(0, 0, TILE, TILE);
+    ctx.fillRect(0, pieceTop, TILE, TILE);
     const { dx, dy, dw, dh } = tilePlacement(square, source.width, source.height, index);
-    ctx.drawImage(source.image, dx, dy, dw, dh);
+    ctx.drawImage(source.image, dx, dy + pieceTop, dw, dh);
+    ctx.restore();
+
     pieces.push(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
   }
   return pieces;
@@ -116,6 +143,8 @@ export function NineGrid() {
   const [fit, setFit] = useState<Fit>("crop");
   const [position, setPosition] = useState(0.5);
   const [padColour, setPadColour] = useState("#ffffff");
+  /** Tall pieces that open to the whole photo (the default since 2026-11-18). */
+  const [tall, setTall] = useState(true);
   const [pieces, setPieces] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -133,7 +162,7 @@ export function NineGrid() {
     if (!source) return;
     const timer = window.setTimeout(() => {
       try {
-        setPieces(cut(source, fit, position, padColour));
+        setPieces(cut(source, fit, position, padColour, tall));
         setError(null);
       } catch (err) {
         console.error("[grid] cut failed", err);
@@ -141,7 +170,7 @@ export function NineGrid() {
       }
     }, 150);
     return () => window.clearTimeout(timer);
-  }, [source, fit, position, padColour]);
+  }, [source, fit, position, padColour, tall]);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -274,6 +303,28 @@ export function NineGrid() {
               )}
             </div>
           )}
+
+          <div className="stack-2">
+            <div className="grid-tool__seg" role="radiogroup" aria-label="点开单张图时看到什么">
+              {([[true, "点开看完整图"], [false, "只切九宫格"]] as const).map(([value, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={tall === value}
+                  className={tall === value ? "is-on" : undefined}
+                  onClick={() => setTall(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="body-sm" style={{ margin: 0 }}>
+              {tall
+                ? "朋友圈里拼成一张大图；点开任意一张，看到的是完整原图。"
+                : "每张就是大图的九分之一，点开单张只看到局部。"}
+            </p>
+          </div>
 
           {/* A Moments post as it looks in WeChat (light mode): avatar, name,
               then the nine pictures as square thumbnails on white, with white

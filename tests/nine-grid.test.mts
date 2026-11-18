@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { squareFor, tilePlacement, TILE } from "../src/lib/nine-grid.ts";
+import { squareFor, TALL, TALL_PIECE_TOP, tallPhotoPlacement, tilePlacement, TILE } from "../src/lib/nine-grid.ts";
 
 test("crop: the square is the short edge, and position slides along the long one", () => {
   assert.deepEqual(squareFor(4000, 3000, "crop", 0.5), { side: 3000, x: -500, y: 0 });
@@ -45,4 +45,23 @@ test("crop offset carries into every piece", () => {
   const first = tilePlacement(square, 4500, 3000, 0, 1000);
   // A cell is 1000 source px, drawn at 1000 px: scale 1, so the overhang is −750.
   assert.deepEqual(first, { dx: -750, dy: 0, dw: 4500, dh: 3000 });
+});
+
+// ── Opens to the whole picture (2026-11-18) ────────────────────────────────
+test("★ tall pieces: the grid piece is the exact middle square, below the first screen", () => {
+  assert.equal(TALL.height / TALL.width, 6);
+  assert.equal(TALL_PIECE_TOP + TILE / 2, TALL.height / 2, "centred, so the Moments thumbnail is the piece");
+  assert.ok(TALL_PIECE_TOP >= TALL.screen, "opening shows the photo, not the piece under it");
+});
+
+test("tall pieces: the whole photo fits the first screen, uncropped", () => {
+  // A 3:4 portrait phone photo: limited by width.
+  const portrait = tallPhotoPlacement(4284, 5712);
+  assert.equal(portrait.dw, TILE);
+  assert.equal(portrait.dh, 1440);
+  assert.ok(portrait.dy >= 0 && portrait.dy + portrait.dh <= TALL.screen);
+  // A very tall screenshot: limited by the screen, centred across.
+  const tall = tallPhotoPlacement(1000, 5000);
+  assert.equal(tall.dh, TALL.screen);
+  assert.equal(tall.dx, (TILE - tall.dw) / 2);
 });
