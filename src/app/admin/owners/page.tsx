@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "老板名单 · 后台", robots: { i
 
 /**
  * Business owners (2026-11-19, owner-lead.ts), for following up on WeChat and
- * filling the owners' morning for each trade. Those who ticked "have James
+ * seeing which trades and needs come up most. Those who ticked "have James
  * look at my business" on a feedback form come first, then those who agreed
  * to a follow-up on /boss, then every other owner. Each row carries the
  * WeChat remark in the community's format, ready to paste. Organiser-only: it

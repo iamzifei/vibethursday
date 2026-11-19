@@ -148,12 +148,12 @@ export const copy = {
         // 2026-11-19: the fourth way in. The other three are all "come and
         // learn"; a business owner who wants a result had nowhere to go but a
         // line in the footer. A short form, so the organiser knows their line
-        // of work and can invite them to the owners' morning for that trade.
+        // of work and can follow up on WeChat with what owners in that trade do.
         {
           key: "boss",
           tag: "",
           title: "我是老板",
-          body: "想知道 AI 在你这一行先做哪件事。留个行业，同行老板的小范围专场第一时间叫你；想先单独聊也可以。",
+          body: "想知道 AI 在你这一行先做哪件事。留个行业和最想让 AI 帮的一件事，James 告诉你同行在怎么用；想先单独聊也可以。",
           cta: "留个行业",
           href: "/boss",
           scene: "scene-4",
@@ -2047,7 +2047,7 @@ export const copy = {
           key: "boss",
           tag: "",
           title: "I run a business",
-          body: "Find out what AI should do first in your line of work. Tell us your trade and we will invite you to a small morning with owners in the same trade. (Form in Chinese.)",
+          body: "Find out what AI should do first in your line of work. Tell us your trade and the one job you want AI to take, and James will tell you what owners in your trade are doing with it. (Form in Chinese.)",
           cta: "Tell us your trade",
           href: "/boss",
           scene: "scene-4",
