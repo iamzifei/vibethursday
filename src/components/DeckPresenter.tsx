@@ -89,9 +89,13 @@ export function DeckPresenter({
       }
 
       try {
+        const { image, text } = await page();
         const body = new FormData();
         body.append("key", presenterKey);
-        body.append("slide", await page(), "slide.jpg");
+        body.append("slide", image, "slide.jpg");
+        // The page's words, when it had any (a PDF page). The server stores
+        // them beside the picture for the speaker brief's AI read.
+        if (text) body.append("text", text);
 
         const response = await fetch(`/api/deck/${code}/slides`, { method: "POST", body });
 

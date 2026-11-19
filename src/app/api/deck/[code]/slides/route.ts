@@ -3,6 +3,7 @@ import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
 import { keyMatches, MAX_SLIDE_BYTES, MAX_SLIDES, publish } from "@/lib/deck";
 import { addDeckSlide, clearDeckSlides, getDeck } from "@/lib/db";
 import { sniffImage } from "@/lib/image-sniff";
+import { normaliseSlideText } from "@/lib/speak";
 
 /**
  * The most this route reads from a request body. Checked twice: up front
@@ -72,7 +73,10 @@ export async function POST(request: Request, { params }: Context) {
   }
 
   try {
-    const idx = await addDeckSlide(code, { bytes, mime });
+    // The page's words, read from a PDF in the browser (2026-11-19). Optional,
+    // bounded, and only ever used for the speaker brief's AI read.
+    const text = normaliseSlideText(form?.get("text"));
+    const idx = await addDeckSlide(code, { bytes, mime, text });
 
     // Tell the room the deck grew. Someone who scanned the QR while the
     // presenter was still uploading otherwise sits on "no slides yet" until
