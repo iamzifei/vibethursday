@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { CheckinDesk } from "@/components/CheckinDesk";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { FeedbackDesk } from "@/components/FeedbackDesk";
 import { PosterExport } from "@/components/PosterExport";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-auth";
@@ -19,6 +20,7 @@ import {
   listCourseOrders,
   listTuesdayFeeDesk,
   listShareCandidates,
+  getSessionTheme,
   listDinner,
   listFeedback,
   listLoginStats,
@@ -46,6 +48,8 @@ import { ADMIN_VIEW_LABEL, ADMIN_VIEWS, adminHref, adminView } from "@/lib/admin
 import { compositionPerSession, countPerSession, tuesdaySplit, type Tally } from "@/lib/signup-stats";
 import { isTurnstileConfigured } from "@/lib/turnstile";
 import { THURSDAY_TIME_ZH } from "@/lib/venue";
+import { BRIEF_FIELDS, briefStarted, REVIEW_ITEMS, VERDICT_OK, type ReviewItemKey } from "@/lib/speak";
+import { speakerToken } from "@/lib/speak-token";
 
 // Always read live data, and keep this page out of any search index.
 export const dynamic = "force-dynamic";
@@ -58,6 +62,21 @@ export const metadata: Metadata = {
 type PageProps = {
   /** `fb` picks which session's feedback is read out below the summary. */
   searchParams: Promise<{ key?: string; fb?: string; q?: string; all?: string; cq?: string; msg?: string; view?: string }>;
+};
+
+/** The four questions and the rubric lines, as the organiser reads them (speak.ts). */
+const SPEAK_FIELD_LABEL: Record<(typeof BRIEF_FIELDS)[number], string> = {
+  before: "以前怎么做",
+  numbers: "交给 AI 后的真数字",
+  failed: "试过不行的",
+  copyable: "同行能不能照抄",
+};
+const SPEAK_ITEM_LABEL: Record<ReviewItemKey, string> = {
+  theme: "扣题",
+  questions: "四问和真数字",
+  pitch: "推销味",
+  conflict: "和社群、课程冲突",
+  plain: "老板听得懂",
 };
 
 /** What each `login_events.method` means, for the logins table. */
@@ -140,6 +159,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   // to pick 2–3 from. Fails soft.
   const shareSession = nextThursdays(1)[0];
   const shareCandidates = await listShareCandidates(shareSession).catch(() => []);
+  // This week's theme and each pick's hand-in (2026-11-19, speak.ts). Fail soft.
+  const shareTheme = await getSessionTheme(shareSession).catch(() => null);
   // The dinner after that Thursday (2026-10-15), when one is configured.
   const dinner = dinnerConfig();
   const dinnerSeats = dinner ? await listDinner(shareSession).catch(() => []) : [];
@@ -1127,13 +1148,23 @@ export default async function AdminPage({ searchParams }: PageProps) {
             想分享 {shareCandidates.filter((x) => x.demo_intent === "yes").length} · 看情况 {shareCandidates.filter((x) => x.demo_intent === "maybe").length} · 已选 {shareCandidates.filter((x) => x.picked).length}（建议 2–3 人）
           </span>
         </div>
+        {/* This week's theme (2026-11-19): the line voted in the group. Shown
+            to the speakers on /speak and given to the AI read of their briefs. */}
+        <form method="post" action="/api/admin/theme" className="deck-build__join">
+          <input type="hidden" name="session" value={shareSession} />
+          <label className="stack-1" style={{ flex: "1 1 20em" }}>
+            <span className="label">本周主题（群投票定的那句，留空就是清掉）</span>
+            <input className="field" name="theme" defaultValue={shareTheme ?? ""} maxLength={120} placeholder="例：客户问价，第一轮回复交给 AI" />
+          </label>
+          <button className="btn btn--secondary" type="submit">保存主题</button>
+        </form>
         {shareCandidates.length === 0 ? (
           <p className="body-sm" style={{ color: "var(--fg3)" }}>还没有人报名分享。可以在群里点名老面孔。</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead>
-                <tr><th scope="col">名字</th><th scope="col">微信号</th><th scope="col">意向</th><th scope="col">分享什么</th><th scope="col">操作</th></tr>
+                <tr><th scope="col">名字</th><th scope="col">微信号</th><th scope="col">意向</th><th scope="col">分享什么</th><th scope="col">交稿</th><th scope="col">操作</th></tr>
               </thead>
               <tbody>
                 {shareCandidates.map((x) => (
@@ -1142,6 +1173,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <td className="mono">{x.wechat ?? "—"}</td>
                     <td>{x.demo_intent === "yes" ? "想分享" : x.demo_intent === "maybe" ? "看情况" : "—"}</td>
                     <td style={{ whiteSpace: "normal", minWidth: "16em" }}>{x.share_topic ?? x.building ?? "—"}</td>
+                    <td>{!x.picked ? "—" : !briefStarted(x.brief) ? "未交" : !x.review ? "已交 · 还没请 AI 看" : x.review.verdict === VERDICT_OK ? "已交 · 可以讲" : "已交 · 建议改"}</td>
                     <td>
                       <form method="post" action="/api/admin/share">
                         <input type="hidden" name="session" value={shareSession} />
@@ -1156,6 +1188,61 @@ export default async function AdminPage({ searchParams }: PageProps) {
             </table>
           </div>
         )}
+        {/* Each pick's hand-in (2026-11-19): the link to send them, and what
+            they have handed in so far. The link works until that day ends. */}
+        {shareCandidates.filter((x) => x.picked).map((x) => {
+          let link: string | null = null;
+          try {
+            link = `${origin}/speak/${speakerToken(x.signup_id, shareSession)}`;
+          } catch {
+            link = null;
+          }
+          const stale = Boolean(x.review && x.brief_at && x.reviewed_at && x.brief_at > x.reviewed_at);
+          return (
+            <details className="card stack-3" key={`speak-${x.signup_id}`}>
+              <summary className="body" style={{ cursor: "pointer" }}>
+                {x.name} · 交稿链接、四问、AI 意见、投屏房间
+              </summary>
+              <div className="stack-4" style={{ marginTop: "var(--space-3)" }}>
+                {link ? (
+                  <CopyLinkButton url={link} label="复制交稿链接" copiedLabel="已复制，微信发给他" failedLabel="复制不了，长按上面的链接复制" />
+                ) : (
+                  <p className="body-sm hl">没有设 MEMBER_SECRET / ADMIN_TOKEN，生成不了交稿链接。</p>
+                )}
+                {x.deck_code && x.deck_key ? (
+                  <p className="body-sm">
+                    投屏房间 <span className="mono hl">{x.deck_code}</span> · 主持人翻页链接{" "}
+                    <a className="mono" style={{ wordBreak: "break-all" }} href={`/present/${x.deck_code}?k=${x.deck_key}`}>{`${origin}/present/${x.deck_code}?k=${x.deck_key}`}</a>
+                  </p>
+                ) : (
+                  <p className="body-sm" style={{ color: "var(--fg3)" }}>他第一次打开交稿链接时会自动开投屏房间。</p>
+                )}
+                {briefStarted(x.brief) && x.brief ? (
+                  <dl className="stack-2" style={{ margin: 0 }}>
+                    {BRIEF_FIELDS.map((field) => (
+                      <div key={field} className="stack-1">
+                        <dt className="label">{SPEAK_FIELD_LABEL[field]}</dt>
+                        <dd className="body-sm" style={{ margin: 0, whiteSpace: "pre-wrap" }}>{x.brief![field] || "（没写）"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : (
+                  <p className="body-sm" style={{ color: "var(--fg3)" }}>还没交四问。</p>
+                )}
+                {x.review && (
+                  <div className="stack-2">
+                    <p className="label" style={{ margin: 0 }}>AI 意见：{x.review.verdict}{stale ? "（之后改过稿）" : ""}</p>
+                    <ul className="body-sm" style={{ margin: 0, paddingLeft: "1.25em" }}>
+                      {REVIEW_ITEMS.map((key) => (
+                        <li key={key}>{x.review!.items[key].ok ? "✅" : "⚠️"} {SPEAK_ITEM_LABEL[key]}{x.review!.items[key].fix ? `：${x.review!.items[key].fix}` : ""}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </details>
+          );
+        })}
       </section>
 
       </section>
