@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "我是老板 · Vibe Thursday",
-  description: "悉尼做生意的老板：留下你这一行，同行老板的小范围专场第一时间通知你。",
+  description: "悉尼做生意的老板：留下你这一行和最想让 AI 帮的一件事，James 会告诉你同行在怎么用 AI。",
 };
 
 const ERRORS: Record<string, string> = {
@@ -46,13 +46,13 @@ export default async function BossPage({ searchParams }: PageProps) {
               <span className="eyebrow">§ 我是老板</span>
               <h1 className="h2" style={{ margin: 0 }}>AI 在你这一行，先做哪件事？</h1>
               <p className="body-lg" style={{ margin: 0 }}>
-                留下你这一行和最想让 AI 帮的一件事。同一行的老板凑够了，会开一个 6–8 人的小范围专场，第一时间叫你。
+                留下你这一行和最想让 AI 帮的一件事。James 会在微信上告诉你，你这一行的老板现在在怎么用 AI。
               </p>
             </div>
 
             {params.done ? (
               <div className="stack-3">
-                <p className="alert" role="status">收到了，谢谢。勾了「可以加我微信」的话，James 会在微信上跟你打个招呼，你这一行的专场定了日子也会通知你。</p>
+                <p className="alert" role="status">收到了，谢谢。勾了「可以加我微信」的话，James 会在微信上跟你打个招呼。</p>
                 <p className="body">等不及的话，周四早上直接来坐坐，每次都有不同行业的老板讲自己怎么用 AI。</p>
                 <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
                   <Link className="btn btn--primary" href="/#signup">报名周四 →</Link>
@@ -105,7 +105,7 @@ export default async function BossPage({ searchParams }: PageProps) {
                 </div>
                 <label className="choice" style={{ alignItems: "flex-start" }}>
                   <input type="checkbox" name="consent" value="1" />
-                  <span>可以加我微信，有我这一行的专场或者适合我的做法时告诉我</span>
+                  <span>可以加我微信，有适合我这一行的做法时告诉我</span>
                 </label>
                 <QuickBotCheck siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null} label="提交" />
               </form>

@@ -12,7 +12,7 @@ import { INDUSTRIES, type Industry } from "./signup-profile.ts";
  * - the "have James look at my business" tick on the Thursday feedback form.
  *
  * Even an owner who is not ready to pay leaves their trade and their need,
- * which is what the owners' morning for each trade is filled from.
+ * so there is something to follow up with on WeChat.
  */
 
 /** Company size bands on the form. Counted, so relabel freely, never rename. */

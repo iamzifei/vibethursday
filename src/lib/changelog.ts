@@ -76,8 +76,8 @@ export const RELEASES: readonly Release[] = [
     date: "2026-11-19",
     kind: "minor",
     scope: "room",
-    zh: "12 月 24 日和 31 日两个周四停办，1 月 7 日恢复。首页多了第四种来法「我是老板」：留下你这一行，同行老板的小范围专场第一时间叫你。周四散场的反馈表上，老板可以自己勾「想让主办人单独看看我的生意」。",
-    en: "No Thursday on 24 or 31 December; back on 7 January. The home page has a fourth way in, for business owners: tell us your trade and you will be invited to a small morning with owners in the same trade. The Thursday feedback form now has a box for owners who would like the organiser to look at their business one-on-one.",
+    zh: "12 月 24 日和 31 日两个周四停办，1 月 7 日恢复。首页多了第四种来法「我是老板」：留下你这一行和最想让 AI 帮的一件事，主办人告诉你同行在怎么用。周四散场的反馈表上，老板可以自己勾「想让主办人单独看看我的生意」。",
+    en: "No Thursday on 24 or 31 December; back on 7 January. The home page has a fourth way in, for business owners: tell us your trade and the one job you want AI to take, and the organiser will tell you what owners in your trade are doing with it. The Thursday feedback form now has a box for owners who would like the organiser to look at their business one-on-one.",
     link: { href: "/boss", zh: "我是老板 →", en: "For business owners →" },
   },
   {
