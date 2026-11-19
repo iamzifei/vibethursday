@@ -5652,11 +5652,15 @@ h4, .h4 { font-size: var(--text-lg); font-weight: var(--weight-semibold); line-h
 .path-card__body { font-size: var(--text-sm); color: var(--fg2); line-height: 1.55; }
 .path-card__cta { font-size: var(--text-sm); color: var(--accent); font-weight: var(--weight-semibold); }
 
-/* Wide screens: three cards side by side, picture on top. */
+/* Wide screens: cards side by side, picture on top — two by two, then all
+   four in a row once there is room (four from 2026-11-19). */
 @media (min-width: 860px) {
-  .paths { grid-template-columns: repeat(3, 1fr); }
+  .paths { grid-template-columns: repeat(2, 1fr); }
   .path-card { grid-template-columns: 1fr; align-items: start; }
   .path-card .scene-img { aspect-ratio: 3 / 2; }
+}
+@media (min-width: 1180px) {
+  .paths { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* The three first-time steps: big numbers, one line of title, one of detail. */

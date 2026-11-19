@@ -76,12 +76,43 @@ const SESSION_END_HOUR = 12;
  * earlier than FIRST_SESSION are skipped rather than offered.
  */
 export function nextThursdays(count = 6): string[] {
-  const today = sydneyToday();
+  return thursdaysFrom(sydneyToday().toISOString().slice(0, 10), sydneyHour(), count);
+}
+
+/**
+ * Thursdays that are not held. Christmas and New Year weeks of 2026: the
+ * meetup is back on 7 January 2027. Add a date here to take a Thursday off
+ * the calendar everywhere at once (signup, /go, the bot, the sitemap).
+ */
+export const SKIPPED_THURSDAYS: readonly string[] = ["2026-12-24", "2026-12-31"];
+
+/**
+ * The last Thursday that was actually held before `date` (YYYY-MM-DD),
+ * stepping back over SKIPPED_THURSDAYS. Over the Christmas break the session
+ * before 7 January is 17 December, not 31 December (review 2026-11-19).
+ */
+export function previousHeldThursday(date: string): string {
+  const at = new Date(`${date}T00:00:00Z`);
+  // Bounded: a run of skipped weeks longer than a year is a typo, not a plan.
+  for (let i = 0; i < 52; i += 1) {
+    at.setUTCDate(at.getUTCDate() - 7);
+    const iso = at.toISOString().slice(0, 10);
+    if (!SKIPPED_THURSDAYS.includes(iso)) return iso;
+  }
+  return at.toISOString().slice(0, 10);
+}
+
+/**
+ * `nextThursdays`, pure in (today, hour) so the tests can stand on any day.
+ * `today` is a Sydney date, YYYY-MM-DD.
+ */
+export function thursdaysFrom(todayIso: string, hour: number, count = 6): string[] {
+  const today = new Date(`${todayIso}T00:00:00Z`);
   let daysUntilThursday = (THURSDAY - today.getUTCDay() + 7) % 7;
 
   // On a Thursday afternoon the session has already happened, so offering it
   // would take signups for something that is over. Roll to next week instead.
-  if (daysUntilThursday === 0 && sydneyHour() >= SESSION_END_HOUR) {
+  if (daysUntilThursday === 0 && hour >= SESSION_END_HOUR) {
     daysUntilThursday = 7;
   }
 
@@ -95,7 +126,7 @@ export function nextThursdays(count = 6): string[] {
     session.setUTCDate(today.getUTCDate() + daysUntilThursday + week * 7);
 
     const iso = session.toISOString().slice(0, 10);
-    if (iso >= FIRST_SESSION) upcoming.push(iso);
+    if (iso >= FIRST_SESSION && !SKIPPED_THURSDAYS.includes(iso)) upcoming.push(iso);
   }
 
   return upcoming;
@@ -332,10 +363,7 @@ export function sessionInFocus(nextSession: string, today: string): string {
 
   if (daysAway <= LOOK_AHEAD_DAYS) return nextSession;
 
-  const previous = new Date(`${nextSession}T00:00:00Z`);
-  previous.setUTCDate(previous.getUTCDate() - 7);
-
-  const iso = previous.toISOString().slice(0, 10);
+  const iso = previousHeldThursday(nextSession);
   return iso >= FIRST_SESSION ? iso : nextSession;
 }
 

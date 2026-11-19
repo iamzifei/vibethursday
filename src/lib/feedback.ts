@@ -1,6 +1,7 @@
 // Relative, not "@/": the tests load this through Node's type stripper, which
 // cannot resolve the tsconfig path alias.
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { previousHeldThursday, SKIPPED_THURSDAYS } from "./sessions.ts";
 
 /**
  * Saying what a session was like, afterwards.
@@ -151,7 +152,9 @@ export function sessionForFeedback(today: string): string {
   const back = (date.getUTCDay() - THURSDAY + 7) % 7;
 
   date.setUTCDate(date.getUTCDate() - back);
-  return date.toISOString().slice(0, 10);
+  const iso = date.toISOString().slice(0, 10);
+  // A skipped Thursday had no morning to give feedback on (2026-11-19).
+  return SKIPPED_THURSDAYS.includes(iso) ? previousHeldThursday(iso) : iso;
 }
 
 /** One submitted form, as the summary needs it. */

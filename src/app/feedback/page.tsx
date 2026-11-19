@@ -125,6 +125,7 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
     params.err === "empty" ? { title: t.emptyTitle, body: t.empty }
     : params.err === "rate" ? { title: null, body: t.rateLimited }
     : params.err === "failed" ? { title: null, body: t.failed }
+    : params.err === "callWechat" ? { title: null, body: t.wantsCallNeedsWechat }
     : null;
 
   const recommendOptions = [
@@ -232,6 +233,14 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
           <input className="field" id="feedback-wechat" name="wechat" maxLength={100} autoComplete="off" />
           <p className="field-hint">{t.wechatHint}</p>
         </div>
+
+        <label className="choice" style={{ alignItems: "flex-start" }}>
+          <input type="checkbox" name="wantsCall" value="1" />
+          <span>
+            {t.wantsCallLabel}
+            <span className="field-hint" style={{ display: "block" }}>{t.wantsCallHint}</span>
+          </span>
+        </label>
 
         <button className="btn btn--primary btn--block" type="submit">
           {t.submit}

@@ -15,6 +15,7 @@ import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, PAST
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
 import type { ProgressEntry, ProgressInput } from "./progress.ts";
 import type { DeskRow } from "./desk.ts";
+import type { OwnerLeadRecord } from "./owner-lead.ts";
 import type { PersonRoleKind } from "./person-roles.ts";
 
 /**
@@ -229,6 +230,11 @@ export function ensureSchema(): Promise<void> {
     // What a business owner most wants AI for (signup-profile.ts BIZ_FOCUS,
     // 2026-10-05). Empty = not asked or not answered.
     await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS biz_focus text[] NOT NULL DEFAULT '{}'`);
+
+    // What a business owner left on /boss (owner-lead.ts, 2026-11-19): shop,
+    // size, the one job they want AI to take, whether they agreed to be
+    // followed up on WeChat, and when. NULL = never used that form.
+    await pool.query(`ALTER TABLE signups ADD COLUMN IF NOT EXISTS owner_lead jsonb`);
 
     // WeChat login (wechat-auth.ts, 2026-10-04): the service account's openid
     // for this person, once they have proved which signup is theirs. One
@@ -582,6 +588,10 @@ export function ensureSchema(): Promise<void> {
     // left a name but no way to reach them cannot be replied to, which is the
     // one reason the name box exists at all.
     await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS wechat text`);
+
+    // "Have James look at my business" (2026-11-19): an owner raising their
+    // own hand at the end of a Thursday, so nothing is sold from the front.
+    await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS wants_call boolean NOT NULL DEFAULT false`);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS feedback_session_idx ON feedback (session)
@@ -1439,6 +1449,8 @@ export type SignupRow = {
   industry: string | null;
   interest: string | null;
   biz_focus: string[];
+  /** What they left on /boss (owner-lead.ts). Null when they never used it. */
+  owner_lead: OwnerLeadRecord | null;
   /** Sessions this person checked in to on the day, oldest first. */
   checked_in: string[];
   /** Why they came, per session, as "2026-09-24=biz 2026-10-01=learn". Empty when never answered. */
@@ -1623,6 +1635,19 @@ export async function setBizFocus(signupId: string, focus: readonly string[]): P
 }
 
 /**
+ * Saves what a business owner left on /boss against their signup row, and
+ * their industry when the row had none (an answer given earlier is kept).
+ * The id comes from `saveSignupWithResult` on the same request.
+ */
+export async function setOwnerLead(signupId: string, lead: OwnerLeadRecord, industry: string | null): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE signups SET owner_lead = $2::jsonb, industry = COALESCE(industry, $3), updated_at = now() WHERE id = $1::bigint`,
+    [signupId, JSON.stringify(lead), industry],
+  );
+}
+
+/**
  * Saves the one-tap interest answer against a signup. The id comes from the
  * "this phone remembers you" cookie, never from anything typed, so nobody can
  * answer for someone else.
@@ -1651,7 +1676,7 @@ export async function listSignups(): Promise<SignupRow[]> {
               '{}'
             ) AS waitlist,
             to_char(first_session, 'YYYY-MM-DD') AS first_session,
-            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, source, lang, bot_check, wechat_former, wechat_name, share_topic, waitlist_since,
+            availability, ai_models, ai_spend, ai_level, industry, interest, biz_focus, owner_lead, source, lang, bot_check, wechat_former, wechat_name, share_topic, waitlist_since,
             -- The days they were actually in the room, from the check-in
             -- table. Formatted in SQL like sessions above, for the same reason.
             COALESCE(
@@ -3386,6 +3411,8 @@ export type FeedbackInput = {
   name: string | null;
   /** Optional, and only useful together with a name. */
   wechat: string | null;
+  /** Ticked "have James look at my business" (2026-11-19). */
+  wantsCall: boolean;
   lang: string;
 };
 
@@ -3402,8 +3429,8 @@ export async function saveFeedback(input: FeedbackInput): Promise<void> {
   await ensureSchema();
 
   await getPool().query(
-    `INSERT INTO feedback (session, rating, recommend, best, better, name, wechat, lang)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8)`,
+    `INSERT INTO feedback (session, rating, recommend, best, better, name, wechat, lang, wants_call)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       input.session,
       input.rating,
@@ -3413,6 +3440,7 @@ export async function saveFeedback(input: FeedbackInput): Promise<void> {
       input.name,
       input.wechat,
       input.lang,
+      input.wantsCall,
     ],
   );
 }
@@ -3427,6 +3455,8 @@ export type FeedbackRecord = {
   name: string | null;
   wechat: string | null;
   lang: string | null;
+  /** Ticked "have James look at my business". */
+  wants_call: boolean;
   /** Sydney date and time, for the organiser's table. */
   created_at: string;
 };
@@ -3445,7 +3475,7 @@ export async function listFeedback(session?: string): Promise<FeedbackRecord[]> 
   const result = await getPool().query<FeedbackRecord>(
     `SELECT id::text AS id,
             to_char(session, 'YYYY-MM-DD') AS session,
-            rating, recommend, best, better, name, wechat, lang,
+            rating, recommend, best, better, name, wechat, lang, wants_call,
             to_char(created_at AT TIME ZONE 'Australia/Sydney', 'YYYY-MM-DD HH24:MI') AS created_at
        FROM feedback
       WHERE $1::date IS NULL OR session = $1::date
