@@ -111,7 +111,7 @@ const SYDNEY = "Australia/Sydney";
  * midnight, so the offset at UTC midnight is the offset at Sydney midnight
  * on every date this is used for.)
  */
-function sydneyMidnight(isoDate: string): Date {
+export function sydneyMidnight(isoDate: string): Date {
   const utcMidnight = Date.parse(`${isoDate}T00:00:00Z`);
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: SYDNEY, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
@@ -123,7 +123,7 @@ function sydneyMidnight(isoDate: string): Date {
 }
 
 /** The day after a date, YYYY-MM-DD. */
-function nextDay(isoDate: string): string {
+export function nextDay(isoDate: string): string {
   const day = new Date(`${isoDate}T00:00:00Z`);
   day.setUTCDate(day.getUTCDate() + 1);
   return day.toISOString().slice(0, 10);

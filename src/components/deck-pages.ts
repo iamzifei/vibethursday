@@ -26,9 +26,18 @@
 export const SLIDE_MAX_EDGE = 1600;
 export const SLIDE_QUALITY = 0.85;
 
+/**
+ * One rendered page: the picture, and the words that were on it.
+ *
+ * `text` is read out of a PDF page with pdf.js while it is rendered
+ * (2026-11-19), for the speaker brief's AI read, which cannot see pictures.
+ * It is empty for an image upload and for a PDF page that is only a picture.
+ */
+export type Page = { image: Blob; text: string };
+
 /** A page that has not been rendered yet. Deferred so a forty-page PDF is not
  *  held in memory as forty bitmaps while the first one uploads. */
-export type PageSource = () => Promise<Blob>;
+export type PageSource = () => Promise<Page>;
 
 export function isPdf(file: File): boolean {
   // The extension as well as the type: some Android file pickers hand over
@@ -128,9 +137,23 @@ export async function pdfPages(file: File): Promise<PageSource[]> {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     await page.render({ canvas, viewport }).promise;
+
+    // The words, as a side product. Never allowed to stop the upload: a page
+    // whose text cannot be read is still a perfectly good page to show.
+    let text = "";
+    try {
+      const content = await page.getTextContent();
+      text = content.items
+        .map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : " ") : ""))
+        .join("")
+        .trim();
+    } catch {
+      text = "";
+    }
+
     page.cleanup();
 
-    return toJpeg(canvas);
+    return { image: await toJpeg(canvas), text };
   });
 }
 
@@ -147,7 +170,7 @@ export async function expandToPages(files: File[]): Promise<PageSource[]> {
 
   for (const file of sortByName(files)) {
     if (isPdf(file)) pages.push(...(await pdfPages(file)));
-    else pages.push(() => shrinkImage(file));
+    else pages.push(async () => ({ image: await shrinkImage(file), text: "" }));
   }
 
   return pages;

@@ -4,12 +4,13 @@ import { nameHint } from "./my-signup.ts";
 import { isOpenTrialSession } from "./sessions.ts";
 import { BOT_SOURCE, botAlready, botNameKey, findBotRow } from "./bot-signup.ts";
 import type { SessionQuestion } from "./session-questions.ts";
-import { spendFrom } from "./coach-budget.ts";
+import { REVIEW_BUDGET_SQL, spendFrom } from "./coach-budget.ts";
 import { classifyLane, type Lane } from "./questions.ts";
 // Relative, not "@/": scripts/ and tests/ load this through Node's type stripper,
 // which cannot resolve the tsconfig path alias.
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
+import { readBrief, refundSpeakerReview, spendSpeakerReview, storedReview, type Brief, type Review } from "./speak.ts";
 import type { CheckinSource } from "./checkin.ts";
 import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, PAST_CLASS_IDS, YEARLY_MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
@@ -528,6 +529,11 @@ export function ensureSchema(): Promise<void> {
       )
     `);
 
+    // The words on a PDF page, read in the browser while the page is turned
+    // into a picture (2026-11-19). Only the speaker brief's AI read uses it;
+    // an image upload has none. Goes when the deck goes.
+    await pool.query(`ALTER TABLE deck_slides ADD COLUMN IF NOT EXISTS text text`);
+
     // ── Check-ins ────────────────────────────────────────────────────
     // Who was actually in the room, one row per person per session. This is
     // the only attendance record on the site: `signups.sessions` says who
@@ -780,6 +786,38 @@ export function ensureSchema(): Promise<void> {
         position    int NOT NULL DEFAULT 0,
         created_at  timestamptz NOT NULL DEFAULT now(),
         PRIMARY KEY (session, signup_id)
+      )
+    `);
+
+    // ── A picked speaker hands in their talk (2026-11-19, speak.ts) ─────
+    // The four answers, the AI read of them, and the phone-follow room their
+    // slides live in, all on the pick itself: unpick someone and it goes with
+    // them. `deck_key` is kept beside `deck_code` because room codes are only
+    // four digits and are reused once a room is closed — a code alone could
+    // later name somebody else's room.
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS deck_code text`);
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS deck_key text`);
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS brief jsonb`);
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS brief_at timestamptz`);
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS review jsonb`);
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS reviewed_at timestamptz`);
+    // How many AI reads this speaker has had for this morning; capped in SQL
+    // (SPEAKER_REVIEW_SQL in speak.ts).
+    await pool.query(`ALTER TABLE session_shares ADD COLUMN IF NOT EXISTS review_count int NOT NULL DEFAULT 0`);
+    // The week's theme, as voted in the group. One line per Thursday.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session_themes (
+        session     date PRIMARY KEY,
+        theme       text NOT NULL,
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    // The site-wide daily cap on speaker reads, apart from the ask box's
+    // (coach_budget) so neither can use up the other. A count and nothing else.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS review_budget (
+        day date PRIMARY KEY,
+        calls integer NOT NULL DEFAULT 0
       )
     `);
 
@@ -2825,15 +2863,15 @@ export async function getDeck(code: string): Promise<DeckRow | null> {
  */
 export async function addDeckSlide(
   code: string,
-  image: { bytes: Buffer; mime: string },
+  image: { bytes: Buffer; mime: string; text?: string },
 ): Promise<number> {
   await ensureSchema();
 
   const result = await getPool().query<{ idx: number }>(
-    `INSERT INTO deck_slides (code, idx, image, image_mime)
-     SELECT $1, coalesce(max(idx) + 1, 0), $2, $3 FROM deck_slides WHERE code = $1
+    `INSERT INTO deck_slides (code, idx, image, image_mime, text)
+     SELECT $1, coalesce(max(idx) + 1, 0), $2, $3, $4 FROM deck_slides WHERE code = $1
      RETURNING idx`,
-    [code, image.bytes, image.mime],
+    [code, image.bytes, image.mime, image.text || null],
   );
 
   return result.rows[0].idx;
@@ -2976,7 +3014,10 @@ export async function closeStaleDecks(): Promise<number> {
   await ensureSchema();
 
   const result = await getPool().query(
-    `DELETE FROM decks WHERE created_at < now() - interval '7 days'`,
+    // A speaker's room for a Thursday still to come is kept however early it
+    // was opened: those slides are for that morning (speak.ts).
+    `DELETE FROM decks WHERE created_at < now() - interval '7 days'
+        AND NOT EXISTS (SELECT 1 FROM session_shares x WHERE x.deck_code = decks.code AND x.deck_key = decks.presenter_key AND x.session >= current_date)`,
   );
 
   return result.rowCount ?? 0;
@@ -5121,22 +5162,30 @@ export type ShareCandidate = {
   share_topic: string | null;
   building: string | null;
   picked: boolean;
+  /** What a picked speaker handed in on /speak (2026-11-19); null until then. */
+  brief: Brief | null;
+  brief_at: Date | null;
+  review: Review | null;
+  reviewed_at: Date | null;
+  deck_code: string | null;
+  deck_key: string | null;
 };
 
 /** Everyone booked for a morning who offered to share (yes first, then maybe), with whether they are picked. */
 export async function listShareCandidates(session: string): Promise<ShareCandidate[]> {
   await ensureSchema();
-  const result = await getPool().query<ShareCandidate>(
+  const result = await getPool().query<Omit<ShareCandidate, "brief" | "review"> & { brief: unknown; review: unknown }>(
     `SELECT g.id::text AS signup_id, g.name, g.wechat, g.demo_intent, g.share_topic, g.building,
-            EXISTS (SELECT 1 FROM session_shares x WHERE x.session = $1::date AND x.signup_id = g.id) AS picked
+            x.signup_id IS NOT NULL AS picked,
+            x.brief, x.brief_at, x.review, x.reviewed_at, x.deck_code, x.deck_key
        FROM signups g
+       LEFT JOIN session_shares x ON x.session = $1::date AND x.signup_id = g.id
       WHERE $1::date = ANY(g.sessions)
-        AND (g.demo_intent IN ('yes', 'maybe')
-             OR EXISTS (SELECT 1 FROM session_shares x WHERE x.session = $1::date AND x.signup_id = g.id))
+        AND (g.demo_intent IN ('yes', 'maybe') OR x.signup_id IS NOT NULL)
       ORDER BY (g.demo_intent = 'yes') DESC, g.updated_at`,
     [session],
   );
-  return result.rows;
+  return result.rows.map((row) => ({ ...row, brief: readBrief(row.brief), review: storedReview(row.review) }));
 }
 
 /** Picks or unpicks someone to share at the start of a morning; picks keep their order. */
@@ -5165,6 +5214,151 @@ export async function listSessionShares(session: string): Promise<{ name: string
     [session],
   );
   return result.rows;
+}
+
+/* =============================================================================
+   A picked speaker hands in their talk (2026-11-19, speak.ts)
+============================================================================= */
+
+/** The week's theme for a Thursday, or null if none has been set. */
+export async function getSessionTheme(session: string): Promise<string | null> {
+  await ensureSchema();
+  const result = await getPool().query<{ theme: string }>(`SELECT theme FROM session_themes WHERE session = $1::date`, [session]);
+  return result.rows[0]?.theme ?? null;
+}
+
+/** Sets a Thursday's theme; blank clears it. */
+export async function setSessionTheme(session: string, theme: string): Promise<void> {
+  await ensureSchema();
+  if (!theme) {
+    await getPool().query(`DELETE FROM session_themes WHERE session = $1::date`, [session]);
+    return;
+  }
+  await getPool().query(
+    `INSERT INTO session_themes (session, theme) VALUES ($1::date, $2)
+     ON CONFLICT (session) DO UPDATE SET theme = EXCLUDED.theme, updated_at = now()`,
+    [session, theme],
+  );
+}
+
+export type SpeakerShare = {
+  name: string;
+  theme: string | null;
+  brief: Brief | null;
+  briefAt: Date | null;
+  review: Review | null;
+  reviewedAt: Date | null;
+  reviewCount: number;
+  deckCode: string | null;
+  deckKey: string | null;
+};
+
+/** One speaker's pick for a morning, or null if they are not (or no longer) picked. */
+export async function getSpeakerShare(session: string, signupId: string): Promise<SpeakerShare | null> {
+  await ensureSchema();
+  const result = await getPool().query<{
+    name: string; theme: string | null; brief: unknown; brief_at: Date | null; review: unknown;
+    reviewed_at: Date | null; review_count: number; deck_code: string | null; deck_key: string | null;
+  }>(
+    `SELECT g.name, t.theme, x.brief, x.brief_at, x.review, x.reviewed_at, x.review_count, x.deck_code, x.deck_key
+       FROM session_shares x
+       JOIN signups g ON g.id = x.signup_id
+       LEFT JOIN session_themes t ON t.session = x.session
+      WHERE x.session = $1::date AND x.signup_id = $2::bigint`,
+    [session, signupId],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    name: row.name,
+    theme: row.theme,
+    brief: readBrief(row.brief),
+    briefAt: row.brief_at,
+    review: storedReview(row.review),
+    reviewedAt: row.reviewed_at,
+    reviewCount: row.review_count,
+    deckCode: row.deck_code,
+    deckKey: row.deck_key,
+  };
+}
+
+/**
+ * The speaker's room, opened on their first visit and reused after that.
+ *
+ * A stored code is only trusted while its key still matches: a room closed
+ * from /admin frees its four digits for somebody else's room, and the
+ * speaker must then get a fresh one, never that one. Two first visits at once
+ * both open a room; the conditional update keeps one and the other is closed.
+ */
+export async function ensureSpeakerDeck(session: string, signupId: string, title: string): Promise<{ code: string; key: string } | null> {
+  const share = await getSpeakerShare(session, signupId);
+  if (!share) return null;
+
+  if (share.deckCode && share.deckKey) {
+    const existing = await getDeck(share.deckCode);
+    if (existing && existing.presenterKey === share.deckKey) return { code: share.deckCode, key: share.deckKey };
+  }
+
+  const deck = await createDeck(title);
+  const claimed = await getPool().query(
+    `UPDATE session_shares SET deck_code = $3, deck_key = $4
+      WHERE session = $1::date AND signup_id = $2::bigint AND deck_code IS NOT DISTINCT FROM $5`,
+    [session, signupId, deck.code, deck.presenterKey, share.deckCode],
+  );
+  if (claimed.rowCount === 1) return { code: deck.code, key: deck.presenterKey };
+
+  await deleteDeck(deck.code);
+  const again = await getSpeakerShare(session, signupId);
+  return again?.deckCode && again.deckKey ? { code: again.deckCode, key: again.deckKey } : null;
+}
+
+/** Saves the four answers. False if the person is no longer picked for that morning. */
+export async function saveSpeakerBrief(session: string, signupId: string, brief: Brief): Promise<boolean> {
+  await ensureSchema();
+  const result = await getPool().query(
+    `UPDATE session_shares SET brief = $3::jsonb, brief_at = now() WHERE session = $1::date AND signup_id = $2::bigint`,
+    [session, signupId, JSON.stringify(brief)],
+  );
+  return result.rowCount === 1;
+}
+
+export async function saveSpeakerReview(session: string, signupId: string, review: Review): Promise<void> {
+  await ensureSchema();
+  await getPool().query(
+    `UPDATE session_shares SET review = $3::jsonb, reviewed_at = now() WHERE session = $1::date AND signup_id = $2::bigint`,
+    [session, signupId, JSON.stringify(review)],
+  );
+}
+
+/** One read out of this speaker's allowance for the morning (SPEAKER_REVIEW_LIMIT). */
+export async function spendSpeakerReviewCall(session: string, signupId: string): Promise<boolean> {
+  await ensureSchema();
+  const pool = getPool();
+  return spendSpeakerReview((sql, params) => pool.query(sql, params), session, signupId);
+}
+
+/** Gives one read back to this speaker (day's cap refused, or the model failed). */
+export async function refundSpeakerReviewCall(session: string, signupId: string): Promise<void> {
+  await ensureSchema();
+  const pool = getPool();
+  await refundSpeakerReview((sql, params) => pool.query(sql, params), session, signupId);
+}
+
+/** One read out of the whole site's day (review_budget). See coach-budget.ts. */
+export async function spendReviewCall(limit: number): Promise<boolean> {
+  await ensureSchema();
+  const pool = getPool();
+  return spendFrom((sql, params) => pool.query(sql, params), limit, REVIEW_BUDGET_SQL);
+}
+
+/** The words on each page of a room, in page order ("" for a picture). */
+export async function listDeckSlideText(code: string): Promise<string[]> {
+  await ensureSchema();
+  const result = await getPool().query<{ text: string | null }>(
+    `SELECT text FROM deck_slides WHERE code = $1 ORDER BY idx`,
+    [code],
+  );
+  return result.rows.map((row) => row.text ?? "");
 }
 
 /* =============================================================================

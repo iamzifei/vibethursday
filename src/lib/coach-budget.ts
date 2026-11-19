@@ -26,6 +26,16 @@ export const BUDGET_SQL = `INSERT INTO coach_budget (day, calls) VALUES (current
      WHERE coach_budget.calls < $1
      RETURNING calls`;
 
+/**
+ * The same cap for the speakers' AI read on /speak (2026-11-19), counted in
+ * its own table so that a busy week of speakers cannot use up the ask-box's
+ * day, or the other way round. Same single statement, same WHERE.
+ */
+export const REVIEW_BUDGET_SQL = `INSERT INTO review_budget (day, calls) VALUES ((now() AT TIME ZONE 'Australia/Sydney')::date, 1)
+     ON CONFLICT (day) DO UPDATE SET calls = review_budget.calls + 1
+     WHERE review_budget.calls < $1
+     RETURNING calls`;
+
 /** Just enough of `pg`'s shape to run the statement, so a test can stand in. */
 export type BudgetQuery = (sql: string, params: unknown[]) => Promise<{ rowCount: number | null }>;
 
@@ -38,10 +48,10 @@ export type BudgetQuery = (sql: string, params: unknown[]) => Promise<{ rowCount
  * false, so a bare `limit <= 0` check waves it through and sends `NaN` to
  * Postgres — a mistyped spending cap must not become no spending cap.
  */
-export async function spendFrom(query: BudgetQuery, limit: number): Promise<boolean> {
+export async function spendFrom(query: BudgetQuery, limit: number, sql: string = BUDGET_SQL): Promise<boolean> {
   if (!Number.isFinite(limit) || limit <= 0) return false;
 
-  const result = await query(BUDGET_SQL, [limit]);
+  const result = await query(sql, [limit]);
 
   // The WHERE refused it when nothing comes back. `rowCount` is nullable in
   // `pg`'s types, and null is not one.

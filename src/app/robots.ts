@@ -45,6 +45,8 @@ export default function robots(): MetadataRoute.Robots {
         // nothing for a stranger. Only the pages *under* /class — the signup
         // page itself sets its own noindex and must stay fetchable for that.
         "/class/",
+        // A speaker's hand-in page (2026-11-19): one person's link, nothing to index.
+        "/speak/",
         "/api/",
       ],
     },

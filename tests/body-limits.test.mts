@@ -146,6 +146,7 @@ const ROUTES: [file: string, method: "POST" | "DELETE"][] = [
   ["src/app/api/admin/waitlist/route.ts", "POST"],
   ["src/app/api/admin/wechat/route.ts", "POST"],
   ["src/app/api/admin/wharf/route.ts", "POST"],
+  ["src/app/api/admin/theme/route.ts", "POST"],
   ["src/app/api/bot/cancel/route.ts", "POST"],
   ["src/app/api/bot/signup/route.ts", "POST"],
   ["src/app/api/checkin/route.ts", "POST"],
@@ -166,6 +167,7 @@ const ROUTES: [file: string, method: "POST" | "DELETE"][] = [
   ["src/app/api/play/move/route.ts", "POST"],
   ["src/app/api/session-photos/route.ts", "POST"],
   ["src/app/api/signup/route.ts", "POST"],
+  ["src/app/api/speak/route.ts", "POST"],
   ["src/app/api/wharf/route.ts", "POST"],
   ["src/app/api/wharf/coach/route.ts", "POST"],
 ];
