@@ -33,7 +33,9 @@ test("Thursday is the default way in, and the only card drawn as the main one", 
   for (const lang of ["zh", "en"] as const) {
     const items = getCopy(lang).paths.items;
     assert.equal(items[0].href, "#signup");
-    assert.deepEqual(items.map((item) => Boolean(item.tag)), [true, false, false]);
+    assert.deepEqual(items.map((item) => Boolean(item.tag)), [true, false, false, false]);
+    // The fourth way in (2026-11-19): owners who want a result, not a class.
+    assert.equal(items[3].href, "/boss");
   }
 });
 

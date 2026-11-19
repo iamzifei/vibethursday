@@ -54,6 +54,7 @@ export const ADMIN_NAV: AdminGroup[] = [
       { href: "/admin/photos", label: "照片审核", hint: "大家上传的现场照片", perm: "photos" },
       { href: "/admin?view=after", label: "周四散场后：反馈" },
       { href: "/admin/followup?day=thu", label: "周四会后跟进" },
+      { href: "/admin/owners", label: "老板名单", hint: "/boss 登记、反馈表举手的、报名选了做生意的；附微信备注" },
       { href: "/admin?view=community", label: "社群：码头、名片" },
     ],
   },

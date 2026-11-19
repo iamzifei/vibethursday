@@ -96,17 +96,22 @@ export async function POST(request: Request) {
   const better = clean(form?.get("better") ?? null, 2000);
   const name = clean(form?.get("name") ?? null, 100);
   const wechat = clean(form?.get("wechat") ?? null, 100);
+  // "Have James look at my business" (2026-11-19). Strict: only the exact
+  // value the checkbox sends. Useless without a way to reach them.
+  const wantsCall = form?.get("wantsCall") === "1";
+  if (wantsCall && !wechat) return back({ err: "callWechat" });
 
   // A form where every question was skipped says nothing and would still be a
   // row in the count — which would then make a session look like it got
   // responses it did not. A name or a WeChat ID on its own is not an answer
   // either: it is somebody saying who they are, not what they thought.
-  if (rating === null && recommend === null && !best && !better) {
+  // Asking for a one-on-one is an answer in its own right.
+  if (rating === null && recommend === null && !best && !better && !wantsCall) {
     return back({ err: "empty" });
   }
 
   try {
-    await saveFeedback({ session, rating, recommend, best, better, name, wechat, lang });
+    await saveFeedback({ session, rating, recommend, best, better, name, wechat, wantsCall, lang });
     return back({ done: "1" });
   } catch (error) {
     console.error("[feedback] failed", error);

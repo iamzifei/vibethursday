@@ -115,7 +115,7 @@ export const copy = {
     // the people who ever signed up came for Thursday and most came once, so
     // Thursday is the default and is the only card styled as the primary.
     paths: {
-      eyebrow: "§ 01 — 三种来法",
+      eyebrow: "§ 01 — 四种来法",
       title: "你是哪一种？",
       items: [
         {
@@ -144,6 +144,19 @@ export const copy = {
           cta: "看课程",
           href: "/class",
           scene: "class-1",
+        },
+        // 2026-11-19: the fourth way in. The other three are all "come and
+        // learn"; a business owner who wants a result had nowhere to go but a
+        // line in the footer. A short form, so the organiser knows their line
+        // of work and can invite them to the owners' morning for that trade.
+        {
+          key: "boss",
+          tag: "",
+          title: "我是老板",
+          body: "想知道 AI 在你这一行先做哪件事。留个行业，同行老板的小范围专场第一时间叫你；想先单独聊也可以。",
+          cta: "留个行业",
+          href: "/boss",
+          scene: "scene-4",
         },
       ],
     },
@@ -1560,6 +1573,10 @@ export const copy = {
       nameHint: "想让我回你就填一个。不填就是匿名，也一样会被读。",
       wechatLabel: "微信号（选填）",
       wechatHint: "只在需要回你的时候用。填了名字但没留联系方式，我就回不了。",
+      // 2026-11-19: an owner raising their own hand; nothing is sold from the front.
+      wantsCallLabel: "想让 James 单独看看我的生意",
+      wantsCallHint: "一对一单独聊。勾了要留微信号，James 会私信你约时间。",
+      wantsCallNeedsWechat: "勾了「想让 James 单独看看」的话，留个微信号，不然约不上你。",
       submit: "交上去",
       doneTitle: "收到了，谢谢。",
       doneBody: "每一条都会被读。下周四见。",
@@ -1996,7 +2013,7 @@ export const copy = {
     },
 
     paths: {
-      eyebrow: "§ 01 — Three ways in",
+      eyebrow: "§ 01 — Four ways in",
       title: "Which one are you?",
       items: [
         {
@@ -2025,6 +2042,15 @@ export const copy = {
           cta: "See the class",
           href: "/class",
           scene: "class-1",
+        },
+        {
+          key: "boss",
+          tag: "",
+          title: "I run a business",
+          body: "Find out what AI should do first in your line of work. Tell us your trade and we will invite you to a small morning with owners in the same trade. (Form in Chinese.)",
+          cta: "Tell us your trade",
+          href: "/boss",
+          scene: "scene-4",
         },
       ],
     },
@@ -3185,6 +3211,9 @@ export const copy = {
       nameHint: "Leave one if you want a reply. Without it this is anonymous, and still read.",
       wechatLabel: "WeChat ID (optional)",
       wechatHint: "Only used if there is something to reply to. A name with no way to reach you cannot be answered.",
+      wantsCallLabel: "I'd like James to look at my business",
+      wantsCallHint: "A one-on-one conversation. Leave your WeChat ID and James will message you to set a time.",
+      wantsCallNeedsWechat: "To be contacted about a one-on-one, leave your WeChat ID.",
       submit: "Send it",
       doneTitle: "Got it — thank you.",
       doneBody: "Every one of these gets read. See you Thursday.",
