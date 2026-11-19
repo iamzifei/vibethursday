@@ -4,7 +4,7 @@
  * The organiser picks who opens a morning on /admin (`session_shares`). Each
  * pick gets a link: four short answers about the one job they handed to AI,
  * their slides (which become that morning's phone-follow room, so nothing on
- * the day depends on the venue's TV), and an optional AI read of the whole
+ * the day depends on a shared screen), and an optional AI read of the whole
  * thing against a fixed rubric.
  *
  * ★ **The AI read never decides anything.** It returns two possible verdicts
@@ -196,6 +196,15 @@ export const SPEAKER_REVIEW_SQL = `UPDATE session_shares SET review_count = revi
      WHERE session = $1::date AND signup_id = $2::bigint AND review_count < $3
      RETURNING review_count`;
 
+/**
+ * Gives one read back (2026-11-19 review). Used when the day's cap refuses
+ * after the speaker's allowance was taken, or when the model returns nothing:
+ * neither is the speaker's doing, so neither should cost them a read. The
+ * `review_count > 0` keeps a stray second refund from going below zero.
+ */
+export const SPEAKER_REFUND_SQL = `UPDATE session_shares SET review_count = review_count - 1
+     WHERE session = $1::date AND signup_id = $2::bigint AND review_count > 0`;
+
 export type CapQuery = (sql: string, params: unknown[]) => Promise<{ rowCount: number | null }>;
 
 /** Takes one read out of this speaker's allowance. False when it is used up. */
@@ -208,4 +217,9 @@ export async function spendSpeakerReview(
   if (!Number.isFinite(limit) || limit <= 0) return false;
   const result = await query(SPEAKER_REVIEW_SQL, [session, signupId, limit]);
   return result.rowCount === 1;
+}
+
+/** Gives one read back to this speaker (see SPEAKER_REFUND_SQL). */
+export async function refundSpeakerReview(query: CapQuery, session: string, signupId: string): Promise<void> {
+  await query(SPEAKER_REFUND_SQL, [session, signupId]);
 }

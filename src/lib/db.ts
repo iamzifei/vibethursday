@@ -10,7 +10,7 @@ import { classifyLane, type Lane } from "./questions.ts";
 // which cannot resolve the tsconfig path alias.
 import { fallbackSlug, type AssetKind, type Platform, type ProductStage, type ProfileInput, type Role } from "./members.ts";
 import { newDeckCode, newPresenterKey } from "./deck.ts";
-import { readBrief, spendSpeakerReview, storedReview, type Brief, type Review } from "./speak.ts";
+import { readBrief, refundSpeakerReview, spendSpeakerReview, storedReview, type Brief, type Review } from "./speak.ts";
 import type { CheckinSource } from "./checkin.ts";
 import { cohortValidUntilSql, MEMBERSHIP, MEMBERSHIP_4W_FROM, newMemberRef, PAST_CLASS_IDS, YEARLY_MEMBERSHIP_COURSES, YEARLY_MEMBERSHIP_ID } from "./course.ts";
 import type { PersonLevel, PersonProfile, PersonRole } from "./person-profile.ts";
@@ -5335,6 +5335,13 @@ export async function spendSpeakerReviewCall(session: string, signupId: string):
   await ensureSchema();
   const pool = getPool();
   return spendSpeakerReview((sql, params) => pool.query(sql, params), session, signupId);
+}
+
+/** Gives one read back to this speaker (day's cap refused, or the model failed). */
+export async function refundSpeakerReviewCall(session: string, signupId: string): Promise<void> {
+  await ensureSchema();
+  const pool = getPool();
+  await refundSpeakerReview((sql, params) => pool.query(sql, params), session, signupId);
 }
 
 /** One read out of the whole site's day (review_budget). See coach-budget.ts. */

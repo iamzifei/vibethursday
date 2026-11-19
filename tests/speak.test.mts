@@ -21,6 +21,7 @@ import {
   REVIEW_ITEMS,
   SPEAKER_REVIEW_LIMIT,
   SPEAKER_REVIEW_SQL,
+  SPEAKER_REFUND_SQL,
   spendSpeakerReview,
   storedReview,
   VERDICT_FIX,
@@ -240,4 +241,26 @@ test("both languages carry the same speak keys, and the rubric has a label for e
 test("the page says screenshot-only slides are read from the answers alone", () => {
   assert.match(copy.zh.speak.slidesTextNote, /截图/);
   assert.match(copy.en.speak.slidesTextNote, /screenshots/);
+});
+
+// 2026-11-19 review: when the day's cap refused (or the model failed), the
+// speaker's own allowance had already gone down and was never given back, so
+// ten presses on a busy day could lock a speaker out for the whole morning.
+test("★ the speaker's read is given back when the day's cap refuses or the model fails", () => {
+  const route = body("src/app/api/speak/route.ts");
+  const day = route.indexOf("spendReviewCall(");
+  const call = route.indexOf("reviewBrief(");
+  const refunds = [...route.matchAll(/refundSpeakerReviewCall\(/g)].map((m) => m.index ?? -1);
+  assert.ok(refunds.some((at) => at > day && at < call), "refund when the day's cap refuses");
+  assert.ok(refunds.some((at) => at > call), "refund when the model gives nothing back");
+});
+
+test("the refund never takes a speaker below zero, in one statement", () => {
+  assert.match(SPEAKER_REFUND_SQL, /review_count\s*=\s*review_count\s*-\s*1/);
+  assert.match(SPEAKER_REFUND_SQL, /review_count\s*>\s*0/);
+  assert.equal(SPEAKER_REFUND_SQL.split(";").length, 1);
+});
+
+test("the site's daily review count turns over at Sydney midnight, not UTC", () => {
+  assert.match(REVIEW_BUDGET_SQL, /Australia\/Sydney/);
 });

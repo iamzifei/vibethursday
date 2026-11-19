@@ -31,7 +31,7 @@ export const BUDGET_SQL = `INSERT INTO coach_budget (day, calls) VALUES (current
  * its own table so that a busy week of speakers cannot use up the ask-box's
  * day, or the other way round. Same single statement, same WHERE.
  */
-export const REVIEW_BUDGET_SQL = `INSERT INTO review_budget (day, calls) VALUES (current_date, 1)
+export const REVIEW_BUDGET_SQL = `INSERT INTO review_budget (day, calls) VALUES ((now() AT TIME ZONE 'Australia/Sydney')::date, 1)
      ON CONFLICT (day) DO UPDATE SET calls = review_budget.calls + 1
      WHERE review_budget.calls < $1
      RETURNING calls`;

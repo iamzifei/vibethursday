@@ -5,6 +5,7 @@ import {
   saveSpeakerBrief,
   saveSpeakerReview,
   spendReviewCall,
+  refundSpeakerReviewCall,
   spendSpeakerReviewCall,
 } from "@/lib/db";
 import { bodyTooLarge, boundedRequest, tooMany } from "@/lib/rate-limit";
@@ -81,6 +82,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, error: "used_up", left: 0 }, { status: 429 });
   }
   if (!(await spendReviewCall(REVIEWS_PER_DAY))) {
+    // Not the speaker's doing: give their read back, so a busy day cannot
+    // use up their allowance for the whole morning.
+    await refundSpeakerReviewCall(who.session, who.signupId).catch(() => undefined);
     return NextResponse.json({ ok: true, error: "spent" }, { status: 429 });
   }
 
@@ -95,8 +99,14 @@ export async function POST(request: Request) {
     completionTokens: result.usage?.completion_tokens ?? null,
   });
 
+  if (!result.review) {
+    // The model gave nothing back; the speaker keeps the read. The day's
+    // count stays spent, so making calls fail is not a way round that cap.
+    await refundSpeakerReviewCall(who.session, who.signupId).catch(() => undefined);
+    const leftAfterRefund = Math.max(0, SPEAKER_REVIEW_LIMIT - Math.max(0, (share?.reviewCount ?? SPEAKER_REVIEW_LIMIT) - 1));
+    return NextResponse.json({ ok: true, error: "failed", left: leftAfterRefund }, { status: 502 });
+  }
   const left = Math.max(0, SPEAKER_REVIEW_LIMIT - (share?.reviewCount ?? SPEAKER_REVIEW_LIMIT));
-  if (!result.review) return NextResponse.json({ ok: true, error: "failed", left }, { status: 502 });
 
   await saveSpeakerReview(who.session, who.signupId, result.review);
   return NextResponse.json({ ok: true, review: result.review, left });
