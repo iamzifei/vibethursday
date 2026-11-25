@@ -20,9 +20,11 @@ test("earlier classes count as taken; the class on sale does not", () => {
   assert.ok(!(PAST_CLASS_IDS as readonly string[]).includes(IP_COURSE.id));
   assert.equal(IP_COURSE_1115.id, "2026-11-15-ai-ip", "old orders keep the id they were saved under");
   // Spec change 2026-11-25 (James): the refresher fee is 10% of the class
-  // fee plus GST, stated as a rule on the page with no dollar figure.
-  assert.match(REFRESHER.payLabel, /课程学费 ×10% \+ GST/);
-  assert.doesNotMatch(REFRESHER.payLabel, /\d+ 澳元/);
+  // fee plus GST; the transfer step shows the exact amount so a refresher can
+  // pay straight away: 699 × 10% = 69.90, plus GST 6.99 = 76.89.
+  assert.match(REFRESHER.priceLabel, /课程学费 ×10% \+ GST/);
+  assert.match(REFRESHER.payLabel, /^76\.89 澳元/);
+  assert.equal(Math.round(699 * 0.1 * 1.1 * 100) / 100, 76.89);
 });
 
 const db = process.env.COURSE_TEST_DATABASE_URL;

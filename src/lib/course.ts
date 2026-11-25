@@ -292,13 +292,15 @@ export const PAST_CLASS_IDS = [COURSE.id, IP_COURSE_1115.id] as const;
 
 /**
  * The refresher fee (James 2026-11-25, from the 老学员复训 poster): 10% of the
- * next class's fee plus GST, three refreshers in all. James asked that the
- * page state the rule, not a dollar figure, so the transfer step sends a
- * refresher to him to confirm the exact amount.
+ * next class's fee plus GST, three refreshers in all. For the 12/13 class
+ * that is 699 × 10% = 69.90, plus GST 6.99: A$76.89. Shown wherever someone
+ * would pay it, so a refresher can transfer straight away (James 2026-11-25).
  */
 export const REFRESHER = {
   priceLabel: "课程学费 ×10% + GST",
-  payLabel: "复训费：课程学费 ×10% + GST（具体金额私信 James 确认）",
+  /** This class's refresher fee, GST included. */
+  amountLabel: "76.89 澳元",
+  payLabel: "76.89 澳元（复训费：699 × 10% = 69.90，加 GST 6.99）",
 } as const;
 
 /** A payment reference: easy to read out and type into a bank app. */

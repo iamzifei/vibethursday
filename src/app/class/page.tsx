@@ -97,8 +97,8 @@ const REFRESH: { icon: IconName; text: string }[] = [
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
   { q: "699 包含什么？", a: "12 月 13 日这一整天的课，含午餐，价格另加 GST。上完就是老学员，之后有 3 次复训机会，每次付下次课程学费的 10% + GST，条件是按时、认真完成作业；遇到不懂的问题，都可以向导师团请教。" },
-  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，付课程学费的 10% + GST。用上次报课时的微信号报名，页面会自动按复训处理，具体金额私信 James 确认。" },
-  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付课程学费的 10% + GST。之后办的 4 周会员不含这门课。" },
+  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，付课程学费的 10% + GST。用上次报课时的微信号报名，页面会自动按复训显示转账金额：这一期是 76.89 澳元（699 × 10% = 69.90，加 GST）。" },
+  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付课程学费的 10% + GST，这一期是 76.89 澳元。之后办的 4 周会员不含这门课。" },
   { q: "安排会变吗？", a: "具体时间和安排以最终通知为准。" },
 ];
 
@@ -292,7 +292,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       <li><Icon name="pin" />唐宴 King Dynasty · Moore Park</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">上过之前课程的同学算复训，付课程学费 ×10% + GST</p>
+                    <p className="vip-offer__left">上过之前课程的同学算复训，付课程学费 ×10% + GST，这一期 76.89 澳元</p>
                   </div>
                 </header>
 
@@ -392,7 +392,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   费用：{IP_COURSE.priceLabel} + GST（含午餐），银行转账
                   <br />
-                  上过之前课程的同学算复训，付{REFRESHER.priceLabel}；11 月 5 日前办的共创会员、还没上过课的免费
+                  上过之前课程的同学算复训，付{REFRESHER.priceLabel}，这一期是 {REFRESHER.amountLabel}；11 月 5 日前办的共创会员、还没上过课的免费
                   <br />
                   席位有限，报满即止
                 </p>
