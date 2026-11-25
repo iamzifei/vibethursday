@@ -59,10 +59,10 @@ const INDUSTRY_OPTIONS = [
 type IconName = "advisor" | "list" | "laptop" | "tool" | "handshake" | "people" | "globe" | "gift" | "calendar" | "pin" | "camera";
 
 /**
- * The AI+IP class (`IP_COURSE`, 12/13), laid out from the poster James sent on
- * 2026-11-18 — headline, the three promises, the three modules, the hands-on
- * shoot, venue, price — without its QR code (payment stays a bank transfer).
- * Only what the poster says: no times per module, no promises it does not make.
+ * The AI+IP class (`IP_COURSE`, 12/13), laid out from the posters James sent on
+ * 2026-11-25 — headline, the three promises, the day's timetable, the
+ * hands-on shoot, venue, price, and the 老学员复训 terms — without their QR
+ * codes (payment stays a bank transfer). Only what the posters say.
  */
 const PROMISES = [
   { strong: "用好", em: "AI" },
@@ -70,29 +70,35 @@ const PROMISES = [
   { strong: "让生意", em: "更好做" },
 ];
 
-/** The day's three modules, in the poster's order: who, an optional line about them, what. */
-const MODULES: { who: string; tag?: string; what: string }[] = [
-  { who: "悉尼妈妈 Lankey", what: "个人 IP 打造" },
-  { who: "特邀嘉宾：澳骄哥", tag: "全网 300 万+ 粉丝", what: "自媒体实战分享" },
-  { who: "澳洲 AI 教父 James", what: "AI 应用实战" },
+/** The day's timetable, exactly as the 2026-11-25 poster lists it. */
+const SCHEDULE: { time: string; what: string }[] = [
+  { time: "09:00–09:30", what: "签到" },
+  { time: "09:30–10:10", what: "悉尼妈妈 Lankey" },
+  { time: "10:10–10:20", what: "课间休息" },
+  { time: "10:20–11:20", what: "澳骄哥 分享" },
+  { time: "11:20–12:00", what: "澳骄哥 答疑" },
+  { time: "12:00–12:30", what: "午餐 · Alex 唐宴分享" },
+  { time: "12:30–13:30", what: "James 分享" },
+  { time: "13:30–14:00", what: "答疑 · 实操分组" },
+  { time: "14:00–17:00", what: "分组实操" },
 ];
 
 /** The assistants named on the poster. */
 const ASSISTANTS = ["Nick", "阿利", "楚楚"];
 
-/** 「含一年课程会员权益」: what the price buys besides the day (James 2026-11-18: still included). */
+/** 老学员复训, from the poster of the same name (James 2026-11-25). */
 const REFRESH: { icon: IconName; text: string }[] = [
-  { icon: "calendar", text: "全年不少于 6 次复训机会" },
-  { icon: "gift", text: `复训留位费：${REFRESHER.priceLabel} / 次` },
-  { icon: "people", text: "学员群交流" },
-  { icon: "list", text: "复训日期、主题及预约安排提前通知" },
+  { icon: "calendar", text: "共 3 次复训机会" },
+  { icon: "gift", text: `每次复训费：下次${REFRESHER.priceLabel}` },
+  { icon: "list", text: "复训条件：按时、认真完成作业" },
+  { icon: "advisor", text: "遇到不懂的问题，都可以向导师团请教" },
 ];
 
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
-  { q: "699 包含什么？", a: "12 月 13 日这一整天的课（含午餐），加一年课程会员权益：全年不少于 6 次复训，每次付 40 澳元（含 GST）留位；还有学员群。复训的日期、主题和预约安排会提前通知。" },
-  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，只付 40 澳元（含 GST）留位费。用上次报课时的微信号报名，页面会自动按复训显示转账金额；对不上的话私信 James。" },
-  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付 40 澳元（含 GST）留位费。之后办的 4 周会员不含这门课。" },
+  { q: "699 包含什么？", a: "12 月 13 日这一整天的课，含午餐，价格另加 GST。上完就是老学员，之后有 3 次复训机会，每次付下次课程学费的 10% + GST，条件是按时、认真完成作业；遇到不懂的问题，都可以向导师团请教。" },
+  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，付课程学费的 10% + GST。用上次报课时的微信号报名，页面会自动按复训处理，具体金额私信 James 确认。" },
+  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付课程学费的 10% + GST。之后办的 4 周会员不含这门课。" },
   { q: "安排会变吗？", a: "具体时间和安排以最终通知为准。" },
 ];
 
@@ -228,7 +234,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                         转账金额：<strong>{payLabel}</strong>
                       </p>
                       {refresher && (
-                        <p className="body" style={{ margin: 0 }}>你上过之前的课，这一期算复训，只付留位费。</p>
+                        <p className="body" style={{ margin: 0 }}>你上过之前的课，这一期算复训，只付复训费。</p>
                       )}
                       <p className="body-lg" style={{ margin: 0 }}>
                         转账备注填：<strong className="mono" style={{ fontSize: "1.4rem" }}>{order.ref}</strong>
@@ -271,22 +277,22 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 <header className="vip-hero ip-hero">
                   <span className="eyebrow">§ Vibe Thursday</span>
                   <h1 className="ip-hero__title">澳洲 AI+IP<br />实战课</h1>
-                  <p className="ip-hero__tag">自媒体人的黄埔军校 · AI 获客类短视频</p>
+                  <p className="ip-hero__tag">自媒体人的流量密码</p>
                   <ul className="ip-promises" aria-label="这门课的三件事">
                     {PROMISES.map((p) => (
                       <li key={p.strong}>{p.strong}<em>{p.em}</em></li>
                     ))}
                   </ul>
                   <div className="vip-offer">
-                    <p className="vip-offer__price">AUD $699</p>
-                    <p className="vip-offer__eq">含午餐 · 含一年课程会员权益</p>
+                    <p className="vip-offer__price">AUD $699 + GST</p>
+                    <p className="vip-offer__eq">含午餐 · 老学员 3 次复训机会</p>
                     <ul className="vip-offer__facts">
                       <li><Icon name="calendar" />2026 年 12 月 13 日（周日）· 悉尼</li>
-                      <li><Icon name="calendar" />09:00–17:00</li>
+                      <li><Icon name="calendar" />09:30–17:00（09:00 签到）</li>
                       <li><Icon name="pin" />唐宴 King Dynasty · Moore Park</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">上过之前课程的同学算复训，只付 40 澳元留位费</p>
+                    <p className="vip-offer__left">上过之前课程的同学算复训，付课程学费 ×10% + GST</p>
                   </div>
                 </header>
 
@@ -296,20 +302,17 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </figure>
 
                 <section className="vip-section">
-                  <SectionHead n="01" title="课程表" lead="2026 年 12 月 13 日（周日）09:00–17:00 · 悉尼 Moore Park" />
-                  <ol className="ip-modules">
-                    {MODULES.map((m, i) => (
-                      <li key={m.who}>
-                        <span className="ip-modules__n mono">{String(i + 1).padStart(2, "0")}</span>
-                        <div>
-                          <p className="ip-modules__who">{m.who}</p>
-                          {m.tag && <p className="ip-modules__tag">{m.tag}</p>}
-                          <p className="ip-modules__what">{m.what}</p>
-                        </div>
+                  <SectionHead n="01" title="课程表" lead="2026 年 12 月 13 日（周日）09:30–17:00 · 悉尼 Moore Park" />
+                  <ol className="ip-schedule">
+                    {SCHEDULE.map((row) => (
+                      <li key={row.time}>
+                        <span className="ip-schedule__time mono">{row.time}</span>
+                        <span className="ip-schedule__what">{row.what}</span>
                       </li>
                     ))}
                   </ol>
-                  <p className="body" style={{ margin: 0 }}>助教：{ASSISTANTS.join(" · ")}</p>
+                  <p className="body-lg" style={{ margin: 0 }}><strong>一桌一位导师 · 学员自选导师</strong></p>
+                  <p className="body" style={{ margin: 0 }}>助教（澳洲资深自媒体博主）：{ASSISTANTS.join(" · ")}</p>
                   <div className="card card--accent stack-2">
                     <h3 className="h3" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", margin: 0 }}>
                       <Icon name="camera" />实拍实操环节
@@ -320,7 +323,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 <section className="vip-section">
-                  <SectionHead n="02" title="含一年课程会员权益" lead="AUD $699，包含这一天的课和一年的课程会员权益。" />
+                  <SectionHead n="02" title="老学员复训" lead="上完这一期就是老学员，之后还能回来复训。" />
                   <ul className="vip-features">
                     {REFRESH.map((item) => (
                       <li key={item.text}>
@@ -338,7 +341,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <p className="body-lg" style={{ margin: 0 }}>
                     <strong>唐宴 King Dynasty</strong>
                     <br />
-                    Level 1, Building 215-S1, 125 Lang Rd, Moore Park NSW 2021
+                    Level 1, Building 215, 51-125 Lang Rd, Moore Park NSW 2021
                   </p>
                   <p className="vip-note">活动协办与餐食赞助：唐宴，赞助精美午餐。</p>
                 </section>
@@ -378,7 +381,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                 </section>
 
                 {/* Phones: the price and the way in, always one tap away. */}
-                <StickyCta href="#class-signup" label="AUD $699" cta="报名" />
+                <StickyCta href="#class-signup" label="AUD $699 + GST" cta="报名" />
 
                 <div className="card card--accent stack-6 vip-signup" id="class-signup">
                 <h2>报名</h2>
@@ -387,9 +390,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   地点：{IP_COURSE.placeLabel}
                   <br />
-                  费用：{IP_COURSE.priceLabel}（含午餐和一年课程会员权益），银行转账
+                  费用：{IP_COURSE.priceLabel} + GST（含午餐），银行转账
                   <br />
-                  上过之前课程的同学算复训，付 {REFRESHER.priceLabel} 留位费；11 月 5 日前办的共创会员、还没上过课的免费
+                  上过之前课程的同学算复训，付{REFRESHER.priceLabel}；11 月 5 日前办的共创会员、还没上过课的免费
                   <br />
                   席位有限，报满即止
                 </p>

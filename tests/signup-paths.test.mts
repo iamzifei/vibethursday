@@ -19,7 +19,7 @@ import { copy } from "../src/lib/content.ts";
 import { navCtaFor, NAV_LINKS } from "../src/lib/nav.ts";
 import { buildDesk, deskExportRow, type DeskRow } from "../src/lib/desk.ts";
 import { feeLabel, payLabel } from "../src/lib/tuesday-fee.ts";
-import { IP_COURSE, MEMBERSHIP } from "../src/lib/course.ts";
+import { IP_COURSE, MEMBERSHIP, REFRESHER } from "../src/lib/course.ts";
 import { SCREEN_TUESDAY } from "../src/lib/screen.ts";
 
 const read = (file: string) => readFileSync(path.join(process.cwd(), file), "utf8");
@@ -109,11 +109,19 @@ test("public prices are shown before GST, with no '+ GST'", () => {
     JSON.stringify(copy.zh),
     JSON.stringify(copy.en),
     read("src/app/join/page.tsx"),
-    read("src/app/class/page.tsx"),
     read("src/app/tuesday/page.tsx"),
     read("src/lib/screen.ts"),
   ];
   for (const source of publicSources) assert.doesNotMatch(source, /\+\s*GST/);
+});
+
+// Spec change 2026-11-25 (James): /class follows the class posters, which say
+// "AUD $699 + GST" and "课程学费 ×10% + GST" for refreshers. Only this page;
+// everywhere else above still shows prices with no "+ GST".
+test("/class shows the price and the refresher fee with '+ GST', as the posters do", () => {
+  const page = read("src/app/class/page.tsx");
+  assert.match(page, /AUD \$699 \+ GST/);
+  assert.match(REFRESHER.priceLabel, /课程学费 ×10% \+ GST/);
 });
 
 test("where you pay, GST is added and shown", () => {

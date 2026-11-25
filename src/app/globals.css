@@ -5371,12 +5371,12 @@ a.wharf-item:hover .wharf-item__name { color: var(--fg1); }
 .ip-promises li { padding: var(--space-2) var(--space-4); border: 1px solid var(--border-subtle); border-radius: 999px; font-weight: 700; color: var(--fg1); }
 .ip-promises em { font-style: normal; color: var(--accent); }
 /* The 12/13 class's three modules (2026-11-18 poster): number, who, what. */
-.ip-modules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.ip-modules li { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
-.ip-modules__n { flex: none; padding: 2px var(--space-2); border-radius: var(--radius-sm); background: var(--accent); color: var(--accent-contrast); font-weight: 700; }
-.ip-modules__who { margin: 0; font-weight: 700; color: var(--fg1); }
-.ip-modules__tag { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--accent); }
-.ip-modules__what { margin: var(--space-1) 0 0; color: var(--fg2); }
+
+/* The day's timetable on /class (2026-11-25 poster): time on the left, what on the right. */
+.ip-schedule { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.ip-schedule li { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
+.ip-schedule__time { flex: none; font-weight: 700; color: var(--accent); font-size: 0.95em; }
+.ip-schedule__what { color: var(--fg1); }
 
 /* Pinned call to action (2026-11-02): a pill at the bottom on every width,
    centred and narrow on wide screens. The footer leaves room for it. */

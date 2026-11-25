@@ -1372,7 +1372,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 {[...courseOrders, ...oldCourseOrders, ...ip1115Orders].map((order) => (
                   <tr key={order.id}>
                     <td className="mono">{order.ref}</td>
-                    <td>{order.name}{order.signup_id ? "" : " ·新"}{oldCourseOrders.some((o) => o.id === order.id) ? ` ·${COURSE.title}（599）` : ip1115Orders.some((o) => o.id === order.id) ? " ·11/15 那期（365）" : order.refresher ? " ·复训（40）" : ""}</td>
+                    <td>{order.name}{order.signup_id ? "" : " ·新"}{oldCourseOrders.some((o) => o.id === order.id) ? ` ·${COURSE.title}（599）` : ip1115Orders.some((o) => o.id === order.id) ? " ·11/15 那期（365）" : order.refresher ? " ·复训" : ""}</td>
                     <td className="mono">{order.wechat}</td>
                     <td>
                       {{ pending: "待付", paid: `已付 ${order.paid_at ?? ""}`, cancelled: "已取消", waitlist: "候补" }[order.status]}

@@ -19,8 +19,10 @@ test("earlier classes count as taken; the class on sale does not", () => {
   assert.deepEqual([...PAST_CLASS_IDS], [COURSE.id, IP_COURSE_1115.id]);
   assert.ok(!(PAST_CLASS_IDS as readonly string[]).includes(IP_COURSE.id));
   assert.equal(IP_COURSE_1115.id, "2026-11-15-ai-ip", "old orders keep the id they were saved under");
-  assert.match(REFRESHER.payLabel, /^40 澳元/);
-  assert.match(REFRESHER.payLabel, /含 GST/);
+  // Spec change 2026-11-25 (James): the refresher fee is 10% of the class
+  // fee plus GST, stated as a rule on the page with no dollar figure.
+  assert.match(REFRESHER.payLabel, /课程学费 ×10% \+ GST/);
+  assert.doesNotMatch(REFRESHER.payLabel, /\d+ 澳元/);
 });
 
 const db = process.env.COURSE_TEST_DATABASE_URL;

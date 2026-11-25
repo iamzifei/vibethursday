@@ -258,8 +258,8 @@ export const IP_COURSE_1115 = {
 
 /**
  * The class on sale on /class from 2026-11-18: the second AI+IP class, one
- * full day on 2026-12-13, laid out from the poster James sent that day.
- * Still includes a year of class-membership benefits (refreshers).
+ * full day on 2026-12-13, laid out from the poster James sent that day
+ * (schedule, times and address updated from his poster of 2026-11-25).
  *
  * Who pays what (James 2026-11-18):
  *   - anyone new: the full price below;
@@ -275,8 +275,8 @@ export const IP_COURSE = {
   title: "澳洲 AI+IP 实战课",
   date: "2026-12-13",
   dateLabel: "12 月 13 日（周日）",
-  timeLabel: "9:00 到 17:00，含午餐",
-  placeLabel: "唐宴 King Dynasty，Level 1, Building 215-S1, 125 Lang Rd, Moore Park NSW 2021",
+  timeLabel: "9:30 到 17:00（9:00 签到），含午餐",
+  placeLabel: "唐宴 King Dynasty，Level 1, Building 215, 51-125 Lang Rd, Moore Park NSW 2021",
   priceLabel: "699 澳元",
   /** What to transfer: A$699 plus 10% GST. */
   payLabel: "768.90 澳元（699 + GST）",
@@ -290,10 +290,15 @@ export const IP_COURSE = {
  */
 export const PAST_CLASS_IDS = [COURSE.id, IP_COURSE_1115.id] as const;
 
-/** The refresher seat fee: GST already included, so the transfer is exactly this. */
+/**
+ * The refresher fee (James 2026-11-25, from the 老学员复训 poster): 10% of the
+ * next class's fee plus GST, three refreshers in all. James asked that the
+ * page state the rule, not a dollar figure, so the transfer step sends a
+ * refresher to him to confirm the exact amount.
+ */
 export const REFRESHER = {
-  priceLabel: "40 澳元（含 GST）",
-  payLabel: "40 澳元（复训留位费，含 GST）",
+  priceLabel: "课程学费 ×10% + GST",
+  payLabel: "复训费：课程学费 ×10% + GST（具体金额私信 James 确认）",
 } as const;
 
 /** A payment reference: easy to read out and type into a bank app. */

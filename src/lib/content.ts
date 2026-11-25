@@ -629,7 +629,7 @@ export const copy = {
       classStep: "接下来怎么学？",
       // 2026-11-01：收费课已定（/class 的 AI+IP 实战课），卡片直接给课和链接。
       classCardTitle: "想有人带着学？",
-      classCardBody: "12 月 13 日（周日）澳洲 AI+IP 实战课：学点 AI，做点内容，让生意多些机会。699 澳元，含午餐和一年复训。",
+      classCardBody: "12 月 13 日（周日）澳洲 AI+IP 实战课：学点 AI，做点内容，让生意多些机会。699 澳元，含午餐；老学员有 3 次复训机会。",
       classCardCta: "看课程安排、报名 →",
       classSubmit: "先登记，有新课先通知我",
       thursdayInstead: "我还是想先来周四看看 →",
@@ -2499,7 +2499,7 @@ export const copy = {
       successNoSession: "No session picked this time — you are on the list, and I will let you know when one fits.",
       classStep: "How would you like to learn?",
       classCardTitle: "Want someone to walk you through it?",
-      classCardBody: "Sunday 13 December, the AI + personal brand class (taught in Chinese): learn some AI, make some content, bring your business more chances. A$699, with lunch and a year of refresher sessions.",
+      classCardBody: "Sunday 13 December, the AI + personal brand class (taught in Chinese): learn some AI, make some content, bring your business more chances. A$699, with lunch; past students get three refresher sessions.",
       classCardCta: "See the day and sign up →",
       classSubmit: "Register, and tell me about new classes first",
       thursdayInstead: "I'd rather come on a Thursday first →",
