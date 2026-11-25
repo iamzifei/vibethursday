@@ -39,18 +39,23 @@ export const PROMOTION_HOLD_MINUTES = 24 * 60;
 export const CHECKOUT_MINUTES = 30;
 export const CHECKOUT_HOLD_MINUTES = CHECKOUT_MINUTES + 3;
 
-/** What a card payment is for. "member": the 共创会员 (2026-11-02, course.ts MEMBERSHIP). */
-export type PayKind = "tuesday" | "dinner" | "member";
+/**
+ * What a card payment is for. "member": the 共创会员 (2026-11-02, course.ts
+ * MEMBERSHIP). "class": a class order, but only a refresher's (2026-11-25) —
+ * a full-price class order stays a bank transfer (see card-pay.ts amountFor).
+ */
+export type PayKind = "tuesday" | "dinner" | "member" | "class";
 
 export function stripeEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return Boolean(env.STRIPE_SECRET_KEY);
 }
 
-/** Which payment a reference belongs to, from its prefix (TU / DN / CM). */
+/** Which payment a reference belongs to, from its prefix (TU / DN / CM / AI). */
 export function kindOfRef(ref: string): PayKind | null {
   if (/^TU[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "tuesday";
   if (/^DN[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "dinner";
   if (/^CM[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "member";
+  if (/^AI[A-HJ-NP-Z2-9]{5}$/.test(ref)) return "class";
   return null;
 }
 

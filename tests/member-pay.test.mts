@@ -36,7 +36,9 @@ test("a membership reference is its own kind, distinct from Tuesday, dinner and 
   const ref = newMemberRef();
   assert.ok(looksLikeMemberRef(ref), ref);
   assert.equal(kindOfRef(ref), "member");
-  assert.equal(kindOfRef("AIABCDE"), null, "a bank-transfer class reference is never paid by card");
+  // 2026-11-25: a class reference maps to "class"; only a refresher's order is
+  // actually payable by card (card-pay.ts amountFor).
+  assert.equal(kindOfRef("AIABCDE"), "class");
   assert.equal(kindOfRef("TUABCDE"), "tuesday");
 });
 

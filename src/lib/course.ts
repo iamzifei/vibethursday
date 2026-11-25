@@ -277,6 +277,8 @@ export const IP_COURSE = {
   dateLabel: "12 月 13 日（周日）",
   timeLabel: "9:30 到 17:00（9:00 签到），含午餐",
   placeLabel: "唐宴 King Dynasty，Level 1, Building 215, 51-125 Lang Rd, Moore Park NSW 2021",
+  /** The class fee before GST, in Australian dollars. A refresher pays 10% of it plus GST. */
+  price: 699,
   priceLabel: "699 澳元",
   /** What to transfer: A$699 plus 10% GST. */
   payLabel: "768.90 澳元（699 + GST）",
@@ -292,16 +294,38 @@ export const PAST_CLASS_IDS = [COURSE.id, IP_COURSE_1115.id] as const;
 
 /**
  * The refresher fee (James 2026-11-25, from the 老学员复训 poster): 10% of the
- * next class's fee plus GST, three refreshers in all. For the 12/13 class
- * that is 699 × 10% = 69.90, plus GST 6.99: A$76.89. Shown wherever someone
- * would pay it, so a refresher can transfer straight away (James 2026-11-25).
+ * next class's fee plus GST, three refreshers in all.
+ *
+ * ★ James 2026-11-25: no refresher dollar figure anywhere on the site. The page
+ * states only the rule; a refresher pays by card, and the amount is worked out
+ * by `refresherAmount` when the Stripe Checkout page is opened, so the figure
+ * is seen only on Stripe's own page.
  */
 export const REFRESHER = {
   priceLabel: "课程学费 ×10% + GST",
-  /** This class's refresher fee, GST included. */
-  amountLabel: "76.89 澳元",
-  payLabel: "76.89 澳元（复训费：699 × 10% = 69.90，加 GST 6.99）",
+  payLabel: "复训费：课程学费 ×10% + GST（付款时自动计算）",
 } as const;
+
+/**
+ * What a refresher pays for a class of `price` dollars (before GST): 10% of
+ * it, plus 10% GST on that, in dollars. Worked in whole cents so it never
+ * drifts.
+ */
+export function refresherAmount(price: number): number {
+  const fee = Math.round(price * 100 * 0.1);
+  const gst = Math.round(fee * 0.1);
+  return (fee + gst) / 100;
+}
+
+/**
+ * What a class order costs by card, GST included, or null when it is not paid
+ * by card: only a pending refresher's order for the class on sale
+ * (2026-11-25). A full-price class order stays a bank transfer.
+ */
+export function classCardAmount(order: { status: string; course: string; refresher: boolean }): number | null {
+  if (order.status !== "pending" || order.course !== IP_COURSE.id || !order.refresher) return null;
+  return refresherAmount(IP_COURSE.price);
+}
 
 /** A payment reference: easy to read out and type into a bank app. */
 export function newCourseRef(): string {

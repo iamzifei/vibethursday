@@ -4833,9 +4833,11 @@ export async function releaseExpiredHolds(): Promise<void> {
 }
 
 /** The Checkout page opened for a payment, and the hold stretched to outlast it. */
-export async function attachCheckout(kind: "tuesday" | "dinner" | "member", ref: string, stripeSession: string, holdMinutes: number): Promise<boolean> {
+export async function attachCheckout(kind: "tuesday" | "dinner" | "member" | "class", ref: string, stripeSession: string, holdMinutes: number): Promise<boolean> {
   await ensureSchema();
-  if (kind === "member") {
+  // A refresher's class order (2026-11-25) is held like a membership: no card
+  // hold, its place was taken when it signed up.
+  if (kind === "member" || kind === "class") {
     // No hold and no cap: the page is simply remembered, so it is reused.
     const result = await getPool().query(
       `UPDATE course_orders SET stripe_session = $2 WHERE ref = $1 AND status = 'pending'`,
@@ -4896,9 +4898,9 @@ export async function reopenMembershipOrder(ref: string): Promise<void> {
  * money arrived, so the place is theirs, even if that makes one over the cap.
  * Returns false when there was nothing to settle (already paid, or no row).
  */
-export async function markPaidByCard(kind: "tuesday" | "dinner" | "member", ref: string, subscription: string | null = null): Promise<boolean> {
+export async function markPaidByCard(kind: "tuesday" | "dinner" | "member" | "class", ref: string, subscription: string | null = null): Promise<boolean> {
   await ensureSchema();
-  if (kind === "member") {
+  if (kind === "member" || kind === "class") {
     // The money arrived, so it is paid whatever the row said before. The
     // subscription is kept so renewals can find this order.
     const result = await getPool().query(

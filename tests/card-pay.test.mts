@@ -32,7 +32,7 @@ test("a webhook is accepted only with a fresh signature made with our secret", (
 test("references, amounts and holds", () => {
   assert.equal(kindOfRef("TUABCDE"), "tuesday");
   assert.equal(kindOfRef("DNABCDE"), "dinner");
-  assert.equal(kindOfRef("AIABCDE"), null, "the class is not paid by card");
+  assert.equal(kindOfRef("AIABCDE"), "class", "class refs: only a refresher's is payable by card");
   assert.equal(toCents(33), 3300);
   assert.equal(toCents(32.99), 3299);
   assert.equal(minutesLeft(null), null);

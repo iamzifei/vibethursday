@@ -60,13 +60,14 @@ export async function POST(request: Request) {
   const session = event.data?.object;
   const kind = session?.metadata?.kind as PayKind | undefined;
   const ref = session?.metadata?.ref;
-  if (!session || (kind !== "tuesday" && kind !== "dinner" && kind !== "member") || !ref) return new Response("ignored");
+  if (!session || (kind !== "tuesday" && kind !== "dinner" && kind !== "member" && kind !== "class") || !ref) return new Response("ignored");
 
   try {
     if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && checkoutSettled(session.payment_status)) {
       await markPaidByCard(kind, ref, session.subscription ?? null);
-    } else if (event.type === "checkout.session.expired" && kind !== "member") {
-      // A membership holds no place, so an expired page releases nothing.
+    } else if (event.type === "checkout.session.expired" && kind !== "member" && kind !== "class") {
+      // A membership or a refresher's class order holds no card hold, so an
+      // expired page releases nothing.
       await expireCheckout(kind, session.id);
     }
   } catch (error) {

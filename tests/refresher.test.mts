@@ -13,18 +13,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { COURSE, IP_COURSE, IP_COURSE_1115, newCourseRef, PAST_CLASS_IDS, REFRESHER } from "../src/lib/course.ts";
+import { COURSE, IP_COURSE, IP_COURSE_1115, newCourseRef, PAST_CLASS_IDS, REFRESHER, refresherAmount } from "../src/lib/course.ts";
 
 test("earlier classes count as taken; the class on sale does not", () => {
   assert.deepEqual([...PAST_CLASS_IDS], [COURSE.id, IP_COURSE_1115.id]);
   assert.ok(!(PAST_CLASS_IDS as readonly string[]).includes(IP_COURSE.id));
   assert.equal(IP_COURSE_1115.id, "2026-11-15-ai-ip", "old orders keep the id they were saved under");
   // Spec change 2026-11-25 (James): the refresher fee is 10% of the class
-  // fee plus GST; the transfer step shows the exact amount so a refresher can
-  // pay straight away: 699 × 10% = 69.90, plus GST 6.99 = 76.89.
+  // fee plus GST, paid by card; the amount is worked out when the Stripe
+  // Checkout page opens and no refresher figure appears on the site.
   assert.match(REFRESHER.priceLabel, /课程学费 ×10% \+ GST/);
-  assert.match(REFRESHER.payLabel, /^76\.89 澳元/);
-  assert.equal(Math.round(699 * 0.1 * 1.1 * 100) / 100, 76.89);
+  assert.doesNotMatch(REFRESHER.payLabel, /\d+(\.\d+)? ?澳元/);
+  assert.equal(refresherAmount(IP_COURSE.price), 76.89, "699 × 10% = 69.90, plus GST 6.99");
+  assert.equal(refresherAmount(365), 40.15);
 });
 
 const db = process.env.COURSE_TEST_DATABASE_URL;
@@ -99,3 +100,33 @@ test(
     }
   },
 );
+
+// ★ James 2026-11-25: no refresher dollar figure anywhere on the site; the
+// amount exists only in the code that opens the Stripe Checkout page.
+test("no refresher amount is written on any page", async () => {
+  const { readFileSync, readdirSync, statSync } = await import("node:fs");
+  const path = await import("node:path");
+  const root = path.resolve(import.meta.dirname, "..");
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (/\.(tsx?|mts)$/.test(name)) files.push(full);
+    }
+  };
+  walk(path.join(root, "src"));
+  for (const file of files) {
+    const text = readFileSync(file, "utf8");
+    assert.doesNotMatch(text, /76\.89|69\.90|40 澳元（含 GST）|复训（40）/, path.relative(root, file));
+  }
+});
+
+test("a refresher for the class on sale is payable by card; a full-price order is not", async () => {
+  const { classCardAmount } = await import("../src/lib/course.ts");
+  const base = { status: "pending", course: IP_COURSE.id };
+  assert.equal(classCardAmount({ ...base, refresher: true }), 76.89);
+  assert.equal(classCardAmount({ ...base, refresher: false }), null, "full price stays a bank transfer");
+  assert.equal(classCardAmount({ ...base, refresher: true, course: COURSE.id }), null, "an old class is not paid this way");
+  assert.equal(classCardAmount({ ...base, refresher: true, status: "paid" }), null);
+});

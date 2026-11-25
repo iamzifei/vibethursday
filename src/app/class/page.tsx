@@ -13,12 +13,14 @@ import { getCopy } from "@/lib/content";
 import { COURSE, IP_COURSE, IP_COURSE_1115, looksLikeCourseRef, REFRESHER } from "@/lib/course";
 import { getCourseOrderByRef, getSignupProfile } from "@/lib/db";
 import { wechatLoginHref } from "@/lib/login-link";
+import { settleIfPaid } from "@/lib/card-pay";
+import { stripeEnabled } from "@/lib/stripe-pay";
 
 // Who is asking changes the form, and a reference changes the whole page.
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ ref?: string; err?: string; other?: string; done?: string }>;
+  searchParams: Promise<{ ref?: string; err?: string; other?: string; done?: string; paid?: string; error?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -97,8 +99,8 @@ const REFRESH: { icon: IconName; text: string }[] = [
 const FAQ: { q: string; a: string }[] = [
   { q: "适合我吗？", a: "老板、创业者、自媒体新手都欢迎。" },
   { q: "699 包含什么？", a: "12 月 13 日这一整天的课，含午餐，价格另加 GST。上完就是老学员，之后有 3 次复训机会，每次付下次课程学费的 10% + GST，条件是按时、认真完成作业；遇到不懂的问题，都可以向导师团请教。" },
-  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，付课程学费的 10% + GST。用上次报课时的微信号报名，页面会自动按复训显示转账金额：这一期是 76.89 澳元（699 × 10% = 69.90，加 GST）。" },
-  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付课程学费的 10% + GST，这一期是 76.89 澳元。之后办的 4 周会员不含这门课。" },
+  { q: "我上过之前的课（10 月 25 日或 11 月 15 日），还要付 699 吗？", a: "不用。上过课的同学来这一期算复训，付课程学费的 10% + GST。用上次报课时的微信号报名，页面会自动按复训处理，点按钮刷卡付款，金额在付款页面自动算好。" },
+  { q: "我是共创会员，要付钱吗？", a: "11 月 5 日前办的共创会员（一年那种），如果还没上过任何一期课，这一期免费：用报名周四时的微信登录，再点报名，就直接确认了，不用转账。已经上过课的共创会员，这一期算复训，付课程学费的 10% + GST。之后办的 4 周会员不含这门课。" },
   { q: "安排会变吗？", a: "具体时间和安排以最终通知为准。" },
 ];
 
@@ -148,12 +150,19 @@ export default async function ClassPage({ searchParams }: PageProps) {
   const c = getCopy("zh");
 
   const ref = looksLikeCourseRef(params.ref) ? params.ref : null;
-  const order = ref ? await getCourseOrderByRef(ref).catch(() => null) : null;
+  let order = ref ? await getCourseOrderByRef(ref).catch(() => null) : null;
+  // Back from paying a refresher by card (2026-11-25): settle it now rather
+  // than wait on Stripe's webhook, so the page already says it is paid.
+  if (order && order.course === IP_COURSE.id && order.refresher && order.status === "pending" && order.stripe_session) {
+    if (await settleIfPaid("class", order)) order = await getCourseOrderByRef(order.ref).catch(() => order);
+  }
   // An order from an earlier class still opens on its own dates and amount.
   const course = order?.course === COURSE.id ? COURSE : order?.course === IP_COURSE_1115.id ? IP_COURSE_1115 : IP_COURSE;
   // Someone who has already taken a class pays only the refresher fee for this one.
   const refresher = course === IP_COURSE && Boolean(order?.refresher);
   const payLabel = refresher ? REFRESHER.payLabel : course.payLabel;
+  // A refresher pays by card; the amount is worked out on Stripe's page only.
+  const refresherByCard = refresher && stripeEnabled();
 
   let knownName: string | null = null;
   if (!order && params.other !== "1") {
@@ -192,7 +201,9 @@ export default async function ClassPage({ searchParams }: PageProps) {
                           ? `${order.name}，欢迎加入！`
                           : order.claimed
                             ? `${order.name}，欢迎加入！`
-                            : "报上了，最后一步：转账"}
+                            : refresherByCard
+                              ? "报上了，最后一步：付复训费"
+                              : "报上了，最后一步：转账"}
                   </h1>
                 </div>
 
@@ -227,7 +238,29 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       </div>
                     </details>
                   </div>
-                                ) : (
+                ) : refresherByCard ? (
+                  // Refresher (2026-11-25): card only, no figure on this site.
+                  <>
+                    <div className="card card--accent stack-3">
+                      <p className="body-lg" style={{ margin: 0 }}>
+                        <strong>{payLabel}</strong>
+                      </p>
+                      <p className="body" style={{ margin: 0 }}>你上过之前的课，这一期算复训，只付复训费。点下面的按钮刷卡，金额在付款页面自动算好。</p>
+                    </div>
+                    {params.error === "1" && (
+                      <p className="alert" role="alert">付款页面没打开，请再点一次；还不行的话私信 James。</p>
+                    )}
+                    <form method="post" action="/api/pay/checkout">
+                      <input type="hidden" name="ref" value={order.ref} />
+                      <button className="btn btn--primary btn--block" type="submit" style={{ fontSize: "1.15rem" }}>
+                        刷卡付复训费
+                      </button>
+                    </form>
+                    {params.paid === "1" && (
+                      <p className="body">刚付完的话，银行确认可能要几秒钟，刷新一下这个页面就好。</p>
+                    )}
+                  </>
+                ) : (
                   <>
                     <div className="card card--accent stack-3">
                       <p className="body-lg" style={{ margin: 0 }}>
@@ -292,7 +325,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                       <li><Icon name="pin" />唐宴 King Dynasty · Moore Park</li>
                     </ul>
                     <a className="btn btn--primary btn--block" href="#class-signup">报名</a>
-                    <p className="vip-offer__left">上过之前课程的同学算复训，付课程学费 ×10% + GST，这一期 76.89 澳元</p>
+                    <p className="vip-offer__left">上过之前课程的同学算复训，付课程学费 ×10% + GST</p>
                   </div>
                 </header>
 
@@ -392,7 +425,7 @@ export default async function ClassPage({ searchParams }: PageProps) {
                   <br />
                   费用：{IP_COURSE.priceLabel} + GST（含午餐），银行转账
                   <br />
-                  上过之前课程的同学算复训，付{REFRESHER.priceLabel}，这一期是 {REFRESHER.amountLabel}；11 月 5 日前办的共创会员、还没上过课的免费
+                  上过之前课程的同学算复训，付{REFRESHER.priceLabel}（刷卡，金额付款时自动计算）；11 月 5 日前办的共创会员、还没上过课的免费
                   <br />
                   席位有限，报满即止
                 </p>

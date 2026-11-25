@@ -1,4 +1,4 @@
-import { cohortDatesLabel, cohortOnSale, MEMBERSHIP } from "./course";
+import { classCardAmount, cohortDatesLabel, cohortOnSale, IP_COURSE, MEMBERSHIP } from "./course";
 import { attachCheckout, getCourseOrderByRef, getDinnerByRef, getSessionFeeByRef, markPaidByCard, type CourseOrderByRef, type DinnerOrder, type SessionFee } from "./db";
 import { dinnerConfig } from "./dinner";
 import { feeFor, formatSession } from "./sessions";
@@ -18,6 +18,10 @@ export function amountFor(kind: PayKind, row: SessionFee | DinnerOrder | CourseO
   // old yearly order left unpaid is no longer sold, and with no next cohort
   // set there is nothing to buy.
   if (kind === "member") return (row as CourseOrderByRef).course === MEMBERSHIP.id && cohortOnSale() ? MEMBERSHIP.amount : null;
+  // A class order is payable by card only when it is a refresher for the
+  // class on sale (2026-11-25); the amount is worked out here, never shown on
+  // the site. A full-price order stays a bank transfer.
+  if (kind === "class") return classCardAmount(row as CourseOrderByRef);
   if (kind === "tuesday") {
     const fee = row as SessionFee;
     const price = feeFor(fee.session);
@@ -50,12 +54,12 @@ export async function settleIfPaid(kind: PayKind, row: { ref: string; status: st
  */
 /** The page a payment of this kind is shown on, by its reference. */
 export function payPagePath(kind: PayKind): string {
-  return kind === "member" ? "/join" : kind === "tuesday" ? "/tuesday/pay" : "/dinner/pay";
+  return kind === "member" ? "/join" : kind === "class" ? "/class" : kind === "tuesday" ? "/tuesday/pay" : "/dinner/pay";
 }
 
 export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string): Promise<string> {
   const back = `${origin}${payPagePath(kind)}?ref=${ref}`;
-  const row = kind === "member" ? await getCourseOrderByRef(ref) : kind === "tuesday" ? await getSessionFeeByRef(ref) : await getDinnerByRef(ref);
+  const row = kind === "member" || kind === "class" ? await getCourseOrderByRef(ref) : kind === "tuesday" ? await getSessionFeeByRef(ref) : await getDinnerByRef(ref);
   if (!row) return back;
 
   if (row.stripe_session) {
@@ -91,7 +95,9 @@ export async function checkoutUrlFor(ref: string, kind: PayKind, origin: string)
     title:
       kind === "member"
         ? `${MEMBERSHIP.title} · ${MEMBERSHIP.weeks} 周（${cohortDatesLabel(cohortOnSale()!)}，含 GST）`
-        : kind === "tuesday"
+        : kind === "class"
+          ? `${IP_COURSE.title} · ${IP_COURSE.dateLabel} · 复训（课程学费 10% + GST）`
+          : kind === "tuesday"
           ? `Build Tuesday · ${when}（含 GST）`
           : `Vibe Thursday 散场聚餐 · ${when}（含 GST）`,
     successUrl: `${back}&paid=1`,
